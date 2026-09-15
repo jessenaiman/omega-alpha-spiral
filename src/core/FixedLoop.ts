@@ -11,8 +11,8 @@ export class FixedLoop {
   constructor(
     private readonly update: (dt: number) => void,
     private readonly render: (alpha: number) => void,
-    private readonly requestFrame: (callback: FrameRequestCallback) => number = requestAnimationFrame,
-    private readonly cancelFrame: (id: number) => void = cancelAnimationFrame,
+    private readonly requestFrame: (callback: FrameRequestCallback) => number = (callback) => window.requestAnimationFrame(callback),
+    private readonly cancelFrame: (id: number) => void = (id) => window.cancelAnimationFrame(id),
   ) {}
 
   private readonly onFrame = (nowMs: number): void => {

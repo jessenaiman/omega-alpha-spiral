@@ -33,6 +33,46 @@ function scheduler() {
   };
 }
 
+test('default browser scheduler preserves the Window receiver', () => {
+  const previousWindow = Object.getOwnPropertyDescriptor(globalThis, 'window');
+  const previousRequest = Object.getOwnPropertyDescriptor(globalThis, 'requestAnimationFrame');
+  const previousCancel = Object.getOwnPropertyDescriptor(globalThis, 'cancelAnimationFrame');
+  let scheduled: FrameCallback | null = null;
+  let cancelled: number | null = null;
+  const fakeWindow = {
+    requestAnimationFrame(this: unknown, callback: FrameCallback): number {
+      assert.equal(this, fakeWindow);
+      scheduled = callback;
+      return 42;
+    },
+    cancelAnimationFrame(this: unknown, id: number): void {
+      assert.equal(this, fakeWindow);
+      cancelled = id;
+    },
+  };
+
+  Object.defineProperty(globalThis, 'window', { configurable: true, value: fakeWindow });
+  Object.defineProperty(globalThis, 'requestAnimationFrame', { configurable: true, value: fakeWindow.requestAnimationFrame });
+  Object.defineProperty(globalThis, 'cancelAnimationFrame', { configurable: true, value: fakeWindow.cancelAnimationFrame });
+
+  try {
+    const loop = new FixedLoop(() => undefined, () => undefined);
+    loop.start();
+    assert.ok(scheduled);
+    loop.stop();
+    assert.equal(cancelled, 42);
+  } finally {
+    for (const [name, descriptor] of [
+      ['window', previousWindow],
+      ['requestAnimationFrame', previousRequest],
+      ['cancelAnimationFrame', previousCancel],
+    ] as const) {
+      if (descriptor) Object.defineProperty(globalThis, name, descriptor);
+      else Reflect.deleteProperty(globalThis, name);
+    }
+  }
+});
+
 test('runs at most five fixed updates for a 100 ms frame and renders once', () => {
   const frames = scheduler();
   const updates: number[] = [];
