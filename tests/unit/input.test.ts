@@ -57,6 +57,62 @@ test('held buttons only produce one pressed edge', () => {
   assert.equal(state.pausePressed, false);
 });
 
+test('quick keyboard taps queue one pressed edge while movement remains held-state', () => {
+  const keyboard = new EventTarget();
+  const visibility = new EventTarget();
+  const canvas = {} as HTMLCanvasElement;
+  const controller = new InputController(canvas, {
+    keyboard,
+    visibility,
+    activeElement: () => canvas,
+    visibilityHidden: () => false,
+    getGamepad: () => null,
+  });
+
+  for (const code of ['Space', 'KeyE', 'Escape', 'KeyW']) {
+    keyboard.dispatchEvent(keyEvent('keydown', code));
+    keyboard.dispatchEvent(keyEvent('keyup', code));
+  }
+
+  assert.deepEqual(controller.sample(), {
+    move: { x: 0, y: 0 },
+    dashPressed: true,
+    actPressed: true,
+    pausePressed: true,
+  });
+  assert.deepEqual(controller.sample(), {
+    move: { x: 0, y: 0 },
+    dashPressed: false,
+    actPressed: false,
+    pausePressed: false,
+  });
+  controller.dispose();
+});
+
+test('key repeat does not repeat edges and release-repress queues a new edge between samples', () => {
+  const keyboard = new EventTarget();
+  const visibility = new EventTarget();
+  const canvas = {} as HTMLCanvasElement;
+  const controller = new InputController(canvas, {
+    keyboard,
+    visibility,
+    activeElement: () => canvas,
+    visibilityHidden: () => false,
+    getGamepad: () => null,
+  });
+
+  keyboard.dispatchEvent(keyEvent('keydown', 'KeyE'));
+  keyboard.dispatchEvent(keyEvent('keydown', 'KeyE'));
+  assert.equal(controller.sample().actPressed, true);
+  assert.equal(controller.sample().actPressed, false);
+
+  keyboard.dispatchEvent(keyEvent('keyup', 'KeyE'));
+  keyboard.dispatchEvent(keyEvent('keydown', 'KeyE'));
+  assert.equal(controller.sample().actPressed, true);
+  assert.equal(controller.sample().actPressed, false);
+  controller.dispose();
+});
+
 test('sample advances prior button state and clears held keys on focus loss', () => {
   const keyboard = new EventTarget();
   const visibility = new EventTarget();
@@ -78,13 +134,21 @@ test('sample advances prior button state and clears held keys on focus loss', ()
   assert.equal(controller.sample().dashPressed, false);
 
   keyboard.dispatchEvent(keyEvent('keydown', 'KeyW'));
+  keyboard.dispatchEvent(keyEvent('keydown', 'KeyE'));
+  keyboard.dispatchEvent(keyEvent('keyup', 'KeyE'));
   keyboard.dispatchEvent(new Event('blur'));
-  assert.deepEqual(controller.sample().move, { x: 0, y: 0 });
+  const afterBlur = controller.sample();
+  assert.deepEqual(afterBlur.move, { x: 0, y: 0 });
+  assert.equal(afterBlur.actPressed, false);
 
   keyboard.dispatchEvent(keyEvent('keydown', 'KeyD'));
+  keyboard.dispatchEvent(keyEvent('keydown', 'Escape'));
+  keyboard.dispatchEvent(keyEvent('keyup', 'Escape'));
   hidden = true;
   visibility.dispatchEvent(new Event('visibilitychange'));
-  assert.deepEqual(controller.sample().move, { x: 0, y: 0 });
+  const afterHidden = controller.sample();
+  assert.deepEqual(afterHidden.move, { x: 0, y: 0 });
+  assert.equal(afterHidden.pausePressed, false);
 
   activeElement = null;
   const unfocused = keyEvent('keydown', 'ArrowUp');

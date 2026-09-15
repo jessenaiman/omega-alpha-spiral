@@ -73,11 +73,16 @@ function browserEnvironment(): InputEnvironment {
 export class InputController {
   private readonly keys = new Set<string>();
   private previous: ButtonState = EMPTY_BUTTONS;
+  private readonly queued = { dash: false, act: false, pause: false };
   private readonly environment: InputEnvironment;
 
   private readonly onKeyDown = (event: Event): void => {
     const key = event as KeyboardEvent;
+    const before = buttonState(this.keys, null);
     this.keys.add(key.code);
+    if (key.code === 'Space' && !before.dash) this.queued.dash = true;
+    if ((key.code === 'KeyE' || key.code === 'Enter') && !before.act) this.queued.act = true;
+    if (key.code === 'Escape' && !before.pause) this.queued.pause = true;
     if (GAMEPLAY_KEYS.has(key.code) && this.environment.activeElement() === this.canvas) event.preventDefault();
   };
 
@@ -89,6 +94,9 @@ export class InputController {
 
   private readonly clearKeys = (): void => {
     this.keys.clear();
+    this.queued.dash = false;
+    this.queued.act = false;
+    this.queued.pause = false;
   };
 
   private readonly onVisibilityChange = (): void => {
@@ -105,8 +113,17 @@ export class InputController {
 
   sample(): InputFrame {
     const pad = this.environment.getGamepad();
-    const frame = mapInput(this.keys, pad, this.previous);
+    const mapped = mapInput(this.keys, pad, this.previous);
+    const frame = {
+      move: mapped.move,
+      dashPressed: mapped.dashPressed || this.queued.dash,
+      actPressed: mapped.actPressed || this.queued.act,
+      pausePressed: mapped.pausePressed || this.queued.pause,
+    };
     this.previous = buttonState(this.keys, pad);
+    this.queued.dash = false;
+    this.queued.act = false;
+    this.queued.pause = false;
     return frame;
   }
 
@@ -115,6 +132,6 @@ export class InputController {
     this.environment.keyboard.removeEventListener('keyup', this.onKeyUp);
     this.environment.keyboard.removeEventListener('blur', this.clearKeys);
     this.environment.visibility.removeEventListener('visibilitychange', this.onVisibilityChange);
-    this.keys.clear();
+    this.clearKeys();
   }
 }
