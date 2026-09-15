@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.test-dist/
+test-results/
+playwright-report/
+.worktrees/
+.superpowers/
+artifacts/pass-*/
