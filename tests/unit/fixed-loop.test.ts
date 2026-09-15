@@ -92,6 +92,30 @@ test('start owns one RAF chain and stop cancels it', () => {
   assert.equal(frames.cancelled.length, 1);
 });
 
+test('reentrant stop and start preserve one cancellable RAF chain', () => {
+  const frames = scheduler();
+  let restarted = false;
+  let loop: FixedLoop;
+  loop = new FixedLoop(
+    () => undefined,
+    () => {
+      if (restarted) return;
+      restarted = true;
+      loop.stop();
+      loop.start();
+    },
+    frames.request,
+    frames.cancel,
+  );
+
+  loop.start();
+  frames.advance(1_000);
+  assert.equal(frames.pendingCount, 1);
+
+  loop.stop();
+  assert.equal(frames.pendingCount, 0);
+});
+
 test('restart treats its first frame as a new timing baseline', () => {
   const frames = scheduler();
   let updates = 0;

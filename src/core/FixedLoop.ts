@@ -16,8 +16,10 @@ export class FixedLoop {
   ) {}
 
   private readonly onFrame = (nowMs: number): void => {
+    if (!this.running) return;
+    this.frameId = null;
     this.tick(nowMs);
-    if (this.running) this.frameId = this.requestFrame(this.onFrame);
+    if (this.running && this.frameId === null) this.frameId = this.requestFrame(this.onFrame);
   };
 
   start(): void {
