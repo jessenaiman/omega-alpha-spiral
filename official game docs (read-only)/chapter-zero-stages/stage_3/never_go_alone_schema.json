@@ -1,0 +1,81 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Never Go Alone Stage Schema",
+  "type": "object",
+  "required": ["type", "title", "companions", "escapeSequence"],
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": ["never_go_alone"],
+      "description": "Scene type identifier"
+    },
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "companions": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "affinityRequirement", "abilities"],
+        "properties": {
+          "id": { "type": "string", "enum": ["light", "mischief", "wrath"] },
+          "name": { "type": "string" },
+          "affinityRequirement": { "type": "integer", "minimum": 0 },
+          "abilities": {
+            "type": "array",
+            "minItems": 2,
+            "items": {
+              "type": "object",
+              "required": ["name", "effect"],
+              "properties": {
+                "name": { "type": "string" },
+                "effect": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "escapeSequence": {
+      "type": "object",
+      "required": ["tiers", "finale"],
+      "properties": {
+        "tiers": {
+          "type": "array",
+          "minItems": 3,
+          "items": {
+            "type": "object",
+            "required": ["id", "layout", "objective"],
+            "properties": {
+              "id": { "type": "string" },
+              "layout": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "objective": { "type": "string" },
+              "echoModifier": { "type": "string" }
+            }
+          }
+        },
+        "finale": {
+          "type": "object",
+          "required": ["successCondition", "successNarration", "fallbackNarration"],
+          "properties": {
+            "successCondition": { "type": "string" },
+            "successNarration": { "type": "string" },
+            "fallbackNarration": { "type": "string" }
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

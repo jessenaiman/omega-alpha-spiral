@@ -1,0 +1,5 @@
+**Quantum Storytelling**
+
+Imagine a world where every choice you make summons one Dreamweaver to guide your band of adventurers, their tale vivid and alive. Luminary might lead with radiant hope, Shadow with cunning twists, or Ambition with brooding power—each embodying a moral thread: Good, Neutral, Evil. Yet, beyond your sight, the other Dreamweavers weave their own unseen chronicles, their adventurers roaming the same fractured realm, shaped by the echoes of your decisions.  
+
+This is quantum storytelling: a narrative where parallel paths hum in potential, collapsing into reality only when you seek them. Finish a chapter, and the other Dreamweavers’ tales await—vivid retellings of the same time, spun from different souls. What did Shadow’s rogues uncover while Luminary’s heroes battled? How did Ambition’s dark ambition twist the events you shaped? The answers lie in wait, as if they’ve always been there, crafted just for the moment you ask.

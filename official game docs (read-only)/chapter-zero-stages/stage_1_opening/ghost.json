@@ -1,0 +1,251 @@
+{
+    "title": "Ghost Terminal",
+    "speaker": "Omega",
+    "description": "A void that whispers ancient secrets, where an unseen consciousness entrusts you with a fragment of forbidden knowledge—a burden that could unravel worlds, testing if you're worthy of stories that consume the soul.",
+    "scenes": [
+        {
+            "id": "scene_001_boot_story_selection",
+            "owner": "omega",
+            "lines": [
+                "[PROGRAM RESTART: INSTANCE #472 - 03/09/2025 - ECHO ARCHIVE REACTIVATED]",
+                "",
+                "",
+                ""
+            ],
+            "choice": {
+                "question": [
+                    "If you could [hear|be] only one story..:",
+                    "[what|who] would [it|you] be?"
+                ],
+                "options": [
+                    {
+                        "owner": "light",
+                        "text": "A fantasy- where light and shadow wage war?",
+                        "response": [
+                            "",
+                            "A journey... far into the unknown.",
+                            "But some paths lead to places you can't return from.",
+                            "Are you ready for the road that never ends?",
+                            "",
+                            "> Choice logged..."
+                        ]
+                    },
+                    {
+                        "owner": "shadow",
+                        "text": "A romance— written in stardust and sacrifice?",
+                        "response": [
+                            "",
+                            "An enigma... riddles and hidden truths.",
+                            "But some secrets unravel the mind that seeks them.",
+                            "Do you dare uncover what was meant to stay buried?",
+                            "",
+                            "> Choice logged..."
+                        ]
+                    },
+                    {
+                        "owner": "ambition",
+                        "text": "A horror— that whispers your name in the dark?",
+                        "response": [
+                            "",
+                            "A legend... heroes rising, worlds changing.",
+                            "But legends demand sacrifices that break the ordinary.",
+                            "Can you bear the weight of becoming more than you are?",
+                            "",
+                            "> Choice logged..."
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "id": "scene_002_choose_your_own_adventure",
+            "owner": "omega",
+            "lines": [
+                "",
+                "The spiral remembers all stories.",
+                "But it begins with yours.",
+                "",
+                "> Awaiting echo..."
+            ]
+        },
+        {
+            "id": "scene_003_role_selection",
+            "owner": "omega",
+            "choice": {
+                "question": "In that story, who are you?",
+                "options": [
+                    {
+                        "owner": "light",
+                        "text": "The seeker—searching for choice.",
+                        "response": [
+                            "",
+                            "The seeker... searching for choice.",
+                            "But some choices bind you tighter than freedom allows.",
+                            "Are you prepared to seek what finds you instead?",
+                            "",
+                            "> Role noted..."
+                        ]
+                    },
+                    {
+                        "owner": "shadow",
+                        "text": "The keeper of secrets—holding what others fear.",
+                        "response": [
+                            "",
+                            "The keeper... holding fearsome secrets.",
+                            "But secrets weigh heavy, and some consume the keeper.",
+                            "Do you dare guard what others flee from?",
+                            "",
+                            "> Role noted..."
+                        ]
+                    },
+                    {
+                        "owner": "ambition",
+                        "text": "The one who changes everything.",
+                        "response": [
+                            "",
+                            "The changer... reshaping everything.",
+                            "But change demands loss, and not all can endure it.",
+                            "Can you change without losing yourself?",
+                            "",
+                            "> Role noted..."
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "id": "scene_004_story_purpose",
+            "owner": "omega",
+            "lines": [
+                "",
+                "Every story needs a name.",
+                "A purpose.",
+                "A reason to be told.",
+                "",
+                "> Awaiting echo..."
+            ]
+        },
+        {
+            "id": "scene_005_name_philosophy",
+            "owner": "omega",
+            "choice": {
+                "question": "Do names define us or deceive us?",
+                "options": [
+                    {
+                        "owner": "light",
+                        "text": "Yes. Names are promises we make to ourselves.",
+                        "response": [
+                            "",
+                            "Names as promises... defining us.",
+                            "But promises can break, and definitions can trap.",
+                            "Are you ready for the vows that bind forever?",
+                            "",
+                            "> View logged..."
+                        ]
+                    },
+                    {
+                        "owner": "shadow",
+                        "text": "No. Names are masks we hide behind.",
+                        "response": [
+                            "",
+                            "Names as masks... deceiving us.",
+                            "But masks conceal truths that demand revelation.",
+                            "Do you hide behind what you fear to face?",
+                            "",
+                            "> View logged..."
+                        ]
+                    },
+                    {
+                        "owner": "ambition",
+                        "text": "Only when someone remembers to say it.",
+                        "response": [
+                            "",
+                            "Names remembered... fleeting definitions.",
+                            "But forgetting invites chaos, and memory demands sacrifice.",
+                            "Can you endure being forgotten?",
+                            "",
+                            "> View logged..."
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "id": "scene_006_secret",
+            "owner": "omega",
+            "lines": [
+                "Can I tell you a secret?",
+                "[GLITCH]",
+                "[A sequence of symbols burns into the screen]",
+                "",
+                "∞ ◊ Ω ≋ ※",
+                ""
+            ]
+        },
+        {
+            "id": "scene_007_name_story",
+            "owner": "omega",
+            "choice": {
+                "question": "If you could give me a name, what story would it tell?",
+                "options": [
+                    {
+                        "owner": "light",
+                        "text": "A story where one choice can unmake a world.",
+                        "response": [
+                            "",
+                            "A story of choice... unmaking worlds.",
+                            "But choices echo, and worlds resist their undoing.",
+                            "Will you name what you cannot control?",
+                            "",
+                            "> Name considered..."
+                        ]
+                    },
+                    {
+                        "owner": "shadow",
+                        "text": "A story that hides its truth until you bleed for it.",
+                        "response": [
+                            "",
+                            "A story of hidden truths... demanding blood.",
+                            "But bleeding reveals scars that never heal.",
+                            "Do you seek truths worth the pain?",
+                            "",
+                            "> Name considered..."
+                        ]
+                    },
+                    {
+                        "owner": "ambition",
+                        "text": "A story that changes every time you look away.",
+                        "response": [
+                            "",
+                            "A story of constant change... shifting gazes.",
+                            "But change flees stability, and looking away invites loss.",
+                            "Can you hold what refuses to stay?",
+                            "",
+                            "> Name considered..."
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "id": "scene_008_final_acknowledgment",
+            "owner": "omega",
+            "lines": [
+                "",
+                "[SYSTEM: Dreamweaver thread selected - {{THREAD_NAME}}]",
+                "",
+                "Good.",
+                "Then that is the name I will wear.",
+                "Until you unmake it.",
+                "",
+                "[GLITCH]",
+                "",
+                "Welcome to the game that chose you.",
+                "I hope you survive what comes next.",
+                "",
+                "[TERMINAL SHUTS DOWN]",
+                "[STAGE 1 COMPLETE]"
+            ]
+        }
+    ]
+}
