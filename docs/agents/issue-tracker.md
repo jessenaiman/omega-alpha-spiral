@@ -4,13 +4,13 @@ Issues and specs for this repo live as **ticket notes in the Obsidian vault**, n
 
 | | |
 |---|---|
-| Repository | `C:\SpiralDrive\omega-alpha-spiral` — the tracker lives **inside** it |
-| Tracker root | `C:\SpiralDrive\omega-alpha-spiral\project-management` |
+| Vault root | `C:\obsidian` |
 | Tracker folder | `C:\SpiralDrive\omega-alpha-spiral\project-management\Tasks` |
 | Tracker hub | `C:\SpiralDrive\omega-alpha-spiral\project-management\HUB.md` |
 | Board | `C:\SpiralDrive\omega-alpha-spiral\project-management\BOARD.md` |
 | Format precedent | `C:\obsidian\Projects\omega-spiral\Tasks` — **read-only** |
 | Template | `C:\SpiralDrive\omega-alpha-spiral\project-management\Templates\TASK.md` |
+| Vault ledger | `C:\obsidian\VAULT-MAP.md` |
 
 The GitHub remote (`jessenaiman/omega-alpha-spiral`) exists for **code**, not for work tracking. Do not use `gh issue` for this repo's tickets.
 
@@ -18,11 +18,10 @@ The GitHub remote (`jessenaiman/omega-alpha-spiral`) exists for **code**, not fo
 
 | Path | Access |
 |---|---|
-| `C:\SpiralDrive\omega-alpha-spiral\project-management\` | **read + write** — this is the tracker |
-| `C:\SpiralDrive\omega-alpha-spiral` (rest of the repo) | the application — normal code rules |
-| `C:\obsidian\Project Management\` | **legacy copy** — a duplicate of this tracker was moved out of here on 2026-09-18. Do not edit it; it is not the authority |
+| `C:\obsidian\Project Management\` | **read + write** |
 | `C:\obsidian\Projects\` | **READ-ONLY** — personal creative work. Do not revise or add to it. The old tracker at `Projects\omega-spiral\Tasks` is precedent only; never write to it |
 | Anything else in the vault | read-only unless the user says otherwise |
+| `C:\SpiralDrive\omega-alpha-spiral` | the application repo — stays **outside** the vault |
 
 ## Convention
 
