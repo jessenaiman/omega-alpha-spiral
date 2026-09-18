@@ -159,3 +159,34 @@ measurements live in `artifacts/final-evidence.md`.
 - Verified: typecheck, 96/96 unit tests, 4/4 browser tests, desktop + mobile
   inspector captures with zero console/page/WebGL errors. Uncommitted
   `project-management/` churn left out of the commit (standing agreement).
+
+### Generated environment plate — integrated
+
+- **Provider note**: Gemini unconfigured; Codex `image_generation` wedged on a
+  network/model-refresh timeout (two attempts, no artifact). Working substitute:
+  **Pollinations** (`image.pollinations.ai`, free, no key) — `turbo` tier was
+  "good enough to start" per the operator. This replaces the premium generator
+  as a proof of concept, exactly the trade the operator asked for.
+- **Source (not runtime)**: `assets/concepts/spiral-breaker-vortex-background-source.png`
+  — pollinations turbo, 1024×576, 16:9. Measured (this agent is vision-blind;
+  ffmpeg/PIL): mean RGB 14/63/116 (blue-dominant), luminance p50=37, p95=148,
+  53% dark share, 2% near-black, 6.99-bit histogram entropy. The source bytes
+  are JPEG inside a `.png` wrapper (ffprobe: codec mjpeg) — one reason to keep
+  the raw file out of the runtime path.
+- **Runtime**: `assets/textures/spiral-breaker-vortex-background.jpg` (re-encoded
+  mjpeg q3, 1024×576). `arena.ts` backdrop sphere (`MeshBasic + map, BackSide,
+  depthWrite:false, rotation.y=π`) loads it with:
+  - `texture.colorSpace = THREE.SRGBColorSpace` — the classic trap: a `map`
+    that keeps `NoColorSpace` renders washed out under the renderer's sRGB
+    output space.
+  - `texture.anisotropy = 4` + default mipmap filtering so the grazing-angle
+    slice of a 64-unit sphere doesn't alias.
+  - Texture held by `backdropTexture` and disposed in `dispose()` (an earlier
+    "dispose guard" that no-op'd `texture.dispose` was removed — it masked leaks).
+- **Verified**: typecheck clean, 4/4 browser tests, inspector active-play
+  (seed 7): renderer textures 15→16 (upload confirmed), zero console/page/WebGL
+  errors; frame metrics vs the old gradient: contrast 101→105, entropy 2.93→2.79,
+  edges unchanged 0.097 — darker/blue as designed, readability untouched.
+- **Open item**: this model cannot view images; a human should eyeball
+  `artifacts/canvas-inspection/desktop-active-play.png` (or the live dev server)
+  to confirm the vo-light vortex reads well behind the arena.

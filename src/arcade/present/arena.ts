@@ -120,34 +120,29 @@ export function createArena(): Arena {
   halo.position.y = 0.02;
   group.add(halo);
 
-  // A huge gradient sphere frames the arena instead of raw void: a vertical
-  // falloff from deep space to a faint rosy horizon that hauls the periphery
-  // out of pure black without competing with the floor.
+  // A huge textured sphere frames the arena instead of raw void. The plate is a
+  // generated cosmic-vortex environment (concept source in assets/concepts/,
+  // flattened runtime JPG in assets/textures/). Color-space is the trap: a
+  // texture used as `map` must be declared sRGB or it renders washed out under
+  // the renderer's output color space. Mipmaps + a touch of anisotropy keep the
+  // grazing-angle silhouette from sharpening noise.
   const backdropGeometry = new THREE.SphereGeometry(64, 32, 16);
-  const backdropMaterial = new THREE.ShaderMaterial({
+  const backdropMaterial = new THREE.MeshBasicMaterial({
+    color: 0x081022,
     side: THREE.BackSide,
     depthWrite: false,
-    vertexShader: /* glsl */ `
-      varying float vY;
-      void main() {
-        vY = normalize(position).y;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-      }
-    `,
-    fragmentShader: /* glsl */ `
-      varying float vY;
-      void main() {
-        float t = smoothstep(-0.12, 0.65, vY);
-        vec3 deep = vec3(0.008, 0.012, 0.028);
-        vec3 top = vec3(0.05, 0.1, 0.22);
-        vec3 rosy = vec3(0.09, 0.055, 0.12);
-        vec3 color = mix(deep, top, t);
-        color += rosy * pow(max(0.0, 1.0 - abs(vY - 0.1)), 4.0) * 0.6;
-        gl_FragColor = vec4(color, 1.0);
-      }
-    `,
+  });
+  let backdropTexture: THREE.Texture | null = null;
+  const backdroploader = new THREE.TextureLoader();
+  backdroploader.load('assets/textures/spiral-breaker-vortex-background.jpg', (texture) => {
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.anisotropy = 4;
+    backdropTexture = texture;
+    backdropMaterial.map = texture;
+    backdropMaterial.needsUpdate = true;
   });
   const backdrop = new THREE.Mesh(backdropGeometry, backdropMaterial);
+  backdrop.rotation.y = Math.PI;
   group.add(backdrop);
 
   const coreHealthy = new THREE.Color(0x9ff4ff);
@@ -182,6 +177,7 @@ export function createArena(): Arena {
       for (const material of [floorMaterial, rimMaterial, slowMaterial, coreMaterial, haloMaterial, backdropMaterial]) {
         material.dispose();
       }
+      backdropTexture?.dispose();
     },
   };
 }
