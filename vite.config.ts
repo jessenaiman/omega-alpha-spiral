@@ -12,6 +12,7 @@ export default defineConfig({
       input: {
         main: fileURLToPath(new URL('./index.html', import.meta.url)),
         arcade: fileURLToPath(new URL('./spiral-breaker.html', import.meta.url)),
+        basic: fileURLToPath(new URL('./basic.html', import.meta.url)),
       },
     },
   },
