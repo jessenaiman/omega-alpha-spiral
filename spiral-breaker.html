@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#04060b">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M32 6a26 26 0 1 0 26 26A26 26 0 0 0 32 6Zm0 6a20 20 0 1 1-20 20 20 20 0 0 1 20-20Zm0 8a12 12 0 1 0 12 12 12 12 0 0 0-12-12Zm0 6a6 6 0 1 1-6 6 6 6 0 0 1 6-6Z' fill='%237cf0ff'/%3E%3C/svg%3E">
+    <title>Spiral Breaker</title>
+  </head>
+  <body class="arcade-body">
+    <main class="arcade" data-arcade-hud role="application" aria-label="Spiral Breaker">
+      <canvas data-game-canvas tabindex="0" aria-label="Spiral Breaker arena"></canvas>
+
+      <header class="hud hud-top">
+        <div class="hud-block">
+          <span class="hud-label">SCORE</span>
+          <span class="hud-value" data-hud-score>0</span>
+          <span class="hud-chain" data-hud-chain hidden></span>
+        </div>
+        <div class="hud-block hud-align-end">
+          <span class="hud-label">BEST</span>
+          <span class="hud-value" data-hud-best>0</span>
+        </div>
+      </header>
+
+      <div class="hud hud-upper">
+        <div class="hud-block">
+          <span class="hud-label">CORE</span>
+          <span class="hud-value hud-integrity" data-hud-integrity>◆◆◆</span>
+        </div>
+        <div class="hud-block hud-align-end">
+          <span class="hud-label">WAVE</span>
+          <span class="hud-value" data-hud-wave>1</span>
+        </div>
+      </div>
+
+      <div class="hud-badge" data-hud-badge hidden>GHOST PLAYING</div>
+
+      <section class="overlay" data-hud-overlay>
+        <h1 class="overlay-title" data-hud-overlay-title>SPIRAL BREAKER</h1>
+        <p class="overlay-body" data-hud-overlay-body>Steer the core. Dash through every shard. Nothing reaches the center.</p>
+        <p class="overlay-hint">Move · WASD / arrows &nbsp; Dash · Space &nbsp; Pause · Esc</p>
+      </section>
+
+      <footer class="hud hud-bottom">
+        <p class="hud-status" data-hud-status role="status" aria-live="polite"></p>
+        <button type="button" class="hud-mute" data-hud-mute>SOUND OFF</button>
+      </footer>
+
+      <div class="game-error" data-game-error role="alert" hidden></div>
+    </main>
+    <script type="module" src="/src/arcade/main.ts"></script>
+  </body>
+</html>

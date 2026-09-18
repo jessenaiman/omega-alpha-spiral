@@ -1,0 +1,56 @@
+{
+  "runId": "pass-3",
+  "game": "Spiral Breaker",
+  "dtMs": 16.666666666666668,
+  "runs": [
+    {
+      "seed": "spiral-42",
+      "driver": "ghost",
+      "framesAdvanced": 5400,
+      "reachedVictory": true,
+      "reachedGameOver": false,
+      "scoreAfter": 3050,
+      "stepOfFirstScore": 22,
+      "distanceTravelled": 162.7099687733722,
+      "softlockWindows": 0,
+      "errored": false
+    },
+    {
+      "seed": "watchable",
+      "driver": "ghost",
+      "framesAdvanced": 5400,
+      "reachedVictory": true,
+      "reachedGameOver": false,
+      "scoreAfter": 1540,
+      "stepOfFirstScore": 22,
+      "distanceTravelled": 159.3391772412254,
+      "softlockWindows": 0,
+      "errored": false
+    },
+    {
+      "seed": "42",
+      "driver": "ghost",
+      "framesAdvanced": 5400,
+      "reachedVictory": true,
+      "reachedGameOver": false,
+      "scoreAfter": 2140,
+      "stepOfFirstScore": 23,
+      "distanceTravelled": 168.3360056458513,
+      "softlockWindows": 0,
+      "errored": false
+    },
+    {
+      "seed": "42",
+      "driver": "reckless",
+      "framesAdvanced": 8000,
+      "reachedVictory": false,
+      "reachedGameOver": true,
+      "scoreAfter": 455,
+      "stepOfFirstScore": 39,
+      "distanceTravelled": 97.48866154745856,
+      "softlockWindows": 12,
+      "errored": false
+    }
+  ],
+  "verdict": "release-ready gameplay measured: the ghost clears the gauntlet on every watchable seed, a reckless driver hits the fail state fast, and the retry restores play."
+}

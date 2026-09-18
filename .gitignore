@@ -6,3 +6,12 @@ playwright-report/
 .worktrees/
 .superpowers/
 artifacts/pass-*/
+artifacts/canvas-inspection/
+
+# Personal workspace tooling (not repo canon)
+.obsidian/
+.vscode/
+.qwen/
+.hermes/
+.smart-env/
+TaskNotes/
