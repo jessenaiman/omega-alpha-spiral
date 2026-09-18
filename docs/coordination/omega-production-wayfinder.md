@@ -2,7 +2,7 @@
 
 **Destination:** release **one epic scene at a time** until the final scene. The Alpha 0.1 / Alpha 0.2 split is retired.
 
-**Authority:** the role roster lives in the tracker at `C:\obsidian\Project Management\Omega Spiral\ROLES.md`. **This page mirrors it. If they disagree, `ROLES.md` wins.** The board owns current work; the Scene spec owns scene decisions.
+**Authority:** the role roster lives in the tracker at `C:\SpiralDrive\omega-alpha-spiral\project-management\ROLES.md`. **This page mirrors it. If they disagree, `ROLES.md` wins.** The board owns current work; the Scene spec owns scene decisions.
 
 > **This page previously listed invented role names — Captain, Sol, Terra, Modlens, Mimo, Nemo, DeepSeek 4.1.** None of those are profiles on this machine, so none could ever be assigned work. They are retired. Only the names below are assignable.
 

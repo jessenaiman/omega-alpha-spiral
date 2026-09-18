@@ -7,7 +7,7 @@ Issue tracker for the **game repository** at `C:\SpiralDrive\omega-alpha-spiral`
 
 | | |
 |---|---|
-| Tracker folder | `C:\obsidian\Project Management\Omega Spiral\` |
+| Tracker folder | `C:\SpiralDrive\omega-alpha-spiral\project-management\` |
 | Ticket notes | `Tasks\<id>.md` — one file per ticket |
 | Repo-side config | `C:\SpiralDrive\omega-alpha-spiral\docs\agents\issue-tracker.md` |
 | Format precedent | `C:\obsidian\Projects\omega-spiral\Tasks` — **read-only**, do not write to it |

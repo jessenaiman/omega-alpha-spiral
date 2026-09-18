@@ -14,7 +14,7 @@ When a skill mentions a role (e.g. "apply the AFK-ready triage label"), use the 
 
 ## Where these strings live
 
-This repo's tracker is Obsidian, not a label service. Each string is the value of the `status` field in a ticket's header table, in `C:\obsidian\Project Management\Omega Spiral\Tasks\<id>.md`. The `BOARD.md` lanes mirror them. There is no separate label store to create — a "label" here is a status value.
+This repo's tracker is Obsidian, not a label service. Each string is the value of the `status` field in a ticket's header table, in `C:\SpiralDrive\omega-alpha-spiral\project-management\Tasks\<id>.md`. The `BOARD.md` lanes mirror them. There is no separate label store to create — a "label" here is a status value.
 
 ## `done` — terminal state, not a triage role
 
