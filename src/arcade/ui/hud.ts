@@ -15,6 +15,13 @@ export interface Hud {
   setDebugHidden(hidden: boolean): void;
 }
 
+/** Fraction of the dash wait already elapsed: 0 = cooling, 1 = ready. */
+export function dashCharge(cooldownSec: number, cooldownDurationSec: number): number {
+  if (cooldownDurationSec <= 0) return 1;
+  const remaining = Math.max(0, Math.min(cooldownDurationSec, cooldownSec));
+  return 1 - remaining / cooldownDurationSec;
+}
+
 export function createHud(root: HTMLElement): Hud {
   const score = root.querySelector<HTMLElement>('[data-hud-score]');
   const best = root.querySelector<HTMLElement>('[data-hud-best]');
@@ -28,6 +35,33 @@ export function createHud(root: HTMLElement): Hud {
   const status = root.querySelector<HTMLElement>('[data-hud-status]');
   const mute = root.querySelector<HTMLElement>('[data-hud-mute]');
   const feed = root.querySelector<HTMLElement>('[data-hud-feed]');
+  const dash = root.querySelector<HTMLElement>('[data-hud-dash]');
+  const dashFill = root.querySelector<HTMLElement>('[data-hud-dash-fill]');
+  const waveDots = root.querySelector<HTMLElement>('[data-hud-wave-dots]');
+
+  // The integrity and wave meters are authored once as cells so the HUD shows
+  // status at a glance: gold when healing, red at one pip, cyan live dots for
+  // the wave climb.
+  const integrityPips: HTMLElement[] = [];
+  if (integrity) {
+    for (let index = 0; index < TUNING.maxIntegrity; index += 1) {
+      const pip = document.createElement('span');
+      pip.className = 'integrity-pip';
+      pip.setAttribute('aria-hidden', 'true');
+      integrity.appendChild(pip);
+      integrityPips.push(pip);
+    }
+  }
+
+  const waveDotEls: HTMLElement[] = [];
+  if (waveDots) {
+    for (let index = 0; index < TUNING.gauntletWaves; index += 1) {
+      const dot = document.createElement('span');
+      dot.className = 'wave-dot';
+      waveDots.appendChild(dot);
+      waveDotEls.push(dot);
+    }
+  }
 
   const setText = (element: HTMLElement | null, value: string): void => {
     if (element && element.textContent !== value) element.textContent = value;
@@ -74,10 +108,23 @@ export function createHud(root: HTMLElement): Hud {
       if (chain) chain.hidden = !showChain;
 
       if (integrity) {
-        const filled = '◆'.repeat(Math.max(0, world.integrity));
-        const empty = '◇'.repeat(Math.max(0, TUNING.maxIntegrity - world.integrity));
-        setText(integrity, filled + empty);
+        integrityPips.forEach((pip, index) => {
+          const filled = index < world.integrity;
+          if (pip.dataset.filled !== String(filled)) pip.dataset.filled = String(filled);
+        });
         integrity.dataset.low = world.integrity <= 1 ? 'true' : 'false';
+      }
+
+      waveDotEls.forEach((dot, index) => {
+        const active = index < world.wave;
+        if (dot.dataset.active !== String(active)) dot.dataset.active = String(active);
+      });
+
+      if (dash && dashFill) {
+        const charge = dashCharge(world.player.dashCooldown, TUNING.dashCooldownSec);
+        dashFill.style.transform = `scaleX(${charge})`;
+        const ready = charge >= 1;
+        dash.dataset.ready = ready ? 'true' : 'false';
       }
 
       if (badge) {

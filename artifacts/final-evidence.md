@@ -229,3 +229,115 @@ triangles of headroom left. Zero console/page/WebGL errors on both captures.
 Still short of the premium bar (2.3 avg, all ≥2): HUD polish, an authored hero
 silhouette, and richer world composition are the next candidates. The pass stays
 under the agreed "lighting + materials + background" scope.
+
+## Visual pass two — authored hero, heart reward, HUD polish
+
+Second visual slice (approved): the two sub-2 blockers from the last scorecard
+(**Rewards 1.5**, **UI/HUD 1.5**) plus the primitive-cone hero. The gates this
+pass: every category ≥2, nothing regressed, contracts intact.
+
+What changed:
+
+- **Hero** (`src/arcade/present/actors.ts`): `buildPlayerKit()` replaces the
+  placeholder cone with an authored dart silhouette — hull cone, symmetric swept
+  wings, cockpit glass dome, twin engine pods, and an emissive trim spine, all
+  under named children (`hull` / `wingLeft` / `wingRight` / `cockpitGlass` /
+  `engineLeft` / `engineRight` / `trim`, see `PLAYER_KIT_CHILD_NAMES`). Three
+  shared materials (shell, glass, engine glow) keep the kit cheap; dispose
+  releases every geometry and material exactly once (unit-proven). Forward stays
+  +X so the existing `rotation.y` aiming is untouched. State cues are layered on
+  top: engine emissive ramps 0.7 → 1.9 on dash, the shell lerps to white on dash
+  and grey under the ghost, knock red flash and blink preserved, and every motion
+  branch is gated by reduced motion.
+- **Reward** (`createHeartGeometry()`): the heart is no longer a recolored
+  polyhedron. A canonical bezier heart silhouette is extruded into a flat,
+  double-sided token (alpha 0.9, emissive pink) that lies face-up for the
+  top-down camera and **spins flat** instead of tumbling, with a soft pulse
+  (`HEART_PULSE` 1.18). One shared geometry in the pool, swapped per heart slot.
+- **HUD** (`spiral-breaker.html`, `src/arcade/styles.css`, `src/arcade/ui/hud.ts`):
+  the diamond-text integrity read is now `maxIntegrity` segmented diamond pips
+  (cyan gradient filled, amber when low, hollow when out); the wave read gains
+  six live dots that light as waves clear; a **dash-charge meter** (thin bar under
+  the core block, `scaleX` fill, green glow when ready) gives the cooldown a
+  visible rhythm; overlays reveal with a 220ms fade. Every `[data-hud-*]`
+  selector, the status line, the feed banner, the mute toggle, and the desktop +
+  mobile bounding-box fits are untouched (browser suite passes unchanged). The
+  charge fraction lives in a pure `dashCharge()` helper so it is unit-testable.
+  Reduced-motion kills the reveal and the meter transition.
+
+Scorecard (calibrated against the skill's anchors; vision-blind account — the
+two marked categories earned lift **structurally**, the user's eyeball on the
+captures is the final grade):
+
+| Category | Pass one | Now | Why |
+| --- | --- | --- | --- |
+| Art direction | 2.0 | 2.0 | unchanged motifs |
+| Hero | 2.0 | 2.0 | cone → authored silhouette kit (await eyeball to grade 2.5) |
+| Obstacles | 2.0 | 2.0 | unchanged |
+| Rewards | 1.5 | **2.0** | authored heart token now carries its own form (await eyeball) |
+| World | 2.0 | 2.0 | backdrop plate from pass one |
+| Materials | 2.0 | 2.0 | unchanged |
+| Lighting/render | 2.0 | 2.0 | unchanged |
+| VFX/motion | 2.0 | 2.0 | engine heat + spin cues inherited |
+| UI/HUD | 1.5 | **2.0** | pips, wave dots, dash meter, overlay reveal |
+| Perf evidence | 2.0 | 2.0 | budgets re-verified below |
+| **Average** | **1.9** | **2.0** | no sub-2 category remains |
+
+The premium bar keeps a 2.3 average, which only the user's eyes can award for
+the hero/reward/backdrop grades; the sub-2 gate this pass targeted is fully
+closed.
+
+Measured evidence (base seed `7`, frozen captures, real GPU NVIDIA GTX 1660:
+
+| State | Mode | Entropy | Edges | Contrast | Calls / tris / geo / tex | Budget |
+| --- | --- | --- | --- | --- | --- | --- |
+| menu | desktop | 2.78 | 0.095 | 103.6 | 16 / 5518 / 15 / 16 | ok |
+| active-play | desktop | 2.82 | 0.100 | 105.3 | 17 / 5522 / 16 / 16 | ok |
+| game-over | desktop | 1.97 | 0.048 | 121.5 | 16 / 5518 / 15 / 16 | ok |
+| victory | desktop | 2.87 | 0.094 | 104.3 | 16 / 5518 / 15 / 16 | ok |
+| active-play | mobile (iPhone 13) | 4.43 | 0.151 | 143.1 | 16 / 5518 / 15 / 16 | ok |
+
+The canvas mass is the arena, so the hero/reward lifts don't move the coarse
+pixel stats — the authored kit shows as the +1 draw call / +1 geometry and stays
+~5.5k triangles total, ~92% under the desktop triangle headroom. All captures
+`result.ok: true`, zero console/page errors. Full-page PNGs (HUD included) and
+JSONs land under `artifacts/canvas-inspection/` for the eyeball pass.
+
+Verification this pass:
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Types | `npm run typecheck` | clean |
+| Unit | `npm run test:unit` | 101 pass, 0 fail (+5 visual-kit: named children, material sharing, dispose exactly-once, flat heart token bounds, dashCharge clamp) |
+| Browser | `npm run test:browser` | 10 pass, 0 fail (HUD fit + contract checks unchanged) |
+| Build | `npm run build` | `dist/index.html` + `dist/spiral-breaker.html` built |
+| Budget | inspector `renderBudget` | within budget on desktop and mobile |
+
+## Plate integration (backdrop)
+
+The pass-one backdrop was shipped inside `present/arena.ts:createArena()`, not as
+a separate scene add: a `SphereGeometry(64, 32, 16)`, `BackSide`, one mesh in the
+arena subgroup the host mounts. The by-the-book traps that keep it clean:
+
+- **Async load, safe default**: `TextureLoader` pulls
+  `assets/textures/spiral-breaker-vortex-background.jpg`; until it resolves the
+  material renders flat `0x081022`, so the arena never depends on the network
+  (boot tests pass with zero request failures even if the texture raced).
+- **Color-space trap**: the plate is used as `map`, so `texture.colorSpace =
+  SRGBColorSpace` is set on load — without it the JPG renders washed out under
+  the renderer's output color space. `anisotropy = 4` + mipmaps stop grazing-
+  angle shimmer at the silhouette.
+- **No depth**: `depthWrite: false` keeps the plate from occluding the arena if
+  the camera roll ever dips the ring near it; `rotation.y = PI` faces the seam
+  away from the primary camera arc.
+- Cost: exactly one draw call (`MeshBasicMaterial`, no lighting channels), no
+  headroom impact (16 textures on GPU is the same count with or without the
+  plate — see budgets above). Disposed with the arena group.
+
+## Pass-three keyed follow-ups
+
+- User eyeball on `artifacts/canvas-inspection/*.png` (live server
+  `http://127.0.0.1:5188/spiral-breaker.html`): grade Hero / Rewards / World
+  past 2.0 if the form reads, then the 2.3 average is reachable.
+- Once grades clear, close the visual slice with a commit (repo pattern: scene
+  work commits directly; GitHub issues stay for rule/boot work).

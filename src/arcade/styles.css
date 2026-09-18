@@ -72,8 +72,79 @@ canvas[data-game-canvas] {
   text-shadow: 0 0 18px rgba(124, 240, 255, 0.45);
 }
 
-.hud-integrity { letter-spacing: 0.3em; color: #9ff4ff; }
-.hud-integrity[data-low='true'] { color: #ff6f5d; text-shadow: 0 0 18px rgba(255, 90, 70, 0.5); }
+.hud-integrity { display: flex; gap: 0.4rem; }
+
+.integrity-pip {
+  width: 1rem;
+  height: 1rem;
+  transform: rotate(45deg);
+  border: 1px solid rgba(124, 240, 255, 0.45);
+  background: rgba(124, 240, 255, 0.07);
+  box-shadow: inset 0 0 6px rgba(124, 240, 255, 0.1);
+}
+.integrity-pip[data-filled='true'] {
+  border-color: #9ff4ff;
+  background: linear-gradient(135deg, #aef4ff, #6ce6ff);
+  box-shadow: 0 0 10px rgba(124, 240, 255, 0.65), inset 0 0 3px rgba(255, 255, 255, 0.6);
+}
+.hud-integrity[data-low='true'] .integrity-pip[data-filled='true'] {
+  border-color: #ffb0a6;
+  background: linear-gradient(135deg, #ff8a7a, #ff5a46);
+  box-shadow: 0 0 12px rgba(255, 90, 70, 0.65), inset 0 0 3px rgba(255, 255, 255, 0.5);
+}
+.hud-integrity[data-low='true'] .integrity-pip[data-filled='false'] {
+  border-color: rgba(255, 90, 70, 0.35);
+}
+
+.hud-wave-dots {
+  display: flex;
+  gap: 0.32rem;
+  margin-top: 0.3rem;
+}
+.hud-align-end .hud-wave-dots { justify-content: flex-end; }
+
+.wave-dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 999px;
+  border: 1px solid rgba(124, 240, 255, 0.4);
+  background: rgba(124, 240, 255, 0.05);
+}
+.wave-dot[data-active='true'] {
+  border-color: #7cf0ff;
+  background: #7cf0ff;
+  box-shadow: 0 0 8px rgba(124, 240, 255, 0.75);
+}
+
+.hud-label-sub {
+  margin-top: 0.35rem;
+  font-size: 0.55rem;
+  letter-spacing: 0.24em;
+}
+
+.hud-dash {
+  display: block;
+  width: 6rem;
+  height: 0.32rem;
+  margin-top: 0.18rem;
+  border: 1px solid rgba(124, 240, 255, 0.3);
+  background: rgba(124, 240, 255, 0.06);
+  overflow: hidden;
+}
+.hud-dash-fill {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform: scaleX(0);
+  transform-origin: left center;
+  background: linear-gradient(90deg, rgba(124, 240, 255, 0.4), #7cf0ff);
+  box-shadow: 0 0 8px rgba(124, 240, 255, 0.6);
+  transition: transform 80ms linear;
+}
+.hud-dash[data-ready='true'] .hud-dash-fill {
+  background: linear-gradient(90deg, #7cff9b, #c4ffd6);
+  box-shadow: 0 0 10px rgba(124, 255, 155, 0.7);
+}
 
 .hud-chain {
   margin-top: 0.1rem;
@@ -111,6 +182,11 @@ canvas[data-game-canvas] {
   padding: 2rem;
   pointer-events: none;
   background: radial-gradient(ellipse at center, rgba(4, 8, 16, 0.28), rgba(4, 6, 11, 0.82));
+  animation: overlay-rise 220ms ease-out both;
+}
+@keyframes overlay-rise {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .overlay-title {
@@ -222,4 +298,6 @@ canvas[data-game-canvas] {
 
 @media (prefers-reduced-motion: reduce) {
   .hud-value, .overlay-title { text-shadow: none; }
+  .overlay { animation: none; }
+  .hud-dash-fill { transition: none; }
 }
