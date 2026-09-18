@@ -4,13 +4,13 @@ Issues and specs for this repo live as **ticket notes in the Obsidian vault**, n
 
 | | |
 |---|---|
-| Vault root | `C:\obsidian` |
-| Tracker folder | `C:\obsidian\Project Management\Omega Spiral\Tasks` |
-| Tracker hub | `C:\obsidian\Project Management\Omega Spiral\HUB.md` |
-| Board | `C:\obsidian\Project Management\Omega Spiral\BOARD.md` |
+| Repository | `C:\SpiralDrive\omega-alpha-spiral` — the tracker lives **inside** it |
+| Tracker root | `C:\SpiralDrive\omega-alpha-spiral\project-management` |
+| Tracker folder | `C:\SpiralDrive\omega-alpha-spiral\project-management\Tasks` |
+| Tracker hub | `C:\SpiralDrive\omega-alpha-spiral\project-management\HUB.md` |
+| Board | `C:\SpiralDrive\omega-alpha-spiral\project-management\BOARD.md` |
 | Format precedent | `C:\obsidian\Projects\omega-spiral\Tasks` — **read-only** |
-| Template | `C:\obsidian\Project Management\Omega Spiral\Templates\TASK.md` |
-| Vault ledger | `C:\obsidian\VAULT-MAP.md` |
+| Template | `C:\SpiralDrive\omega-alpha-spiral\project-management\Templates\TASK.md` |
 
 The GitHub remote (`jessenaiman/omega-alpha-spiral`) exists for **code**, not for work tracking. Do not use `gh issue` for this repo's tickets.
 
@@ -18,10 +18,11 @@ The GitHub remote (`jessenaiman/omega-alpha-spiral`) exists for **code**, not fo
 
 | Path | Access |
 |---|---|
-| `C:\obsidian\Project Management\` | **read + write** |
+| `C:\SpiralDrive\omega-alpha-spiral\project-management\` | **read + write** — this is the tracker |
+| `C:\SpiralDrive\omega-alpha-spiral` (rest of the repo) | the application — normal code rules |
+| `C:\obsidian\Project Management\` | **legacy copy** — a duplicate of this tracker was moved out of here on 2026-09-18. Do not edit it; it is not the authority |
 | `C:\obsidian\Projects\` | **READ-ONLY** — personal creative work. Do not revise or add to it. The old tracker at `Projects\omega-spiral\Tasks` is precedent only; never write to it |
 | Anything else in the vault | read-only unless the user says otherwise |
-| `C:\SpiralDrive\omega-alpha-spiral` | the application repo — stays **outside** the vault |
 
 ## Convention
 
@@ -75,7 +76,7 @@ Then these sections, in order:
 
 ## Operations
 
-- **Create an issue**: `write_file` to `C:\obsidian\Project Management\Omega Spiral\Tasks\<id>.md` using the frontmatter, header table, and sections above. Pick the next free `<id>`; `updated` is today's date. Add a row to `BOARD.md` in the lane matching the status.
+- **Create an issue**: `write_file` to `C:\SpiralDrive\omega-alpha-spiral\project-management\Tasks\<id>.md` using the frontmatter, header table, and sections above. Pick the next free `<id>`; `updated` is today's date. Add a row to `BOARD.md` in the lane matching the status.
 - **Read an issue**: `read_file` on the ticket note.
 - **List issues**: `search_files` with `target: "files"`, `pattern: "*.md"` under the tracker folder, then read each `status` row.
 - **Find issues by state**: `search_files` with `target: "content"`, `pattern: "\| status \| <value> \|"`, `file_glob: "*.md"` under the tracker folder.
@@ -109,8 +110,8 @@ A ticket that becomes active work gets a DSH card. The ticket note stays the aut
 
 ## When a skill says "publish to the issue tracker"
 
-Create a ticket note under `C:\obsidian\Project Management\Omega Spiral\Tasks`.
+Create a ticket note under `C:\SpiralDrive\omega-alpha-spiral\project-management\Tasks`.
 
 ## When a skill says "fetch the relevant ticket"
 
-Read `C:\obsidian\Project Management\Omega Spiral\Tasks\<id>.md`.
+Read `C:\SpiralDrive\omega-alpha-spiral\project-management\Tasks\<id>.md`.
