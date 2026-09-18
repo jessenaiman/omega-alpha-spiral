@@ -82,10 +82,33 @@ pass-3, verified the production build on `vite preview` (both pages, no
     which emits `wave.start` on step 1). New unit file
     `tests/unit/spiral-breaker-feel.test.ts` (9 tests) covers hitstop map,
     reset, and tween lifecycle.
+11. **Slice B — the pulsar (this slice).** A seventh shard kind, chosen from the
+    brainstorm (bounded → "Pulsar", a rhythm hazard) and gated on an approved
+    short design: **a dashable shard carrying a 360° pulse ring on a fixed-step
+    cooldown**. Lingering inside its reach when the ring fires shoves the player
+    outward — knockback only, no integrity loss, no splits, no stunlock (a
+    `pulseGraceSec` window swallows follow-up bites). Dashing the pulsar kills
+    it **before** the ring fires; contact resolution runs before `firePulses`, so
+    a dash that connects in the exact step the pulse expires still wins. Pulsars
+    spawn from wave 3, one on screen at a time (`maxPulsarsOnScreen`), at low
+    weight, excluded from drifters, worth standard points; the ghost waits out a
+    charging pulse it cannot reach (`standoffPoint` outside `pulseMaxRadius ×
+    1.25`) but strikes a reachable/released one. Presentation: an icosahedron in
+    periwinkle with a charging telegraph ring that tightens/brightens as the
+    pulse nears (`actors.ts`), the fired ring in `vfx.ts`, and a rising whoop in
+    `sfx.ts`. **Two bugs found by verification**: `updateShards` guarded the
+    countdown with `pulseTimer > 0`, so a pulsar placed exactly at zero never
+    fired (real spawns use a 0.6–1.0× stagger so it hid until tests) — now any
+    non-positive timer discharges the next step; and the first spawn-gating test
+    sat an idle board into `maxShardsOnScreen` before wave 3, so no pulsar could
+    ever hatch — the gating test now floods a cleared board at forced waves
+    (exact "never before wave 3", safe ≥1 after), and a gauntlet test feeds a
+    fresh pulsar on a cadence so the ghost is genuinely forced to play around
+    them. New `tests/unit/spiral-breaker-pulsar.test.ts` (11 tests).
 
 ## Verification
 
-`npm run typecheck`, `npm run test:unit` (85 pass), `npm run test:browser`
+`npm run typecheck`, `npm run test:unit` (96 pass), `npm run test:browser`
 (10 pass), `npm run build`, and the production preview check (both pages, game
 starts from menu input, zero console/page/network errors) all pass. See
 `artifacts/final-evidence.md`.
@@ -101,6 +124,7 @@ starts from menu input, zero console/page/network errors) all pass. See
 - Entry: `spiral-breaker.html` → `src/arcade/main.ts`
 - Tests: `tests/unit/spiral-breaker-rules.test.ts`,
   `tests/unit/bot-playtest.test.ts`, `tests/unit/spiral-breaker-feel.test.ts`,
+  `tests/unit/spiral-breaker-pulsar.test.ts`,
   `tests/browser/spiral-breaker.spec.ts`, `tests/browser/qa-release.spec.ts`
 - Feel layer: `src/arcade/present/feel.ts` (hitstop), `src/arcade/present/tween.ts`
   (squash/stretch/dash overshoot), plus `camera.ts` roll, `sfx.ts` setDuck/vary,

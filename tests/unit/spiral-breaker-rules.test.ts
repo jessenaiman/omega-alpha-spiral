@@ -47,6 +47,7 @@ function shardAt(x: number, y: number, overrides: Partial<Shard> = {}): Shard {
     variant: 0,
     kind: 'standard',
     grace: 0,
+    pulseTimer: 0,
     alive: true,
     ...overrides,
   };

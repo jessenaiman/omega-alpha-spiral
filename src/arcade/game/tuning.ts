@@ -74,6 +74,21 @@ export const TUNING = {
   shieldHalfAngle: 0.62,
   shieldedPoints: 15,
 
+  /** Pulsars emit a full 360° pulse ring on a rhythm; linger and it shoves you. */
+  pulsarStartWave: 3,
+  pulsarChanceBase: 0.07,
+  pulsarChancePerWave: 0.01,
+  /** One charging hazard on the field is plenty. */
+  maxPulsarsOnScreen: 1,
+  pulseCooldownSec: 1.5,
+  /** Nothing inside this reach avoids the ring's shove when it fires. */
+  pulseMaxRadius: 0.5,
+  /** A hair gentler than a graze knockback, so a dodge is survivable. */
+  pulseKnockbackStrength: 2.3,
+  pulseStunSec: 0.16,
+  /** After a bite, a beat of immunity so a nearby second ring cannot chain you. */
+  pulseGraceSec: 0.22,
+
   /** Clear this many waves to win; the final wave needs an empty field at the clock. */
   gauntletWaves: 6,
   /** Integrity left on a cleared run banks this many points per pip. */

@@ -22,6 +22,10 @@
  *               heals one integrity pip; a full core pays bonus points.
  *   shielded  — a frontal cone faces the core; a dash inside that cone bounces
  *               ('shard.blocked'), a flank dash breaks it.
+ *   pulsar    — a rhythm hazard. Emits a 360° ring on a fixed-step cooldown;
+ *               anything inside its reach when the ring fires is knocked back
+ *               (no integrity loss). Dashing the pulsar kills it before it
+ *               can ever fire.
  *
  * Event types are the only seam between rules and presentation. Presentation
  * reacts; it never decides score, health, or collision.
@@ -33,7 +37,7 @@ import { TUNING, distanceSq, type Vec2 } from './tuning';
 
 export type Phase = 'menu' | 'play' | 'game-over' | 'victory';
 
-export type ShardKind = 'standard' | 'splitter' | 'mini' | 'heart' | 'shielded';
+export type ShardKind = 'standard' | 'splitter' | 'mini' | 'heart' | 'shielded' | 'pulsar';
 
 export interface Shard {
   readonly id: number;
@@ -48,6 +52,8 @@ export interface Shard {
   readonly kind: ShardKind;
   /** Fresh minis are ignored by collision for this many seconds. */
   grace: number;
+  /** Pulsars only: seconds until the next ring fires. Ignored for other kinds. */
+  pulseTimer: number;
   alive: boolean;
 }
 
@@ -82,6 +88,7 @@ export type ArcadeEvent =
     }
   | { readonly type: 'shard.destroy'; readonly id: number; readonly x: number; readonly y: number; readonly kind: ShardKind }
   | { readonly type: 'shard.blocked'; readonly id: number; readonly x: number; readonly y: number }
+  | { readonly type: 'pulsar.pulse'; readonly id: number; readonly x: number; readonly y: number }
   | { readonly type: 'core.heal'; readonly integrity: number; readonly x: number; readonly y: number }
   | { readonly type: 'score.change'; readonly score: number; readonly gained: number; readonly chain: number }
   | { readonly type: 'chain.reset' }
@@ -259,8 +266,11 @@ export function step(world: WorldState, dt: number, commands: Commands): ArcadeE
   // if the flight and the contact land inside it.
   const approach: Vec2 = { x: world.player.pos.x, y: world.player.pos.y };
   updatePlayer(world, dt, commands, events);
-  updateShards(world, dt);
+  const pulsed = updateShards(world, dt);
   resolveContacts(world, dt, events, approach);
+  // A pulse fires only if its pulsar survived the step, so dashing a pulsar
+  // that is about to pulse kills it before the ring can ever go off.
+  firePulses(world, pulsed, events);
 
   updateWave(world, events);
   updateSpawning(world, dt, events);
@@ -361,10 +371,20 @@ function clampToArena(player: PlayerState): void {
   }
 }
 
-function updateShards(world: WorldState, dt: number): void {
+function updateShards(world: WorldState, dt: number): number[] {
   const time = world.time;
+  const pulsed: number[] = [];
   for (const shard of world.shards) {
     if (!shard.alive) continue;
+    if (shard.kind === 'pulsar') {
+      if (shard.pulseTimer > 0) shard.pulseTimer -= dt;
+      // A non-positive timer discharges the very next step — a pulsar placed
+      // exactly at zero must not spin forever on an off-by-one.
+      if (shard.pulseTimer <= 0) {
+        shard.pulseTimer = TUNING.pulseCooldownSec;
+        pulsed.push(shard.id);
+      }
+    }
     if (shard.grace > 0) shard.grace = Math.max(0, shard.grace - dt);
     const speed = shard.speed * speedFactorAt(shard.pos);
     const bx = Math.cos(shard.bearing);
@@ -378,6 +398,37 @@ function updateShards(world: WorldState, dt: number): void {
     }
     shard.pos.x += vx * dt;
     shard.pos.y += vy * dt;
+  }
+  return pulsed;
+}
+
+/**
+ * The step's expired pulsar timers become live ring events here, only for
+ * pulsars that are still on the board — a pulsar killed by a dash this step
+ * never fires. A ring that reaches the player knocks back (a shove, never
+ * integrity loss) unless a recent bite is still protecting them.
+ */
+function firePulses(world: WorldState, pulsedIds: readonly number[], events: ArcadeEvent[]): void {
+  const player = world.player;
+  const reach = TUNING.pulseMaxRadius;
+  for (const id of pulsedIds) {
+    const shard = world.shards.find((candidate) => candidate.alive && candidate.id === id);
+    if (!shard) continue;
+    events.push({ type: 'pulsar.pulse', id: shard.id, x: shard.pos.x, y: shard.pos.y });
+    if (player.stun > 0 || player.invuln > 0) continue;
+    const d = Math.hypot(shard.pos.x - player.pos.x, shard.pos.y - player.pos.y);
+    if (d > reach) continue;
+    const dx = player.pos.x - shard.pos.x;
+    const dy = player.pos.y - shard.pos.y;
+    const length = Math.max(1e-6, Math.hypot(dx, dy));
+    player.vel.x = (dx / length) * TUNING.pulseKnockbackStrength;
+    player.vel.y = (dy / length) * TUNING.pulseKnockbackStrength;
+    player.pos.x += player.vel.x * TUNING.pulseStunSec;
+    player.pos.y += player.vel.y * TUNING.pulseStunSec;
+    clampToArena(player);
+    player.stun = Math.max(player.stun, TUNING.pulseStunSec);
+    player.invuln = Math.max(player.invuln, TUNING.pulseGraceSec);
+    events.push({ type: 'player.knockback', x: player.pos.x, y: player.pos.y });
   }
 }
 
@@ -518,6 +569,7 @@ function crackSplitter(world: WorldState, shard: Shard, events: ArcadeEvent[]): 
       variant: 0,
       kind: 'mini',
       grace: TUNING.miniGraceSec,
+      pulseTimer: 0,
       alive: true,
     };
     world.shards.push(mini);
@@ -571,6 +623,14 @@ function pickSpawnKind(world: WorldState): ShardKind {
   if (world.wave >= TUNING.splitterStartWave && world.rng.next() < TUNING.splitterChance) {
     return 'splitter';
   }
+  const pulsarsOnScreen = world.shards.reduce((count, shard) => count + (shard.alive && shard.kind === 'pulsar' ? 1 : 0), 0);
+  if (
+    world.wave >= TUNING.pulsarStartWave &&
+    pulsarsOnScreen < TUNING.maxPulsarsOnScreen &&
+    world.rng.next() < TUNING.pulsarChanceBase + (world.wave - TUNING.pulsarStartWave) * TUNING.pulsarChancePerWave
+  ) {
+    return 'pulsar';
+  }
   if (
     world.wave >= TUNING.shieldStartWave &&
     world.rng.next() < TUNING.shieldChanceBase + (world.wave - TUNING.shieldStartWave) * TUNING.shieldChancePerWave
@@ -600,6 +660,7 @@ function updateSpawning(world: WorldState, dt: number, events: ArcadeEvent[]): v
   const isDrifter =
     kind !== 'heart' &&
     kind !== 'splitter' &&
+    kind !== 'pulsar' &&
     world.wave >= TUNING.drifterStartWave &&
     world.rng.next() < TUNING.drifterChanceBase + world.wave * TUNING.drifterChancePerWave;
 
@@ -613,6 +674,9 @@ function updateSpawning(world: WorldState, dt: number, events: ArcadeEvent[]): v
     variant,
     kind,
     grace: 0,
+    // A staggered first ring so hazards never pulse in lockstep.
+    pulseTimer:
+      kind === 'pulsar' ? TUNING.pulseCooldownSec * (0.6 + world.rng.next() * 0.4) : 0,
     alive: true,
   });
 

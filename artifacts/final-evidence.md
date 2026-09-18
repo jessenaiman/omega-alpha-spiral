@@ -29,7 +29,7 @@ Terminal scene on its own page so neither boot path can break the other.
 | Check | Command | Result |
 | --- | --- | --- |
 | Types | `npm run typecheck` | clean |
-| Unit | `npm run test:unit` | 85 pass, 0 fail (+9 feel tests) |
+| Unit | `npm run test:unit` | 96 pass, 0 fail (+11 pulsar tests) |
 | Browser | `npm run test:browser` | 10 pass, 0 fail (+feed banner test) |
 | Build (MPA) | `npm run build` | `dist/index.html` + `dist/spiral-breaker.html` built |
 | Evidence | `check_evidence.py . --manifest artifacts/evidence.json` | 16 artifacts confirmed |
@@ -60,6 +60,7 @@ and hides.
 
 Play now has moment-to-moment feel it previously lacked entirely. Rules stay
 pure deterministic fixed-step; the feel layer sits in the host/presentation only.
+pure deterministic fixed-step; the feel layer sits in the host/presentation only.
 
 - **Hitstop** (`src/arcade/present/feel.ts`): the render delta is scaled by
   `feel.timeScale` (0.05 while frozen, capped 140ms) and audio ducks to 0.6 via
@@ -81,6 +82,43 @@ pure deterministic fixed-step; the feel layer sits in the host/presentation only
   (off-by-one tween index; wrong easing argument) were caught by the suite and
   fixed, and the feed spec's first form was flaky for a real reason — fixed by
   driving it via real input.
+
+## Slice B — the pulsar
+
+A seventh shard kind, chosen from the brainstorm (bounded → "Pulsar") and gated
+on an approved short design. A **rhythm hazard, not a damage bomb**: exactly one
+kind of pressure, expressed through the mechanic players already own.
+
+- **Rules** (`rules.ts`, pure deterministic): a pulsar is a dashable shard
+  carrying a 360° pulse ring on a fixed-step cooldown (1.5s). Anyone inside its
+  reach (`pulseMaxRadius` 0.5) when the ring fires gets shoves outward —
+  knockback + brief stun only, **no integrity loss, no splits**. A
+  `pulseGraceSec` (0.22) window swallows follow-up bites, so never a stunlock
+  chain. Contact resolution runs before `firePulses`, so **a dash that connects
+  in the exact step the pulse expires wins** — dashing a pulsar is the counter,
+  exactly like every other shard. Pulsars spawn from wave 3, max one on screen,
+  low weight, excluded from drifters, standard points; a spawned pulsar's first
+  ring is staggered 0.6–1.0× the cooldown so hazards never pulse in lockstep.
+- **Ghost** (`autopilot.ts`): when a pulsar is charging and out of dash reach,
+  the ghost holds at `standoffPoint` (just outside `pulseMaxRadius × 1.25`) and
+  waits out the ring; a reachable or released pulsar is dashed like any shard. The
+  bot-ghost gauntlet test feeds a fresh pulsar on a cadence and the ghost still
+  clears the run.
+- **Presentation**: a periwinkle icosahedron (`actors.ts`) with a charging ring
+  that tightens and brightens as the pulse nears (reduced-motion shows it frozen
+  mid-charge); the fired ring expands to the pulse's reach in `vfx.ts`; a rising
+  whoop sweeps the same 360° in `sfx.ts`.
+- **Bugs caught by verification, both honest**: `updateShards` counted down only
+  while `pulseTimer >= ...` — a pulsar placed exactly at zero never fired (the
+  0.6–1.0× spawn stagger hid it). The guard now fires any non-positive timer on
+  the next step. And the first spawn-gating test sat an idle board into
+  `maxShardsOnScreen` before wave 3, so no pulsar could hatch; the gating test
+  now floods a cleared board at forced waves and the gauntlet test injects
+  pulsars directly.
+- New checks: `tests/unit/spiral-breaker-pulsar.test.ts` (11 tests: pulse timer
+  countdown/reset, exactly-once per cooldown cycle, bite knockback, outside-
+  reach immunity, grace window, dash beats pulse, same-step dash beats pulse,
+  core breach, spawn gating, ghost standoff/strike ×3, gauntlet-with-pulsars).
 
 ## Captures
 
@@ -138,6 +176,6 @@ re-assert the same determinism and is not worth its maintenance here.
   gesture; captures are silent.
 - The Ghost Terminal scene is untouched; `tests/browser/boot.spec.ts` still passes.
 - Post-release enhancement roadmap (approved order, each slice its own
-  brainstorm + design gate + commit): **B** new enemy kind → **C** boss encounter
-  → **D** upgrade economy → **E** meta persistence. Touch/accessibility
-  explicitly out of scope for these slices.
+  brainstorm + design gate + commit): **C** boss encounter → **D** upgrade
+  economy → **E** meta persistence. Touch/accessibility explicitly out of scope
+  for these slices.

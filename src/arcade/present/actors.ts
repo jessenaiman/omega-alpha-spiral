@@ -9,7 +9,7 @@
 
 import * as THREE from 'three';
 import { easeOutBack, easeOutCubic, createTweenManager } from './tween';
-import type { ShardKind, WorldState, ArcadeEvent } from '../game';
+import { TUNING, type ShardKind, type WorldState, type ArcadeEvent } from '../game';
 import { sceneX, sceneZ } from './scale';
 
 export interface Actors {
@@ -32,10 +32,13 @@ const SHARD_KIND_COLORS: Record<ShardKind, number> = {
   mini: 0xff8fd2,
   heart: 0xff6b8a,
   shielded: 0xffd166,
+  pulsar: 0x8ea2ff,
 };
 const STANDARD_VARIANTS = [0xff6fd8, 0xffd166, 0x8affc1];
 const MINI_SCALE = 0.7;
 const HEART_PULSE = 1.18;
+const PULSAR_SCALE = 1.05;
+const PULSAR_HOT = new THREE.Color(0xffffff);
 
 export function createActors(): Actors {
   const group = new THREE.Group();
@@ -67,6 +70,7 @@ export function createActors(): Actors {
     mini: new THREE.TetrahedronGeometry(SHARD_RADIUS, 0),
     heart: new THREE.IcosahedronGeometry(SHARD_RADIUS * 0.85, 0),
     shielded: new THREE.OctahedronGeometry(SHARD_RADIUS * 0.92, 0),
+    pulsar: new THREE.IcosahedronGeometry(SHARD_RADIUS * 1.05, 0),
   };
   const standardMaterials = STANDARD_VARIANTS.map(
     (color) => new THREE.MeshBasicMaterial({ color, toneMapped: false }),
@@ -87,6 +91,28 @@ export function createActors(): Actors {
     mesh.position.y = 0.22;
     shards.push(mesh);
     group.add(mesh);
+  }
+
+  // A telegraph ring rides each pooled shard, shown only on pulsars: it grows
+  // and brightens as the pulse charges, then a wave fire resets it.
+  const pulseRingGeometry = new THREE.RingGeometry(0.62, 0.7, 40);
+  const pulseRings: THREE.Mesh[] = [];
+  for (let index = 0; index < SHARD_POOL; index += 1) {
+    const material = new THREE.MeshBasicMaterial({
+      color: SHARD_KIND_COLORS.pulsar,
+      transparent: true,
+      opacity: 0,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      blending: THREE.AdditiveBlending,
+      toneMapped: false,
+    });
+    const ring = new THREE.Mesh(pulseRingGeometry, material);
+    ring.rotation.x = -Math.PI / 2;
+    ring.position.y = 0.3;
+    ring.visible = false;
+    pulseRings.push(ring);
+    group.add(ring);
   }
 
   const dashColor = new THREE.Color(DASH_COLOR);
@@ -210,10 +236,31 @@ export function createActors(): Actors {
                 (reducedMotion ? 0 : Math.sin(timeSec * 5 + index * 0.8) * 0.08)
               : shard.kind === 'shielded'
                 ? 1.12
-                : shard.drifter
-                  ? 1.15
-                  : 1;
+                : shard.kind === 'pulsar'
+                  ? PULSAR_SCALE
+                  : shard.drifter
+                    ? 1.15
+                    : 1;
         mesh.scale.setScalar(scale);
+
+        const ring = pulseRings[index] as THREE.Mesh;
+        if (ring && shard.kind === 'pulsar') {
+          ring.visible = true;
+          ring.position.set(sceneX(shard.pos.x), 0.3, sceneZ(shard.pos.y));
+          const rawTelegraph = 1 - shard.pulseTimer / TUNING.pulseCooldownSec;
+          const telegraph = reducedMotion ? 0.5 : Math.max(0, Math.min(1, rawTelegraph));
+          ring.scale.setScalar(1 + telegraph * 0.55);
+          const ringMaterial = ring.material as THREE.MeshBasicMaterial;
+          ringMaterial.opacity = 0.12 + telegraph * 0.5;
+          ringMaterial.color.setHex(SHARD_KIND_COLORS.pulsar).lerp(PULSAR_HOT, telegraph);
+          const hot = 1 + telegraph * 0.1;
+          mesh.scale.setScalar(PULSAR_SCALE * hot);
+          (mesh.material as THREE.MeshBasicMaterial).color
+            .setHex(SHARD_KIND_COLORS.pulsar)
+            .lerp(PULSAR_HOT, telegraph * 0.55);
+        } else if (ring) {
+          ring.visible = false;
+        }
       }
     },
     dispose(): void {
@@ -221,6 +268,8 @@ export function createActors(): Actors {
       playerMaterial.dispose();
       playerRingGeometry.dispose();
       playerRingMaterial.dispose();
+      pulseRingGeometry.dispose();
+      for (const ring of pulseRings) (ring.material as THREE.Material).dispose();
       for (const geometry of Object.values(shardGeometries)) geometry.dispose();
       for (const material of standardMaterials) material.dispose();
       for (const material of Object.values(kindMaterials)) material.dispose();

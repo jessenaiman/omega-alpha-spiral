@@ -38,6 +38,7 @@ interface RunMetrics {
   stepOfFirstScore: number;
   distanceTravelled: number;
   softlockWindows: number;
+  pulsarSpawns: number;
   errored: boolean;
 }
 
@@ -64,6 +65,7 @@ function runBot(seed: string | number, driver: Driver, maxSteps = 12_000): RunMe
   let stepOfFirstScore = -1;
   let distanceTravelled = 0;
   let softlockWindows = 0;
+  let pulsarSpawns = 0;
   let errored = false;
 
   let last = sampleOf(world);
@@ -82,6 +84,7 @@ function runBot(seed: string | number, driver: Driver, maxSteps = 12_000): RunMe
       if (stepOfFirstScore < 0 && world.score > 0) stepOfFirstScore = framesAdvanced;
 
       for (const event of events) {
+        if (event.type === 'shard.spawn' && event.kind === 'pulsar') pulsarSpawns += 1;
         if (event.type === 'game.over') {
           if (event.victory) reachedVictory = true;
           else reachedGameOver = true;
@@ -110,6 +113,7 @@ function runBot(seed: string | number, driver: Driver, maxSteps = 12_000): RunMe
     stepOfFirstScore,
     distanceTravelled,
     softlockWindows,
+    pulsarSpawns,
     errored,
   };
 }
@@ -177,6 +181,11 @@ test('the bot playtest runs real drivers against the rules and reports metrics',
     assert.ok(run.stepOfFirstScore > 0, `${run.seed} ghost must score on the way`);
     assert.equal(run.softlockWindows, 0, `${run.seed} ghost must never stall`);
   }
+
+  assert.ok(
+    ghostRuns.reduce((sum, run) => sum + run.pulsarSpawns, 0) > 0,
+    'the ghost runs must have encountered pulsars on at least one seed',
+  );
 
   const reckless = runBot(42, recklessDriver, 8_000);
   reckless.driver = 'reckless';

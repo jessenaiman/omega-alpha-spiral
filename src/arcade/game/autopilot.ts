@@ -20,6 +20,8 @@ const ZERO: Intents = { moveX: 0, moveY: 0, dash: false, act: false, pause: fals
 /** The dash carries the player this far; commit once the target is in range. */
 const DASH_REACH = TUNING.dashRadius + TUNING.dashSpeed * TUNING.dashDurationSec * 0.9;
 const SWAY = 0.28;
+/** A pulsar this close to firing cannot be safely approached on foot. */
+const PULSAR_AVOID = TUNING.dashDurationSec + 0.3;
 
 export function autopilot(world: WorldState): Intents {
   const player = world.player;
@@ -49,13 +51,19 @@ export function autopilot(world: WorldState): Intents {
   const base = steerTo(player.pos, target.pos, d, world.time);
   const aligned =
     (target.pos.x - player.pos.x) * player.facing.x + (target.pos.y - player.pos.y) * player.facing.y > 0;
-
-  if (
+  const killReady =
     aligned &&
     d <= DASH_REACH &&
     player.dashCooldown <= 0 &&
-    player.dashTime <= 0
-  ) {
+    player.dashTime <= 0;
+
+  // A charging pulsar is killed before its ring fires only when the strike is
+  // already lined up; otherwise back off outside its reach and wait it out.
+  if (target.kind === 'pulsar' && target.pulseTimer <= PULSAR_AVOID && !killReady) {
+    return steerTo(player.pos, standoffPoint(target, player.pos), d, world.time);
+  }
+
+  if (killReady) {
     return { ...base, dash: true };
   }
 
@@ -161,6 +169,23 @@ function flankPoint(shard: Shard): { x: number; y: number } {
   const py = shard.pos.y + ry * reach;
   // Shards spawn at the arena rim, where an unclamped flank goal sits outside
   // the ring — the wall then wrestles the ghost forever. Keep the goal inside.
+  const maxR = TUNING.arenaRadius - 0.05;
+  const r = Math.hypot(px, py);
+  if (r > maxR && r > 1e-6) return { x: (px / r) * maxR, y: (py / r) * maxR };
+  return { x: px, y: py };
+}
+
+/**
+ * A point just outside a charging pulsar's ring reach, on the player's side,
+ * so the ghost can wait out the pulse without eating it.
+ */
+function standoffPoint(shard: Shard, playerPos: { x: number; y: number }): { x: number; y: number } {
+  const dx = playerPos.x - shard.pos.x;
+  const dy = playerPos.y - shard.pos.y;
+  const length = Math.max(1e-6, Math.hypot(dx, dy));
+  const reach = TUNING.pulseMaxRadius * 1.25;
+  const px = shard.pos.x + (dx / length) * reach;
+  const py = shard.pos.y + (dy / length) * reach;
   const maxR = TUNING.arenaRadius - 0.05;
   const r = Math.hypot(px, py);
   if (r > maxR && r > 1e-6) return { x: (px / r) * maxR, y: (py / r) * maxR };

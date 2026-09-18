@@ -135,6 +135,10 @@ export function createSfx(): Sfx {
           case 'shard.blocked':
             tone(vary(1400), 0.07, 'square', 0.14, vary(500));
             break;
+          case 'pulsar.pulse':
+            // A rising whoop that sweeps the same 360° the ring covers.
+            tone(vary(150), 0.3, 'triangle', 0.18, vary(760));
+            break;
           case 'core.heal':
             tone(vary(440), 0.26, 'sine', 0.2, vary(980));
             break;

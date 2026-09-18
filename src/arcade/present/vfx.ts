@@ -46,6 +46,7 @@ const COLORS = {
   coral: new THREE.Color(0xff6b8a),
   green: new THREE.Color(0x4dff9e),
   gold: new THREE.Color(0xffe066),
+  periwinkle: new THREE.Color(0x8ea2ff),
 };
 
 const particleVertex = /* glsl */ `
@@ -219,9 +220,11 @@ export function createVfx(): Vfx {
                     ? COLORS.coral
                     : event.kind === 'shielded'
                       ? COLORS.amber
-                      : event.kind === 'mini'
-                        ? COLORS.magenta
-                        : COLORS.magenta;
+                      : event.kind === 'pulsar'
+                        ? COLORS.periwinkle
+                        : event.kind === 'mini'
+                          ? COLORS.magenta
+                          : COLORS.magenta;
               const count = event.kind === 'splitter' ? 16 : event.kind === 'mini' ? 6 : 12;
               spawnSpark(event.x, event.y, color, 2.6, count);
               spawnRing(event.x, event.y, color, event.kind === 'splitter' ? 9 : 6.5, 0.3);
@@ -236,6 +239,10 @@ export function createVfx(): Vfx {
             spawnSpark(event.x, event.y, COLORS.amber, 2.2, 6, 0.3);
             spawnRing(event.x, event.y, COLORS.amber, 4, 0.2);
             trauma = Math.min(1, trauma + 0.04);
+            break;
+          case 'pulsar.pulse':
+            // The charged ring fires outward to exactly the pulse's reach.
+            spawnRing(event.x, event.y, COLORS.periwinkle, 2.2, 0.5);
             break;
           case 'core.heal':
             spawnSpark(event.x, event.y, COLORS.green, 2.2, 8, 0.5);

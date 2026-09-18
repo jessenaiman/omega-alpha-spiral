@@ -9,10 +9,11 @@
       "framesAdvanced": 5400,
       "reachedVictory": true,
       "reachedGameOver": false,
-      "scoreAfter": 3050,
+      "scoreAfter": 2565,
       "stepOfFirstScore": 22,
-      "distanceTravelled": 162.7099687733722,
+      "distanceTravelled": 160.45468198054303,
       "softlockWindows": 0,
+      "pulsarSpawns": 3,
       "errored": false
     },
     {
@@ -21,10 +22,11 @@
       "framesAdvanced": 5400,
       "reachedVictory": true,
       "reachedGameOver": false,
-      "scoreAfter": 1540,
+      "scoreAfter": 2315,
       "stepOfFirstScore": 22,
-      "distanceTravelled": 159.3391772412254,
+      "distanceTravelled": 159.42724414222064,
       "softlockWindows": 0,
+      "pulsarSpawns": 0,
       "errored": false
     },
     {
@@ -33,10 +35,11 @@
       "framesAdvanced": 5400,
       "reachedVictory": true,
       "reachedGameOver": false,
-      "scoreAfter": 2140,
+      "scoreAfter": 3615,
       "stepOfFirstScore": 23,
-      "distanceTravelled": 168.3360056458513,
+      "distanceTravelled": 169.6442687904792,
       "softlockWindows": 0,
+      "pulsarSpawns": 2,
       "errored": false
     },
     {
@@ -49,6 +52,7 @@
       "stepOfFirstScore": 39,
       "distanceTravelled": 97.48866154745856,
       "softlockWindows": 12,
+      "pulsarSpawns": 0,
       "errored": false
     }
   ],
