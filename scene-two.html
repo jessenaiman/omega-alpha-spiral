@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='26' fill='%2306090d' stroke='%23dcecff' stroke-width='3'/%3E%3Cpath d='M18 32h28M32 18v28' stroke='%23dcecff' stroke-width='2'/%3E%3C/svg%3E">
+    <title>Echo Chamber | Omega Spiral</title>
+  </head>
+  <body>
+    <main class="scene-shell">
+      <canvas data-scene-two-canvas tabindex="0" aria-label="Light's Echo Chamber"></canvas>
+
+      <header class="scene-heading">
+        <p class="eyebrow">SCENE 02 / SHARD 472</p>
+        <h1>Echo Chamber</h1>
+        <p class="owner"><span aria-hidden="true"></span> Light is listening</p>
+      </header>
+
+      <section class="objective" aria-label="Current objective">
+        <p>CHAMBER 01</p>
+        <strong data-objective>Approach what calls to you.</strong>
+      </section>
+
+      <aside class="object-index" aria-label="Objects in the chamber">
+        <p>THREE REFLECTIONS</p>
+        <ol>
+          <li data-chamber-object="door"><b>D</b><span>Door</span></li>
+          <li data-chamber-object="monster"><b>M</b><span>Monster</span></li>
+          <li data-chamber-object="chest"><b>C</b><span>Chest</span></li>
+        </ol>
+      </aside>
+
+      <section class="transmission" data-transmission aria-live="polite">
+        <p class="speaker" data-speaker>LIGHT / ECHO</p>
+        <p class="story" data-story>Three forms wait in the room. Move closer. I will not choose for you.</p>
+        <button type="button" data-restart hidden>Restart chamber</button>
+      </section>
+
+      <footer class="controls">
+        <span>MOVE</span>
+        <kbd>WASD</kbd>
+        <kbd>ARROWS</kbd>
+      </footer>
+    </main>
+    <script type="module" src="/src/scene-two/main.ts"></script>
+  </body>
+</html>

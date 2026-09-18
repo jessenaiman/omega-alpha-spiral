@@ -1,0 +1,48 @@
+{
+  "objectIds": [
+    "chest",
+    "door",
+    "monster"
+  ],
+  "outcome": {
+    "objectId": "monster",
+    "action": {
+      "kind": "encounter"
+    },
+    "story": "The shape tests your nerve, then recedes into its own reflection."
+  },
+  "diagnostics": {
+    "runId": "scene-two:scene-two",
+    "instance": null,
+    "loop": 0,
+    "phase": "resolved",
+    "checkpoint": "monster",
+    "objective": "Reflection recorded",
+    "targetVerb": null,
+    "playerState": "listening",
+    "party": [],
+    "route": null,
+    "pairing": null,
+    "era": null,
+    "paused": false,
+    "accessibility": {
+      "reducedMotion": false,
+      "debugHidden": false
+    },
+    "audio": {
+      "unlocked": false
+    },
+    "canvas": {
+      "width": 1280,
+      "height": 720,
+      "pixelRatio": 1
+    },
+    "renderer": {
+      "calls": 34,
+      "triangles": 684,
+      "geometries": 34,
+      "textures": 1
+    },
+    "errors": []
+  }
+}
