@@ -20,6 +20,11 @@ export interface Vfx {
   readonly fovPunch: number;
   /** 0..1 arena flash from a breach. */
   readonly breachFlash: number;
+  /** 0..1 green heal pulse for the core. */
+  readonly healFlash: number;
+  /** 0..1 full-screen flash; kind says what to paint it. */
+  readonly flash: number;
+  readonly flashKind: 'breach' | 'destruct' | 'victory' | null;
   handle(events: readonly ArcadeEvent[], world: WorldState): void;
   update(dtSec: number, reducedMotion: boolean): void;
   reset(): void;
@@ -172,6 +177,9 @@ export function createVfx(): Vfx {
   let trauma = 0;
   let fovPunch = 0;
   let breachFlash = 0;
+  let healFlash = 0;
+  let flash = 0;
+  let flashKind: Vfx['flashKind'] = null;
 
   return {
     group,
@@ -183,6 +191,15 @@ export function createVfx(): Vfx {
     },
     get breachFlash(): number {
       return breachFlash;
+    },
+    get healFlash(): number {
+      return healFlash;
+    },
+    get flash(): number {
+      return flash;
+    },
+    get flashKind(): Vfx['flashKind'] {
+      return flashKind;
     },
     handle(events: readonly ArcadeEvent[], world: WorldState): void {
       for (const event of events) {
@@ -209,6 +226,10 @@ export function createVfx(): Vfx {
               spawnSpark(event.x, event.y, color, 2.6, count);
               spawnRing(event.x, event.y, color, event.kind === 'splitter' ? 9 : 6.5, 0.3);
               trauma = Math.min(1, trauma + (event.kind === 'shielded' ? 0.22 : 0.16));
+              if (event.kind === 'shielded') {
+                flash = 0.3;
+                flashKind = 'destruct';
+              }
             }
             break;
           case 'shard.blocked':
@@ -219,6 +240,7 @@ export function createVfx(): Vfx {
           case 'core.heal':
             spawnSpark(event.x, event.y, COLORS.green, 2.2, 8, 0.5);
             spawnRing(event.x, event.y, COLORS.green, 6, 0.4);
+            healFlash = 1;
             break;
           case 'score.change':
             if (event.chain >= 3) spawnRing(world.player.pos.x, world.player.pos.y, COLORS.amber, 8, 0.4);
@@ -232,6 +254,8 @@ export function createVfx(): Vfx {
             spawnSpark(event.x, event.y, COLORS.red, 3.4, 22, 0.8);
             trauma = Math.min(1, trauma + 0.6);
             breachFlash = 1;
+            flash = 0.5;
+            flashKind = 'breach';
             break;
           case 'wave.start':
             spawnRing(0, 0, COLORS.cyan, 12, 0.7);
@@ -245,11 +269,15 @@ export function createVfx(): Vfx {
               spawnRing(0, 0, COLORS.gold, 22, 0.9);
               spawnRing(0, 0, COLORS.coral, 14, 0.7);
               trauma = Math.min(1, trauma + 0.35);
+              flash = 1;
+              flashKind = 'victory';
             } else {
               spawnSpark(world.player.pos.x, world.player.pos.y, COLORS.red, 4.2, 30, 1.1);
               spawnRing(0, 0, COLORS.red, 24, 0.9);
               trauma = Math.min(1, trauma + 0.8);
               breachFlash = 1;
+              flash = 0.6;
+              flashKind = 'breach';
             }
             break;
           default:
@@ -295,9 +323,19 @@ export function createVfx(): Vfx {
       }
 
       const decay = (value: number, rate: number): number => Math.max(0, value - dtSec * rate);
+      const decayExp = (value: number, tau: number): number => value * Math.exp(-dtSec / tau);
       trauma = decay(trauma, 1.8);
-      fovPunch = decay(fovPunch, 4.5);
-      breachFlash = decay(breachFlash, 2.2);
+      fovPunch = decayExp(fovPunch, 0.38);
+      breachFlash = decayExp(breachFlash, 0.32);
+      healFlash = decayExp(healFlash, 0.3);
+      if (reducedMotion) {
+        flash = 0;
+        healFlash = 0;
+        flashKind = null;
+      } else {
+        flash = decayExp(flash, 0.2);
+        if (flash < 0.01) flashKind = null;
+      }
     },
     reset(): void {
       life.fill(0);
@@ -306,6 +344,9 @@ export function createVfx(): Vfx {
       trauma = 0;
       fovPunch = 0;
       breachFlash = 0;
+      healFlash = 0;
+      flash = 0;
+      flashKind = null;
     },
     dispose(): void {
       particleGeometry.dispose();

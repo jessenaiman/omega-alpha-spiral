@@ -6,10 +6,11 @@
  * capture of "menu" or "game-over" is the same overlay a player sees.
  */
 
-import { TUNING, type WorldState } from '../game';
+import { TUNING, type ArcadeEvent, type WorldState } from '../game';
 
 export interface Hud {
   update(world: WorldState): void;
+  notify(events: readonly ArcadeEvent[]): void;
   setMuted(muted: boolean): void;
   setDebugHidden(hidden: boolean): void;
 }
@@ -26,9 +27,37 @@ export function createHud(root: HTMLElement): Hud {
   const overlayBody = root.querySelector<HTMLElement>('[data-hud-overlay-body]');
   const status = root.querySelector<HTMLElement>('[data-hud-status]');
   const mute = root.querySelector<HTMLElement>('[data-hud-mute]');
+  const feed = root.querySelector<HTMLElement>('[data-hud-feed]');
 
   const setText = (element: HTMLElement | null, value: string): void => {
     if (element && element.textContent !== value) element.textContent = value;
+  };
+
+  const punch = (element: HTMLElement | null, scale = 1.25): void => {
+    if (!element || typeof element.animate !== 'function') return;
+    element.animate(
+      [{ transform: `scale(${scale})` }, { transform: 'scale(1)' }],
+      { duration: 130, easing: 'ease-out' },
+    );
+  };
+
+  const feedMessage = (message: string, kind: string): void => {
+    if (!feed) return;
+    feed.dataset.kind = kind;
+    feed.textContent = message;
+    feed.hidden = false;
+    try {
+      feed.getAnimations().forEach((animation) => animation.cancel());
+      const animation = feed.animate(
+        [{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'translateY(0)' }, { opacity: 0, transform: 'translateY(-6px)' }],
+        { duration: 1400, easing: 'ease-out' },
+      );
+      void animation.finished.then(() => {
+        feed.hidden = true;
+      });
+    } catch {
+      feed.hidden = true;
+    }
   };
 
   return {
@@ -92,6 +121,37 @@ export function createHud(root: HTMLElement): Hud {
           status,
           `${mode} · score ${world.score} · integrity ${world.integrity}/${TUNING.maxIntegrity} · wave ${waveLabel}`,
         );
+      }
+    },
+    notify(events: readonly ArcadeEvent[]): void {
+      for (const event of events) {
+        switch (event.type) {
+          case 'score.change':
+            if (event.gained > 0) {
+              punch(score);
+              if (event.chain >= 3) punch(chain, 1.3);
+            }
+            break;
+          case 'wave.start':
+            feedMessage(
+              event.wave === TUNING.gauntletWaves ? 'FINAL WAVE' : `WAVE ${event.wave}`,
+              'wave',
+            );
+            break;
+          case 'shard.blocked':
+            feedMessage('BLOCKED — FLANK IT', 'blocked');
+            break;
+          case 'core.heal':
+            feedMessage('+1 INTEGRITY', 'heal');
+            punch(integrity, 1.3);
+            break;
+          case 'core.breach':
+            feedMessage('THE CORE WEAKENS', 'breach');
+            punch(integrity, 1.15);
+            break;
+          default:
+            break;
+        }
       }
     },
     setMuted(muted: boolean): void {

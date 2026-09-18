@@ -8,12 +8,14 @@
  */
 
 import * as THREE from 'three';
-import type { ShardKind, WorldState } from '../game';
+import { easeOutBack, easeOutCubic, createTweenManager } from './tween';
+import type { ShardKind, WorldState, ArcadeEvent } from '../game';
 import { sceneX, sceneZ } from './scale';
 
 export interface Actors {
   readonly group: THREE.Group;
-  update(world: WorldState, timeSec: number, reducedMotion: boolean): void;
+  handle(events: readonly ArcadeEvent[]): void;
+  update(world: WorldState, timeSec: number, dtSec: number, reducedMotion: boolean): void;
   dispose(): void;
 }
 
@@ -37,6 +39,7 @@ const HEART_PULSE = 1.18;
 
 export function createActors(): Actors {
   const group = new THREE.Group();
+  const tweens = createTweenManager();
 
   const playerGeometry = new THREE.ConeGeometry(0.26, 0.62, 3);
   const playerMaterial = new THREE.MeshBasicMaterial({ color: PLAYER_COLOR, toneMapped: false });
@@ -89,10 +92,73 @@ export function createActors(): Actors {
   const dashColor = new THREE.Color(DASH_COLOR);
   const playerBase = new THREE.Color(PLAYER_COLOR);
   const ghostBase = new THREE.Color(GHOST_COLOR);
+  const knockColor = new THREE.Color(0xff4d4d);
+
+  // Feedback pulse scalars written by the tween manager; `update` multiplies
+  // them into the state-driven pose so they never fight the rules readings.
+  const feelScale = { value: 1 };
+  const knockFlash = { value: 0 };
 
   return {
     group,
-    update(world: WorldState, timeSec: number, reducedMotion: boolean): void {
+    handle(events: readonly ArcadeEvent[]): void {
+      for (const event of events) {
+        if (event.type === 'dash.start') {
+          tweens.cancel('squash');
+          tweens.cancel('squash-settle');
+          tweens.tween(
+            'stretch',
+            0.07,
+            (value) => {
+              feelScale.value = 1 + 0.4 * value;
+            },
+            easeOutCubic,
+            () => {
+              tweens.tween(
+                'stretch-settle',
+                0.16,
+                (value) => {
+                  feelScale.value = 1 + 0.4 * (1 - value);
+                },
+                easeOutBack,
+              );
+            },
+          );
+        } else if (event.type === 'player.knockback') {
+          tweens.cancel('stretch');
+          tweens.cancel('stretch-settle');
+          knockFlash.value = 1;
+          tweens.tween(
+            'knock-flash',
+            0.24,
+            (value) => {
+              knockFlash.value = 1 - value;
+            },
+            easeOutCubic,
+          );
+          tweens.tween(
+            'squash',
+            0.06,
+            (value) => {
+              feelScale.value = 1 - 0.14 * value;
+            },
+            easeOutCubic,
+            () => {
+              tweens.tween(
+                'squash-settle',
+                0.16,
+                (value) => {
+                  feelScale.value = 1 - 0.14 * (1 - value);
+                },
+                easeOutBack,
+              );
+            },
+          );
+        }
+      }
+    },
+    update(world: WorldState, timeSec: number, dtSec: number, reducedMotion: boolean): void {
+      tweens.update(dtSec);
       const { player: state } = world;
       player.position.set(sceneX(state.pos.x), 0.28, sceneZ(state.pos.y));
       playerRing.position.set(sceneX(state.pos.x), 0.03, sceneZ(state.pos.y));
@@ -105,12 +171,15 @@ export function createActors(): Actors {
       const knocked = state.stun > 0;
       playerMaterial.color.copy(world.ghostDriving ? ghostBase : playerBase);
       if (dashing) playerMaterial.color.lerp(dashColor, 0.7);
+      if (knockFlash.value > 0 && !reducedMotion) playerMaterial.color.lerp(knockColor, knockFlash.value);
       playerRingMaterial.color.copy(playerMaterial.color);
 
-      const dashScale = dashing ? 1.35 : 1;
+      // The dash stretch is tween-owned (1 -> overshoot -> settle); only the
+      // knockback squat stays state-driven so stunned reads stay honest.
+      const feel = reducedMotion ? 1 : feelScale.value;
       const knockScale = knocked ? 0.8 : 1;
-      player.scale.setScalar(dashScale * knockScale);
-      playerRing.scale.setScalar(dashScale);
+      player.scale.setScalar(knockScale * feel);
+      playerRing.scale.setScalar(feel);
 
       const blink =
         state.invuln > 0 && state.stun <= 0 && !reducedMotion

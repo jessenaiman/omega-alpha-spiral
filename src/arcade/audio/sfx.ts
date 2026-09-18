@@ -16,6 +16,8 @@ export interface Sfx {
   /** Call from a real user gesture. Safe to call repeatedly. */
   unlock(): void;
   setMuted(muted: boolean): boolean;
+  /** 0..1; ducked low during hitstop so the impact reads. */
+  setDuck(value: number): void;
   handle(events: readonly ArcadeEvent[]): void;
   dispose(): void;
 }
@@ -25,6 +27,12 @@ export function createSfx(): Sfx {
   let context: AudioContext | null = null;
   let master: GainNode | null = null;
   let muted = false;
+  let duck = 1;
+
+  const applyMaster = (): void => {
+    if (!context || !master) return;
+    master.gain.setTargetAtTime((muted ? 0 : 0.5) * duck, context.currentTime, 0.02);
+  };
 
   const ensure = (): AudioContext | null => {
     if (context) return context;
@@ -34,10 +42,13 @@ export function createSfx(): Sfx {
     if (!Ctor) return null;
     context = new Ctor();
     master = context.createGain();
-    master.gain.value = muted ? 0 : 0.5;
+    master.gain.value = (muted ? 0 : 0.5) * duck;
     master.connect(context.destination);
     return context;
   };
+
+  /** +/-6% pitch wobble so repeated hits never sound cloned. */
+  const vary = (frequency: number): number => frequency * (1 + (rng.next() - 0.5) * 0.12);
 
   const tone = (
     frequency: number,
@@ -97,8 +108,12 @@ export function createSfx(): Sfx {
     },
     setMuted(value: boolean): boolean {
       muted = Boolean(value);
-      if (master && context) master.gain.setTargetAtTime(muted ? 0 : 0.5, context.currentTime, 0.02);
+      applyMaster();
       return muted;
+    },
+    setDuck(value: number): void {
+      duck = value;
+      applyMaster();
     },
     handle(events: readonly ArcadeEvent[]): void {
       if (!context) return;
@@ -109,35 +124,35 @@ export function createSfx(): Sfx {
             break;
           case 'shard.destroy':
             if (event.kind === 'heart') {
-              tone(880, 0.18, 'triangle', 0.2, 1320);
+              tone(vary(880), 0.18, 'triangle', 0.2, vary(1320));
               break;
             }
-            tone(520 + rng.next() * 220, 0.14, 'triangle', 0.22, 880);
+            tone(vary(520 + rng.next() * 220), 0.14, 'triangle', 0.22, vary(880));
             if (event.kind === 'splitter') noise(0.1, 0.18, 3000, 800);
             if (event.kind === 'shielded') noise(0.09, 0.22, 1400, 400);
-            if (event.kind === 'mini') tone(1400, 0.05, 'square', 0.1, 1100);
+            if (event.kind === 'mini') tone(vary(1400), 0.05, 'square', 0.1, vary(1100));
             break;
           case 'shard.blocked':
-            tone(1400, 0.07, 'square', 0.14, 500);
+            tone(vary(1400), 0.07, 'square', 0.14, vary(500));
             break;
           case 'core.heal':
-            tone(440, 0.26, 'sine', 0.2, 980);
+            tone(vary(440), 0.26, 'sine', 0.2, vary(980));
             break;
           case 'score.change':
-            if (event.chain >= 3) tone(660 + event.chain * 40, 0.16, 'square', 0.12, 1320);
+            if (event.chain >= 3) tone(vary(660 + event.chain * 40), 0.16, 'square', 0.12, vary(1320));
             break;
           case 'player.knockback':
-            tone(180, 0.22, 'sawtooth', 0.26, 70);
+            tone(vary(180), 0.22, 'sawtooth', 0.26, vary(70));
             break;
           case 'core.breach':
-            tone(150, 0.5, 'sine', 0.4, 48);
+            tone(vary(150), 0.5, 'sine', 0.4, vary(48));
             noise(0.4, 0.3, 700, 120);
             break;
           case 'wave.start':
-            tone(392, 0.18, 'triangle', 0.16, 588);
+            tone(vary(392), 0.18, 'triangle', 0.16, vary(588));
             break;
           case 'ghost.takeover':
-            tone(880, 0.3, 'sine', 0.12, 660);
+            tone(vary(880), 0.3, 'sine', 0.12, vary(660));
             break;
           case 'game.over':
             if (event.victory) {

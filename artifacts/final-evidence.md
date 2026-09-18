@@ -29,8 +29,8 @@ Terminal scene on its own page so neither boot path can break the other.
 | Check | Command | Result |
 | --- | --- | --- |
 | Types | `npm run typecheck` | clean |
-| Unit | `npm run test:unit` | 76 pass, 0 fail |
-| Browser | `npm run test:browser` | 9 pass, 0 fail |
+| Unit | `npm run test:unit` | 85 pass, 0 fail (+9 feel tests) |
+| Browser | `npm run test:browser` | 10 pass, 0 fail (+feed banner test) |
 | Build (MPA) | `npm run build` | `dist/index.html` + `dist/spiral-breaker.html` built |
 | Evidence | `check_evidence.py . --manifest artifacts/evidence.json` | 16 artifacts confirmed |
 | Preview | built `dist/` served via `vite preview` (4188), both pages + live state | no console/page/network errors |
@@ -51,7 +51,36 @@ both pages and every capture state run free of console, page, and **network**
 errors; real keyboard input takes control from the ghost and a failed run restarts
 on a real start input; the HUD and overlays fit desktop (1280×720) and mobile
 (390×664) viewports; the mute button toggles the procedural-audio master with no
-errors.
+errors. A new transient-feed test starts a run through real menu input (the only
+path that emits `wave.start` on step 1 — `startActivePlay`'s warm-up calls
+`resetForRun` directly and discards its events) and proves the feed banner shows
+and hides.
+
+## Slice A — game feel pass
+
+Play now has moment-to-moment feel it previously lacked entirely. Rules stay
+pure deterministic fixed-step; the feel layer sits in the host/presentation only.
+
+- **Hitstop** (`src/arcade/present/feel.ts`): the render delta is scaled by
+  `feel.timeScale` (0.05 while frozen, capped 140ms) and audio ducks to 0.6 via
+  `sfx.setDuck`. Map: destroy 35 / splitter 45 / shielded 55 / mini 30 / heart 20,
+  blocked 45, core.heal 20, knockback 60, breach 90.
+- **Squash & stretch** (`present/tween.ts`): a tween manager with
+  easeInQuad/easeOutCubic/easeOutBack drives dash overshoot and destroy pop;
+  knocked shards stay state-driven at 0.8; a red knock flash tints the hurt core.
+- **Camera**: a small roll kick after `lookAt`, gated by reduced motion; exp
+  field-of-view recovery decays smoothly.
+- **VFX**: exponential decay on sparks/rings, a shielded "flare" and a gold
+  victory flash.
+- **Sound**: per-kind ±6% pitch variance (`sfx.vary`).
+- **HUD**: `Element.animate` punches on score/heal/breach + a transient
+  `[data-hud-feed]` message line — the level plan's missing "wave banner" —
+  showing "WAVE 2" / "FINAL WAVE", "BLOCKED — FLANK IT", "+1 INTEGRITY".
+- New checks: `tests/unit/spiral-breaker-feel.test.ts` (9 tests: hitstop map,
+  reset, duels, tween lifecycle) and the feed browser test. Two test-side bugs
+  (off-by-one tween index; wrong easing argument) were caught by the suite and
+  fixed, and the feed spec's first form was flaky for a real reason — fixed by
+  driving it via real input.
 
 ## Captures
 
@@ -108,3 +137,7 @@ re-assert the same determinism and is not worth its maintenance here.
 - Audio is fully procedural (no decode assets to error) and unlocks on the first
   gesture; captures are silent.
 - The Ghost Terminal scene is untouched; `tests/browser/boot.spec.ts` still passes.
+- Post-release enhancement roadmap (approved order, each slice its own
+  brainstorm + design gate + commit): **B** new enemy kind → **C** boss encounter
+  → **D** upgrade economy → **E** meta persistence. Touch/accessibility
+  explicitly out of scope for these slices.

@@ -92,6 +92,22 @@ test('real keyboard input takes control and dashes, with the ghost releasing cle
   expect(problems).toEqual([]);
 });
 
+test('the transient feed shows the wave banner on play and hides after the beat', async ({ page }) => {
+  const problems = collectProblems(page);
+  await page.goto('/spiral-breaker.html');
+  await expect(page.locator('[data-hud-feed]')).toBeHidden();
+
+  // A real start input from the menu begins the run through the player path,
+  // which fires wave.start on the first step — no capture warm-up.
+  await page.keyboard.press('Space');
+
+  const feed = page.locator('[data-hud-feed]');
+  await expect(feed).toBeVisible({ timeout: 3_000 });
+  await expect(feed).toContainText(/WAVE|FINAL/);
+  await expect(feed).toBeHidden({ timeout: 4_000 });
+  expect(problems).toEqual([]);
+});
+
 test('a failed run restarts into a live run on a real start input', async ({ page }) => {
   const problems = collectProblems(page);
   await page.goto('/spiral-breaker.html');

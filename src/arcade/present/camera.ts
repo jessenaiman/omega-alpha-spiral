@@ -54,6 +54,13 @@ export function createArenaCamera(camera: THREE.PerspectiveCamera): ArenaCamera 
 
       camera.lookAt(px * LEAN * 1.4, 0, pz * LEAN * 1.4);
 
+      // Roll around the view axis on heavy trauma; lookAt already set the pose,
+      // so rotateZ is a pure twist and cannot fight the pitch.
+      if (!reducedMotion && trauma > 0) {
+        const roll = trauma * trauma * 0.03 * Math.sin(shakeTime * 41.0 + 1.7);
+        camera.rotateZ(roll);
+      }
+
       const targetFov = BASE_FOV - (reducedMotion ? 0 : fovPunch * 3.2);
       if (Math.abs(targetFov - currentFov) > 0.005) {
         currentFov = targetFov;

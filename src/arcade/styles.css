@@ -165,6 +165,46 @@ canvas[data-game-canvas] {
 
 [data-debug-hidden='true'] .hud-status { visibility: hidden; }
 
+.hud-feed {
+  position: absolute;
+  left: 50%;
+  bottom: 3.2rem;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 0.4rem 1rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  letter-spacing: 0.24em;
+  color: #eafcff;
+  background: rgba(8, 14, 24, 0.72);
+  border: 1px solid rgba(124, 240, 255, 0.5);
+  box-shadow: 0 0 18px rgba(124, 240, 255, 0.25);
+  opacity: 0;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.hud-feed[data-kind='wave'] { color: #aef4ff; border-color: rgba(124, 240, 255, 0.6); }
+.hud-feed[data-kind='blocked'] { color: #ffd166; border-color: rgba(255, 209, 102, 0.6); }
+.hud-feed[data-kind='breach'] { color: #ff7d70; border-color: rgba(255, 90, 70, 0.6); }
+.hud-feed[data-kind='heal'] { color: #7cff9b; border-color: rgba(124, 255, 155, 0.6); }
+
+.game-flash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  mix-blend-mode: screen;
+}
+.game-flash[data-flash='breach'] {
+  background: radial-gradient(ellipse at center, rgba(255, 60, 40, 0.55), rgba(255, 60, 40, 0.05) 72%, transparent 92%);
+}
+.game-flash[data-flash='destruct'] {
+  background: radial-gradient(ellipse at center, rgba(255, 220, 180, 0.35), transparent 70%);
+}
+.game-flash[data-flash='victory'] {
+  background: radial-gradient(ellipse at center, rgba(255, 224, 102, 0.6), rgba(255, 224, 102, 0.1) 75%, transparent 95%);
+}
+
 .game-error {
   position: absolute;
   left: 50%;

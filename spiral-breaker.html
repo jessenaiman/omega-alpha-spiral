@@ -44,9 +44,11 @@
 
       <footer class="hud hud-bottom">
         <p class="hud-status" data-hud-status role="status" aria-live="polite"></p>
+        <p class="hud-feed" data-hud-feed role="status" aria-live="polite" hidden></p>
         <button type="button" class="hud-mute" data-hud-mute>SOUND OFF</button>
       </footer>
 
+      <div class="game-flash" data-game-flash aria-hidden="true"></div>
       <div class="game-error" data-game-error role="alert" hidden></div>
     </main>
     <script type="module" src="/src/arcade/main.ts"></script>

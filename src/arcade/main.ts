@@ -11,6 +11,7 @@ import { createArcadeHost } from './host';
 import { createArenaCamera } from './present/camera';
 import { createActors } from './present/actors';
 import { createArena } from './present/arena';
+import { createFeel } from './present/feel';
 import { createArcadeRenderContext } from './present/renderer';
 import { createVfx } from './present/vfx';
 import { createHud } from './ui/hud';
@@ -31,6 +32,7 @@ try {
   const arena = createArena();
   const actors = createActors();
   const vfx = createVfx();
+  const feel = createFeel();
   const cameraRig = createArenaCamera(render.camera);
   const hud = createHud(hudRoot);
   const sfx = createSfx();
@@ -47,8 +49,11 @@ try {
     inputTarget: globalThis,
     reducedMotion: undefined,
     onStep(events, world) {
+      feel.observe(events);
       vfx.handle(events, world);
       sfx.handle(events);
+      actors.handle(events);
+      hud.notify(events);
       hud.update(world);
     },
     onFrame({ dtMs, paused }) {
@@ -57,13 +62,14 @@ try {
       const reducedMotion = host.settings.value.reducedMotion;
 
       vfx.update(dtSec, reducedMotion);
-      actors.update(host.world, elapsedSec, reducedMotion);
+      actors.update(host.world, elapsedSec, dtSec, reducedMotion);
       arena.update({
         timeSec: elapsedSec,
         reducedMotion,
         integrity: host.world.integrity,
         maxIntegrity: 3,
         breachFlash: vfx.breachFlash,
+        healFlash: vfx.healFlash,
         chain: host.world.chain,
       });
       cameraRig.update(host.world, dtSec, vfx.trauma, vfx.fovPunch, reducedMotion);
@@ -101,11 +107,20 @@ try {
   host.installAcceptanceSurfaces(globalThis as unknown as Parameters<typeof host.installAcceptanceSurfaces>[0]);
 
   render.resize();
+  const flash = document.querySelector<HTMLElement>('[data-game-flash]');
   let last = performance.now();
   const tick = (now: number): void => {
     const delta = now - last;
     last = now;
-    host.update(delta);
+    const dtSec = Math.min(delta, 50) / 1000;
+    feel.decay(dtSec);
+    sfx.setDuck(feel.duck);
+    host.update(delta * feel.timeScale);
+    if (flash && !host.settings.value.reducedMotion) {
+      const kind = vfx.flashKind;
+      flash.dataset.flash = kind ?? '';
+      flash.style.opacity = kind ? String(vfx.flash) : '0';
+    }
     requestAnimationFrame(tick);
   };
   requestAnimationFrame(tick);

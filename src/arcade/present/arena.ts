@@ -18,6 +18,8 @@ export interface ArenaUpdate {
   readonly maxIntegrity: number;
   /** 0..1, spiked by a breach and decayed by the caller. */
   readonly breachFlash: number;
+  /** 0..1 green heal pulse for the core. */
+  readonly healFlash: number;
   /** Chain level, brightens the arms. */
   readonly chain: number;
 }
@@ -120,6 +122,7 @@ export function createArena(): Arena {
 
   const coreHealthy = new THREE.Color(0x9ff4ff);
   const coreHurt = new THREE.Color(0xff5d4d);
+  const coreHeal = new THREE.Color(0x7cff9b);
   const workingColor = new THREE.Color();
 
   return {
@@ -132,12 +135,14 @@ export function createArena(): Arena {
       floorMaterial.uniforms.uFlash.value = state.breachFlash;
 
       workingColor.copy(coreHurt).lerp(coreHealthy, health);
+      if (state.healFlash > 0) workingColor.lerp(coreHeal, Math.min(1, state.healFlash * 1.2));
       coreMaterial.color.copy(workingColor);
       haloMaterial.color.copy(workingColor);
 
       const pulse = state.reducedMotion ? 1 : 1 + Math.sin(state.timeSec * 2.6) * 0.06;
-      halo.scale.setScalar(pulse);
-      core.scale.setScalar(pulse);
+      const healPulse = 1 + state.healFlash * 0.18;
+      halo.scale.setScalar(pulse * healPulse);
+      core.scale.setScalar(pulse * healPulse);
       rimMaterial.color.setHex(state.breachFlash > 0.2 ? 0xff8f6a : 0x36c6ff);
     },
     dispose(): void {
