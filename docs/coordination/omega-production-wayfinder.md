@@ -1,106 +1,105 @@
 # Omega Spiral Production Wayfinder
 
-**Destination:** Ship the complete Alpha 0.1 loop, let the user review it, then build the Blender-led Alpha 0.2 showcase pass.
+**Destination:** release **one epic scene at a time** until the final scene. The Alpha 0.1 / Alpha 0.2 split is retired.
 
-**Live authority:** The DSH task board owns current work. This page is the shared role map. The master design spec owns product decisions.
+**Authority:** the role roster lives in the tracker at `C:\obsidian\Project Management\Omega Spiral\ROLES.md`. **This page mirrors it. If they disagree, `ROLES.md` wins.** The board owns current work; the Scene spec owns scene decisions.
 
-```text
-                         USER / DESIGN OWNER
-             scope · taste · budget · push/deploy approval
-                                  |
-                                  v
-                         CAPTAIN / INTEGRATOR
-              plan · interfaces · decisions · final review
-              gameplay integration · Blender/Affinity work
-                                  |
-              +-------------------+-------------------+
-              |                   |                   |
-              v                   v                   v
-        SETUP + CODE         VISUAL ASSETS          QA / REVIEW
-        Sol worker           Terra draft            Sol verifier
-        Git/toolchain             |                 browser evidence
-        focused modules           v                 contract checks
-                              Sol polish
-                                  |
-                                  v
-                         Modlens vision review
-                                  |
-                                  v
-                         Captain pixel review
-                                  |
-                      accept or repeat (max 3)
-              +-------------------+-------------------+
-                                  |
-                                  v
-                       CAPTAIN INTEGRATES + VERIFIES
-                                  |
-                                  v
-                         USER REVIEWS THE BUILD
-```
+> **This page previously listed invented role names — Captain, Sol, Terra, Modlens, Mimo, Nemo, DeepSeek 4.1.** None of those are profiles on this machine, so none could ever be assigned work. They are retired. Only the names below are assignable.
 
-## Roles
-
-| Role | Owns | Returns |
-|---|---|---|
-| User / Design Owner | Product direction, taste calls, scope changes, remote push and deployment | Approval or a concise correction |
-| Captain / Integrator | Plans, interfaces, integration, browser playthrough, final visual judgment, release evidence | Working build, limitations, next decision |
-| Captain / Blender Operator | Install/access software allowed by `threejs-game-director`; interactive Blender, Affinity, computer-use tools, exports, target-camera checks | Saved source, export, hashes, captures |
-| Sol Setup/Builder | Git/toolchain setup, architecture-sensitive code, scripts, manifests, focused implementation | Files, commands, tests, `CHECK-IN v1` |
-| Terra | First visual draft for one locked asset brief | Immutable draft plus prompt/construction record |
-| Sol Asset Polish | Convert Terra direction into procedural/code/2D/Blender-support candidate; interactive Blender stays with captain | Versioned candidate and in-engine captures |
-| Modlens Critic | Independent pixel-based visual critique using `modlens-openrouter/xiaomi/mimo-v2.5-pro` | Pass/revise evidence; no edits |
-| Mimo | Documentation, task clarity, focused general work | Bounded edits or ranked findings |
-| Sol Verifier | Independent contract and evidence review | Pass or structured findings |
-| Nemo | Exact-location installs only when its route becomes available | Currently unavailable; never silently replaced |
-| DeepSeek 4.1 | Long creative build only when its route becomes available and approved docs were fact-checked | Currently unavailable; never silently replaced |
-
-## Work Lanes
+## The flow
 
 ```text
-LANE A  Foundation
-        Git → npm lock → Vite/TypeScript/Three.js → tests → worktree
-
-LANE B  Complete Alpha 0.1
-        state/input → town/eras → terminal/exploration → action/rewind
-        → party → fracture routes → threshold/bridge/collapse
-
-LANE C  Visual Loop
-        Terra → Sol → in-engine capture → Modlens → captain
-        repeat only when the captain rejects visible evidence
-
-LANE D  Release
-        real-input bot → human pacing run → production build
-        → screenshots/motion/renderer evidence → user review
-
-LANE E  Alpha 0.2
-        captain Blender production → validated GLBs → audiovisual polish
-        → optimization → showcase evidence
+                    OPERATOR  (jesse)
+        scope · taste · agent creation · push approval
+                            |
+                            v
+        ROUTING  —  held by Direction (leader work)
+        the board · cards · verified assignees · gates
+                            |
+        +-------------------+-------------------+
+        |                   |                   |
+        v                   v                   v
+   DIRECTION             BUILD                WORDS
+   omega-game-director   game-dev             omega-project-librarian
+   creative + art lead   game source          copy, cards, docs
+        |                   |                   |
+        +---------+---------+---------+---------+
+                  |                   |
+                  v                   v
+                ART                 CHECK
+            design-dev              reviewer
+         look · motion · VFX    spec first, quality second
+                  |                   |
+                  +---------+---------+
+                            |
+                            v
+                    PUBLISH — check-in-agent
+                    draft PRs · one exact SHA
+                            |
+                            v
+                    OPERATOR REVIEWS THE BUILD
 ```
 
-## Handoff Rule
+**Scouts, drawn on demand and assigned to no lane:** `buzz` (bounded research, cited) · `hermit-the-crab` (locate code, reproduce an issue, narrow audit).
 
-Small, precise, independent tasks use normal subagents by default; AgentTeams is reserved for work that genuinely needs a shared roster and dependency graph. Every delegated prompt names the exact applicable `threejs-*` skill, requires the worker to call and fully follow it, supplies exact source documents, writable paths, completion criteria, and verification commands, and forbids invented paths, capabilities, or evidence. Raw logs remain in worker context. The captain receives changed files, observed evidence, decisions, risks, and a bounded handoff.
+## The roster
 
-## Good-Enough Rule
+| Role | Profile | Owns | Returns |
+|---|---|---|---|
+| Operator | *(you)* | Scope, taste, **creating and configuring agents**, push and deploy approval | Approval or a concise correction |
+| Routing | `omega-game-director` *(with Direction)* | The board: cards, verified assignees, `parents=[...]` gates, escalation, hygiene | Cards that end ready / running / blocked-with-reason / done |
+| Direction | `omega-game-director` | Creative lead, art lead, integration, final visual call | Working build, limitations, the next decision |
+| Build | `game-dev` | Game source — one ticket, one file boundary, TDD | Files, commands, real output, `CHECK-IN v1` |
+| Art | `design-dev` | Look, motion, effects, the visual scorecard | Versioned candidate plus in-engine captures |
+| Words | `omega-project-librarian` | Questions, copy, creative cards, the docs vault | Draft text plus named weakest lines |
+| Check | `reviewer` | Independent verification — **spec compliance first, quality second** | Pass, or structured findings. Never edits |
+| Publish | `check-in-agent` | GitHub checkpoints as draft PRs | One exact SHA, no merge |
+| Scout | `buzz` | Bounded web/source research | Cited findings with uncertainty stated |
 
-The plans are executable starting maps, not permanent law. Begin building once the required files exist. Improve details when play, tests, screenshots, or the user reveal a concrete problem. Do not add another preflight pass merely to make planning feel complete.
+## Budget
 
-## How to Talk About This Map
+**Four dedicated agents** (operator, 2026-09-17), protected from other projects. All four slots are filled: **Build** `game-dev` · **Art** `design-dev` · **Words** `omega-project-librarian` · **Check** `reviewer`.
 
-Use role or lane names:
+Direction **and** Routing sit with `omega-game-director` — leader work does not consume a worker slot. The trade-off is accepted: the same agent that plans also routes, so **review independence matters more, not less.**
 
-- “Move Foundation forward.”
-- “Send the player asset through the Visual Loop again.”
-- “Captain takes Blender now.”
-- “Accept this Alpha 0.1 rough edge; promote it to Alpha 0.2.”
-- “Pause Release until I review the build.”
-- “Replace Modlens only with this exact approved reviewer route.”
+`check-in-agent`, `buzz`, and `hermit-the-crab` are used **on demand** and are never dedicated. `data-curriculum`, `mr-barnyard`, and `Big Brain` belong to other projects and take no Omega Spiral work.
 
-## Current Route
+## Work lanes
 
-1. Finish the two Alpha plans at good-enough execution depth.
-2. Delegate Foundation setup.
-3. Build the complete Alpha 0.1 loop in vertical slices.
-4. Use the Visual Loop on representative authored surfaces, not every trivial prop.
-5. Captain integrates, plays, and captures evidence.
-6. User reviews Alpha 0.1 while Alpha 0.2 Blender work begins.
+```text
+LANE A  Foundation      core · game · state · input · tests          → game-dev
+LANE B  Scene build     one scene at a time, terminal → the loop     → game-dev
+LANE C  Visual          authored surfaces, capture, scorecard       → design-dev
+LANE D  Words           questions · copy · creative cards            → omega-project-librarian
+LANE E  Check           real-input browser pass · evidence           → reviewer
+LANE F  Release         draft-PR checkpoint · operator review        → check-in-agent
+LANE G  Blender         tooling · pipeline · asset export            → direction, with the operator
+```
+
+## Handoff rule
+
+Every delegated card names **three skills** in its `skills` header row, in this order: `omega-spiral-environment`, the persona for the role, and the applicable `threejs-*` skill. **The row is what gets force-loaded — naming a skill in prose does not attach it.**
+
+Every card also declares a **file boundary** so parallel agents cannot collide, and states its **acceptance** and **verify** explicitly. Raw logs stay in the worker's context; the lead receives changed files, observed evidence, decisions, risks, and a bounded handoff.
+
+An agent that cannot tell what it was assigned will invent work someone else has to unpick. If the assignment is unclear, it stops and asks.
+
+## Good-enough rule
+
+Plan to the depth that lets work begin, then improve details when play, tests, screenshots, or the operator reveal a concrete problem. Do not add another preflight pass merely to make planning feel complete.
+
+## Standing constraints (from the ANCHOR, still correct)
+
+- Verify every assignee exists before creating a card — the dispatcher **silently drops** unknown names and the card sits in `ready` forever.
+- Label claims **Verified / Inferred / Unknown**. Stop honestly when evidence is missing.
+- **Facts are the agent's job. Decisions are the operator's.**
+- A card needing a human decision blocks with `needs_input` and **stops**. Never spin. Alert the operator in one short message: what, blocked on what, what is needed.
+- Draft PRs only. No merge, no push to `main`, without explicit authorization.
+- Never retain credentials or tokens.
+
+## Current route
+
+1. Finish **Scene 1** through its gates: foundation → console, universe, presence, audio → evidence.
+2. Prove the **Blender export path** end to end, and decide which surfaces Blender authors versus procedural Three.js.
+3. Spec **Scene 2** from the Scene 1 result.
+4. Clear the five open roster decisions in `ROLES.md` (reviewer scope, `check-in-agent`'s job, second-opinion review, orphaned cards, the stale ANCHOR).
