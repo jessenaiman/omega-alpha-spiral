@@ -132,3 +132,30 @@ starts from menu input, zero console/page/network errors) all pass. See
   `styles.css` feed/flash elements
 - Evidence: `artifacts/pass-3/` (captures), `artifacts/qa/bot-playtest.json`,
   `artifacts/evidence.json`, `artifacts/final-evidence.md`
+
+## Visual pass — lighting, materials, backdrop
+
+Direction pivot, first pass. Biggest scar on the scene was **every body being
+`MeshBasicMaterial { toneMapped: false }` with `NoToneMapping`**: nothing
+reflected, nothing had dimension, the "game" read as flat neon blobs with bloom.
+The agreed fix was the smallest cascade that removes that scar: a lighting
+foundation, lit materials, one backdrop layer. Full before/after scorecard and
+measurements live in `artifacts/final-evidence.md`.
+
+- `present/renderer.ts` — `ACESFilmicToneMapping` + exposure 1.05; procedural
+  PMREM env (tiny ambient+cool-dir scene → `scene.environment`) so MeshStandard
+  reflects instead of hitting pure black; key (`0x88aaff`, 1.6) / fill
+  (`0xffaa66`, 0.45) / rim (`0x4466ff`, 0.55) / ambient (`0x1a2a3a`, 0.35).
+- `present/actors.ts` — player cone + per-kind shard materials → MeshStandard
+  with a per-kind finish map (roughness 0.3–0.5, metalness 0.4–0.7) plus faint
+  emissive so bloom still lifts the neon identity. Telegraph/pulse rings stay
+  additive MeshBasic (energy overlay, not a body).
+- `present/arena.ts` — BackSide gradient sphere (r64) behind everything: deep
+  space → faint rosy horizon, `depthWrite: false`, +1 draw. Disposed with rest.
+- Learning: with `EffectComposer` the tone mapping rides the final OutputPass,
+  so `renderer.toneMapping` needs no per-pass juggling in this pipeline. And the
+  inspector's entropy/metrics are a real signal: they moved with the art
+  direction, not noise.
+- Verified: typecheck, 96/96 unit tests, 4/4 browser tests, desktop + mobile
+  inspector captures with zero console/page/WebGL errors. Uncommitted
+  `project-management/` churn left out of the commit (standing agreement).

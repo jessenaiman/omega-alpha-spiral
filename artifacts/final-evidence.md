@@ -175,7 +175,57 @@ re-assert the same determinism and is not worth its maintenance here.
 - Audio is fully procedural (no decode assets to error) and unlocks on the first
   gesture; captures are silent.
 - The Ghost Terminal scene is untouched; `tests/browser/boot.spec.ts` still passes.
-- Post-release enhancement roadmap (approved order, each slice its own
-  brainstorm + design gate + commit): **C** boss encounter → **D** upgrade
-  economy → **E** meta persistence. Touch/accessibility explicitly out of scope
-  for these slices.
+- Enhancement roadmap superseded by the **visual pass** (below): boss/economy/
+  persistence slices **cancelled**, swapped for a threejs-skills-driven visual
+  direction. The game stays playable; the deliverable is the spectacle.
+  Touch/accessibility explicitly out of scope.
+
+## Visual pass — lighting, materials, backdrop
+
+Direction pivot (approved): the feature roadmap was cancelled in favour of a
+threejs-skills visual pass on the existing scene. First pass scope: **ACES
+lighting foundation, MeshStandard materials, one backdrop layer** — chosen as
+the minimum cascade that removes the flat-unlit look.
+
+What changed (`renderer.ts`, `actors.ts`, `arena.ts`):
+
+- **Lighting** (`renderer.ts`): `ACESFilmicToneMapping` + exposure 1.05 (was
+  `NoToneMapping`). Procedural PMREM environment (ambient + cool directional in
+  a tiny scene → `scene.environment`) so MeshStandard surfaces reflect
+  something, plus a key/fill/rim/ambient light rig (cool key, warm fill, blue
+  rim).
+- **Materials** (`actors.ts`): player cone and every shard kind were
+  `MeshBasicMaterial { toneMapped: false }` — unlit flat colour. Now
+  `MeshStandardMaterial` with per-kind roughness/metalness (crystalline) and a
+  faint emissive so the bloom still lifts the neon identity out of the lit
+  scene. Overlay/telegraph rings stay additive MeshBasic by design.
+- **Backdrop** (`arena.ts`): a huge BackSide gradient sphere replaces raw
+  void — deep space rising to a faint rosy horizon, depthWrite off, no bloom,
+  +1 draw call.
+
+Honest before/after scorecard (calibrated against the skill's anchors):
+
+| Category | Before | After | Why |
+| --- | --- | --- | --- |
+| Art direction | 1.5 | 2.0 | motifs + unified palette via backdrop/ACES |
+| Hero | 1.0 | 2.0 | cone no longer flat-glow; lit + emissive read |
+| Obstacles | 2.0 | 2.0 | distinct geometry + telegraphs (unchanged) |
+| Rewards | 1.5 | 1.5 | heart now lit, but no authored interaction form |
+| World | 1.5 | 2.0 | first background layer added |
+| Materials | 1.0 | 2.0 | per-kind roughness/metalness + emissive |
+| Lighting/render | 1.0 | 2.0 | ACES + rig + env reflections |
+| VFX/motion | 2.0 | 2.0 | event-driven system (unchanged) |
+| UI/HUD | 1.5 | 1.5 | unchanged (future polish target) |
+| Perf evidence | 2.0 | 2.0 | budgets re-verified below |
+| **Average** | **1.5** | **1.9** | auto-fail (flat hero) resolved |
+
+Measured delta (base seed `7`, active play, desktop 1280×720): entropy
+3.51→2.93 bits, edge density 0.089→0.097, luminance contrast 96→101, p95
+highlight 103→109, dominant colour share 0.244→0.55 (backdrop unifies the
+frame). Render budget: **11 calls / 5,274 tris / 11 geo / 15 tex** (desktop),
+**10 / 5,270 / 10 / 15** (mobile @pixelRatio 2) — tens of thousands of
+triangles of headroom left. Zero console/page/WebGL errors on both captures.
+
+Still short of the premium bar (2.3 avg, all ≥2): HUD polish, an authored hero
+silhouette, and richer world composition are the next candidates. The pass stays
+under the agreed "lighting + materials + background" scope.

@@ -1,10 +1,12 @@
 /**
  * Spiral Breaker — the actors.
  *
- * One pooled mesh per shard and a single player body. Everything is
- * `MeshBasicMaterial` with `toneMapped: false` so the bloom pass, not the tone
- * mapper, decides how bright a thing looks. The pool is allocated once and
- * only toggled afterwards; the render loop allocates nothing.
+ * One pooled mesh per shard and a single player body. The bodies are
+ * `MeshStandardMaterial`: a crystalline roughness/metalness tuned per kind, a
+ * faint emissive so the bloom pass still picks the neon identity out of the
+ * now-lit scene, and tone-mapped light defining the forms. The pool is
+ * allocated once and only toggled afterwards; the render loop allocates
+ * nothing.
  */
 
 import * as THREE from 'three';
@@ -45,7 +47,13 @@ export function createActors(): Actors {
   const tweens = createTweenManager();
 
   const playerGeometry = new THREE.ConeGeometry(0.26, 0.62, 3);
-  const playerMaterial = new THREE.MeshBasicMaterial({ color: PLAYER_COLOR, toneMapped: false });
+  const playerMaterial = new THREE.MeshStandardMaterial({
+    color: PLAYER_COLOR,
+    roughness: 0.3,
+    metalness: 0.55,
+    emissive: PLAYER_COLOR,
+    emissiveIntensity: 0.32,
+  });
   const player = new THREE.Mesh(playerGeometry, playerMaterial);
   player.rotation.z = -Math.PI / 2;
   player.position.y = 0.28;
@@ -72,17 +80,43 @@ export function createActors(): Actors {
     shielded: new THREE.OctahedronGeometry(SHARD_RADIUS * 0.92, 0),
     pulsar: new THREE.IcosahedronGeometry(SHARD_RADIUS * 1.05, 0),
   };
-  const standardMaterials = STANDARD_VARIANTS.map(
-    (color) => new THREE.MeshBasicMaterial({ color, toneMapped: false }),
-  );
+  /** Per-kind finish: roughness/metalness for the crystalline shards. */
+  const KIND_FINISH: Record<ShardKind, { roughness: number; metalness: number; emissiveIntensity: number }> = {
+    standard: { roughness: 0.32, metalness: 0.6, emissiveIntensity: 0.22 },
+    splitter: { roughness: 0.28, metalness: 0.68, emissiveIntensity: 0.2 },
+    mini: { roughness: 0.3, metalness: 0.62, emissiveIntensity: 0.26 },
+    heart: { roughness: 0.5, metalness: 0.4, emissiveIntensity: 0.32 },
+    shielded: { roughness: 0.3, metalness: 0.7, emissiveIntensity: 0.18 },
+    pulsar: { roughness: 0.34, metalness: 0.58, emissiveIntensity: 0.24 },
+  };
+  const makeShardMaterial = (color: THREE.ColorRepresentation): THREE.MeshStandardMaterial => {
+    const material = new THREE.MeshStandardMaterial({
+      color,
+      roughness: 0.32,
+      metalness: 0.6,
+      emissive: color,
+      emissiveIntensity: 0.22,
+    });
+    return material;
+  };
+  const standardMaterials = STANDARD_VARIANTS.map((color) => makeShardMaterial(color));
   const kindMaterials = Object.fromEntries(
-    (Object.keys(SHARD_KIND_COLORS) as ShardKind[]).map((kind) => [
-      kind,
-      new THREE.MeshBasicMaterial({ color: SHARD_KIND_COLORS[kind], toneMapped: false, transparent: kind === 'heart', opacity: kind === 'heart' ? 0.85 : 1 }),
-    ]),
-  ) as Record<ShardKind, THREE.MeshBasicMaterial>;
-  const materialFor = (kind: ShardKind, variant: number): THREE.MeshBasicMaterial =>
-    kind === 'standard' ? (standardMaterials[variant % standardMaterials.length] as THREE.MeshBasicMaterial) : kindMaterials[kind];
+    (Object.keys(SHARD_KIND_COLORS) as ShardKind[]).map((kind) => {
+      const finish = KIND_FINISH[kind];
+      const material = new THREE.MeshStandardMaterial({
+        color: SHARD_KIND_COLORS[kind],
+        roughness: finish.roughness,
+        metalness: finish.metalness,
+        emissive: SHARD_KIND_COLORS[kind],
+        emissiveIntensity: finish.emissiveIntensity,
+        transparent: kind === 'heart',
+        opacity: kind === 'heart' ? 0.85 : 1,
+      });
+      return [kind, material];
+    }),
+  ) as Record<ShardKind, THREE.MeshStandardMaterial>;
+  const materialFor = (kind: ShardKind, variant: number): THREE.MeshStandardMaterial =>
+    kind === 'standard' ? (standardMaterials[variant % standardMaterials.length] as THREE.MeshStandardMaterial) : kindMaterials[kind];
 
   const shards: THREE.Mesh[] = [];
   for (let index = 0; index < SHARD_POOL; index += 1) {

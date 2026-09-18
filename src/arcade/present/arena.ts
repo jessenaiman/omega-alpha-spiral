@@ -120,6 +120,36 @@ export function createArena(): Arena {
   halo.position.y = 0.02;
   group.add(halo);
 
+  // A huge gradient sphere frames the arena instead of raw void: a vertical
+  // falloff from deep space to a faint rosy horizon that hauls the periphery
+  // out of pure black without competing with the floor.
+  const backdropGeometry = new THREE.SphereGeometry(64, 32, 16);
+  const backdropMaterial = new THREE.ShaderMaterial({
+    side: THREE.BackSide,
+    depthWrite: false,
+    vertexShader: /* glsl */ `
+      varying float vY;
+      void main() {
+        vY = normalize(position).y;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: /* glsl */ `
+      varying float vY;
+      void main() {
+        float t = smoothstep(-0.12, 0.65, vY);
+        vec3 deep = vec3(0.008, 0.012, 0.028);
+        vec3 top = vec3(0.05, 0.1, 0.22);
+        vec3 rosy = vec3(0.09, 0.055, 0.12);
+        vec3 color = mix(deep, top, t);
+        color += rosy * pow(max(0.0, 1.0 - abs(vY - 0.1)), 4.0) * 0.6;
+        gl_FragColor = vec4(color, 1.0);
+      }
+    `,
+  });
+  const backdrop = new THREE.Mesh(backdropGeometry, backdropMaterial);
+  group.add(backdrop);
+
   const coreHealthy = new THREE.Color(0x9ff4ff);
   const coreHurt = new THREE.Color(0xff5d4d);
   const coreHeal = new THREE.Color(0x7cff9b);
@@ -146,10 +176,10 @@ export function createArena(): Arena {
       rimMaterial.color.setHex(state.breachFlash > 0.2 ? 0xff8f6a : 0x36c6ff);
     },
     dispose(): void {
-      for (const geometry of [floorGeometry, rimGeometry, slowGeometry, coreGeometry, haloGeometry]) {
+      for (const geometry of [floorGeometry, rimGeometry, slowGeometry, coreGeometry, haloGeometry, backdropGeometry]) {
         geometry.dispose();
       }
-      for (const material of [floorMaterial, rimMaterial, slowMaterial, coreMaterial, haloMaterial]) {
+      for (const material of [floorMaterial, rimMaterial, slowMaterial, coreMaterial, haloMaterial, backdropMaterial]) {
         material.dispose();
       }
     },
