@@ -43,9 +43,9 @@ async def run() -> None:
                 print(json.dumps([
                     {
                         "name": tool.name,
-                        "title": tool.annotations.title if tool.annotations else None,
-                        "read_only": tool.annotations.readOnlyHint if tool.annotations else None,
-                        "destructive": tool.annotations.destructiveHint if tool.annotations else None,
+                        "title": getattr(tool.annotations, "title", None) if tool.annotations else None,
+                        "read_only": getattr(tool.annotations, "read_only_hint", None) if tool.annotations else None,
+                        "destructive": getattr(tool.annotations, "destructive_hint", None) if tool.annotations else None,
                         "schema": tool.inputSchema,
                     }
                     for tool in response.tools

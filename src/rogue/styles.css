@@ -1,0 +1,30 @@
+:root {
+  color-scheme: dark;
+  --ink: #cfe6ff; --dim: #6b7891; --cyan: #7cf0ff; --red: #ff5566;
+  --bg: #04060b; --line: rgba(124, 240, 255, 0.16);
+}
+html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; color: var(--ink);
+  font: 12px/1.5 ui-monospace, "Cascadia Mono", Consolas, monospace; }
+#app { display: flex; height: 100vh; }
+canvas[data-rogue-canvas] { flex: 1 1 auto; min-width: 0; display: block; width: 100%; height: 100%; outline: none; }
+aside[data-rogue-hud] { flex: 0 0 280px; display: flex; flex-direction: column; min-height: 0;
+  border-left: 1px solid var(--line); background: linear-gradient(180deg, #06090f, #04060b); }
+[data-rogue-status] { display: flex; gap: 16px; padding: 10px 12px; border-bottom: 1px solid var(--line); font-size: 11px; }
+[data-rogue-status] b { color: var(--cyan); }
+[data-rogue-log] { flex: 1 1 auto; list-style: none; margin: 0; padding: 10px 12px; overflow-y: auto; font-size: 11px; color: var(--dim); }
+[data-rogue-log] li { padding: 2px 0; border-bottom: 1px dotted rgba(124, 240, 255, 0.07); }
+[data-rogue-log] li:last-child { color: var(--ink); }
+[data-rogue-hint] { border-top: 1px solid var(--line); padding: 8px 12px; font-size: 11px; color: var(--dim); }
+[data-rogue-hint] b { color: var(--ink); }
+[data-rogue-overlay] { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; background: rgba(4, 6, 11, 0.86); }
+[data-rogue-overlay][hidden] { display: none; }
+[data-rogue-overlay] .panel { max-width: 420px; padding: 20px 24px; text-align: center; background: #070b12; border: 1px solid var(--line); }
+[data-rogue-overlay] h1 { margin: 0 0 8px; font-size: 14px; letter-spacing: 0.12em; color: var(--red); }
+[data-rogue-overlay] p { margin: 0 0 14px; color: var(--dim); }
+[data-rogue-overlay] kbd { color: var(--ink); border: 1px solid rgba(207, 230, 255, 0.35); border-radius: 3px; padding: 1px 6px; }
+[data-rogue-error] { position: fixed; left: 14px; bottom: 14px; z-index: 30; color: var(--red); background: rgba(4, 6, 11, 0.9); padding: 4px 8px; }
+@media (max-width: 860px) {
+  #app { flex-direction: column; }
+  aside[data-rogue-hud] { flex: 0 0 auto; border-left: none; border-top: 1px solid var(--line); }
+  [data-rogue-log] { max-height: 18vh; }
+}

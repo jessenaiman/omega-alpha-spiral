@@ -1,160 +1,80 @@
-# Omega Spiral — Core Loop Contract
+# Floor One Core Loop Contract
 
-## Purpose
+## Contract
 
-This contract defines what the player repeatedly does, what creates pressure, what changes after success, how failure recovers, and what must be externally observable for acceptance. It governs the complete 15–20 minute Alpha 0.1 run.
+The player explores a remembered grid and uses Talk, Hit, and Run to reach the exit while turn-linked actors and finite-HP pressure make actions consequential; success advances the visual era, while failure ends the attempt and teaches through the message history and immediate retry.
 
-## Core micro-loop
+## Turn Contract
 
-Every playable beat follows the same six steps:
+Floor One is a discrete, deterministic, turn-based grid. The world waits while the player thinks. Movement, Wait, Talk, Hit, pickup use, and door interaction spend turns when they change world state. Inspect, help, message review, and other information actions spend no turn.
 
-1. Observe a signal, target, hazard tell, or authored choice.
-2. Move or choose.
-3. Commit with Contextual Act or Dash.
-4. Receive immediate visual, audio, and state feedback.
-5. Change the world, party, route, or available path.
-6. Repeat with one harder combination of known actions.
+Each elapsed turn resolves in this order:
 
-The player is never asked to guess an undocumented control. The objective, target verb, and world response make the next meaningful action legible without solving the encounter for the player.
+1. Read one input intent.
+2. Validate the intent against current grid and actor state.
+3. Resolve the player action.
+4. Emit feedback events and message entries.
+5. Resolve the monster phase.
+6. Apply turn-linked pressure.
+7. Recompute field of view and remembered terrain.
+8. Resolve death or exit success.
+9. Present the resulting state.
 
-## Input contract
+Invalid input and information-only actions do not advance this sequence beyond validation and presentation. Seeded rules must produce the same result from the same seed and input sequence.
 
-- **Move:** WASD, arrow keys, or left stick.
-- **Dash:** Space or the south gamepad button.
-- **Contextual Act:** E, Enter, or the west gamepad button.
-- **Pause:** Escape or the gamepad menu button.
-- **Mouse:** menus and settings only.
-- **Camera:** directed by the game; no manual orbit.
-- **Touch:** full touch gameplay is not supported in Alpha 0.1.
+## World Contract
 
-Keyboard and standard gamepad must reach the same outcomes. Input produces intentions; it does not directly mutate presentation, audio, or narrative state.
+The grid owns walls, floor, a stateful door, a useful pickup, exit stairs, the player, and actors. Tile occupancy and collision determine movement; Floor One uses no Rapier or continuous physics.
 
-## Session cadence
+Visibility has three states:
 
-The first completion lasts 15–20 minutes and targets about 18 minutes:
+- Unknown tiles reveal no terrain or entities.
+- Remembered tiles show previously seen terrain without stale entity positions.
+- Currently visible tiles show current terrain, items, and actors.
 
-- Ghost Terminal: 2–3 minutes.
-- Town Map: 2–3 minutes.
-- Town Space: about 3 minutes.
-- Town Community: 3–4 minutes.
-- Town Fracture: 4–5 minutes.
-- Threshold and Collapse: about 2 minutes.
+A short message history records movement blockers, disposition changes, attacks, hit or miss, damage, HP changes, pickup effects, pursuit, death, and exit outcomes.
 
-Reading and captions never have a countdown. Timing pressure appears only inside clearly telegraphed playable hazards.
+## Verb Contract
 
-## Phase micro-loops
+**Talk** addresses an adjacent Threshold Guard. A real Talk result can change disposition, access, or both; it is not flavor text alone.
 
-| Phase | Repeated action | Escalation | Exit condition |
-|---|---|---|---|
-| Ghost Terminal | Read a prompt, make one explicit choice, receive one authored response. | Three choice-and-response beats make influence visible only through tone and signal grammar. | The player has stated a name, committed three choices, and named Omega. |
-| Town Map | Find a landmark, move into context, hold or press Act, observe restoration. | Archive, civic refuge, and gate or bridge each require clearer spatial reading. | All three landmarks are restored. |
-| Town Space | Read a hazard trace, enter a safe window, commit Move, Dash, or Act, recover. | Three encounters combine known actions; Archive Crossing is the representative capstone. | Archive Crossing is complete and the resident is safe. |
-| Town Community | Meet an Echo, understand the role through action, recruit, see party response. | Three recruitments are followed by one party test that accepts any composition. | Three of four Echoes are recruited and the party test is complete. |
-| Town Fracture | Read a simultaneous need, send or use a role, complete one route objective, see the parallel consequence. | Three objectives make memory and bodies increasingly impossible to preserve together. | The chosen route has three completed objectives. |
-| Threshold | Inspect three presences, approach one, hold Act to carry its question, then cross. | The cost is exclusion: one pairing is carried and two close for this run. | Bridge, logo, world glimpse, collapse, and next loop resolve in order. |
+**Hit** uses bump melee or an explicit adjacent melee action. Resolution includes a seeded hit or miss result, damage on a hit, and visible HP consequences. Actors cannot share occupied tiles.
 
-## Pressure
+**Run** performs source-faithful committed repeated grid movement. Each traversed tile costs and resolves one turn. Run stops before or on rules-defined interest, threat, or obstacle conditions, and it must support tactical retreat rather than functioning as cosmetic speed.
 
-Pressure comes from:
+No verb permanently belongs to one Dreamweaver. Dreamweaver differences may affect framing or approach, not remove Talk, Hit, or Run from the common action set.
 
-- signal sweeps with visible traces before contact;
-- instability shards that remove safe space until disrupted;
-- spatial loss that narrows or breaks routes;
-- simultaneous town needs during the fracture;
-- the knowledge that committing to one route or pairing closes alternatives.
+## Pressure and Outcome
 
-Pressure does not come from timed reading, surprise damage without a tell, hidden affinity selecting the ending, or replaying completed phases after a local mistake.
+At least the Threshold Guard acts only when turns elapse. It pursues or otherwise advances its threat during the monster phase according to current disposition and visibility rules. Finite player HP and pursuit create Floor One pressure; no hunger system is present.
 
-## Reward
+Death ends the attempt. Immediate retry reconstructs the same authored topology and seed-driven variation. Starting a new run may choose a new seed. Reaching the exit stairs ends the demo and indicates the next visual era.
 
-Each success provides an immediate local reward and an accumulating run reward:
+Floor topology is authored. Actor and item variation may change only through seeded randomness. All hit checks, damage variation, placement variation, and behavior choices use the seeded random source.
 
-- greater visual fidelity and a wider display era;
-- another layer of Omega’s audio motif;
-- a restored landmark or opened path;
-- a learned capability or clearer target verb;
-- a recruited relationship and visible party tool;
-- a route consequence that remains visible;
-- the final logo and coherent world glimpse.
+## Controls
 
-Rewards must be perceivable through more than color. Geometry, motion, sound, label, and state change reinforce important outcomes.
+- Arrow keys or WASD: cardinal movement
+- Optional diagonal keys: eight-direction movement
+- Space or period: Wait
+- T: Talk to an adjacent actor
+- H or hostile bump: Hit an adjacent actor
+- Shift plus a direction: Run
+- Inspect/help/message controls: information only, no turn
+- Enter after death: retry the same seed
+- New Run from a terminal screen: choose a new seed
 
-## Cost and consequence
+## Acceptance Observations
 
-Committing closes possibilities without deleting the player’s progress:
-
-- terminal choices close alternate replies;
-- recruiting three Echoes closes one party slot, while the fourth Echo remains visible with the parallel party;
-- choosing memory or bodies closes the other route for this run, while the other party performs it;
-- carrying one Dreamweaver question closes the other two pairings for this run.
-
-Neither fracture route is morally correct. Hidden affinity changes authored commentary only; the player’s physical threshold approach determines the pairing.
-
-## Failure, retry, and softlock prevention
-
-- Contact with a hazard or loss of the protected resident starts a 1.25-second Echo rewind.
-- The rewind restores the current encounter snapshot only.
-- Earlier phases and completed encounters remain intact.
-- A trace of the failed path may guide the retry, but it disappears after success and never persists into another phase or run.
-- `Retry Encounter` is always available from the pause flow.
-- Leaving traversable space returns the player to the last safe tile.
-- After 30 seconds without progress, the next valid affordance pulses through shape, motion, label, and sound.
-- Wide Timing assist enlarges hazard windows without changing the required actions or story outcome.
-- Pause suspends gameplay pressure and exposes controls, captions, volume groups, reduced motion, Wide Timing, text speed, and Retry Encounter.
-- WebGL or required-asset failure enters an explicit error state rather than a blank or permanently loading screen.
-- The final collapse is a successful ending beat, not a failure.
-
-No failure may erase a recruitment, landmark, route objective completed before the current encounter snapshot, or terminal choice. No recovery path may require reloading the page.
-
-## Era transition triggers
-
-Display eras advance only after verified objective completion:
-
-1. Completing name entry, three choices, and Omega naming reveals the denser 4:3 Town Map.
-2. Restoring all three landmarks extrudes the map into the widening 16:10 Town Space.
-3. Completing Archive Crossing introduces the 16:9 Town Community with portraits and fuller sound.
-4. Recruiting three Echoes and passing the party test begins the generationally layered Town Fracture.
-5. Completing three objectives on the chosen route opens the threshold.
-6. Carrying one Dreamweaver question enables the bridge crossing and momentary coherent 1920×1080 world.
-7. Completing the bridge beat resolves the era-specific logo, collapses the world, increments the loop, and returns to Ghost Terminal.
-
-An era transition adds capabilities and motifs; it does not replace the town with an unrelated environment.
-
-## State and reset rules
-
-One seeded run state owns instance, loop, phase, checkpoint, player and Omega names, hidden affinity, party, route, pairing, and era.
-
-- A fresh browser session selects one seeded three-digit base instance.
-- The same tab preserves instance and loop through session storage.
-- A full collapse increments only the loop number.
-- Names, choices, affinity, party, route, pairing, phase, and checkpoints reset for the next loop.
-- Accessibility and volume settings may persist separately.
-- Dialogue is authored; no runtime model or API supplies it.
-- One fixed update order and seeded randomness make the same seed and inputs reproducible.
-
-## Gameplay events
-
-The run must emit typed, observable events for presentation rather than duplicating rules inside UI, audio, or VFX. Alpha 0.1 requires:
-
-`ui.confirm`, `step`, `dash.start`, `act.commit`, `threat.tell`, `threat.contact`, `landmark.restore`, `companion.recruit`, `rewind.begin`, `rewind.end`, `era.advance`, `route.commit`, `pair.carry`, `bridge.cross`, `logo.resolve`, and `loop.collapse`.
-
-Each required event produces immediate feedback. Pause, retry, and restart must stop or release transient audio and VFX so effects do not stack across snapshots.
-
-## Acceptance hooks
-
-The browser acceptance surface must expose the real game, not a parallel mock:
-
-- `window.__THREE_GAME_TEST_HOOKS__` exposes deterministic seed selection, named state preparation, immediate simulation pause while rendering continues, reduced-motion control, and player-facing debug hiding.
-- `seed(value)` applies the requested deterministic seed.
-- `setState(name)` reaches a declared capture state through real state ownership, rejects unknown names, and reports the applied state.
-- `setPausedForScreenshot(true)` stops simulation immediately but keeps the scene renderable.
-- Reduced-motion and debug-hide operations change the same settings used by players and release captures.
-- `window.__THREE_GAME_DIAGNOSTICS__` reports current run ID, instance, loop, phase, checkpoint, objective, target verb, player state, party, route, pairing, era, pause and accessibility state, audio-unlock state, canvas dimensions, renderer calls, triangles, geometries, textures, and captured runtime errors.
-
-Required named states are `ghost-terminal`, `exploration-active`, `archive-crossing`, `formation-party`, `fracture-memory`, `fracture-bodies`, `threshold-luminary`, `threshold-shadow`, `threshold-ambition`, `bridge-logo`, `loop-restart`, `pause-settings`, and `reduced-motion-fracture`.
-
-A single-worker browser run must prove one complete loop through real input, both fracture routes across runs, all three pairings, one deliberate failure, Echo rewind, retry, and restart. Screenshots support visual review but never substitute for input proof. Current-revision evidence must also show an empty browser console, page-error list, and failed-network list in the production static preview.
-
-## Non-goals
-
-The loop does not include inventory, loot economy, skill trees, procedural levels, a conventional boss, a separate attack combo system, full touch gameplay, backend services, database persistence, a runtime LLM, Python or FastAPI runtime architecture, Electron, installers, or Alpha 0.2 cross-loop residue.
+- The first 30 seconds contain a visible route or approach decision.
+- The player can trigger Talk, Hit, and Run through real desktop input.
+- Talk changes Threshold Guard disposition or access in the observed state.
+- Hit visibly resolves hit or miss, damage, and HP.
+- Run repeats tile movement and stops for an obstacle, threat, or point of interest.
+- Waiting advances the Threshold Guard; inspecting does not.
+- Unknown, remembered, and currently visible states are visually distinguishable.
+- A pursuing enemy and finite HP create pressure during the first playable minute.
+- The useful pickup changes play state rather than only presentation.
+- Death states why the attempt ended and same-seed retry reconstructs the same setup.
+- Exit stairs end the demo and indicate a new visual era without loading another floor.
+- Repeating one seed with one input sequence produces the same outcomes.

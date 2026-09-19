@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%2304060b'/%3E%3Ctext x='32' y='44' font-size='40' text-anchor='middle' fill='%237cf0ff' font-family='monospace'%3E%40%3C/text%3E%3C/svg%3E">
+    <title>Loop Lab — Floor 1</title>
+    <style>
+      :root {
+        --ink: #cfe6ff;
+        --dim: #6b7891;
+        --cyan: #7cf0ff;
+        --red: #ff5566;
+        --gold: #ffd166;
+        --panel: rgba(6, 9, 15, 0.85);
+        --line: rgba(124, 240, 255, 0.16);
+      }
+      html, body { margin: 0; height: 100%; background: #04060b; overflow: hidden; }
+      body { font: 12px/1.5 ui-monospace, "Cascadia Mono", "Consolas", monospace; color: var(--ink); }
+      #app { display: flex; height: 100vh; }
+
+      [data-lab-play] { position: relative; flex: 1 1 auto; min-width: 0; }
+      canvas[data-lab-canvas] { display: block; width: 100%; height: 100%; outline: none; }
+
+      [data-lab-console] {
+        flex: 0 0 320px; display: flex; flex-direction: column;
+        border-left: 1px solid var(--line);
+        background: linear-gradient(180deg, #06090f, #04060b);
+      }
+      [data-lab-console] > * { padding: 10px 12px; }
+
+      [data-lab-hud] {
+        display: flex; gap: 14px; flex-wrap: wrap;
+        border-bottom: 1px solid var(--line);
+        font-size: 11px; letter-spacing: 0.04em;
+      }
+      [data-lab-hud] b { color: var(--cyan); font-weight: 700; }
+
+      [data-lab-log] {
+        flex: 1 1 auto; margin: 0; overflow-y: auto;
+        list-style: none; font-size: 11px; color: var(--dim);
+      }
+      [data-lab-log] li { padding: 3px 0; border-bottom: 1px dotted rgba(124, 240, 255, 0.07); }
+      [data-lab-log] li:first-child { color: var(--ink); }
+
+      [data-lab-hint] {
+        border-top: 1px solid var(--line); color: var(--dim); font-size: 11px;
+      }
+      [data-lab-hint] b { color: var(--ink); }
+
+      [data-lab-prompt] {
+        position: fixed; inset: 0; z-index: 20;
+        display: none; place-content: center; align-items: center;
+        background: rgba(4, 6, 11, 0.9);
+      }
+      [data-lab-prompt][data-open] { display: grid; }
+      [data-lab-prompt] .card {
+        max-width: 620px; padding: 24px 28px;
+        background: #070b12;
+        border: 1px solid rgba(180, 140, 255, 0.35);
+        border-radius: 8px;
+      }
+      [data-lab-prompt] .who { color: #b48cff; letter-spacing: 0.08em; }
+      [data-lab-prompt] .q { margin: 12px 0 20px; font-size: 14px; }
+      [data-lab-prompt] .keys { color: var(--dim); }
+      [data-lab-prompt] kbd {
+        color: var(--ink); border: 1px solid rgba(207, 230, 255, 0.35);
+        border-radius: 3px; padding: 1px 6px;
+      }
+      [data-lab-error] {
+        position: fixed; inset: auto 14px 14px; z-index: 30;
+        color: var(--red); background: rgba(4, 6, 11, 0.9); padding: 4px 8px;
+      }
+
+      @media (max-width: 860px) {
+        #app { flex-direction: column; }
+        [data-lab-play] { flex: 1 1 auto; min-height: 0; }
+        [data-lab-console] { flex: 0 0 auto; border-left: none; border-top: 1px solid var(--line); }
+        [data-lab-log] { max-height: 150px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <main data-lab-play>
+        <canvas data-lab-canvas tabindex="0" aria-label="Loop Lab floor one"></canvas>
+      </main>
+
+      <aside data-lab-console>
+        <div data-lab-hud>
+          <span>HP <b data-lab-hp>6</b></span>
+          <span>TURN <b data-lab-turn>0</b></span>
+          <span>SEED <b data-lab-seed>—</b></span>
+        </div>
+
+        <ol data-lab-log></ol>
+
+        <div data-lab-hint>
+          <div><b>Arrows / WASD</b> step</div>
+          <div><b>Bump</b> to fight · <b>Enter</b> to use an exit · <b>R</b> restart</div>
+        </div>
+      </aside>
+    </div>
+
+    <div data-lab-prompt>
+      <div class="card">
+        <div class="who">LIGHT</div>
+        <div class="q" data-lab-question></div>
+        <div class="keys">
+          <kbd>Y</kbd> answer yes &nbsp;·&nbsp; <kbd>N</kbd> answer no &nbsp;·&nbsp; <kbd>Esc</kbd> step away
+        </div>
+      </div>
+    </div>
+
+    <div data-lab-error hidden></div>
+
+    <script type="module" src="/src/lab/main.ts"></script>
+  </body>
+</html>

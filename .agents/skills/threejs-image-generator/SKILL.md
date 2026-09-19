@@ -19,21 +19,37 @@ Resolve `<this-skill-dir>` from the actual loaded skill file. Resolve sibling sk
 
 For premium graphics work with generation in scope, generate the high-value 2D surfaces rather than defaulting to hand-coded CSS and flat colors. Respect explicitly procedural art and external-service restrictions. Choose assets from the game's design, not a fixed quota of logos, skies, or icons.
 
-## API key
+## Providers and API key
 
-The script reads `--api-key` or `GEMINI_API_KEY`. Keys never go in skill files, game code, or reports.
+Two scripts, both run from the game project with `uv`:
 
-```bash
-uv run <this-skill-dir>/scripts/generate_image.py probe   # GEMINI_API_KEY=SET|MISSING
-```
+- **`scripts/generate_image_pollinations.py` — free default, no key.** Generation only
+  (no local-image editing). Use this first unless a task's quality truly needs Gemini.
+  ```bash
+  uv run <this-skill-dir>/scripts/generate_image_pollinations.py probe  # IMAGE_PROVIDER=pollinations
+  uv run <this-skill-dir>/scripts/generate_image_pollinations.py \
+    --prompt "your image description" --filename assets/concepts/output.png --width 1536 --height 1536
+  ```
+- **`scripts/generate_image.py` — Gemini, paid, opt-in.** Reads `--api-key` or `GEMINI_API_KEY`.
+  Needed only for local-image editing (style variants, cleanup, palette alignment).
+  ```bash
+  uv run <this-skill-dir>/scripts/generate_image.py probe   # GEMINI_API_KEY=SET|MISSING
+  ```
 
-Keys defined only in a shell profile can be absent from the process env. If the plain probe unexpectedly prints MISSING, use `threejs-game-director/scripts/probe_asset_credentials.sh`, which sources the profile and probes all three providers.
+Keys never go in skill files, game code, or reports. Prefer the free path; switch to Gemini
+only when the prompt needs editing an existing local image or the operator approves the cost.
+Keys defined only in a shell profile can be absent from the process env; if the plain probe
+unexpectedly prints MISSING, use `threejs-game-director/scripts/probe_asset_credentials.sh`.
 
 ## Commands
 
 Run from the game project so output lands in it:
 
 ```bash
+uv run <this-skill-dir>/scripts/generate_image_pollinations.py \
+  --prompt "your image description" --filename assets/concepts/output.png --width 1536 --height 1536
+
+# Gemini only (needs a key; required for local image editing):
 uv run <this-skill-dir>/scripts/generate_image.py \
   --prompt "your image description" --filename assets/concepts/output.png --resolution 2K
 
@@ -43,7 +59,9 @@ uv run <this-skill-dir>/scripts/generate_image.py \
   --filename assets/concepts/ship-red-livery.png --resolution 2K
 ```
 
-Resolution: `1K` for quick concepts, icons, and draft sheets · `2K` (the default) for production references, image-to-3D, textures, backgrounds, UI panels · `4K` for hero splash art, high-detail texture references, and large sky plates.
+Resolution: Pollinations takes explicit `--width`/`--height` (cap 2048). Gemini takes
+`1K` for quick concepts, icons, and draft sheets · `2K` (the default) for production references,
+image-to-3D, textures, backgrounds, UI panels · `4K` for hero splash art and large sky plates.
 
 ## Prompt patterns
 
@@ -61,6 +79,21 @@ Logo, icon, or UI art:
 
 Sky or background:
 > Create a wide game background plate of [environment]. Layered depth, readable horizon, [time/weather/style], suitable behind a real-time Three.js scene, no foreground subject.
+
+## Vision review via the installed Codex CLI
+
+When the acting agent cannot view images, inspect/review them with the installed Codex CLI
+(uses the operator's existing ChatGPT subscription — no extra cost):
+
+```bash
+codex exec -C <repo> -i <image.png> -m gpt-5.6-luna -s read-only \
+  -- "Return one-sentence factual observations about this image: composition, palette, readability, placeholders."
+```
+
+Treat any model output as **unverified input, not authority**: cross-check it against measured
+pixel metrics (`scripts/inspect-threejs-canvas.mjs`), the code that produced the image, and a
+human look before spending on generation or shipping art. A vision model's verdict is a hint,
+never an acceptance gate on its own.
 
 ## Integration
 
