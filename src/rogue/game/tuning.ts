@@ -1,0 +1,16 @@
+export const TUNING = {
+  baseCols: 21,
+  baseRows: 15,
+  growthPerDepth: 2,
+  maxCols: 41,
+  maxRows: 27,
+  roomAttempts: 60,
+  roomMin: 4,
+  roomMax: 8,
+  maxRooms: 8,
+  playerHp: 8,
+  monsterHp: 2,
+  monsterDamage: 1,
+  heartHeal: 2,
+  aggroRadius: 9,
+} as const;

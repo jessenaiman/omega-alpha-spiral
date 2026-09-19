@@ -87,11 +87,17 @@ Randomness routes through `src/core` `createRng(seed)` — no `Math.random`, so 
 ## Progress log
 
 - **2026-09-18** — approved the slice; loaded the skill suite; read repo conventions; started design artifacts.
+- **2026-09-19** — built the Blender kit headless: `assets/rogue/dungeon-kit.glb` (34336 bytes, 14 named
+  parts) + source `tools/blender/rogue-kit.blend`, via
+  `blender --background --factory-startup --python tools/blender/build_rogue_kit.py`. Parts: TileFloor,
+  TileWall, WallCap, StairsBase/Step0-2, HeroBody/Head/Visor, MonsterBody/EyeL/EyeR, ItemHeart.
+- **2026-09-19** — `threejs-image-generator` textures: `assets/rogue/textures/floor-stone.png` and
+  `wall-stone.png`, 512x512, keyed Pollinations `lykon/dreamshaper-8-lcm`. Usable dark cold-stone
+  albedo; not truly seamless and carry baked relief shading.
 
 ## Next actions
 
-1. Blender kit → `assets/rogue/dungeon-kit.glb`.
-2. Scaffold `rogue.html` + vite input.
-3. Pure dungeon + rules + unit tests.
-4. Presentation, HUD, host.
-5. Verify (typecheck / unit / browser capture / metrics) and record evidence.
+1. Scaffold `rogue.html` + vite input.
+2. Pure dungeon + rules.
+3. Presentation (instance the GLB), HUD, host; UV-assign + material the kit with the stone textures.
+4. Verify (typecheck / browser capture / metrics) and record evidence.

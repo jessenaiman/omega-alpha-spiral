@@ -14,6 +14,8 @@ export default defineConfig({
         arcade: fileURLToPath(new URL('./spiral-breaker.html', import.meta.url)),
         basic: fileURLToPath(new URL('./basic.html', import.meta.url)),
         lab: fileURLToPath(new URL('./lab.html', import.meta.url)),
+        floorOne: fileURLToPath(new URL('./floor-one.html', import.meta.url)),
+        rogue: fileURLToPath(new URL('./rogue.html', import.meta.url)),
       },
     },
   },

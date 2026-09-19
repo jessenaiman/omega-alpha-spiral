@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%2304060b'/%3E%3Ctext x='32' y='44' font-size='40' text-anchor='middle' fill='%237cf0ff' font-family='monospace'%3E%3E%3C/text%3E%3C/svg%3E">
+    <title>Rogue Descent | Omega Spiral</title>
+  </head>
+  <body>
+    <div id="app">
+      <canvas data-rogue-canvas tabindex="0" aria-label="Rogue Descent"></canvas>
+      <aside data-rogue-hud>
+        <div data-rogue-status>
+          <span>HP <b data-rogue-hp>8/8</b></span>
+          <span>DEPTH <b data-rogue-depth>1</b></span>
+        </div>
+        <ol data-rogue-log aria-label="message log"></ol>
+        <div data-rogue-hint><b>Arrows/WASD</b> step · <b>Space</b> wait · <b>R</b> retry · <b>N</b> new seed</div>
+      </aside>
+    </div>
+
+    <div data-rogue-overlay hidden>
+      <div class="panel">
+        <h1>YOU DIED</h1>
+        <p>The dungeon took you. The same seed rebuilds it.</p>
+        <div><kbd>R</kbd> retry &nbsp;·&nbsp; <kbd>N</kbd> new seed</div>
+      </div>
+    </div>
+
+    <div data-rogue-error hidden></div>
+
+    <script type="module" src="/src/rogue/main.ts"></script>
+  </body>
+</html>

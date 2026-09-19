@@ -1,0 +1,49 @@
+{
+  "url": "http://127.0.0.1:5188/floor-one.html",
+  "mode": "desktop",
+  "state": null,
+  "requestedState": null,
+  "appliedState": null,
+  "runId": "floor-one-2",
+  "seed": null,
+  "screenshotPath": "artifacts\\floor-one\\desktop.png",
+  "gpu": {
+    "renderer": "ANGLE (NVIDIA, NVIDIA GeForce GTX 1660 (0x00002184) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+    "vendor": "Google Inc. (NVIDIA)",
+    "softwareRendered": false
+  },
+  "result": {
+    "ok": true,
+    "reason": "nonblank",
+    "rect": {
+      "x": 0,
+      "y": 0,
+      "width": 955,
+      "height": 720
+    },
+    "drawingBuffer": {
+      "width": 955,
+      "height": 720
+    },
+    "alphaPixels": 4118,
+    "variance": 251,
+    "colorBuckets": 21,
+    "metrics": {
+      "colorBuckets": 44,
+      "colorEntropyBits": 0.18,
+      "edgeDensity": 0.025,
+      "luminance": {
+        "mean": 7,
+        "p5": 5.9,
+        "p95": 5.9,
+        "contrast": 0
+      },
+      "dominantColorShare": 0.985,
+      "nonBackgroundShare": 0.015
+    },
+    "renderBudget": null,
+    "diagnostics": null
+  },
+  "consoleErrors": [],
+  "pageErrors": []
+}
