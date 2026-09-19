@@ -13,6 +13,7 @@ export default defineConfig({
         main: fileURLToPath(new URL('./index.html', import.meta.url)),
         arcade: fileURLToPath(new URL('./spiral-breaker.html', import.meta.url)),
         basic: fileURLToPath(new URL('./basic.html', import.meta.url)),
+        lab: fileURLToPath(new URL('./lab.html', import.meta.url)),
       },
     },
   },

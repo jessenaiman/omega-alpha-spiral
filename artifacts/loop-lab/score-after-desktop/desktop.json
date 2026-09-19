@@ -1,0 +1,59 @@
+{
+  "url": "http://127.0.0.1:5188/lab.html",
+  "mode": "desktop",
+  "state": null,
+  "requestedState": null,
+  "appliedState": null,
+  "runId": null,
+  "seed": null,
+  "screenshotPath": "C:\\SpiralDrive\\omega-alpha-spiral\\artifacts\\loop-lab\\score-after-desktop\\desktop.png",
+  "gpu": {
+    "renderer": "ANGLE (NVIDIA, NVIDIA GeForce GTX 1660 (0x00002184) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+    "vendor": "Google Inc. (NVIDIA)",
+    "softwareRendered": false
+  },
+  "result": {
+    "ok": true,
+    "reason": "nonblank",
+    "rect": {
+      "x": 0,
+      "y": 0,
+      "width": 959,
+      "height": 720
+    },
+    "drawingBuffer": {
+      "width": 959,
+      "height": 720
+    },
+    "alphaPixels": 4110,
+    "variance": 215,
+    "colorBuckets": 41,
+    "metrics": {
+      "colorBuckets": 74,
+      "colorEntropyBits": 2.53,
+      "edgeDensity": 0.109,
+      "luminance": {
+        "mean": 22.8,
+        "p5": 11.5,
+        "p95": 52,
+        "contrast": 40.5
+      },
+      "dominantColorShare": 0.375,
+      "nonBackgroundShare": 0.625
+    },
+    "renderBudget": null,
+    "diagnostics": {
+      "state": "play",
+      "game": {
+        "renderer": {
+          "calls": 2,
+          "triangles": 4,
+          "geometries": 2,
+          "textures": 3
+        }
+      }
+    }
+  },
+  "consoleErrors": [],
+  "pageErrors": []
+}

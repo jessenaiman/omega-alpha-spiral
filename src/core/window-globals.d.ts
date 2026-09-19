@@ -25,6 +25,22 @@ declare global {
         triangles: number;
       };
     };
+    __LOOP_LAB__?: {
+      getState(): {
+        seed: string;
+        phase: 'play' | 'question' | 'dead' | 'escaped';
+        hp: number;
+        processHp: number;
+        guardHp: number;
+        turn: number;
+        player: { x: number; y: number };
+        process: { x: number; y: number };
+        exits: { kind: string; x: number; y: number }[];
+        drawCalls: number;
+        triangles: number;
+        textureVersion: number;
+      };
+    };
     __THREE_GAME_TEST_HOOKS__?: SceneTestHooks;
     __THREE_GAME_DIAGNOSTICS__?: DiagnosticsSnapshot;
   }
