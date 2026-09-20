@@ -8,7 +8,7 @@
  * randomness comes from the seeded source, so a seed plus an input sequence
  * replays the same floor.
  *
- * No DOM, no Three.js, no Math.random. Presentation consumes this seam.
+ * No DOM, no Three.js, no unseeded randomness. Presentation consumes this seam.
  */
 
 import { createRng, type SeededRng } from '../core/random';

@@ -168,6 +168,46 @@ test('the state registry refuses a name nobody declared', () => {
   assert.throws(() => states.apply('archive-crossing'), /unknown capture state/);
 });
 
+interface FakeTarget {
+  addEventListener(type: string, listener: (event: Event) => void): void;
+  removeEventListener(type: string, listener: (event: Event) => void): void;
+  dispatch(type: string, event: Partial<KeyboardEvent>): void;
+}
+
+function fakeTarget(): FakeTarget {
+  const listeners = new Map<string, Set<(event: Event) => void>>();
+  return {
+    addEventListener(type, listener) {
+      let set = listeners.get(type);
+      if (!set) {
+        set = new Set();
+        listeners.set(type, set);
+      }
+      set.add(listener);
+    },
+    removeEventListener(type, listener) {
+      listeners.get(type)?.delete(listener);
+    },
+    dispatch(type, event) {
+      for (const listener of [...(listeners.get(type) ?? [])]) {
+        listener(event as unknown as Event);
+      }
+    },
+  };
+}
+
+// --- the host -----------------------------------------------------------------
+
+function testHost(options: { seed?: string } = {}) {
+  return createSceneHost({
+    seed: options.seed ?? 'ghost-472',
+    openingQuestion: 'omega.opening',
+    closingQuestion: 'omega.name',
+    dreamweaverQuestions: ['dw.a', 'dw.b', 'dw.c', 'dw.d'],
+    inputTarget: fakeTarget(),
+    gamepad: () => null,
+  });
+}
 
 test('the acceptance hooks reach real state and reject what they cannot', () => {
   const target: Parameters<ReturnType<typeof createSceneHost>['installAcceptanceSurfaces']>[0] = {};
