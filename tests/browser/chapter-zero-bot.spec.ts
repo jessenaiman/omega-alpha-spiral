@@ -37,7 +37,7 @@ for (const route of [0, 1, 2]) {
     await expect(page.locator('main')).toHaveAttribute('data-os-art-ts', 'ready');
     await page.keyboard.press('Enter');
     const evidence: object[] = [];
-    while (true) {
+    while ((await page.locator('main').getAttribute('data-os-phase-ts')) !== 'doorway') {
       await expect(page.locator('main')).toHaveAttribute('data-os-phase-ts', 'waiting', { timeout: 30_000 });
       const choiceCount = await page.getByRole('radio').count();
       expect(choiceCount).toBeGreaterThan(0);
@@ -45,7 +45,6 @@ for (const route of [0, 1, 2]) {
       evidence.push({ sceneIndex: (await page.evaluate(() => window.__INTRO_DIAGNOSTICS__.getState())).sceneIndex, choice });
       await page.keyboard.press(String(choice + 1));
       await expect(page.locator('main')).not.toHaveAttribute('data-os-phase-ts', 'waiting');
-      if ((await page.locator('main').getAttribute('data-os-phase-ts')) === 'doorway') break;
     }
     await expect(page.locator('main')).toHaveAttribute('data-os-phase-ts', 'doorway', { timeout: 30_000 });
     await page.locator('#os-enter-ts').click();
