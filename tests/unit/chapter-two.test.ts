@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { WalkField } from '../../src/chapter-two/WalkField';
-import type { ObjectKind } from '../../src/chapter-two/rooms';
+import type { ObjectKind } from '../../src/chapter-two/floors';
 
 function getPhase(field: WalkField): WalkField['phase'] {
   return field.phase;
@@ -56,7 +56,9 @@ test('an encounter requires proximity and records one decision before the next r
 function finishRooms(thread: string, kinds: ObjectKind[]): WalkField {
   const field = new WalkField();
   field.start(thread);
-  for (const kind of kinds) {
+  // One choice per floor; kinds cycle across any floor count.
+  for (let index = 0; index < field.floorCount; index += 1) {
+    const kind: ObjectKind = kinds[index % kinds.length]!;
     const object = field.objects.find(object => object.kind === kind)!;
     field.player = { x: object.x, z: object.z + 2 };
     assert.equal(field.interact(), true);
@@ -73,15 +75,17 @@ function finishRooms(thread: string, kinds: ObjectKind[]): WalkField {
 
 test('owner-matched choices earn two points and cross-aligned choices one', () => {
   const field = finishRooms('thread-a', ['door', 'monster', 'chest']);
-  assert.deepEqual(field.choices.map(choice => choice.points), [2, 1, 1]);
-  assert.ok(field.choices.every(choice => choice.points >= 1));
+  assert.ok(field.choices.length >= 3);
+  assert.ok(field.choices.every(choice => choice.points === 1 || choice.points === 2));
+  assert.equal(field.choices[0]!.points, 2);
+  assert.ok(field.choices.slice(1, 3).every(choice => choice.points === 1));
   assert.notEqual(field.guide, null);
 });
 
 test('a tied guide prefers the originating thread, with deterministic fallback', () => {
-  const first = finishRooms('', ['door', 'door', 'door']);
-  const second = finishRooms('', ['door', 'door', 'door']);
-  assert.deepEqual(first.choices.map(choice => choice.points), [2, 2, 2]);
+  const first = finishRooms('', ['door']);
+  const second = finishRooms('', ['door']);
+  assert.ok(first.choices.every(choice => choice.points === 2));
   assert.notEqual(first.guide, null);
   assert.equal(first.guide, second.guide);
 });
