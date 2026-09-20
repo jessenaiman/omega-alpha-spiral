@@ -1,0 +1,166 @@
+/* Rules — this isolated entry does not import other scenes' global CSS. */
+.os-body {
+  background: var(--os-black);
+  color: var(--os-white);
+  color-scheme: dark;
+  font-family: 'Courier New', ui-monospace, monospace;
+  font-size: var(--os-font-default);
+  font-weight: var(--os-weight-default);
+  line-height: var(--os-leading-default);
+  margin: 0;
+}
+.os-boot {
+  align-items: center;
+  box-sizing: border-box;
+  display: flex;
+  min-height: 100svh;
+  padding: var(--os-space-xl) var(--os-space-lg);
+  position: relative;
+}
+.os-canvas {
+  height: 100%;
+  inset: 0;
+  pointer-events: none;
+  position: fixed;
+  width: 100%;
+}
+.os-terminal {
+  background: linear-gradient(90deg, var(--os-glass) 80%, var(--os-surface));
+  border: 1px solid var(--os-hairline);
+  box-sizing: border-box;
+  margin: 0;
+  max-width: var(--os-size-xl);
+  padding: var(--os-space-md);
+  position: relative;
+  width: 100%;
+}
+.os-terminal::before {
+  border: 1px solid var(--os-hairline);
+  content: '';
+  inset: calc(0px - var(--os-offset-xs)) var(--os-offset-default) var(--os-offset-xs) calc(0px - var(--os-offset-default));
+  pointer-events: none;
+  position: absolute;
+}
+.os-boot[data-os-phase-ts='cosmic']:not([data-os-art-ts='error']) .os-terminal { visibility: hidden; }
+/* The script tries incompatible alignments, without shaking readable text or controls. */
+.os-boot[data-os-format-ts='searching'] .os-prelude {
+  color: var(--os-amber);
+  transform: translateX(var(--os-offset-default));
+}
+.os-boot[data-os-format-ts='question'] .os-question,
+.os-boot[data-os-format-ts='settled'] .os-question {
+  transform: translateX(calc(0px - var(--os-offset-xs)));
+}
+.os-prelude {
+  color: var(--os-dim);
+  font-size: var(--os-font-sm);
+  letter-spacing: var(--os-tracking-lg);
+  margin: 0 0 var(--os-space-lg);
+  min-height: var(--os-size-default);
+}
+.os-question {
+  font-size: clamp(var(--os-font-lg), 2.4vw, var(--os-font-xl));
+  font-weight: var(--os-weight-default);
+  letter-spacing: var(--os-tracking-default);
+  line-height: var(--os-leading-tight);
+  margin: 0 0 var(--os-space-lg);
+  max-width: var(--os-size-xl);
+  min-height: var(--os-size-md);
+  white-space: pre-wrap;
+}
+.os-cursor {
+  animation: os-blink var(--os-duration-cursor) steps(1) infinite;
+  color: var(--os-white);
+  display: inline;
+  font-size: var(--os-font-default);
+}
+.os-boot[data-os-phase-ts='cursor'] .os-question-cursor { visibility: hidden; }
+.os-boot[data-os-phase-ts='waiting'] .os-prelude-cursor { visibility: hidden; }
+.os-choices {
+  border: 0;
+  display: grid;
+  gap: var(--os-space-xs);
+  margin: 0;
+  max-width: var(--os-size-xl);
+  opacity: 0;
+  padding: 0;
+  transition: opacity var(--os-duration-default) ease;
+  visibility: hidden;
+}
+.os-boot[data-os-phase-ts='waiting'] .os-choices {
+  opacity: var(--os-opacity-default);
+  visibility: visible;
+}
+.os-choice {
+  align-items: center;
+  border: 1px solid var(--os-clear);
+  color: var(--os-silver);
+  cursor: pointer;
+  display: flex;
+  gap: var(--os-space-default);
+  min-height: var(--os-size-default);
+  padding: var(--os-space-xs) var(--os-space-sm);
+  position: relative;
+  transition: background-color var(--os-duration-fast) ease, color var(--os-duration-fast) ease;
+}
+.os-choice:hover { background: var(--os-surface); color: var(--os-white); }
+.os-choice:focus-within { border-color: var(--os-white); }
+.os-choice-index { color: var(--os-dim); font-size: var(--os-font-xs); }
+.os-choice input {
+  accent-color: var(--os-silver);
+  flex-shrink: 0;
+  height: var(--os-size-xs);
+  margin: 0;
+  width: var(--os-size-xs);
+}
+.os-footer {
+  align-items: center;
+  bottom: var(--os-space-default);
+  color: var(--os-dim);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: var(--os-font-xs);
+  gap: var(--os-space-md);
+  justify-content: space-between;
+  left: var(--os-space-lg);
+  position: absolute;
+  right: var(--os-space-lg);
+  visibility: hidden;
+}
+.os-boot[data-os-phase-ts='waiting'] .os-footer { visibility: visible; }
+.os-replay {
+  background: var(--os-clear);
+  border: 1px solid var(--os-hairline);
+  color: var(--os-silver);
+  cursor: pointer;
+  font: inherit;
+  min-height: var(--os-size-default);
+  padding: var(--os-space-xs) var(--os-space-sm);
+}
+.os-replay:focus-visible { outline: 2px solid var(--os-white); }
+.os-replay:hover { background: var(--os-surface); }
+.os-error { color: var(--os-error); max-width: var(--os-size-xl); }
+.os-error:empty { display: none; }
+.os-sr {
+  clip-path: inset(50%);
+  height: var(--os-size-xxxs);
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  width: var(--os-size-xxxs);
+}
+@keyframes os-blink { 0%, 55% { opacity: 1; } 56%, 100% { opacity: 0; } }
+
+/* Media queries */
+@media (width < 760px) {
+  .os-boot { padding: var(--os-space-xl) var(--os-space-default); }
+  .os-terminal { padding: var(--os-space-md) var(--os-space-default); }
+  .os-footer { left: var(--os-space-default); right: var(--os-space-default); }
+  .os-choice { background: var(--os-surface); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .os-cursor { animation: none; }
+  .os-choices, .os-choice { transition: none; }
+  .os-boot[data-os-format-ts] .os-prelude,
+  .os-boot[data-os-format-ts] .os-question { transform: none; }
+}

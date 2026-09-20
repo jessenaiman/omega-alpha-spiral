@@ -16,6 +16,7 @@ export default defineConfig({
         lab: fileURLToPath(new URL('./lab.html', import.meta.url)),
         floorOne: fileURLToPath(new URL('./floor-one.html', import.meta.url)),
         rogue: fileURLToPath(new URL('./rogue.html', import.meta.url)),
+        intro: fileURLToPath(new URL('./intro.html', import.meta.url)),
       },
     },
   },

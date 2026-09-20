@@ -14,3 +14,4 @@ Dated bullets: symptom → cause → fix. Verified on the pinned Three `0.186.0`
   the lighting+material pass they moved with the art direction (entropy 3.51→2.93,
   edges 0.089→0.097, contrast 96→101, dominant share 0.244→0.55 from the new
   backdrop) instead of jumping on random noise.
+- **Spatial opening glyph pass** — GPU-rendered type still looked like a flat questionnaire when its XYZ displacement and plane angle were barely visible. Use shared font atlases and batched glyph quads, but judge the actual frame: stronger perspective tilt and independent depth made the words read as scene objects. Settle the geometry for the untimed reading state; keep a clipped semantic DOM mirror rather than a second visible interface.

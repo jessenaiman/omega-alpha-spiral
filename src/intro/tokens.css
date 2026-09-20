@@ -1,0 +1,46 @@
+:root {
+  /* Typography */
+  --os-font-xs: 0.72rem;
+  --os-font-sm: 0.82rem;
+  --os-font-default: 0.95rem;
+  --os-font-lg: 1.65rem;
+  --os-font-xl: 2.1rem;
+  --os-weight-default: 400;
+  --os-tracking-default: 0.02em;
+  --os-tracking-lg: 0.14em;
+  --os-leading-default: 1.6;
+  --os-leading-tight: 1.45;
+  /* Spacing */
+  --os-space-xs: 0.5rem;
+  --os-space-sm: 0.8rem;
+  --os-space-default: 1rem;
+  --os-space-md: 1.5rem;
+  --os-space-lg: 2.5rem;
+  --os-space-xl: 4rem;
+  /* Palette */
+  --os-black: #000;
+  --os-white: #e0e6e3;
+  --os-silver: #b6c2c2;
+  --os-dim: #899493;
+  --os-hairline: #26312f;
+  --os-surface: #090e0dcc;
+  --os-glass: #030807ed;
+  --os-amber: #d7bb85;
+  --os-clear: transparent;
+  --os-error: #efb9a7;
+  /* Opacity and timing */
+  --os-opacity-default: 1;
+  --os-duration-fast: 180ms;
+  --os-duration-default: 700ms;
+  --os-duration-cursor: 1100ms;
+  /* Fixed sizes */
+  --os-size-xxxs: 1px;
+  --os-size-xs: 0.8rem;
+  --os-size-default: 2.5rem;
+  --os-size-md: 4.5rem;
+  --os-size-xl: 42rem;
+  --os-size-xxl: 72rem;
+  /* Bounded registration errors: decoration, never moving input targets. */
+  --os-offset-xs: 4px;
+  --os-offset-default: 8px;
+}
