@@ -4,7 +4,8 @@ import {
   Scene, SRGBColorSpace, TorusGeometry, Vector2,
 } from 'three';
 
-import { BOOT_OPTIONS, BOOT_SYMBOLS, type BootFrame } from './ghostwriting';
+import { BOOT_SYMBOLS, wrapText, type BootFrame } from './ghostwriting';
+import asides from './dreamweaver-asides.json';
 
 // Recorded first draw (seed 472): UI pixel-font-step .619, gameplay depth-drift
 // .472, stack plane-skew .716. Deliberately independent, bounded experiments.
@@ -12,9 +13,11 @@ export const BOOT_EFFECTS = { pixelStep: 0.619, depthDrift: 0.472, planeSkew: 0.
 const GLYPHS: string = Array.from({ length: 95 }, (_: unknown, index: number): string => String.fromCharCode(index + 32)).join('') + '∞◊Ω≋※—↑↓↵';
 const ATLAS_COLUMNS: number = 16;
 const ATLAS_ROWS: number = 7;
-const GLYPH_CAPACITY: number = 256;
+const GLYPH_CAPACITY: number = 768;
 const INK: number[] = [0xdce7e8, 0xd7bb85, 0xcc606b];
-const ASIDES: string[] = ["They've already tried that.", 'Still looking for the beginning.', 'Let them try.'];
+const ASIDES: string[] = asides.voices.map((voice): string => voice.text);
+const DEBATE_RIBBONS: number[] = [7, 11, 12];
+const VOICE_MARKS: string[] = ['|', '>', '~'];
 const CURSOR_PERIOD_MS: number = 1150;
 const ASIDE_HOLD_MS: number = 4300;
 const VOICE_COOLDOWN_MS: number = 2500;
@@ -82,6 +85,7 @@ class GlyphRibbon {
   }
 
   public setText(text: string, format: number, columns: number, color: number = INK[0]): void {
+    text = wrapText(text, columns);
     this._front.color.setHex(color);
     if (this._text === text && this._format === format && this._columns === columns) return;
     this._text = text;
@@ -152,7 +156,7 @@ export class SpatialBootScene {
   public init(scene: Scene): void {
     this._atlases = [0, 1, 2].map(createAtlas);
     // command, three boot slots, archive, question, symbols, aside, three choices
-    for (let index: number = 0; index < 11; index += 1) {
+    for (let index: number = 0; index < 13; index += 1) {
       const ribbon: GlyphRibbon = new GlyphRibbon(this._atlases);
       ribbon.init();
       this._ribbons.push(ribbon);
@@ -186,12 +190,18 @@ export class SpatialBootScene {
     for (let index: number = 0; index < 3; index += 1) {
       this._ribbons[index + 1].setText(frame.transcript.split('\n')[index + 1] ?? '', index, columns, INK[index]);
     }
-    this._ribbons[4].setText(frame.prelude, 0, this._isNarrow ? 40 : 78, 0x7e9399);
+    this._ribbons[4].setText(frame.prelude, 0, this._isNarrow ? 40 : 62, frame.transcript ? 0x7e9399 : INK[0]);
     this._ribbons[5].setText(frame.question, frame.format, columns);
     this._ribbons[6].setText(BOOT_SYMBOLS, 2, columns, 0x9ca5a8);
     this._ribbons[7].setText(this._aside, Math.max(this._voice, 0), this._isNarrow ? 30 : 42, INK[Math.max(this._voice, 0)]);
+    if (frame.debate?.length) {
+      this._voice = frame.debate[frame.debate.length - 1].voice;
+      for (const line of frame.debate) {
+        this._ribbons[DEBATE_RIBBONS[line.voice]].setText(`${VOICE_MARKS[line.voice]} ${line.text}`, line.voice, this._isNarrow ? 30 : 42, INK[line.voice]);
+      }
+    }
     for (let index: number = 0; index < 3; index += 1) {
-      this._ribbons[8 + index].setText(`${index + 1}  ${BOOT_OPTIONS[index]}`, index, this._isNarrow ? 34 : 62, INK[index]);
+      this._ribbons[8 + index].setText(`${index + 1}  ${frame.options[index] ?? ''}`, index, this._isNarrow ? 34 : 62, INK[index]);
     }
   }
 
@@ -205,6 +215,7 @@ export class SpatialBootScene {
   }
 
   public getVoice(): number { return this._voice; }
+  public getCursorPosition(): number[] { return this._cursor?.position.toArray() ?? []; }
   public select(index: number): void { this._selected = index; }
 
   public pick(clientX: number, clientY: number, camera: PerspectiveCamera): number {
@@ -228,16 +239,20 @@ export class SpatialBootScene {
   public update(elapsedMs: number, isReduced: boolean): void {
     const frame: BootFrame | null = this._frame;
     if (!frame || !this._cursor || !this._panel) return;
+    this._root.visible = !['doorway', 'crossing', 'complete'].includes(frame.phase);
     const seconds: number = elapsedMs / 1000;
     const isWaiting: boolean = frame.phase === 'waiting';
+    const isDebating: boolean = frame.phase === 'debating';
     const isBoot: boolean = frame.phase === 'cursor' || frame.phase === 'command';
+    const isNarrating: boolean = !isBoot && frame.transcript === '';
     const disorder: number = isReduced || isWaiting ? 0 : frame.isCorrupt ? 1.2 : 0.65;
     const left: number = -this._width * 0.47;
     const scale: number = this._width / (this._isNarrow ? 24 : 32);
     this._panel.visible = !isBoot;
-    this._panel.position.set(isWaiting ? 0 : left * 0.22, 0.15, -0.45);
-    this._panel.scale.set(this._width * (isWaiting ? 1.06 : 0.76), isWaiting ? 5.3 : frame.phase === 'loading' ? 2.4 : 4.3, 1);
-    this._panel.rotation.set(isReduced || isWaiting ? 0 : 0.2, isReduced || isWaiting ? 0 : (frame.format - 1) * 0.32, isReduced || isWaiting ? 0 : -0.055);
+    this._panel.position.set(isWaiting || isNarrating ? 0 : left * 0.22, 0.15, -0.45);
+    this._panel.scale.set(this._width * (isWaiting || isNarrating ? 1.06 : 0.76), isWaiting || isNarrating ? 5.3 : frame.phase === 'loading' ? 2.4 : 4.3, 1);
+    this._panel.rotation.set(isReduced || isWaiting || isNarrating ? 0 : 0.2, isReduced || isWaiting || isNarrating ? 0 : (frame.format - 1) * 0.32, isReduced || isWaiting || isNarrating ? 0 : -0.055);
+    if (isDebating) this._panel.scale.y = 2.8;
     for (let index: number = 0; index < this._ribbons.length; index += 1) {
       const ribbon: GlyphRibbon = this._ribbons[index];
       ribbon.root.visible = true;
@@ -247,10 +262,11 @@ export class SpatialBootScene {
       ribbon.update(seconds, index === 5 || index === 0 ? disorder : disorder * 0.25);
     }
     const command: Group = this._ribbons[0].root;
+    command.visible = !isDebating;
     command.position.set(isBoot ? -this._width * 0.21 : left, isBoot ? 0.25 : 2.35, isBoot ? 0.7 : 0);
     command.scale.setScalar(scale * (isBoot ? 1.2 : 0.75));
     if (!isReduced && !isWaiting) {
-      command.position.y += Math.sin(seconds * 0.45) * 0.12;
+      command.position.y += Math.sin(seconds * 0.12) * 0.12;
       command.rotation.y = Math.sin(seconds * 0.23) * BOOT_EFFECTS.planeSkew * 0.22;
     }
     for (let index: number = 0; index < 3; index += 1) {
@@ -266,8 +282,8 @@ export class SpatialBootScene {
       voice.rotation.set(isReduced || isWaiting ? 0 : seconds * 0.08, 0, isReduced || isWaiting ? 0 : seconds * 0.12 + index);
       voice.scale.setScalar(this._voice === index && elapsedMs - this._asideAt < ASIDE_HOLD_MS ? 1.6 : 1);
     }
-    this._ribbons[4].root.visible = !isBoot;
-    this._ribbons[4].root.scale.setScalar(scale * 0.37);
+    this._ribbons[4].root.visible = !isBoot && !isDebating && frame.question === '';
+    this._ribbons[4].root.scale.setScalar(scale * (frame.transcript ? 0.37 : 0.65));
     this._ribbons[4].root.position.set(left, 1.65, -0.05);
     const question: Group = this._ribbons[5].root;
     question.visible = frame.question.length > 0;
@@ -278,7 +294,7 @@ export class SpatialBootScene {
       question.rotation.set(-0.3, (frame.format - 1) * BOOT_EFFECTS.planeSkew * 0.65 + Math.sin(seconds * 0.2) * 0.15, (frame.format - 1) * 0.055);
     }
     const symbols: Group = this._ribbons[6].root;
-    symbols.visible = isWaiting;
+    symbols.visible = frame.showSymbols;
     symbols.position.set(left, -2.35, 0);
     symbols.scale.setScalar(scale * 1.05);
     const aside: Group = this._ribbons[7].root;
@@ -286,6 +302,18 @@ export class SpatialBootScene {
     aside.position.set(left + this._width * 0.04, -1.85, 0.5);
     aside.scale.setScalar(scale * 0.72);
     aside.rotation.z = isReduced ? 0 : (this._voice - 1) * 0.025;
+    this._ribbons[11].root.visible = false;
+    this._ribbons[12].root.visible = false;
+    if (isDebating) {
+      aside.visible = false;
+      for (const [index, line] of (frame.debate ?? []).entries()) {
+        const ribbon: Group = this._ribbons[DEBATE_RIBBONS[line.voice]].root;
+        ribbon.visible = true;
+        ribbon.position.set(left + scale, 0.9 - index * 0.85, 0.5);
+        ribbon.scale.setScalar(scale * 0.7);
+        ribbon.rotation.set(0, 0, 0);
+      }
+    }
     for (let index: number = 0; index < 3; index += 1) {
       const choice: Group = this._ribbons[index + 8].root;
       choice.visible = isWaiting;
@@ -298,14 +326,14 @@ export class SpatialBootScene {
       target.material.opacity = this._selected === index ? 0.19 : this._hovered === index ? 0.1 : 0.02;
       if (this._selected === index) choice.position.x += scale * 0.3;
     }
-    this._cursor.visible = !isWaiting && (isReduced || elapsedMs % CURSOR_PERIOD_MS < 690);
+    this._cursor.visible = !isWaiting && !isNarrating && (isReduced || elapsedMs % CURSOR_PERIOD_MS < 690);
     this._cursor.position.copy(isBoot ? command.position : question.visible ? question.position : this._ribbons[3].root.position);
     const lastLine: string = (isBoot ? frame.transcript : frame.question).split('\n').at(-1) ?? '';
     this._cursor.position.x += Math.min(lastLine.length, this._isNarrow ? 28 : 41) * 0.64 * scale * (isBoot ? 1.2 : 1);
     this._cursor.position.y += scale * 0.45;
     if (!isBoot && frame.question.includes('\n')) this._cursor.position.y -= scale * 1.35;
     this._cursor.position.z += 0.1;
-    this._cursor.rotation.set(0, isReduced ? 0 : Math.sin(seconds * 0.45) * 0.55, isReduced ? 0 : Math.sin(seconds * 0.3) * 0.1);
+    this._cursor.rotation.set(0, isReduced ? 0 : Math.sin(seconds * 0.12) * 0.35, isReduced ? 0 : Math.sin(seconds * 0.08) * 0.07);
     this._cursor.scale.set(frame.format === 1 ? 0.14 : 1, frame.format === 2 ? 0.14 : 1, 1);
   }
 

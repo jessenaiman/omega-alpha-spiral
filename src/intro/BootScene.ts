@@ -1,12 +1,17 @@
 import { loadVfxExportBundle } from 'nixie-fx/export';
+import GUI from 'lil-gui';
 import { ThreeVfxRenderer, type ThreeVfxEffectInstance } from 'nixie-fx/three';
 import { Mesh, PerspectiveCamera, PlaneGeometry, Scene, ShaderMaterial, SRGBColorSpace, Texture, TextureLoader, Vector2, WebGLRenderer } from 'three';
 
 import distantUrl from '../../assets/intro/optical-variations/optical-a-distant.webp';
 import foldUrl from '../../assets/intro/optical-variations/optical-b-fold.webp';
 import thresholdUrl from '../../assets/intro/optical-variations/optical-c-threshold.webp';
-import { BOOT_OPTIONS, createBootFrames, type BootFrame } from './ghostwriting';
+import { BOOT_OPTIONS, type BootFrame } from './ghostwriting';
 import { BOOT_EFFECTS, SpatialBootScene } from './SpatialBootScene';
+import { FORMATION_DURATION_MS, StoryController } from './StoryController';
+import { ThresholdScene } from './ThresholdScene';
+import { Starfield } from './Starfield';
+import { ChapterTwoScene } from '../chapter-two/ChapterTwoScene';
 import dustBundle from './vfx/boot-dust.bundle.json';
 
 const SEED: number = 472;
@@ -59,15 +64,20 @@ export class BootScene {
   private _scene: Scene | null = null;
   private _camera: PerspectiveCamera | null = null;
   private _spatial: SpatialBootScene = new SpatialBootScene();
+  private _threshold: ThresholdScene = new ThresholdScene();
+  private _stars: Starfield = new Starfield();
+  private _chapterTwo: ChapterTwoScene = new ChapterTwoScene();
+  private _visualMs: number = 0;
+  private _artControls: GUI | null = null;
   private _activeChoice: number = 0;
   private _plate: Mesh<PlaneGeometry, ShaderMaterial> | null = null;
   private _textures: Texture[] = [];
   private _vfx: ThreeVfxRenderer | null = null;
   private _dust: ThreeVfxEffectInstance | null = null;
   private _abort: AbortController = new AbortController();
-  private _frames: BootFrame[] = createBootFrames(String(SEED));
-  private _frameIndex: number = -1;
-  private _elapsedMs: number = 0;
+  private _story: StoryController = new StoryController(String(SEED));
+  private _lastFrame: BootFrame | null = null;
+  private _pace: number = 1;
   private _previousMs: number = 0;
   private _raf: number = 0;
   private _isReduced: boolean = false;
@@ -93,7 +103,13 @@ export class BootScene {
     const motion: MediaQueryList = matchMedia('(prefers-reduced-motion: reduce)');
     this._isReduced = motion.matches;
     const signal: AbortSignal = this._abort.signal;
+    const params: URLSearchParams = new URLSearchParams(location.search);
+    this._chapterTwo.init(this._root, params.has('debug'));
+    const pace: number = Number(params.get('pace') ?? 1);
+    this._pace = params.has('debug') && Number.isFinite(pace) ? Math.min(Math.max(pace, 1), 20) : 1;
     motion.addEventListener('change', () => { this._isReduced = motion.matches; }, { signal });
+    getElement('#os-begin-ts', HTMLButtonElement).addEventListener('click', () => this._start(), { signal });
+    getElement('#os-enter-ts', HTMLButtonElement).addEventListener('click', () => this._enterDoor(), { signal });
     getElement('#os-replay-ts', HTMLButtonElement).addEventListener('click', () => this._reset(), { signal });
     window.addEventListener('resize', () => this._resize(), { signal });
     window.addEventListener('keydown', this._onKeyDown, { signal });
@@ -102,8 +118,9 @@ export class BootScene {
     }, { signal });
     window.addEventListener('pointerup', (event: PointerEvent): void => {
       if (!this._camera || (event.target instanceof Element && event.target.closest('button'))) return;
+      if (!this._story.isStarted) { this._start(); return; }
       const index: number = this._spatial.pick(event.clientX, event.clientY, this._camera);
-      if (index >= 0) this._selectChoice(index);
+      if (index >= 0) this._answerChoice(index);
     }, { signal });
     this._choices.addEventListener('change', (): void => {
       const inputs: HTMLInputElement[] = Array.from(document.querySelectorAll<HTMLInputElement>('input[name="story"]'));
@@ -129,6 +146,18 @@ export class BootScene {
       this._camera = new PerspectiveCamera(36, 1, 0.1, 40);
       this._camera.position.z = 10;
       this._spatial.init(this._scene);
+      this._stars.init(this._scene, SEED);
+      if (params.has('debug') && params.has('art')) {
+        this._artControls = new GUI({ title: 'Three.js stars — live study' });
+        this._artControls.add(this._stars.settings, 'speed', 0, 1.5, 0.01);
+        this._artControls.add(this._stars.settings, 'intensity', 0, 1, 0.01);
+        this._artControls.add(this._stars.settings, 'size', 1, 5, 0.1);
+        this._artControls.add(this._stars.settings, 'count', 0, 360, 1);
+      }
+      this._threshold.init(this._scene, (): void => {
+        if (this._root) this._root.dataset.osDoorTs = 'ready';
+        this._applyFrame(this._story.frame);
+      }, (): void => this._showError('The doorway could not load. Reload to try again.'));
       const bundle = loadVfxExportBundle(dustBundle, { requiredBackend: 'three3d', requiredEffectIds: ['boot-dust'], requireEveryAsset: true });
       const effect = bundle.effectsById.get('boot-dust');
       if (!effect) throw new Error('Boot dust is missing');
@@ -171,7 +200,8 @@ export class BootScene {
         Object.assign(window, { __INTRO_DIAGNOSTICS__: {
           renderer: this._renderer.info,
           effects: BOOT_EFFECTS,
-          getState: (): object => ({ phase: this._frames[Math.max(0, this._frameIndex)].phase, elapsedMs: this._elapsedMs, frameIndex: this._frameIndex, voice: this._spatial.getVoice(), text: 'batched-glyph-assets' }),
+          getState: (): object => ({ phase: this._story.frame.phase, elapsedMs: this._story.elapsedMs, ambientMs: this._story.ambientMs, formationMs: this._story.formationMs, sceneIndex: this._story.sceneIndex, answers: [...this._story.answers], thread: this._story.thread, cameraZ: this._story.cameraZ, door: this._threshold.getState(), cursor: this._spatial.getCursorPosition(), voice: this._spatial.getVoice(), text: 'batched-glyph-assets',
+            background: { time: this._isReduced ? 0 : this._visualMs, drift: this._plate?.material.uniforms.drift.value.toArray(), zoom: this._plate?.material.uniforms.zoom.value }, stars: this._stars.getState() }),
         } });
       }
     } catch (error: unknown) {
@@ -196,14 +226,16 @@ export class BootScene {
   }
 
   private _reset(): void {
-    this._elapsedMs = 0;
-    this._frameIndex = -1;
+    this._chapterTwo.stop();
+    this._story.reset();
+    this._visualMs = 0;
+    this._lastFrame = null;
     this._previousMs = performance.now();
     this._spatial.reset();
     this._activeChoice = 0;
     getElement('#os-aside-ts', HTMLElement).textContent = '';
     if (this._root) this._root.dataset.osVoiceTs = '-1';
-    this._applyFrame(this._frames[0]);
+    this._applyFrame(this._story.frame);
     this._dust?.stop();
     this._dust?.restart();
     this._dust?.pause();
@@ -215,25 +247,40 @@ export class BootScene {
     const delta: number = Math.min(Math.max((now - this._previousMs) / 1000, 0), MAX_DELTA_SECONDS);
     this._previousMs = now;
     if (!document.hidden) {
-      const endMs: number = this._frames[this._frames.length - 1].at;
-      this._elapsedMs = this._isReduced ? endMs : Math.min(this._elapsedMs + delta * 1000, endMs);
-      const displayMs: number = this._elapsedMs;
-      let next: number = this._frameIndex;
-      while (next + 1 < this._frames.length && this._frames[next + 1].at <= displayMs) next += 1;
-      if (next !== this._frameIndex) {
-        this._frameIndex = next;
-        this._applyFrame(this._frames[next]);
+      this._story.advance(delta * 1000 * this._pace);
+      const displayMs: number = this._story.elapsedMs;
+      const frame: BootFrame = this._story.frame;
+      if (frame.phase === 'complete') {
+        if (!this._chapterTwo.active) {
+          this._applyFrame(frame);
+          this._artControls?.hide();
+          this._chapterTwo.start(this._story.thread);
+        }
+        this._chapterTwo.update(delta, this._renderer, this._isReduced);
+        this._raf = requestAnimationFrame(this._update);
+        return;
+      }
+      // Ambient travel never advances a question or the door's formation pose.
+      // It also stays at real speed when the debug story clock is accelerated.
+      if (this._story.isStarted) this._visualMs += delta * 1000;
+      if (frame !== this._lastFrame) {
+        this._lastFrame = frame;
+        this._applyFrame(frame);
       }
       const firstMix: number = this._isReduced ? 0 : Math.min(Math.max((displayMs - FIRST_DISSOLVE_MS) / DISSOLVE_DURATION_MS, 0), 1);
       const secondMix: number = this._isReduced ? 0 : Math.min(Math.max((displayMs - SECOND_DISSOLVE_MS) / DISSOLVE_DURATION_MS, 0), 1);
       this._plate.material.uniforms.firstMix.value = firstMix;
       this._plate.material.uniforms.secondMix.value = secondMix;
-      this._plate.material.uniforms.zoom.value = this._isReduced ? 1 : 1 + Math.min(displayMs / ZOOM_DURATION_MS, 1) * 0.06;
-      this._plate.material.uniforms.reveal.value = this._isReduced ? 0.7 : Math.min(Math.max((displayMs - 4400) / 1600, 0), 0.85);
-      this._plate.material.uniforms.drift.value.set(this._isReduced ? 0 : Math.sin(displayMs / 13000) * 0.019, this._isReduced ? 0 : Math.cos(displayMs / 19000) * 0.013);
-      this._spatial.update(displayMs, this._isReduced);
+      this._plate.material.uniforms.zoom.value = this._isReduced ? 1 : 1.035 + Math.min(this._visualMs / ZOOM_DURATION_MS, 1) * 0.025 + (1 - Math.cos(this._visualMs / 27000)) * 0.025;
+      this._plate.material.uniforms.reveal.value = this._isReduced ? (displayMs > 4400 ? 0.7 : 0) : Math.min(Math.max((displayMs - 4400) / 1600, 0), 0.85);
+      this._plate.material.uniforms.drift.value.set(this._isReduced ? 0 : Math.sin(this._visualMs / 13000) * 0.012, this._isReduced ? 0 : Math.sin(this._visualMs / 19000) * 0.01);
+      this._spatial.update(this._story.ambientMs, this._isReduced);
+      this._threshold.update(this._story.formationMs / FORMATION_DURATION_MS, displayMs > FIRST_DISSOLVE_MS, this._isReduced);
+      this._camera.position.z = this._story.cameraZ;
+      this._stars.update(this._visualMs / 1000, displayMs > FIRST_DISSOLVE_MS, this._isReduced, this._story.cameraZ);
+      this._plate.position.z = this._camera.position.z - 11;
       if (this._root) this._root.dataset.osPlateTs = secondMix === 1 ? '2' : firstMix === 1 ? '1' : '0';
-      const isDustVisible: boolean = !this._isReduced && displayMs > FIRST_DISSOLVE_MS && displayMs < endMs;
+      const isDustVisible: boolean = !this._isReduced && displayMs > FIRST_DISSOLVE_MS && frame.phase !== 'waiting';
       if (isDustVisible) {
         this._dust?.play();
         this._vfx?.update(delta);
@@ -248,45 +295,88 @@ export class BootScene {
     if (!this._root || !this._prelude || !this._question || !this._choices || !this._accessibleQuestion || !this._transcript || !this._feed) return;
     if (this._isReduced && frame.isCorrupt) return;
     this._root.dataset.osPhaseTs = frame.phase;
+    this._root.dataset.osStartedTs = String(this._story.isStarted);
+    this._root.dataset.osSceneTs = String(this._story.sceneIndex);
     this._root.dataset.osCorruptTs = frame.isCorrupt ? 'true' : 'false';
     this._root.dataset.osFormatTs = frame.phase === 'waiting' ? 'settled' : String(frame.format);
     this._root.dataset.osTextTs = 'three';
     this._spatial.setFrame(frame);
+    if (frame.phase === 'debating') {
+      getElement('#os-aside-ts', HTMLElement).textContent = (frame.debate ?? []).map((line): string => line.text).join('\n');
+      this._root.dataset.osVoiceTs = String(this._spatial.getVoice());
+    }
     this._prelude.textContent = frame.prelude;
     this._transcript.textContent = frame.transcript;
     this._question.textContent = frame.question;
     // Discrete line-feed jumps, not a smooth page scroll; only while output is changing.
     this._feed.scrollTop = this._feed.scrollHeight;
     this._choices.disabled = frame.phase !== 'waiting';
+    document.querySelectorAll<HTMLElement>('.os-choice-copy').forEach((element: HTMLElement, index: number): void => { element.textContent = frame.options[index] ?? ''; });
+    getElement('#os-begin-ts', HTMLButtonElement).disabled = this._story.isStarted;
+    getElement('#os-enter-ts', HTMLButtonElement).disabled = frame.phase !== 'doorway' || !this._threshold.isReady;
+    getElement('#os-hint-ts', HTMLElement).textContent = frame.phase === 'cursor' ? 'Enter · touch to begin' : frame.phase === 'waiting' ? '1 2 3 · ↑ ↓ then Enter · click an answer' : frame.phase === 'doorway' ? 'Enter · W · step through' : frame.phase === 'complete' ? 'Scene 1 complete' : '';
     // Screen readers hear the complete question once, not a stream of corrected letters.
     this._accessibleQuestion.textContent = frame.phase === 'waiting' ? frame.question : '';
   }
 
   private _selectChoice(index: number): void {
     const inputs: NodeListOf<HTMLInputElement> = document.querySelectorAll<HTMLInputElement>('input[name="story"]');
-    if (!inputs[index] || inputs[index].disabled) return;
+    if (this._story.frame.phase !== 'waiting' || !inputs[index]) return;
     this._activeChoice = index;
     inputs[index].checked = true;
     this._spatial.select(index);
   }
 
+  private _start(): void {
+    if (this._root?.dataset.osArtTs !== 'ready') return;
+    this._story.start();
+    this._applyFrame(this._story.frame);
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+  }
+
+  private _enterDoor(): void {
+    if (this._threshold.isReady) this._story.enterDoor();
+  }
+
+  private _answerChoice(index: number): void {
+    if (!this._story.choose(index)) return;
+    this._activeChoice = 0;
+    this._spatial.select(-1);
+    document.querySelectorAll<HTMLInputElement>('input[name="story"]').forEach((input: HTMLInputElement): void => { input.checked = false; });
+    this._applyFrame(this._story.frame);
+    if (document.activeElement instanceof HTMLInputElement) document.activeElement.blur();
+  }
+
   private _onKeyDown = (event: KeyboardEvent): void => {
+    if (this._chapterTwo.active) return;
     if (event.repeat || event.ctrlKey || event.metaKey || event.altKey || ['Tab', 'Shift', 'Control', 'Alt', 'Meta', 'Escape'].includes(event.key)) return;
-    if (event.target instanceof Element && event.target.closest('button, input')) return;
-    if (this._frames[Math.max(0, this._frameIndex)].phase !== 'waiting') {
-      const aside: string | null = this._spatial.interrupt(this._elapsedMs);
+    if (event.target instanceof Element && event.target.closest('button')) return;
+    if (!this._story.isStarted) {
+      if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); this._start(); }
+      return;
+    }
+    if (this._story.frame.phase === 'doorway' && ['Enter', ' ', 'w', 'W', 'ArrowUp'].includes(event.key)) {
+      event.preventDefault();
+      this._enterDoor();
+      return;
+    }
+    if (this._story.frame.phase === 'debating') return;
+    if (this._story.frame.phase !== 'waiting') {
+      const aside: string | null = this._spatial.interrupt(this._story.ambientMs);
       if (aside) {
         getElement('#os-aside-ts', HTMLElement).textContent = aside;
         if (this._root) this._root.dataset.osVoiceTs = String(this._spatial.getVoice());
       }
       return;
     }
+    if (event.target instanceof HTMLInputElement && event.key !== 'Enter') return;
     if (['ArrowDown', 'ArrowUp', ' ', 'Enter', '1', '2', '3'].includes(event.key)) {
       event.preventDefault();
       if (event.key === 'ArrowDown') this._activeChoice = (this._activeChoice + 1) % 3;
       if (event.key === 'ArrowUp') this._activeChoice = (this._activeChoice + 2) % 3;
       if (['1', '2', '3'].includes(event.key)) this._activeChoice = Number(event.key) - 1;
       this._selectChoice(this._activeChoice);
+      if (['1', '2', '3', 'Enter', ' '].includes(event.key)) this._answerChoice(this._activeChoice);
     }
   };
 
@@ -303,6 +393,10 @@ export class BootScene {
     this._abort.abort();
     this._vfx?.destroy();
     this._spatial.destroy();
+    this._threshold.destroy();
+    this._chapterTwo.destroy();
+    this._stars.destroy();
+    this._artControls?.destroy();
     this._plate?.geometry.dispose();
     this._plate?.material.dispose();
     this._textures.forEach((texture: Texture): void => texture.dispose());

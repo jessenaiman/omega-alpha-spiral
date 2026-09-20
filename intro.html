@@ -8,7 +8,7 @@
     <title>omega-spiral — an invitation</title>
   </head>
   <body class="os-body">
-    <main class="os-boot" data-os-phase-ts="cursor" data-os-art-ts="loading" data-os-plate-ts="0" data-os-format-ts="plain" data-os-corrupt-ts="false" data-os-text-ts="loading" data-os-voice-ts="-1">
+    <main class="os-boot" data-chapter="1" data-os-phase-ts="cursor" data-os-started-ts="false" data-os-scene-ts="0" data-os-art-ts="loading" data-os-door-ts="loading" data-os-plate-ts="0" data-os-format-ts="plain" data-os-corrupt-ts="false" data-os-text-ts="loading" data-os-voice-ts="-1">
       <canvas id="os-canvas-ts" class="os-canvas" aria-hidden="true"></canvas>
       <!-- Accessible mirror only. The visible cursor, letters and choices are WebGL assets. -->
       <section class="os-sr" aria-label="An invitation">
@@ -26,7 +26,12 @@
         <p id="os-aside-ts" aria-live="polite"></p>
       </section>
       <p id="os-error-ts" class="os-error" role="alert"></p>
-      <footer class="os-footer"><span>1 2 3 · ↑ ↓ · click a story</span><button id="os-replay-ts" class="os-replay" type="button">replay boot ↺</button></footer>
+      <footer class="os-footer">
+        <span id="os-hint-ts">Enter · touch to begin</span>
+        <button id="os-begin-ts" class="os-replay os-begin" type="button">begin</button>
+        <button id="os-enter-ts" class="os-replay os-enter" type="button" disabled>step through</button>
+        <button id="os-replay-ts" class="os-replay" type="button">replay boot ↺</button>
+      </footer>
     </main>
     <noscript>This opening needs JavaScript enabled.</noscript>
     <script type="module" src="/src/intro/main.ts"></script>

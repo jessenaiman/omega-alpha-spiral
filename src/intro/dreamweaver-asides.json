@@ -1,0 +1,8 @@
+{
+  "status": "Existing prototype wording, not approved canon. Separate from the staged script; revise only with owner direction.",
+  "voices": [
+    { "owner": "light", "text": "They've already tried that." },
+    { "owner": "shadow", "text": "Still looking for the beginning." },
+    { "owner": "ambition", "text": "Let them try." }
+  ]
+}

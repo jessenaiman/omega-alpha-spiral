@@ -127,7 +127,10 @@
   right: var(--os-space-lg);
   visibility: hidden;
 }
-.os-boot[data-os-phase-ts='waiting'] .os-footer { visibility: visible; }
+.os-boot[data-os-art-ts='ready'] .os-footer { visibility: visible; }
+.os-begin, .os-enter { display: none; }
+.os-boot[data-os-started-ts='false'] .os-begin,
+.os-boot[data-os-phase-ts='doorway'] .os-enter { display: inline-block; }
 .os-replay {
   background: var(--os-clear);
   border: 1px solid var(--os-hairline);
