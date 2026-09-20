@@ -105,12 +105,14 @@ For current project state, completed work, known issues, and next steps read `ha
 
 ### Issue tracker
 
-Executable work lives in GitHub Issues for `jessenaiman/omega-alpha-spiral`. See `docs/agents/issue-tracker.md`.
+Executable work lives in GitHub Issues for `jessenaiman/omega-alpha-spiral`. See `project-management/agents/issue-tracker.md`.
 
 ### Triage labels
 
-Use the five canonical GitHub issue labels. See `docs/agents/triage-labels.md`.
+Use the five canonical GitHub issue labels. See `project-management/agents/triage-labels.md`.
 
 ### Domain docs
 
-This is a single-context repository: read root `CONTEXT.md` and relevant decisions in `docs/adr/`. See `docs/agents/domain.md`.
+This is a single-context repository: read root `CONTEXT.md` and relevant decisions in `project-management/adr/`. See `project-management/agents/domain.md`.
+
+## RULES

@@ -9,8 +9,8 @@ Each scene the dreamweavers challenge the player and offer 3 choices that repres
 
 ## Language
 
-**Dreamweaver**:
-One of the three presences that speak to the player — Light, Shadow, and Ambition. Fragments of Omega's shattered soul, each believing itself the real guide, competing to be the one that leads the player.
+**THERE ARE THREE Dreamweaver**:
+ Light, Shadow, and Ambition. Fragments of Omega's shattered soul, each believing itself the real guide, competing to be the one that leads the player.
 _Avoid_: Echo, shard, persona, narrator, "echo of Light"
 
 **Light**:

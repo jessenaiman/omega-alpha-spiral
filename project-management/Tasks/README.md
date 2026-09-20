@@ -44,5 +44,5 @@ Keep subjective visual, audio, narrative, and interaction feedback here. When fe
 
 - [[../HUB|Creative hub]]
 - [[../BOARD|Creative board]]
-- [[../UI-REVIEW|Floor One feedback inbox]]
+- [[UI-REVIEW|Floor One feedback inbox]]
 - [GitHub Issues](https://github.com/jessenaiman/omega-alpha-spiral/issues)

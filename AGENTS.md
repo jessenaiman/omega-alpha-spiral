@@ -4,6 +4,9 @@ PAUSE: Do not search, grep, inspect code, or edit before confirming the handoff.
 CONFIRM: Report task, branch, last result, and next step; ask the user if current.
 LEARN: Relevant skills read/write their existing `learnings.md`; update the task handoff.
 [DO NOT EDIT LINE 1-5]
+
+## Replacement Tools:
+Eleven Labs: `https://github.com/debpalash/VoiceStudio`
 ---
 ## RULES FOR ADDING TO THIS
 - bullet points, have purpose, like less context `/caveman full|ultra`

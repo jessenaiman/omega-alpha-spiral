@@ -1,6 +1,6 @@
 # Creative Workflow
 
-Obsidian develops intent. GitHub Issues executes it.
+Small wins build momentum. Break the task down, and put the excess idea on the board with an attached task note. 
 
 ## 1. Capture
 
