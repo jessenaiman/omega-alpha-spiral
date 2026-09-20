@@ -98,3 +98,21 @@ Before claiming or resuming any task in the parallel-session system (`handover/`
 ## Project State
 
 For current project state, completed work, known issues, and next steps read `handover.md` in the project root.
+
+---
+
+## Agent skills
+
+### Issue tracker
+
+Executable work lives in GitHub Issues for `jessenaiman/omega-alpha-spiral`. See `project-management/agents/issue-tracker.md`.
+
+### Triage labels
+
+Use the five canonical GitHub issue labels. See `project-management/agents/triage-labels.md`.
+
+### Domain docs
+
+This is a single-context repository: read root `CONTEXT.md` and relevant decisions in `project-management/adr/`. See `project-management/agents/domain.md`.
+
+## RULES

@@ -1,0 +1,49 @@
+{
+  "url": "http://127.0.0.1:5188/floor-one.html?state=pause",
+  "mode": "mobile",
+  "state": null,
+  "requestedState": null,
+  "appliedState": null,
+  "runId": "ui-pause-mobile",
+  "seed": null,
+  "screenshotPath": "artifacts\\floor-one-ui\\pause-mobile\\mobile.png",
+  "gpu": {
+    "renderer": "ANGLE (NVIDIA, NVIDIA GeForce GTX 1660 (0x00002184) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+    "vendor": "Google Inc. (NVIDIA)",
+    "softwareRendered": false
+  },
+  "result": {
+    "ok": true,
+    "reason": "nonblank",
+    "rect": {
+      "x": 0,
+      "y": 63,
+      "width": 390,
+      "height": 492
+    },
+    "drawingBuffer": {
+      "width": 780,
+      "height": 984
+    },
+    "alphaPixels": 4102,
+    "variance": 251,
+    "colorBuckets": 14,
+    "metrics": {
+      "colorBuckets": 27,
+      "colorEntropyBits": 0.93,
+      "edgeDensity": 0.012,
+      "luminance": {
+        "mean": 8,
+        "p5": 5.9,
+        "p95": 10.7,
+        "contrast": 4.7
+      },
+      "dominantColorShare": 0.718,
+      "nonBackgroundShare": 0.282
+    },
+    "renderBudget": null,
+    "diagnostics": null
+  },
+  "consoleErrors": [],
+  "pageErrors": []
+}

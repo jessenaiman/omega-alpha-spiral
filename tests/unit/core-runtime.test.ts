@@ -17,7 +17,7 @@ import {
 } from '../../src/core';
 
 // --- seeded randomness --------------------------------------------------------
-
+//NOTE: THIS SHIT IS NOT A REAL TEST. NOT A USER REQUIREMENT SCOPE CREEP
 test('the same seed produces the same sequence', () => {
   const first = createRng('ghost-terminal');
   const second = createRng('ghost-terminal');
@@ -31,7 +31,7 @@ test('a different seed produces a different sequence', () => {
   const b = Array.from({ length: 8 }, () => createRng('beta').next());
   assert.notDeepEqual(a, b);
 });
-
+// NOT A USER REQUIREMENT SCOPE CREEP WTF
 test('a fork is deterministic and independent of the parent draw', () => {
   const draw = (rng: ReturnType<typeof createRng>): number[] =>
     Array.from({ length: 6 }, () => rng.next());
@@ -121,78 +121,7 @@ test('the loop advances in whole fixed steps and drops older time', () => {
   assert.deepEqual(steps, [10, 10, 10, 10, 10, 10]);
 });
 
-// --- input intents ------------------------------------------------------------
-
-interface FakeTarget {
-  addEventListener(type: string, listener: (event: Event) => void): void;
-  removeEventListener(type: string, listener: (event: Event) => void): void;
-  dispatch(type: string, event: Partial<KeyboardEvent>): void;
-}
-
-function fakeTarget(): FakeTarget {
-  const listeners = new Map<string, Set<(event: Event) => void>>();
-  return {
-    addEventListener(type, listener) {
-      let set = listeners.get(type);
-      if (!set) {
-        set = new Set();
-        listeners.set(type, set);
-      }
-      set.add(listener);
-    },
-    removeEventListener(type, listener) {
-      listeners.get(type)?.delete(listener);
-    },
-    dispatch(type, event) {
-      for (const listener of [...(listeners.get(type) ?? [])]) {
-        listener(event as unknown as Event);
-      }
-    },
-  };
-}
-
-test('keyboard emits intents, not keys, and edges clear as they are read', () => {
-  const target = fakeTarget();
-  const input = createInputController({ target, gamepad: () => null });
-
-  target.dispatch('keydown', { code: 'KeyD' });
-  target.dispatch('keydown', { code: 'Space' });
-  const first = input.readIntents();
-  assert.deepEqual(first, { moveX: 1, moveY: 0, dash: true, act: false, pause: false });
-  const second = input.readIntents();
-  assert.equal(second.dash, false, 'dash is an edge, not a held state');
-  assert.equal(second.moveX, 1, 'movement is held state');
-
-  target.dispatch('keyup', { code: 'KeyD' });
-  assert.equal(input.readIntents().moveX, 0);
-  input.dispose();
-});
-
-test('a gamepad reaches the same intents as the keyboard', () => {
-  let buttons = [{ pressed: false }, { pressed: false }, { pressed: false }];
-  const axes = [0, 0, 0, 0];
-  axes[0] = -1;
-  buttons = [{ pressed: false }, { pressed: false }, { pressed: true }];
-  const input = createInputController({
-    target: fakeTarget(),
-    gamepad: () => ({ axes, buttons }),
-  });
-  const intents = input.readIntents();
-  assert.equal(intents.moveX, -1);
-  assert.equal(intents.act, true);
-  assert.equal(input.readIntents().act, false, 'the west button is an edge too');
-  input.dispose();
-});
-
-test('losing focus releases every held key', () => {
-  const target = fakeTarget();
-  const input = createInputController({ target, gamepad: () => null });
-  target.dispatch('keydown', { code: 'KeyW' });
-  assert.equal(input.readIntents().moveY, 1);
-  target.dispatch('blur', {});
-  assert.equal(input.readIntents().moveY, 0);
-  input.dispose();
-});
+//No faking user gameplay read the skills or your work and you end
 
 // --- settings -----------------------------------------------------------------
 
@@ -239,6 +168,34 @@ test('the state registry refuses a name nobody declared', () => {
   assert.throws(() => states.apply('archive-crossing'), /unknown capture state/);
 });
 
+interface FakeTarget {
+  addEventListener(type: string, listener: (event: Event) => void): void;
+  removeEventListener(type: string, listener: (event: Event) => void): void;
+  dispatch(type: string, event: Partial<KeyboardEvent>): void;
+}
+
+function fakeTarget(): FakeTarget {
+  const listeners = new Map<string, Set<(event: Event) => void>>();
+  return {
+    addEventListener(type, listener) {
+      let set = listeners.get(type);
+      if (!set) {
+        set = new Set();
+        listeners.set(type, set);
+      }
+      set.add(listener);
+    },
+    removeEventListener(type, listener) {
+      listeners.get(type)?.delete(listener);
+    },
+    dispatch(type, event) {
+      for (const listener of [...(listeners.get(type) ?? [])]) {
+        listener(event as unknown as Event);
+      }
+    },
+  };
+}
+
 // --- the host -----------------------------------------------------------------
 
 function testHost(options: { seed?: string } = {}) {
@@ -251,115 +208,6 @@ function testHost(options: { seed?: string } = {}) {
     gamepad: () => null,
   });
 }
-
-test('the host starts on Omega asking the opening question', () => {
-  const host = testHost();
-  const kinds = host.log.map(event => event.type);
-  assert.deepEqual(kinds, ['run.begin', 'question.ask']);
-  assert.equal(host.state.speaker, 'omega');
-  assert.equal(host.state.question, 'omega.opening');
-  assert.equal(host.state.rung, 'dot');
-  host.dispose();
-});
-
-test('a choice emits the beat, the score, the ladder step, and the next ask', () => {
-  const host = testHost();
-  const events = host.choose('shadow');
-  assert.deepEqual(
-    events.map(event => event.type),
-    ['choice.commit', 'affinity.change', 'ladder.advance', 'dreamweaver.ask-to-speak', 'question.ask'],
-  );
-  assert.deepEqual(host.state.affinity, { light: 0, shadow: 1, ambition: 0 });
-  assert.equal(host.state.speaker, 'shadow');
-  assert.equal(host.state.rung, 'line');
-  assert.equal(host.state.questionOrder.length, 3);
-  host.dispose();
-});
-
-test('a Dreamweaver that has already spoken hands the turn on, and all three speak once', () => {
-  const host = testHost();
-  host.choose('light');
-  host.choose('light');
-  host.choose('light');
-  host.choose('light');
-  assert.deepEqual([...host.state.rotation], ['light', 'shadow', 'ambition']);
-  assert.equal(new Set(host.state.rotation).size, host.state.rotation.length);
-  assert.equal(host.state.phase, 'omega-last');
-  assert.equal(host.state.speaker, 'omega');
-  assert.equal(host.state.question, 'omega.name');
-  host.dispose();
-});
-
-test('the closing name completes the run and attaches the pairing', () => {
-  const host = testHost();
-  host.choose('light');
-  host.choose('light');
-  host.choose('light');
-  host.choose('light');
-  const events = host.submitName('  Wren  ');
-  assert.deepEqual(events.map(event => event.type), ['name.submit', 'run.complete']);
-  assert.equal(host.state.phase, 'complete');
-  assert.equal(host.state.playerName, 'Wren');
-  assert.equal(host.state.pairing, 'light');
-  assert.throws(() => host.choose('shadow'), /complete/);
-  host.dispose();
-});
-
-test('the ladder never regresses across a whole run', () => {
-  const order = ['dot', 'line', 'box', 'icon'];
-  const host = testHost();
-  let previous = 0;
-  for (const pick of ['ambition', 'light', 'shadow', 'ambition'] as const) {
-    host.choose(pick);
-    const index = order.indexOf(host.state.rung);
-    assert.ok(index >= previous, `ladder regressed at ${host.state.rung}`);
-    previous = index;
-  }
-  host.dispose();
-});
-
-test('a paused scene stops simulating but keeps rendering', () => {
-  const frames: Array<{ paused: boolean; alpha: number }> = [];
-  const host = createSceneHost({
-    seed: 'capture',
-    openingQuestion: 'omega.opening',
-    closingQuestion: 'omega.name',
-    dreamweaverQuestions: ['dw.a', 'dw.b', 'dw.c'],
-    inputTarget: fakeTarget(),
-    onFrame: frame => frames.push({ paused: frame.paused, alpha: frame.alpha }),
-  });
-  host.update(17);
-  assert.equal(host.loop.steps, 1);
-  host.setPaused(true);
-  assert.equal(host.update(17), 0);
-  assert.equal(host.loop.steps, 1, 'no simulation while paused for capture');
-  assert.equal(frames.at(-1)?.paused, true);
-  assert.equal(frames.at(-1)?.alpha, 1, 'the scene stays renderable');
-  assert.deepEqual(host.choose('light'), [], 'a paused scene accepts no choice');
-  host.setPaused(false);
-  assert.equal(host.update(17), 1);
-  assert.equal(host.choose('light').length > 0, true);
-  host.dispose();
-});
-
-test('the escape intent pauses the scene and the next one resumes it', () => {
-  const target = fakeTarget();
-  const host = createSceneHost({
-    seed: 'pause',
-    openingQuestion: 'omega.opening',
-    closingQuestion: 'omega.name',
-    dreamweaverQuestions: ['dw.a', 'dw.b', 'dw.c'],
-    inputTarget: target,
-    gamepad: () => null,
-  });
-  target.dispatch('keydown', { code: 'Escape' });
-  host.update(17);
-  assert.equal(host.paused, true);
-  target.dispatch('keydown', { code: 'Escape' });
-  host.update(17);
-  assert.equal(host.paused, false);
-  host.dispose();
-});
 
 test('the acceptance hooks reach real state and reject what they cannot', () => {
   const target: Parameters<ReturnType<typeof createSceneHost>['installAcceptanceSurfaces']>[0] = {};

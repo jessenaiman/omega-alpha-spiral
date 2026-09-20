@@ -1,0 +1,138 @@
+{
+  "errors": [],
+  "selected": "romance",
+  "snapshots": [
+    {
+      "name": "cursor",
+      "state": {
+        "phase": "cursor",
+        "elapsedMs": 349.9000000000001,
+        "frameIndex": 0,
+        "voice": -1,
+        "text": "batched-glyph-assets"
+      },
+      "render": {
+        "frame": 9,
+        "calls": 6,
+        "triangles": 14,
+        "points": 0,
+        "lines": 0
+      },
+      "memory": {
+        "geometries": 3,
+        "textures": 4
+      },
+      "error": ""
+    },
+    {
+      "name": "command",
+      "state": {
+        "phase": "command",
+        "elapsedMs": 3199.8,
+        "frameIndex": 9,
+        "voice": -1,
+        "text": "batched-glyph-assets"
+      },
+      "render": {
+        "frame": 90,
+        "calls": 5,
+        "triangles": 74,
+        "points": 0,
+        "lines": 0
+      },
+      "memory": {
+        "geometries": 3,
+        "textures": 4
+      },
+      "error": ""
+    },
+    {
+      "name": "load",
+      "state": {
+        "phase": "loading",
+        "elapsedMs": 8782.999999999998,
+        "frameIndex": 18,
+        "voice": 0,
+        "text": "batched-glyph-assets"
+      },
+      "render": {
+        "frame": 275,
+        "calls": 25,
+        "triangles": 1144,
+        "points": 0,
+        "lines": 0
+      },
+      "memory": {
+        "geometries": 11,
+        "textures": 7
+      },
+      "error": ""
+    },
+    {
+      "name": "words",
+      "state": {
+        "phase": "writing",
+        "elapsedMs": 20349.1,
+        "frameIndex": 64,
+        "voice": 1,
+        "text": "batched-glyph-assets"
+      },
+      "render": {
+        "frame": 694,
+        "calls": 34,
+        "triangles": 2258,
+        "points": 0,
+        "lines": 0
+      },
+      "memory": {
+        "geometries": 14,
+        "textures": 7
+      },
+      "error": ""
+    },
+    {
+      "name": "third-voice",
+      "state": {
+        "phase": "writing",
+        "elapsedMs": 23882.399999999998,
+        "frameIndex": 77,
+        "voice": 2,
+        "text": "batched-glyph-assets"
+      },
+      "render": {
+        "frame": 820,
+        "calls": 34,
+        "triangles": 2142,
+        "points": 0,
+        "lines": 0
+      },
+      "memory": {
+        "geometries": 14,
+        "textures": 7
+      },
+      "error": ""
+    },
+    {
+      "name": "waiting",
+      "state": {
+        "phase": "waiting",
+        "elapsedMs": 28712,
+        "frameIndex": 96,
+        "voice": 2,
+        "text": "batched-glyph-assets"
+      },
+      "render": {
+        "frame": 1188,
+        "calls": 36,
+        "triangles": 2666,
+        "points": 0,
+        "lines": 0
+      },
+      "memory": {
+        "geometries": 21,
+        "textures": 7
+      },
+      "error": ""
+    }
+  ]
+}

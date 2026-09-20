@@ -1,0 +1,1 @@
+3. The image skill now defaults to keyless Pollinations (generate_image_pollinations.py), which prints its own IMAGE_PROVIDER=pollinations / POLLINATIONS_API_KEY=SET|MISSING line — a different contract than the three-key probe. So there are two probe contracts in play and the Loop Lab doc quotes both.
