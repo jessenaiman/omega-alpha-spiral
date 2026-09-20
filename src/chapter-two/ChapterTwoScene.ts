@@ -1,4 +1,4 @@
-import { AmbientLight, BoxGeometry, CanvasTexture, Color, DirectionalLight, Group, GridHelper, MathUtils, Mesh, MeshStandardMaterial, type Camera, OrthographicCamera, PlaneGeometry, Scene, Sprite, SpriteMaterial, SRGBColorSpace, Vector3, WebGLRenderer, WebGLRenderTarget } from 'three';
+import { AmbientLight, BoxGeometry, CanvasTexture, Color, DirectionalLight, Group, GridHelper, MathUtils, Mesh, MeshStandardMaterial, type Camera, OrthographicCamera, PlaneGeometry, Scene, Sprite, SpriteMaterial, SRGBColorSpace, Vector3, WebGLRenderer } from 'three';
 import { loadVfxExportBundle } from 'nixie-fx/export';
 import { ThreeVfxRenderer, type ThreeVfxEffectInstance } from 'nixie-fx/three';
 import vfxBundleJson from './vfx/descent-vfx.bundle.json';
@@ -42,7 +42,6 @@ export class ChapterTwoScene {
   private _chestLid: Group | null = null;
   private _vfxWhisperEffect: unknown = null;
   private _vfxWhisperInstance: unknown = null;
-  private _vfxWhisperElapsed: number = 0;
 
   public init(root: HTMLElement, debug: boolean): void {
     this._root = root;
@@ -151,8 +150,9 @@ export class ChapterTwoScene {
 
   private _initVfx(debug: boolean): void {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- JSON import record matches the loader's shape.
-      const bundle = loadVfxExportBundle(vfxBundleJson as any, { requiredBackend: 'three3d' });
+      // The imported bundle record matches the loader's shape exactly (validated
+      // round-trip when authored); VFX is garnish and degrades to text-only.
+      const bundle = loadVfxExportBundle(vfxBundleJson, { requiredBackend: 'three3d' });
       const whisperEffect = bundle.effectsById.get('whisper-embers');
       const beaconEffect = bundle.effectsById.get('threshold-beacon');
       if (!whisperEffect || !beaconEffect) throw new Error('Descent VFX is missing an effect');
@@ -288,7 +288,6 @@ export class ChapterTwoScene {
       );
       this._vfxWhisperInstance = instance;
       this._vfxInstances.push(instance);
-      this._vfxWhisperElapsed = 0;
     } catch {
       // Garnish only: silent degrade to text-only whisper.
     }
