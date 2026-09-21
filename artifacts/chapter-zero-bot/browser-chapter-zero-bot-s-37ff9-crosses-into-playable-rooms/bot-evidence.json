@@ -1,0 +1,78 @@
+{
+  "route": 2,
+  "opening": [
+    {
+      "scene": "scene_001_boot_story_selection",
+      "option": 2,
+      "text": "A horror— that whispers your name in the dark?"
+    },
+    {
+      "scene": "scene_003_role_selection",
+      "option": 2,
+      "text": "The one who changes everything."
+    },
+    {
+      "scene": "scene_005_name_philosophy",
+      "option": 2,
+      "text": "Only when someone remembers to say it."
+    },
+    {
+      "scene": "scene_007_name_story",
+      "option": 2,
+      "text": "A story that changes every time you look away."
+    }
+  ],
+  "entered": {
+    "active": true,
+    "phase": "exploring",
+    "roomIndex": 0,
+    "player": {
+      "x": 0,
+      "z": 12
+    },
+    "framesAdvanced": 7,
+    "distanceTravelled": 0,
+    "thread": "Ambition",
+    "guide": null,
+    "choices": [],
+    "paused": false
+  },
+  "completed": {
+    "active": true,
+    "phase": "complete",
+    "roomIndex": 2,
+    "player": {
+      "x": 0,
+      "z": 2.399399999999994
+    },
+    "framesAdvanced": 607,
+    "distanceTravelled": 45.097200000000015,
+    "thread": "Ambition",
+    "guide": "Shadow",
+    "choices": [
+      {
+        "room": "Light",
+        "object": "chest",
+        "alignment": "Shadow",
+        "answer": "",
+        "points": 1
+      },
+      {
+        "room": "Shadow",
+        "object": "door",
+        "alignment": "Shadow",
+        "answer": "Bot route 2, room 1: remembered story",
+        "points": 2
+      },
+      {
+        "room": "Ambition",
+        "object": "monster",
+        "alignment": "Shadow",
+        "answer": "",
+        "points": 1
+      }
+    ],
+    "paused": false
+  },
+  "errors": []
+}

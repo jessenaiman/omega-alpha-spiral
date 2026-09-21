@@ -1,0 +1,92 @@
+{
+  "route": 0,
+  "opening": [
+    {
+      "scene": "scene_001_boot_story_selection",
+      "option": 0,
+      "text": "A fantasy- where light and shadow wage war?"
+    },
+    {
+      "scene": "scene_003_role_selection",
+      "option": 0,
+      "text": "The seeker—searching for choice."
+    },
+    {
+      "scene": "scene_005_name_philosophy",
+      "option": 0,
+      "text": "Yes. Names are promises we make to ourselves."
+    },
+    {
+      "scene": "scene_007_name_story",
+      "option": 0,
+      "text": "A story where one choice can unmake a world."
+    }
+  ],
+  "revisions": [
+    {
+      "current": 1,
+      "next": 2,
+      "script": "# OMEGA / next floor script\nREVISION=2\nDUNGEON_MASTER=\"Shadow\"\nDOOR=\"Is chaos kinder than order?\"\nMONSTER=\"A guardian of light blocks your path!\"\nCHEST=\"The chest giggles. It’s empty... or is it?\""
+    },
+    {
+      "current": 2,
+      "next": 3,
+      "script": "# OMEGA / next floor script\nREVISION=3\nDUNGEON_MASTER=\"Ambition\"\nDOOR=\"Would you burn the world to save one soul?\"\nMONSTER=\"A trickster imp cackles and attacks!\"\nCHEST=\"Inside: a shard glowing with ancient hope.\""
+    }
+  ],
+  "entered": {
+    "active": true,
+    "phase": "exploring",
+    "roomIndex": 0,
+    "scriptRevision": 1,
+    "player": {
+      "x": 0,
+      "z": 12
+    },
+    "framesAdvanced": 8,
+    "distanceTravelled": 0,
+    "thread": "Light",
+    "guide": null,
+    "choices": [],
+    "paused": false
+  },
+  "completed": {
+    "active": true,
+    "phase": "complete",
+    "roomIndex": 2,
+    "scriptRevision": 3,
+    "player": {
+      "x": 8.001000000000003,
+      "z": 2.39999999999999
+    },
+    "framesAdvanced": 702,
+    "distanceTravelled": 44.8086,
+    "thread": "Light",
+    "guide": "Light",
+    "choices": [
+      {
+        "room": "Light",
+        "object": "door",
+        "alignment": "Light",
+        "answer": "Bot route 0, room 0: remembered story",
+        "points": 2
+      },
+      {
+        "room": "Shadow",
+        "object": "monster",
+        "alignment": "Light",
+        "answer": "",
+        "points": 1
+      },
+      {
+        "room": "Ambition",
+        "object": "chest",
+        "alignment": "Light",
+        "answer": "",
+        "points": 1
+      }
+    ],
+    "paused": false
+  },
+  "errors": []
+}

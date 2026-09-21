@@ -1,0 +1,13 @@
+You are generating CONCEPT FRAMES ONLY with your native ChatGPT/OpenAI image_gen tool. Do not run shell commands, do not edit, create or delete files in the repository, do not change any configuration, do not install anything.
+
+Attached image: the current opening background plate of the game "Omega Spiral" (an analog-optical cosmic still). Treat it as the reference: the five new images must read as five moments of the SAME place, continuing that exact image, not as five unrelated pictures.
+
+TASK: generate exactly 5 images, in order, as a motion sequence of that plate (style A: keep the plate's own look, alive and cinematic).
+- Frame 01: almost the reference plate with the faintest drift beginning.
+- Frame 02: the luminous strands have shifted and stretched further; the field has moved.
+- Frame 03: mid-cycle: the contours have folded and rotated, depth has opened, grain has flowed sideways.
+- Frame 04: the motion continues toward the far side of the cycle; new interference ripples cross the frame.
+- Frame 05: nearly back to the reference composition so frame 05 can loop into frame 01, but not identical.
+Rules: keep the same palette, the same deep black negative space, the same grainy analog-optical character; a slow, continuous, looping drift (drift + slight zoom + fluid contour flow), never a hard cut, never a new subject. Keep the darker left third relatively open. No text, no letters, no UI, no terminal, no faces, no watermark, no logos, no television branding. Wide landscape 16:9 framing, high detail.
+
+After generating, reply with a numbered list: for each of the 5 images, the absolute path of the generated PNG file and one short line describing that frame. Do not describe anything else.

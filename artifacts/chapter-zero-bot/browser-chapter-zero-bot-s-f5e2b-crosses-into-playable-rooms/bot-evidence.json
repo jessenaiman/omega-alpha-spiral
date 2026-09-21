@@ -1,0 +1,78 @@
+{
+  "route": 1,
+  "opening": [
+    {
+      "scene": "scene_001_boot_story_selection",
+      "option": 1,
+      "text": "A romance— written in stardust and sacrifice?"
+    },
+    {
+      "scene": "scene_003_role_selection",
+      "option": 1,
+      "text": "The keeper of secrets—holding what others fear."
+    },
+    {
+      "scene": "scene_005_name_philosophy",
+      "option": 1,
+      "text": "No. Names are masks we hide behind."
+    },
+    {
+      "scene": "scene_007_name_story",
+      "option": 1,
+      "text": "A story that hides its truth until you bleed for it."
+    }
+  ],
+  "entered": {
+    "active": true,
+    "phase": "exploring",
+    "roomIndex": 0,
+    "player": {
+      "x": 0,
+      "z": 12
+    },
+    "framesAdvanced": 9,
+    "distanceTravelled": 0,
+    "thread": "Shadow",
+    "guide": null,
+    "choices": [],
+    "paused": false
+  },
+  "completed": {
+    "active": true,
+    "phase": "complete",
+    "roomIndex": 2,
+    "player": {
+      "x": -8.002800000000002,
+      "z": 2.3999999999999844
+    },
+    "framesAdvanced": 610,
+    "distanceTravelled": 45.004800000000046,
+    "thread": "Shadow",
+    "guide": "Ambition",
+    "choices": [
+      {
+        "room": "Light",
+        "object": "monster",
+        "alignment": "Ambition",
+        "answer": "",
+        "points": 1
+      },
+      {
+        "room": "Shadow",
+        "object": "chest",
+        "alignment": "Ambition",
+        "answer": "",
+        "points": 1
+      },
+      {
+        "room": "Ambition",
+        "object": "door",
+        "alignment": "Ambition",
+        "answer": "Bot route 1, room 2: remembered story",
+        "points": 2
+      }
+    ],
+    "paused": false
+  },
+  "errors": []
+}

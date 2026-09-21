@@ -1,0 +1,55 @@
+{
+  "source": "C:\\SpiralDrive\\omega-alpha-spiral\\.worktrees\\t_65b7c660\\assets\\intro\\threshold-runtime\\threshold-door-only.blend",
+  "sourceSha256": "36028361d8e0dc48930c8e05fec568450f222888adf2ee2377da4d1c2cc4ae5d",
+  "sourceUnchanged": true,
+  "output": "C:\\SpiralDrive\\omega-alpha-spiral\\.worktrees\\t_65b7c660\\assets\\intro\\threshold-runtime\\threshold.glb",
+  "bytes": 146472,
+  "objects": 23,
+  "sampledPoses": 61,
+  "sourceSeconds": 300,
+  "clipSeconds": 2.5,
+  "blender": "5.2.1 LTS",
+  "materials": [
+    {
+      "name": "Threshold_Signal_BlueWhite",
+      "nodes": [
+        "BSDF_PRINCIPLED",
+        "OUTPUT_MATERIAL"
+      ],
+      "hasPrincipled": true
+    },
+    {
+      "name": "Threshold_Worn_Silver_Edge",
+      "nodes": [
+        "BSDF_PRINCIPLED",
+        "OUTPUT_MATERIAL"
+      ],
+      "hasPrincipled": true
+    },
+    {
+      "name": "Threshold_Ink_Ceramic",
+      "nodes": [
+        "BSDF_PRINCIPLED",
+        "OUTPUT_MATERIAL"
+      ],
+      "hasPrincipled": true
+    },
+    {
+      "name": "Threshold_Signal_Amber",
+      "nodes": [
+        "BSDF_PRINCIPLED",
+        "OUTPUT_MATERIAL"
+      ],
+      "hasPrincipled": true
+    },
+    {
+      "name": "Threshold_Cold_Phosphor_Face",
+      "nodes": [
+        "BSDF_PRINCIPLED",
+        "OUTPUT_MATERIAL"
+      ],
+      "hasPrincipled": true
+    }
+  ],
+  "notes": "Door geometry, bevels, insets and sampled motion only. No preview stars, camera, background or compositor exported. Three.js owns the starfield and early primitive transition. Runtime provides lighting."
+}

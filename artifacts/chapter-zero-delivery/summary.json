@@ -1,0 +1,40 @@
+{
+  "sourceContentMatches": true,
+  "routes": [
+    {
+      "route": 0,
+      "framesAdvanced": 615,
+      "distanceTravelled": 45.000600000000006,
+      "guide": "Light",
+      "errors": []
+    },
+    {
+      "route": 1,
+      "framesAdvanced": 610,
+      "distanceTravelled": 45.10200000000003,
+      "guide": "Ambition",
+      "errors": []
+    },
+    {
+      "route": 2,
+      "framesAdvanced": 600,
+      "distanceTravelled": 45.00780000000002,
+      "guide": "Shadow",
+      "errors": []
+    }
+  ],
+  "openingSceneOptionPairs": 12,
+  "roomObjectPairs": 9,
+  "unitTests": 25,
+  "browserTests": 12,
+  "video": {
+    "duration": "20.600000",
+    "size": "2466828"
+  },
+  "limitations": [
+    "Individual-pair coverage, not all choice-history combinations",
+    "Accelerated opening via pace=20; Stage 2 uses real delta time and real keys",
+    "Narrow viewport uses keyboard and reduced motion, not touch controls",
+    "No full combat, inventory, Stage 3 transition or release/performance certification"
+  ]
+}

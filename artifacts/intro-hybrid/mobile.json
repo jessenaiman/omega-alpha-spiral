@@ -1,0 +1,553 @@
+{
+  "mobile": true,
+  "inputs": 4,
+  "states": [
+    {
+      "phase": "waiting",
+      "elapsedMs": 28712,
+      "ambientMs": 30268.799999964234,
+      "formationMs": 86135.99999999997,
+      "sceneIndex": 0,
+      "answers": [],
+      "thread": "",
+      "cameraZ": 10,
+      "door": {
+        "ready": true,
+        "visible": true,
+        "clipTimes": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "representation": {
+          "blend": 0,
+          "visibleSeeds": 17,
+          "visibleSurfaces": 0
+        }
+      },
+      "cursor": [
+        -0.05384036144578275,
+        0.528859186746988,
+        0.35
+      ],
+      "voice": -1,
+      "text": "batched-glyph-assets",
+      "background": {
+        "time": 0,
+        "drift": [
+          0,
+          0
+        ],
+        "zoom": 1
+      },
+      "stars": {
+        "time": 0,
+        "visible": false,
+        "count": 360
+      }
+    },
+    {
+      "heldAfter": {
+        "phase": "waiting",
+        "elapsedMs": 28712,
+        "ambientMs": 41067.59999996424,
+        "formationMs": 86135.99999999997,
+        "sceneIndex": 0,
+        "answers": [],
+        "thread": "",
+        "cameraZ": 10,
+        "door": {
+          "ready": true,
+          "visible": true,
+          "clipTimes": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "representation": {
+            "blend": 0,
+            "visibleSeeds": 17,
+            "visibleSurfaces": 0
+          }
+        },
+        "cursor": [
+          -0.05384036144578275,
+          0.528859186746988,
+          0.35
+        ],
+        "voice": -1,
+        "text": "batched-glyph-assets",
+        "background": {
+          "time": 0,
+          "drift": [
+            0,
+            0
+          ],
+          "zoom": 1
+        },
+        "stars": {
+          "time": 0,
+          "visible": false,
+          "count": 360
+        }
+      }
+    },
+    {
+      "phase": "waiting",
+      "elapsedMs": 52965,
+      "ambientMs": 65467.19999996424,
+      "formationMs": 158894.99999999994,
+      "sceneIndex": 2,
+      "answers": [
+        "light"
+      ],
+      "thread": "Light",
+      "cameraZ": 10,
+      "door": {
+        "ready": true,
+        "visible": true,
+        "clipTimes": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "representation": {
+          "blend": 0,
+          "visibleSeeds": 17,
+          "visibleSurfaces": 0
+        }
+      },
+      "cursor": [
+        0.8076054216867474,
+        0.7105704066265061,
+        0.35
+      ],
+      "voice": 0,
+      "text": "batched-glyph-assets",
+      "background": {
+        "time": 0,
+        "drift": [
+          0,
+          0
+        ],
+        "zoom": 1
+      },
+      "stars": {
+        "time": 0,
+        "visible": false,
+        "count": 360
+      }
+    },
+    {
+      "phase": "waiting",
+      "elapsedMs": 77625,
+      "ambientMs": 90280.79999996428,
+      "formationMs": 232874.99999999994,
+      "sceneIndex": 4,
+      "answers": [
+        "light",
+        "shadow"
+      ],
+      "thread": "Shadow",
+      "cameraZ": 10,
+      "door": {
+        "ready": true,
+        "visible": true,
+        "clipTimes": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "representation": {
+          "blend": 0,
+          "visibleSeeds": 17,
+          "visibleSurfaces": 0
+        }
+      },
+      "cursor": [
+        0.8937500000000007,
+        0.7105704066265061,
+        0.35
+      ],
+      "voice": 1,
+      "text": "batched-glyph-assets",
+      "background": {
+        "time": 0,
+        "drift": [
+          0,
+          0
+        ],
+        "zoom": 1
+      },
+      "stars": {
+        "time": 0,
+        "visible": false,
+        "count": 360
+      }
+    },
+    {
+      "phase": "waiting",
+      "elapsedMs": 103646,
+      "ambientMs": 116485.19999996426,
+      "formationMs": 264000,
+      "sceneIndex": 6,
+      "answers": [
+        "light",
+        "shadow",
+        "ambition"
+      ],
+      "thread": "Ambition",
+      "cameraZ": 10,
+      "door": {
+        "ready": true,
+        "visible": true,
+        "clipTimes": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "representation": {
+          "blend": 0,
+          "visibleSeeds": 17,
+          "visibleSurfaces": 0
+        }
+      },
+      "cursor": [
+        0.8937500000000007,
+        0.7105704066265061,
+        0.35
+      ],
+      "voice": 2,
+      "text": "batched-glyph-assets",
+      "background": {
+        "time": 0,
+        "drift": [
+          0,
+          0
+        ],
+        "zoom": 1
+      },
+      "stars": {
+        "time": 0,
+        "visible": false,
+        "count": 360
+      }
+    }
+  ],
+  "doorway": {
+    "state": {
+      "phase": "doorway",
+      "elapsedMs": 137022,
+      "ambientMs": 153273.5999999643,
+      "formationMs": 300000,
+      "sceneIndex": 8,
+      "answers": [
+        "light",
+        "shadow",
+        "ambition",
+        "light"
+      ],
+      "thread": "Light",
+      "cameraZ": 10,
+      "door": {
+        "ready": true,
+        "visible": true,
+        "clipTimes": [
+          2.5416667461395264,
+          2.5416667461395264,
+          2.5416667461395264,
+          2.5416667461395264,
+          2.5416667461395264,
+          2.5416667461395264,
+          2.5416667461395264,
+          2.5416667461395264,
+          2.5416667461395264,
+          2.5416667461395264,
+          2.5416667461395264,
+          2.5416667461395264,
+          2.5416667461395264,
+          2.5416667461395264,
+          2.5416667461395264,
+          2.5416667461395264,
+          2.5416667461395264,
+          2.5416667461395264,
+          2.5416667461395264,
+          2.5416667461395264,
+          2.5416667461395264,
+          2.5416667461395264,
+          2.5416667461395264
+        ],
+        "representation": {
+          "blend": 1,
+          "visibleSeeds": 0,
+          "visibleSurfaces": 57
+        }
+      },
+      "cursor": [
+        -1.168298192771084,
+        0.760570406626506,
+        0.1
+      ],
+      "voice": 0,
+      "text": "batched-glyph-assets",
+      "background": {
+        "time": 0,
+        "drift": [
+          0,
+          0
+        ],
+        "zoom": 1
+      },
+      "stars": {
+        "time": 0,
+        "visible": false,
+        "count": 360
+      }
+    },
+    "render": {
+      "frame": 761,
+      "calls": 79,
+      "triangles": 1234,
+      "points": 0,
+      "lines": 0
+    },
+    "memory": {
+      "geometries": 62,
+      "textures": 7
+    }
+  },
+  "completed": {
+    "phase": "complete",
+    "elapsedMs": 137022,
+    "ambientMs": 163480.7999999643,
+    "formationMs": 300000,
+    "sceneIndex": 8,
+    "answers": [
+      "light",
+      "shadow",
+      "ambition",
+      "light"
+    ],
+    "thread": "Light",
+    "cameraZ": -4,
+    "door": {
+      "ready": true,
+      "visible": true,
+      "clipTimes": [
+        2.5416667461395264,
+        2.5416667461395264,
+        2.5416667461395264,
+        2.5416667461395264,
+        2.5416667461395264,
+        2.5416667461395264,
+        2.5416667461395264,
+        2.5416667461395264,
+        2.5416667461395264,
+        2.5416667461395264,
+        2.5416667461395264,
+        2.5416667461395264,
+        2.5416667461395264,
+        2.5416667461395264,
+        2.5416667461395264,
+        2.5416667461395264,
+        2.5416667461395264,
+        2.5416667461395264,
+        2.5416667461395264,
+        2.5416667461395264,
+        2.5416667461395264,
+        2.5416667461395264,
+        2.5416667461395264
+      ],
+      "representation": {
+        "blend": 1,
+        "visibleSeeds": 0,
+        "visibleSurfaces": 57
+      }
+    },
+    "cursor": [
+      -1.168298192771084,
+      0.760570406626506,
+      0.1
+    ],
+    "voice": 0,
+    "text": "batched-glyph-assets",
+    "background": {
+      "time": 0,
+      "drift": [
+        0,
+        0
+      ],
+      "zoom": 1
+    },
+    "stars": {
+      "time": 0,
+      "visible": false,
+      "count": 360
+    }
+  },
+  "reset": {
+    "phase": "cursor",
+    "elapsedMs": 0,
+    "ambientMs": 1500,
+    "formationMs": 0,
+    "sceneIndex": 0,
+    "answers": [],
+    "thread": "",
+    "cameraZ": 10,
+    "door": {
+      "ready": true,
+      "visible": false,
+      "clipTimes": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "representation": {
+        "blend": 0,
+        "visibleSeeds": 17,
+        "visibleSurfaces": 0
+      }
+    },
+    "cursor": [
+      -0.6783885542168674,
+      0.31057040662650603,
+      0.7999999999999999
+    ],
+    "voice": -1,
+    "text": "batched-glyph-assets",
+    "background": {
+      "time": 0,
+      "drift": [
+        0,
+        0
+      ],
+      "zoom": 1
+    },
+    "stars": {
+      "time": 0,
+      "visible": false,
+      "count": 360
+    }
+  },
+  "errors": []
+}

@@ -1,0 +1,11 @@
+{
+  "expected": [
+    "desktop-held-before.png",
+    "desktop-held-after.png",
+    "desktop-doorway.png",
+    "desktop-crossed.png",
+    "mobile-question.png",
+    "mobile-doorway.png"
+  ],
+  "scope": "Actual input traversal; desktop story clock 3x and mobile 12x, ambient travel real-time; no narrative approval"
+}

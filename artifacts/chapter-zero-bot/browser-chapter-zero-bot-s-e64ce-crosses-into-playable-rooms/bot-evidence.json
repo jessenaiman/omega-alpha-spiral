@@ -1,0 +1,78 @@
+{
+  "route": 0,
+  "opening": [
+    {
+      "scene": "scene_001_boot_story_selection",
+      "option": 0,
+      "text": "A fantasy- where light and shadow wage war?"
+    },
+    {
+      "scene": "scene_003_role_selection",
+      "option": 0,
+      "text": "The seeker—searching for choice."
+    },
+    {
+      "scene": "scene_005_name_philosophy",
+      "option": 0,
+      "text": "Yes. Names are promises we make to ourselves."
+    },
+    {
+      "scene": "scene_007_name_story",
+      "option": 0,
+      "text": "A story where one choice can unmake a world."
+    }
+  ],
+  "entered": {
+    "active": true,
+    "phase": "exploring",
+    "roomIndex": 0,
+    "player": {
+      "x": 0,
+      "z": 12
+    },
+    "framesAdvanced": 8,
+    "distanceTravelled": 0,
+    "thread": "Light",
+    "guide": null,
+    "choices": [],
+    "paused": false
+  },
+  "completed": {
+    "active": true,
+    "phase": "complete",
+    "roomIndex": 2,
+    "player": {
+      "x": 8.098799999999999,
+      "z": 2.398800000000004
+    },
+    "framesAdvanced": 609,
+    "distanceTravelled": 45.09780000000004,
+    "thread": "Light",
+    "guide": "Light",
+    "choices": [
+      {
+        "room": "Light",
+        "object": "door",
+        "alignment": "Light",
+        "answer": "Bot route 0, room 0: remembered story",
+        "points": 2
+      },
+      {
+        "room": "Shadow",
+        "object": "monster",
+        "alignment": "Light",
+        "answer": "",
+        "points": 1
+      },
+      {
+        "room": "Ambition",
+        "object": "chest",
+        "alignment": "Light",
+        "answer": "",
+        "points": 1
+      }
+    ],
+    "paused": false
+  },
+  "errors": []
+}

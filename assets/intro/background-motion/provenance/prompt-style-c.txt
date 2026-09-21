@@ -1,0 +1,12 @@
+You are generating CONCEPT FRAMES ONLY with your native ChatGPT/OpenAI image_gen tool. Do not run shell commands, do not edit, create or delete files in the repository, do not change any configuration, do not install anything.
+
+Attached image: the current opening background plate of the game "Omega Spiral" (an analog-optical cosmic still). It is the reference for composition and palette family.
+
+TASK: generate exactly 5 images, in order, as a motion sequence of that plate rendered as the MOST SPECTACULAR REAL-TIME RENDER the technology can produce (style C: everything a high-end GPU Three.js scene could throw at moving art).
+- Volumetric light shafts, god rays, dense fine particle sparks and drifting dust, fluid-smoke plumes, refractive glass-like depth, layered smooth contours, subtle chromatic bloom and lens streaks, thousands of tiny luminous glyph-like specks that are not readable text, mylar-like reflective ribbons, gravity-lensed distortion around the bright core, deep black negative space preserved on the left third.
+- Composition follows the reference: same overall structure and palette family (silver-blue, amber-gold, crimson), same dark left side kept open.
+- The 5 frames are 5 moments of one continuous slow looping drift: particles flow, the ribbons unfurl, the contours breathe and rotate. Frame 05 nearly returns to frame 01 so it can loop with no hard cut.
+- Photographic, expensive-looking, but still strange and analog-optical in feeling, not generic purple neon wallpaper.
+- No text, no letters, no UI, no terminal, no faces, no watermark, no logos. Wide landscape 16:9 framing, very high detail.
+
+After generating, reply with a numbered list of exactly 5 entries: the absolute path of each generated PNG file and one short line describing that frame. Do not describe anything else.
