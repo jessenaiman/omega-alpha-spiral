@@ -1,0 +1,112 @@
+{
+  "url": "http://127.0.0.1:4188/scene-two.html",
+  "mode": "desktop",
+  "state": "echo-chamber",
+  "requestedState": "echo-chamber",
+  "appliedState": "echo-chamber",
+  "runId": "scene-two-pass-1",
+  "seed": 42,
+  "screenshotPath": "artifacts\\scene-two\\qa\\desktop-echo-chamber.png",
+  "gpu": {
+    "renderer": "ANGLE (NVIDIA, NVIDIA GeForce GTX 1660 (0x00002184) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+    "vendor": "Google Inc. (NVIDIA)",
+    "softwareRendered": false
+  },
+  "result": {
+    "ok": true,
+    "reason": "nonblank",
+    "rect": {
+      "x": 0,
+      "y": 0,
+      "width": 1280,
+      "height": 720
+    },
+    "drawingBuffer": {
+      "width": 1280,
+      "height": 720
+    },
+    "alphaPixels": 4096,
+    "variance": 254,
+    "colorBuckets": 60,
+    "metrics": {
+      "colorBuckets": 81,
+      "colorEntropyBits": 1.19,
+      "edgeDensity": 0.084,
+      "luminance": {
+        "mean": 14.1,
+        "p5": 6.8,
+        "p95": 77.2,
+        "contrast": 70.4
+      },
+      "dominantColorShare": 0.853,
+      "nonBackgroundShare": 0.147
+    },
+    "renderBudget": {
+      "tier": "desktop",
+      "note": "starting-point budget; adjust per game and document overrides",
+      "rows": [
+        {
+          "metric": "calls",
+          "actual": 34,
+          "limit": 300,
+          "ok": true
+        },
+        {
+          "metric": "triangles",
+          "actual": 684,
+          "limit": 750000,
+          "ok": true
+        },
+        {
+          "metric": "geometries",
+          "actual": 34,
+          "limit": 300,
+          "ok": true
+        },
+        {
+          "metric": "textures",
+          "actual": 1,
+          "limit": 60,
+          "ok": true
+        }
+      ],
+      "withinBudget": true
+    },
+    "diagnostics": {
+      "runId": "scene-two:42",
+      "instance": null,
+      "loop": 0,
+      "phase": "exploring",
+      "checkpoint": null,
+      "objective": "Approach an object",
+      "targetVerb": "approach",
+      "playerState": "exploring",
+      "party": [],
+      "route": null,
+      "pairing": null,
+      "era": null,
+      "paused": true,
+      "accessibility": {
+        "reducedMotion": true,
+        "debugHidden": false
+      },
+      "audio": {
+        "unlocked": false
+      },
+      "canvas": {
+        "width": 1280,
+        "height": 720,
+        "pixelRatio": 1
+      },
+      "renderer": {
+        "calls": 34,
+        "triangles": 684,
+        "geometries": 34,
+        "textures": 1
+      },
+      "errors": []
+    }
+  },
+  "consoleErrors": [],
+  "pageErrors": []
+}

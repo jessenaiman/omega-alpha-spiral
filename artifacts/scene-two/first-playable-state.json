@@ -11,6 +11,10 @@
     },
     "story": "The shape tests your nerve, then recedes into its own reflection."
   },
+  "journey": {
+    "inputsAttempted": 8,
+    "firstOutcomeStep": 8
+  },
   "diagnostics": {
     "runId": "scene-two:scene-two",
     "instance": null,

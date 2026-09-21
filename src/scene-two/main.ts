@@ -235,8 +235,8 @@ new GLTFLoader().load(
 );
 
 states.register('echo-chamber', () => {
-  restart();
   paused = false;
+  restart();
   return 'echo-chamber';
 });
 
@@ -246,8 +246,8 @@ const hooks: SceneTestHooks = {
     restart();
     return seed;
   },
-  setState(name): string {
-    return states.apply(name);
+  setState(name): { state: string } {
+    return { state: states.apply(name) };
   },
   setPausedForScreenshot(value): boolean {
     paused = value;

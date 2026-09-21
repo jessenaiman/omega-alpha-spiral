@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "runId": "scene-two-pass-1",
+  "captures": [
+    {
+      "mode": "desktop",
+      "state": "echo-chamber",
+      "report": "artifacts/scene-two/qa/desktop-echo-chamber.json"
+    },
+    {
+      "mode": "mobile",
+      "state": "echo-chamber",
+      "report": "artifacts/scene-two/qa/mobile-echo-chamber.json"
+    }
+  ],
+  "artifacts": [
+    "artifacts/scene-two/first-playable.png",
+    "artifacts/scene-two/first-playable-state.json"
+  ]
+}

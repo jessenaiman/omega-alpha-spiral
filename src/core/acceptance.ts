@@ -167,7 +167,7 @@ export function createStateRegistry(): StateRegistry {
  */
 export interface SceneTestHooks {
   seed(value: string | number): string;
-  setState(name: string): string;
+  setState(name: string): string | { readonly state: string };
   setPausedForScreenshot(paused: boolean): boolean;
   setReducedMotion(enabled: boolean): boolean;
   setDebugHidden(hidden: boolean): boolean;
