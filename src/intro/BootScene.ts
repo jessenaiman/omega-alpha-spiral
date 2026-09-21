@@ -833,6 +833,7 @@ export class BootScene {
       this._storyMode = 'waiting';
       this._storyStartedAt = performance.now();
       this._applyFrame(this._storyFrame(question.question, 'waiting', question.era, undefined, 0));
+      this._spatial.settleForTestState(this._motionMs);
       this._refreshStaticFrame();
       return;
     }
@@ -841,11 +842,13 @@ export class BootScene {
     if (name === 'final-door') {
       this._storyMode = 'final';
       this._applyFrame(this._storyFrame(CHRONICLE_FINAL_DRAFT, 'final', 4, undefined, 4400));
+      this._spatial.settleForTestState(this._motionMs);
       this._refreshStaticFrame();
       return;
     }
     this._storyMode = 'complete';
     this._applyFrame(this._storyFrame(CHRONICLE_FINAL, 'complete', 4, 'ALL THREE FOLLOWED', 12000));
+    this._spatial.settleForTestState(this._motionMs);
     this._refreshStaticFrame();
   }
 

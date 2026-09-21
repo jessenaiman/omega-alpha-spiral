@@ -113,6 +113,7 @@ test('observable bot steers through four different answer routes and reaches the
   await testInfo.attach('intro-bot-metrics.json', {
     body: JSON.stringify(metrics, null, 2), contentType: 'application/json',
   });
+  console.info(`INTRO_BOT_METRICS ${JSON.stringify(metrics)}`);
 
   expect(final.objectiveProgress).toBe(4);
   expect(final.physics.ready).toBe(true);

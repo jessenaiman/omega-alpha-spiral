@@ -464,6 +464,10 @@ export class SpatialBootScene {
 
   public getPhysicsDiagnostics(): IntroPhysicsDiagnostics { return this._physics.getDiagnostics(); }
 
+  public settleForTestState(elapsedMs: number): void {
+    this._voiceAppearedAt = [elapsedMs - 3200, elapsedMs - 3200, elapsedMs - 3200];
+  }
+
   public archive(text: string, era: number, owner: number): void {
     this._fossils.unshift({ text, era, color: INK[Math.max(0, Math.min(2, owner))], owner });
     this._fossils.length = Math.min(this._fossils.length, 3);
@@ -745,7 +749,7 @@ export class SpatialBootScene {
       target.visible = isWaiting;
       target.position.set(voicePosition.x, choice.position.y - 0.22, 0.18);
       target.scale.set(this._width * 0.29, 1.12, 1);
-      target.material.opacity = this._selected === index ? 0.19 : this._hovered === index ? 0.1 : 0.02;
+      target.material.opacity = 0;
       if (this._hovered === index) choice.position.y += scale * 0.12;
       const speaker: Group = this._ribbons[14 + index].root;
       speaker.visible = isWaiting || (frame.phase === 'response' && this._selected === index);

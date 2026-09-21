@@ -118,3 +118,9 @@ letting particles substitute for geometry.
   yellow strand particles and bends its player memories progressively.
 - Changed the global rim from amber to cool neutral so it cannot recolor Light;
   Ambition keeps its own local yellow practical.
+- Production desktop capture exposed the Rapier target proxy as a rectangular
+  answer panel. The proxy is now fully transparent; symbol glow, text lift, and
+  particle response provide the interaction feedback without restoring UI frames.
+- Named-state capture initially froze during the Dreamweavers' entrance. Debug
+  state setup now settles only that interpolation before acknowledging the state,
+  making repeated screenshots honest and deterministic without changing play.

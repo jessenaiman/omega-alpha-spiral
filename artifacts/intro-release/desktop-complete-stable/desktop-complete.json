@@ -1,0 +1,144 @@
+{
+  "url": "http://127.0.0.1:4188/intro.html?debug",
+  "mode": "desktop",
+  "state": "complete",
+  "requestedState": "complete",
+  "appliedState": "complete",
+  "runId": "intro-release-20260921-stable",
+  "seed": 472,
+  "screenshotPath": "artifacts\\intro-release\\desktop-complete-stable\\desktop-complete.png",
+  "gpu": {
+    "renderer": "ANGLE (NVIDIA, NVIDIA GeForce GTX 1660 (0x00002184) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+    "vendor": "Google Inc. (NVIDIA)",
+    "softwareRendered": false
+  },
+  "result": {
+    "ok": true,
+    "reason": "nonblank",
+    "rect": {
+      "x": 0,
+      "y": 0,
+      "width": 1280,
+      "height": 720
+    },
+    "drawingBuffer": {
+      "width": 1280,
+      "height": 720
+    },
+    "alphaPixels": 4096,
+    "variance": 234,
+    "colorBuckets": 50,
+    "metrics": {
+      "colorBuckets": 80,
+      "colorEntropyBits": 0.42,
+      "edgeDensity": 0.097,
+      "luminance": {
+        "mean": 3.4,
+        "p5": 0,
+        "p95": 2.8,
+        "contrast": 2.8
+      },
+      "dominantColorShare": 0.963,
+      "nonBackgroundShare": 0.037
+    },
+    "renderBudget": {
+      "tier": "desktop",
+      "note": "starting-point budget; adjust per game and document overrides",
+      "rows": [
+        {
+          "metric": "calls",
+          "actual": 32,
+          "limit": 300,
+          "ok": true
+        },
+        {
+          "metric": "triangles",
+          "actual": 2004,
+          "limit": 750000,
+          "ok": true
+        },
+        {
+          "metric": "geometries",
+          "actual": 23,
+          "limit": 300,
+          "ok": true
+        },
+        {
+          "metric": "textures",
+          "actual": 7,
+          "limit": 60,
+          "ok": true
+        }
+      ],
+      "withinBudget": true
+    },
+    "diagnostics": {
+      "renderer": {
+        "calls": 32,
+        "triangles": 2004,
+        "geometries": 23,
+        "textures": 7
+      },
+      "state": {
+        "frame": 92,
+        "phase": "complete",
+        "storyMode": "complete",
+        "questionIndex": 3,
+        "objective": "opening-complete",
+        "objectiveProgress": 0,
+        "complete": true,
+        "failed": false,
+        "canContinue": false,
+        "selectedChoice": 0,
+        "playerPosition": {
+          "x": 0,
+          "y": -2.55,
+          "z": 0.52
+        },
+        "choiceTargets": [
+          {
+            "x": 0,
+            "y": -1.56,
+            "z": 0.18
+          },
+          {
+            "x": 0,
+            "y": -1.56,
+            "z": 0.18
+          },
+          {
+            "x": 0,
+            "y": -1.56,
+            "z": 0.18
+          }
+        ],
+        "seed": "472",
+        "audio": {
+          "unlocked": false,
+          "muted": false,
+          "cueCount": 0
+        },
+        "physics": {
+          "ready": true,
+          "bodies": 5,
+          "colliders": 5,
+          "sensors": 4,
+          "activeSensors": 0,
+          "ccdBodies": 0,
+          "fixedTimestep": 0.016666666666666666,
+          "steps": 0
+        },
+        "viewport": {
+          "width": 1280,
+          "height": 720,
+          "dpr": 1
+        },
+        "activeLoops": 1,
+        "pausedForScreenshot": true,
+        "debugUiHidden": true
+      }
+    }
+  },
+  "consoleErrors": [],
+  "pageErrors": []
+}

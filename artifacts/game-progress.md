@@ -17,13 +17,27 @@
 - [x] First-question stall that becomes the visible Dreamweaver breach.
 - [x] Player-controlled passages and changing Dreamweaver layouts between questions.
 - [x] Final three-strand threshold preserved.
-- [ ] Basic owner play check requested; no speculative test expansion.
+- [x] Release evidence: build, 18 unit checks, 9 browser checks, real-input bot,
+  production desktop/mobile/final captures, renderer and Rapier diagnostics.
+- [ ] Owner visual/audio approval remains subjective and is intentionally not
+  replaced by automation.
 
 ## Implementation boundary
 
 - Procedural Three.js only for this iteration; no external generation job.
-- No physics dependency: bounded deterministic planar steering is sufficient for this narrative passage.
+- Rapier owns deterministic 1/60-second kinematic movement and four sensor lanes;
+  the authored visual player remains independent of its collision proxy.
 - Existing accessible DOM mirror and click/number shortcuts remain available while arrow/WASD becomes the default spatial interaction.
+
+## Release checkpoint — September 21, 2026
+
+- Creative comparison: `artifacts/intro-creative-comparison.md`.
+- Release evidence: `artifacts/final-evidence.md`.
+- Current branch checkpoints: preservation `93ec56b`, gameplay `855177f`,
+  UI `180fd57`, graphics `25fe3db`.
+- Final release commit is pending immediately after this documentation update.
+- Known release risks: 3.12 MB intro chunk, deliberate low-luminance scorecard,
+  non-fatal Chromium shader precision warnings, subjective audio mix unapproved.
 
 ---
 
