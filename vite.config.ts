@@ -21,6 +21,7 @@ export default defineConfig({
         floorOne: fileURLToPath(new URL('./floor-one.html', import.meta.url)),
         rogue: fileURLToPath(new URL('./rogue.html', import.meta.url)),
         intro: fileURLToPath(new URL('./intro.html', import.meta.url)),
+        descent: fileURLToPath(new URL('./descent.html', import.meta.url)),
       },
     },
   },

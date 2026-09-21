@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { writeFileSync } from 'node:fs';
-interface FieldState { active: boolean; phase: string; roomIndex: number; player: { x: number; z: number }; framesAdvanced: number; distanceTravelled: number; choices: { object: string; answer: string }[]; thread: string; guide: string | null; paused: boolean }
+interface FieldState { active: boolean; phase: string; roomIndex: number; attacksAvailable: boolean; strikesLanded: number; lastOutcome: string | null; player: { x: number; z: number }; framesAdvanced: number; distanceTravelled: number; choices: { object: string; answer: string }[]; thread: string; guide: string | null; paused: boolean }
 declare global { interface Window { __CHAPTER_TWO_DIAGNOSTICS__: { getState(): FieldState } } }
 const state = (page: Page): Promise<FieldState> => page.evaluate(() => window.__CHAPTER_TWO_DIAGNOSTICS__.getState());
 test.use({ video: 'on' });
@@ -35,16 +35,19 @@ for (const route of [0, 1, 2]) {
     page.on('response', response => { if (response.status() >= 400) errors.push(`${response.status()} ${response.url()}`); });
     await page.goto('/intro.html?debug&pace=20');
     await expect(page.locator('main')).toHaveAttribute('data-os-art-ts', 'ready');
+    // Stage 2 is entered through the door, not pre-started; the bot still plays
+    // the real opening first so every arrival is earned through real input.
     await page.keyboard.press('Enter');
     const evidence: object[] = [];
+    await expect(page.locator('main')).toHaveAttribute('data-os-phase-ts', 'waiting', { timeout: 30_000 });
     while ((await page.locator('main').getAttribute('data-os-phase-ts')) !== 'doorway') {
-      await expect(page.locator('main')).toHaveAttribute('data-os-phase-ts', 'waiting', { timeout: 30_000 });
       const choiceCount = await page.getByRole('radio').count();
       expect(choiceCount).toBeGreaterThan(0);
       const choice = route % choiceCount;
       evidence.push({ sceneIndex: (await page.evaluate(() => window.__INTRO_DIAGNOSTICS__.getState())).sceneIndex, choice });
       await page.keyboard.press(String(choice + 1));
       await expect(page.locator('main')).not.toHaveAttribute('data-os-phase-ts', 'waiting');
+      await expect(page.locator('main')).toHaveAttribute('data-os-phase-ts', 'waiting', { timeout: 30_000 }).catch(async (): Promise<void> => { /* final question flows to the door without another gate */ });
     }
     await expect(page.locator('main')).toHaveAttribute('data-os-phase-ts', 'doorway', { timeout: 30_000 });
     await page.locator('#os-enter-ts').click();
@@ -71,6 +74,16 @@ for (const route of [0, 1, 2]) {
       await walk(page, 'x', x);
       await walk(page, 'z', 2.4);
       await page.keyboard.press('e');
+      const monsterFight = (await state(page)).phase === 'fighting';
+      if (monsterFight) {
+        // Combat follows the floor script: attack only when the current floor allows it.
+        const before = await state(page);
+        if (before.attacksAvailable) {
+          await page.keyboard.press('f');
+          for (let strike = 1; strike < 2; strike += 1) if ((await state(page)).phase === 'fighting') await page.keyboard.press('f');
+        }
+        await expect.poll(async () => (await state(page)).phase).toBe('result');
+      }
       if ((await state(page)).phase === 'prompt') {
         await expect(page.locator('#echo-answer')).toBeVisible();
         const answer = `mechanical answer ${route}-${room}`;
