@@ -1,4 +1,4 @@
-import { DESCENT_FLOORS, type DescentFloor, type Guide, type ObjectKind, type RoomObject } from './floors';
+import { DESCENT_FLOORS, type DescentFloor, type Guide, type MirrorProp, type ObjectKind, type RoomObject } from './floors';
 import { Whispers } from './Whispers';
 
 const FIELD_BOUNDARY: number = 22;
@@ -62,6 +62,12 @@ export class WalkField {
   public get nearest(): RoomObject | null {
     return this.objects.find((object: RoomObject): boolean => Math.hypot(object.x - this.player.x, object.z - this.player.z) <= REACH) ?? null;
   }
+  /** Standing mirror within reach, if no exit object is nearer. */
+  public get nearestMirror(): MirrorProp | null {
+    if (this.nearest) return null;
+    const mirrors: MirrorProp[] = this.floor.mirrors ?? [];
+    return mirrors.find((mirror: MirrorProp): boolean => Math.hypot(mirror.x - this.player.x, mirror.z - this.player.z) <= REACH) ?? null;
+  }
 
   public start(thread: string): void {
     this.player = { x: 0, z: START_Z };
@@ -95,7 +101,8 @@ export class WalkField {
     const distance: number = Math.min(delta, MAX_STEP) * speed;
     const nextX: number = Math.max(-this.boundary, Math.min(this.boundary, this.player.x + x / length * distance));
     const nextZ: number = Math.max(-this.boundary, Math.min(this.boundary, this.player.z + z / length * distance));
-    const clear = (px: number, pz: number): boolean => this.objects.every((object: RoomObject): boolean => Math.hypot(object.x - px, object.z - pz) >= SOLID_RADIUS);
+    const clear = (px: number, pz: number): boolean => this.objects.every((object: RoomObject): boolean => Math.hypot(object.x - px, object.z - pz) >= SOLID_RADIUS)
+      && (this.floor.mirrors ?? []).every((mirror: MirrorProp): boolean => Math.abs(mirror.x - px) >= SOLID_RADIUS || Math.abs(mirror.z - pz) >= SOLID_RADIUS * 0.3);
     const allowedX: number = clear(nextX, this.player.z) ? nextX : this.player.x;
     const allowedZ: number = clear(allowedX, nextZ) ? nextZ : this.player.z;
     this.distanceTravelled += Math.hypot(allowedX - this.player.x, allowedZ - this.player.z);
@@ -131,7 +138,11 @@ export class WalkField {
   private _resolve(answer: string): void {
     if (!this.selected || this.choices.length > this.roomIndex) return;
     const monster: boolean = this.selected.kind === 'monster';
-    this.lastOutcome = monster ? (this.strikesLanded >= this.floor.attacksRequired && this.floor.attacksAllowed ? 'victory' : 'defeat') : null;
+    const won: boolean = monster && this.strikesLanded >= this.floor.attacksRequired && this.floor.attacksAllowed;
+    this.lastOutcome = monster ? (won ? 'victory' : 'defeat') : null;
+    // Omega's emergency reset cuts in exactly when the Guardian looks vulnerable
+    // (stage_3 beat_6); the world shifts after either way.
+    if (!won && this.floor.omegaInterrupt) this._whispers?.say('Ambition', this.floor.omegaInterrupt);
     const owner: Guide = this.floor.owner;
     this.choices.push({ room: owner, object: this.selected.kind, alignment: this.selected.alignment, answer, points: this.selected.alignment === owner ? 2 : 1 });
     // Chosen exit = affinity option: the aligned Dreamweaver speaks (issue #37).

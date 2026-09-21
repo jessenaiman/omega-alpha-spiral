@@ -4,7 +4,7 @@ import { DESCENT_FLOORS, type FloorId } from '../../src/chapter-two/floors';
 
 test('descent floors are ordered Light, Shadow, Ambition with per-floor capability data', () => {
   const ids: FloorId[] = DESCENT_FLOORS.map((floor): FloorId => floor.id);
-  assert.deepEqual(ids, ['echo', 'guardian', 'gauntlet', 'revision', 'threshold-echo', 'omniscient']);
+  assert.deepEqual(ids, ['echo', 'guardian', 'gauntlet', 'revision', 'threshold-echo', 'omniscient', 'mirror-one', 'mirror-two', 'mirror-three']);
   // Floor 1 combat is impossible: no attack available, the monster auto-defeats.
   assert.equal(DESCENT_FLOORS[0]!.attacksRequired, 0);
   assert.equal(DESCENT_FLOORS[0]!.attacksAllowed, false);

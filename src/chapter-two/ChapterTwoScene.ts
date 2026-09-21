@@ -4,13 +4,13 @@ import { ThreeVfxRenderer, type ThreeVfxEffectInstance } from 'nixie-fx/three';
 import vfxBundleJson from './vfx/descent-vfx.bundle.json';
 import { WalkField } from './WalkField';
 import { Whispers, type Voice } from './Whispers';
-import { DESCENT_FLOORS } from './floors';
+import { DESCENT_FLOORS, type MirrorProp } from './floors';
 import { layoutFor } from './layout';
 import { createEcho, createWolf, createGiggleChest } from './modelFactories';
 import './styles.css';
 
 const FIELD_SIZE: number = 48;
-const PALETTE: number[] = [0xc9dce5, 0xd4aa66, 0xb85c60];
+const PALETTE: number[] = [0xc9dce5, 0xd4aa66, 0xb85c60, 0x8fb3c9, 0xc7b98a, 0xc98f8f, 0xb6c9e0, 0xa8d0c8, 0xd0b6a0];
 const WHISPER_COLORS: Record<Voice, string> = { Light: '#cfe0f2', Shadow: '#d8c28a', Ambition: '#e2a0a0' };
 
 /** Intentionally rough presentation. No asset loading blocks movement. */
@@ -32,6 +32,8 @@ export class ChapterTwoScene {
   private _paused: boolean = false;
   private _lastUi: string = '';
   private _questionLabel: Sprite | null = null;
+  private _mirrorGroup: Group | null = null;
+  private _mirrorLabelled: string = '';
   private _textures: CanvasTexture[] = [];
   private _target: Vector3 = new Vector3();
   private _labelPosition: Vector3 = new Vector3();
@@ -233,6 +235,14 @@ export class ChapterTwoScene {
     });
     // Cut away from the old floor while its replacement script awaits input.
     this._scene.visible = this._world.phase !== 'rewriting';
+    // A mirror broken into reach whispers its Dreamweaver line once; walking
+    // away resets it. Never blocks input and never counts as a choice.
+    const mirror = this._world.nearestMirror;
+    const mirrorKey: string = mirror ? `${this._world.roomIndex}:${mirror.name}` : '';
+    if (mirrorKey !== this._mirrorLabelled) {
+      this._mirrorLabelled = mirrorKey;
+      if (mirror) this._whispers.say(mirror.name === 'Fighter' || mirror.name === 'Scribe' ? 'Light' : mirror.name === 'Wizard' ? 'Shadow' : 'Ambition', mirror.line);
+    }
     this._updateWhisperLayer(delta, reduced);
     this._updateVfx(delta, reduced);
     renderer.render(this._scene, this._camera);
@@ -333,13 +343,13 @@ export class ChapterTwoScene {
     if (key === this._lastUi) return;
     const roomChanged: boolean = this._lastUi.split(':')[0] !== String(world.roomIndex);
     this._lastUi = key;
-    this._element('echo-title').textContent = `ECHO DESCENT / ${world.roomIndex + 1} — GRAYBOX`;
+    this._element('echo-title').textContent = `ECHO DESCENT / ${world.roomIndex + 1}${world.floor.companions ? ` · PARTY ${world.floor.companions + 1}` : ''} — GRAYBOX`;
     this._element('echo-copy').textContent = this._paused ? 'Paused'
       : world.phase === 'rewriting' ? world.introPreview
       : world.phase === 'complete' ? `${world.guide}: “I’m coming with you. Don’t lose me this time.”`
       : world.phase === 'fighting' ? `${world.selected?.text} ${world.attacksAvailable ? `F to attack! (${world.strikesLanded}/${world.floor.attacksRequired})` : 'You have no way to fight this...'}`
       : world.phase === 'result' && world.lastOutcome ? world.lastOutcome === 'victory' ? 'The thing comes apart into loose glyphs.' : 'It overwhelms you — but the floor remembers you tried.'
-      : world.selected?.text ?? (world.nearest ? `E · ${world.nearest.kind}` : 'Approach a door, monster, or chest. Choose one path through this room.');
+      : world.selected?.text ?? (world.nearest ? `E · ${world.nearest.kind}` : world.nearestMirror ? `E · approach ${world.nearestMirror.name}'s mirror` : 'Approach a door, monster, or chest. Choose one path through this room.');
     const script: HTMLElement = this._element('echo-script');
     script.hidden = world.phase !== 'rewriting' || this._paused;
     script.textContent = world.phase === 'rewriting' ? world.scriptPreview : '';
@@ -356,6 +366,7 @@ export class ChapterTwoScene {
     if (roomChanged) {
       const floor = DESCENT_FLOORS[Math.min(world.roomIndex, DESCENT_FLOORS.length - 1)]!;
       this._floorMaterial.color.setHex(PALETTE[Math.min(world.roomIndex, PALETTE.length - 1)]!).multiplyScalar(0.15 * floor.visualStep);
+      this._buildMirrors(floor.mirrors ?? []);
       if (this._questionLabel) {
         this._scene.remove(this._questionLabel);
         const oldTexture = this._questionLabel.material.map;
@@ -366,6 +377,41 @@ export class ChapterTwoScene {
       this._questionLabel = this._label(floor.objects[0]!.text, -8, 5.8, 0, 7);
       this._scene.add(this._questionLabel);
     }
+  }
+
+  /** Standing mirror props for never-go-alone floors: frame + reflective pane + name. */
+  private _buildMirrors(mirrors: MirrorProp[]): void {
+    if (this._mirrorGroup) {
+      this._scene.remove(this._mirrorGroup);
+      this._mirrorGroup.traverse((object): void => {
+        if (object instanceof Mesh) { object.geometry.dispose(); (object.material as MeshStandardMaterial).dispose(); }
+      });
+      this._mirrorGroup = null;
+      this._mirrorLabelled = '';
+    }
+    if (mirrors.length === 0) return;
+    const group: Group = new Group();
+    const frameMaterial: MeshStandardMaterial = new MeshStandardMaterial({ color: 0x39434f, roughness: 0.5, metalness: 0.35 });
+    const paneMaterial: MeshStandardMaterial = new MeshStandardMaterial({ color: 0x1a2530, roughness: 0.05, metalness: 0.9, emissive: 0x0d1a24, emissiveIntensity: 0.6 });
+    for (const mirror of mirrors) {
+      const stand: Group = new Group();
+      stand.position.set(mirror.x, 0, mirror.z);
+      const pane: Mesh = new Mesh(new BoxGeometry(1.7, 3.4, 0.12), paneMaterial);
+      pane.position.y = 1.9;
+      stand.add(pane);
+      for (const side of [-1, 1]) {
+        const post: Mesh = new Mesh(new BoxGeometry(0.18, 3.6, 0.18), frameMaterial);
+        post.position.set(side * 0.95, 1.85, 0.04);
+        stand.add(post);
+      }
+      const cap: Mesh = new Mesh(new BoxGeometry(2.1, 0.18, 0.24), frameMaterial);
+      cap.position.set(0, 3.7, 0.04);
+      stand.add(cap);
+      stand.add(this._label(mirror.name.toUpperCase(), 0, 4.3, 0, 3.4));
+      group.add(stand);
+    }
+    this._mirrorGroup = group;
+    this._scene.add(group);
   }
 
   private _box(parent: Group | Scene, x: number, y: number, z: number, width: number, height: number, depth: number, color: number): void {
