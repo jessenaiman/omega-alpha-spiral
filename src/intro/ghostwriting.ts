@@ -8,7 +8,7 @@ export interface BootFrame {
   transcript: string;
   choices: readonly string[];
   isCorrupt: boolean;
-  phase: 'cursor' | 'command' | 'loading' | 'writing' | 'waiting' | 'prelude' | 'question' | 'response' | 'travel' | 'final' | 'complete';
+  phase: 'cursor' | 'command' | 'loading' | 'writing' | 'waiting' | 'prelude' | 'question' | 'response' | 'travel' | 'final' | 'doorway' | 'complete';
   format: number;
   phaseElapsedMs?: number;
   hint?: string;

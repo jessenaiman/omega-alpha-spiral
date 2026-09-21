@@ -101,3 +101,23 @@ known art-direction tradeoff and keep World/Lighting below the premium bar.
   loudness on the owner's speakers/headphones.
 - Particle-heavy seeded captures are stored as evidence rather than strict pixel
   snapshots; deterministic hooks and canvas metrics protect state and rendering.
+
+## Main integration — 2026-09-21
+
+- Preserved the four-question chronicle, Rapier movement, spatial Dreamweaver
+  typography, Web Audio ghostwriting, and particle-built final door.
+- Added an explicit `doorway` gate. The player steps through before the existing
+  Chapter Two echo-chamber scene takes over the shared renderer.
+- The opening passes `All Three` into Chapter Two: Stage 1 still does not select
+  a Dreamweaver, and the three threads follow through the door.
+- Removed the merge-added parallel `StoryController`/Blender-threshold runtime;
+  it duplicated the approved opening and would have replaced the particle door.
+- Production build: PASS — 104 modules; intro chunk 3,136.74 kB minified /
+  1,180.57 kB gzip, with the existing large-chunk warning.
+- Unit tests: PASS — 23/23.
+- Consolidated browser suite: PASS — 12/12 in 3.5 minutes.
+- Intro bot: PASS — choices `[0,1,2,0]`, 838 frames advanced,
+  26.07 world units travelled, 713 physics steps, 0 softlock windows,
+  0 console errors, then explicit final-door entry.
+- Chapter Two bots: PASS — three keyboard routes, including narrow-screen
+  reduced motion, each crossing the opening and completing all echo rooms.

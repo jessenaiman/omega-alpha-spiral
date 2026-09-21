@@ -69,7 +69,7 @@ async function steer(page: Page, targetX: () => Promise<number>, until: (state: 
   throw new Error('Bot failed to reach the next narrative sensor');
 }
 
-test('observable bot steers through four different answer routes and reaches the final door', async ({ page }, testInfo: TestInfo) => {
+test('observable bot steers through four answer routes and steps through the final door', async ({ page }, testInfo: TestInfo) => {
   test.setTimeout(120_000);
   const consoleErrors: string[] = [];
   page.on('pageerror', (error: Error): void => { consoleErrors.push(error.message); });
@@ -106,6 +106,8 @@ test('observable bot steers through four different answer routes and reaches the
     }
   }
 
+  await expect.poll(async (): Promise<string> => (await readState(page)).storyMode).toBe('doorway');
+  await page.locator('#os-enter-ts').click();
   await expect.poll(async (): Promise<boolean> => (await readState(page)).complete).toBe(true);
   const final: BotState = await readState(page);
   metrics.framesAdvanced = final.frame - initial.frame;

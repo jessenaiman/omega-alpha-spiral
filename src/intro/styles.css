@@ -133,6 +133,7 @@
 .os-boot[data-os-phase-ts='response'] .os-footer,
 .os-boot[data-os-phase-ts='travel'] .os-footer,
 .os-boot[data-os-phase-ts='final'] .os-footer,
+.os-boot[data-os-phase-ts='doorway'] .os-footer,
 .os-boot[data-os-phase-ts='complete'] .os-footer { visibility: visible; }
 .os-replay {
   background: var(--os-clear);

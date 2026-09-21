@@ -8,7 +8,7 @@
     <title>omega-spiral — an invitation</title>
   </head>
   <body class="os-body">
-    <main class="os-boot" data-os-phase-ts="cursor" data-os-art-ts="loading" data-os-plate-ts="0" data-os-format-ts="plain" data-os-corrupt-ts="false" data-os-text-ts="loading" data-os-voice-ts="-1" data-os-question-ts="0" data-os-can-continue-ts="false" data-os-audio-ts="asleep" data-os-physics-ts="loading" data-os-started-ts="false">
+    <main class="os-boot" data-chapter="1" data-os-phase-ts="cursor" data-os-art-ts="loading" data-os-door-ts="forming" data-os-plate-ts="0" data-os-format-ts="plain" data-os-corrupt-ts="false" data-os-text-ts="loading" data-os-voice-ts="-1" data-os-question-ts="0" data-os-can-continue-ts="false" data-os-audio-ts="asleep" data-os-physics-ts="loading" data-os-started-ts="false">
       <canvas id="os-canvas-ts" class="os-canvas" aria-hidden="true"></canvas>
       <button id="os-sound-ts" class="os-sound" type="button" aria-pressed="false">wake sound</button>
       <!-- Accessible mirror only. The visible cursor, letters and choices are WebGL assets. -->
@@ -33,7 +33,7 @@
         <button type="button" data-os-move="right" aria-label="Move right">→</button>
       </nav>
       <p id="os-error-ts" class="os-error" role="alert"></p>
-      <footer class="os-footer"><span>WASD / arrows · walk into an answer · 1 2 3 / click</span><button id="os-replay-ts" class="os-replay" type="button">replay opening ↺</button></footer>
+      <footer class="os-footer"><span id="os-hint-ts">WASD / arrows · walk into an answer · 1 2 3 / click</span><button id="os-enter-ts" class="os-replay os-enter" type="button" hidden disabled>step through</button><button id="os-replay-ts" class="os-replay" type="button">replay opening ↺</button></footer>
     </main>
     <noscript>This opening needs JavaScript enabled.</noscript>
     <script type="module" src="/src/intro/main.ts"></script>

@@ -11,6 +11,7 @@ import { createBootFrames, type BootFrame } from './ghostwriting';
 import { IntroAudio } from './IntroAudio';
 import type { IntroPhysicsDiagnostics } from './IntroPhysics';
 import { BOOT_EFFECTS, SpatialBootScene } from './SpatialBootScene';
+import { ChapterTwoScene } from '../chapter-two/ChapterTwoScene';
 import dustBundle from './vfx/boot-dust.bundle.json';
 
 const SEED: number = 472;
@@ -22,7 +23,7 @@ const ZOOM_DURATION_MS: number = 16000;
 const VIEW_HEIGHT: number = 6.4;
 const TEST_STATE_NAMES = ['boot-cursor', 'question-1', 'question-2', 'question-3', 'question-4', 'final-door', 'complete'] as const;
 type TestStateName = typeof TEST_STATE_NAMES[number];
-type StoryMode = 'boot' | 'waiting' | 'prelude' | 'question' | 'response' | 'travel' | 'final' | 'complete';
+type StoryMode = 'boot' | 'waiting' | 'prelude' | 'question' | 'response' | 'travel' | 'final' | 'doorway' | 'complete';
 
 interface IntroDiagnosticState {
   frame: number;
@@ -103,6 +104,7 @@ export class BootScene {
   private _scene: Scene | null = null;
   private _camera: PerspectiveCamera | null = null;
   private _spatial: SpatialBootScene = new SpatialBootScene();
+  private _chapterTwo: ChapterTwoScene = new ChapterTwoScene();
   private _spatialReady: Promise<void> = Promise.resolve();
   private _audio: IntroAudio = new IntroAudio();
   private _activeChoice: number = 0;
@@ -158,6 +160,7 @@ export class BootScene {
     this._accessibleQuestion = getElement('#os-accessible-question-ts', HTMLElement);
     this._choices = getElement('#os-choices-ts', HTMLFieldSetElement);
     this._isDebug = new URLSearchParams(location.search).has('debug');
+    this._chapterTwo.init(this._root, this._isDebug);
     document.querySelectorAll<HTMLElement>('.os-choice-copy').forEach((element: HTMLElement, index: number): void => {
       element.textContent = this._questions[0].choices[index]?.text ?? '';
     });
@@ -167,6 +170,7 @@ export class BootScene {
     const signal: AbortSignal = this._abort.signal;
     motion.addEventListener('change', () => { this._isReduced = motion.matches; }, { signal });
     getElement('#os-replay-ts', HTMLButtonElement).addEventListener('click', () => this._reset(), { signal });
+    getElement('#os-enter-ts', HTMLButtonElement).addEventListener('click', () => this._enterDoor(), { signal });
     getElement('#os-sound-ts', HTMLButtonElement).addEventListener('click', () => {
       if (!this._hasStarted) void this._beginBootFromGesture();
       else if (!this._audio.unlocked) void this._unlockAudio();
@@ -304,6 +308,7 @@ export class BootScene {
   }
 
   private _reset(): void {
+    this._chapterTwo.stop();
     this._elapsedMs = 0;
     this._motionMs = 0;
     this._frameIndex = -1;
@@ -328,6 +333,7 @@ export class BootScene {
     if (this._root) {
       this._root.dataset.osVoiceTs = '-1';
       this._root.dataset.osStartedTs = 'false';
+      this._root.dataset.osDoorTs = 'forming';
     }
     this._applyFrame(this._frames[0], true);
     this._dust?.stop();
@@ -346,6 +352,11 @@ export class BootScene {
       this._raf = requestAnimationFrame(this._update);
       return;
     }
+    if (this._chapterTwo.active) {
+      if (!document.hidden) this._chapterTwo.update(delta, this._renderer, this._isReduced);
+      this._raf = requestAnimationFrame(this._update);
+      return;
+    }
     if (!document.hidden) {
       this._motionMs += delta * 1000;
       const endMs: number = this._frames[this._frames.length - 1].at;
@@ -360,14 +371,14 @@ export class BootScene {
         }
       }
       const firstMix: number = this._isReduced ? 0 : Math.min(Math.max((displayMs - FIRST_DISSOLVE_MS) / DISSOLVE_DURATION_MS, 0), 1);
-      const targetSecondMix: number = this._storyMode === 'boot' ? 0 : this._storyMode === 'final' || this._storyMode === 'complete' ? 1 : this._questionIndex / Math.max(1, this._questions.length - 1);
+      const targetSecondMix: number = this._storyMode === 'boot' ? 0 : ['final', 'doorway', 'complete'].includes(this._storyMode) ? 1 : this._questionIndex / Math.max(1, this._questions.length - 1);
       this._secondMix += (targetSecondMix - this._secondMix) * Math.min(1, delta * (this._isReduced ? 60 : 0.42));
       this._plate.material.uniforms.firstMix.value = firstMix;
       this._plate.material.uniforms.secondMix.value = this._secondMix;
       this._plate.material.uniforms.zoom.value = this._isReduced ? 1 : 1 + Math.min(this._motionMs / ZOOM_DURATION_MS, 1) * 0.06 + this._questionIndex * 0.009;
       this._plate.material.uniforms.reveal.value = this._isReduced ? 0.7 : Math.min(Math.max((displayMs - 4400) / 1600, 0), 0.85);
       this._plate.material.uniforms.drift.value.set(this._isReduced ? 0 : Math.sin(this._motionMs / 13000) * 0.019, this._isReduced ? 0 : Math.cos(this._motionMs / 19000) * 0.013);
-      if (this._storyMode !== 'boot' && this._storyMode !== 'waiting' && this._storyMode !== 'complete') this._updateStory(now);
+      if (!['boot', 'waiting', 'doorway', 'complete'].includes(this._storyMode)) this._updateStory(now);
       const spatialEvent: number = this._spatial.update(this._motionMs, this._isReduced);
       if ((this._storyMode === 'waiting' || this._storyMode === 'travel') && this._movementKeys.size > 0) this._audio.move(this._answersCommitted);
       if (spatialEvent >= 0 && this._storyMode === 'waiting') this._commitChoice(spatialEvent);
@@ -414,6 +425,11 @@ export class BootScene {
     this._root.dataset.osTextTs = 'three';
     this._root.dataset.osQuestionTs = String(this._questionIndex);
     this._root.dataset.osCanContinueTs = String(this._canContinue);
+    const enter: HTMLButtonElement = getElement('#os-enter-ts', HTMLButtonElement);
+    enter.hidden = this._storyMode !== 'doorway';
+    enter.disabled = this._storyMode !== 'doorway';
+    this._root.dataset.osDoorTs = this._storyMode === 'doorway' ? 'ready' : this._storyMode === 'complete' ? 'crossed' : 'forming';
+    getElement('#os-hint-ts', HTMLElement).textContent = this._storyMode === 'doorway' ? 'Enter · W · step through' : frame.hint ?? 'WASD / arrows · walk into an answer · 1 2 3 / click';
     this._spatial.setFrame(frame);
     this._prelude.textContent = frame.prelude;
     this._transcript.textContent = frame.transcript;
@@ -506,6 +522,15 @@ export class BootScene {
     }
   }
 
+  private _enterDoor(): void {
+    if (this._storyMode !== 'doorway') return;
+    this._storyMode = 'complete';
+    this._canContinue = false;
+    this._clearMovement();
+    this._applyFrame(this._storyFrame(CHRONICLE_FINAL, 'complete', 4, 'ALL THREE FOLLOWED', 12000));
+    this._chapterTwo.start('All Three');
+  }
+
   private _updateStory(now: number): void {
     const elapsedMs: number = Math.max(0, now - this._storyStartedAt);
     const question: ChronicleQuestion = this._questions[Math.min(this._questionIndex, this._questions.length - 1)];
@@ -544,8 +569,8 @@ export class BootScene {
     if (this._storyMode === 'final') {
       const text: string = this._finalText(elapsedMs);
       const complete: boolean = text.length >= CHRONICLE_FINAL.length;
-      if (complete) this._storyMode = 'complete';
-      this._applyFrame(this._storyFrame(text, complete ? 'complete' : 'final', 4, complete ? 'ALL THREE FOLLOWED' : undefined, elapsedMs));
+      if (complete) this._storyMode = 'doorway';
+      this._applyFrame(this._storyFrame(text, complete ? 'doorway' : 'final', 4, complete ? 'ALL THREE FOLLOWED · STEP THROUGH' : undefined, elapsedMs));
     }
   }
 
@@ -698,6 +723,7 @@ export class BootScene {
   };
 
   private _onKeyDown = (event: KeyboardEvent): void => {
+    if (this._chapterTwo.active) return;
     if (event.repeat || event.ctrlKey || event.metaKey || event.altKey || ['Tab', 'Shift', 'Control', 'Alt', 'Meta', 'Escape'].includes(event.key)) return;
     if (event.target instanceof Element && event.target.closest('button, input')) return;
     if (!this._hasStarted) {
@@ -706,6 +732,11 @@ export class BootScene {
     }
     void this._unlockAudio();
     const key: string = event.key.length === 1 ? event.key.toLowerCase() : event.key;
+    if (this._storyMode === 'doorway' && ['Enter', ' ', 'ArrowUp', 'w'].includes(key)) {
+      event.preventDefault();
+      this._enterDoor();
+      return;
+    }
     if ((this._storyMode === 'waiting' || this._storyMode === 'travel') && ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'w', 'a', 's', 'd'].includes(key)) {
       event.preventDefault();
       this._movementKeys.add(key);
@@ -752,6 +783,7 @@ export class BootScene {
     this._abort.abort();
     this._vfx?.destroy();
     this._spatial.destroy();
+    this._chapterTwo.destroy();
     this._plate?.geometry.dispose();
     this._plate?.material.dispose();
     this._textures.forEach((texture: Texture): void => texture.dispose());
@@ -840,8 +872,8 @@ export class BootScene {
     this._questionIndex = this._questions.length - 1;
     this._storyStartedAt = performance.now();
     if (name === 'final-door') {
-      this._storyMode = 'final';
-      this._applyFrame(this._storyFrame(CHRONICLE_FINAL_DRAFT, 'final', 4, undefined, 4400));
+      this._storyMode = 'doorway';
+      this._applyFrame(this._storyFrame(CHRONICLE_FINAL, 'doorway', 4, 'ALL THREE FOLLOWED · STEP THROUGH', 12000));
       this._spatial.settleForTestState(this._motionMs);
       this._refreshStaticFrame();
       return;
@@ -863,6 +895,8 @@ export class BootScene {
     const questionNumber: number = Math.min(this._questionIndex + 1, this._questions.length);
     const objective: string = this._storyMode === 'complete'
       ? 'opening-complete'
+      : this._storyMode === 'doorway'
+        ? 'step-through-final-door'
       : this._storyMode === 'final'
         ? 'reach-final-door'
         : this._storyMode === 'travel'
