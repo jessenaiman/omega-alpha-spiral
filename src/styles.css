@@ -286,7 +286,8 @@ button { color: inherit; }
 .terminal-choice:disabled { opacity: 0.42; cursor: default; }
 .choice-key { color: var(--signal-dim); }
 .terminal-continue { align-self: flex-end; margin-top: auto; }
-.terminal-complete { display: flex; flex: 1; flex-direction: column; }
+.terminal-complete { display: flex; flex: 1; flex-direction: column; min-width: 0; }
+.terminal-complete .line-symbols { overflow-wrap: anywhere; letter-spacing: 0.08em; }
 
 [data-game-error] {
   position: absolute;
@@ -297,6 +298,17 @@ button { color: inherit; }
   color: #ffb69e;
   background: #140806;
 }
+
+.map-mode [data-game-canvas] { opacity: 1; }
+.map-hud { position: absolute; inset: 0; z-index: 2; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: clamp(0.5rem, 2vw, 1rem); }
+.map-hud header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.map-hud header, .map-hud footer { background: #0a0a0f; border-block: 1px solid #817c71; padding: 0.5rem; }
+.map-hud p { margin: 0; line-height: 1.5; font-size: clamp(0.65rem, 1.4vw, 0.95rem); }
+.map-count { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.blackout-strip { position: absolute; border: 2px dashed #e8dcc8; pointer-events: none; opacity: 0.65; }
+.blackout-strip[data-phase="active"] { border-style: solid; background: repeating-linear-gradient(45deg, #e8dcc840 0 2px, transparent 2px 8px); }
+.map-hud header, .map-hud footer { position: relative; z-index: 1; }
+.map-hud .map-controls { color: #b8b0a2; font-size: clamp(0.6rem, 1.2vw, 0.8rem); }
 
 .sr-only {
   position: absolute;

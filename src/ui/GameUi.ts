@@ -6,7 +6,7 @@ export class GameUi {
   private readonly status: HTMLElement;
   private unsubscribe: (() => void) | null = null;
 
-  constructor(private readonly root: HTMLElement, private readonly phase: GhostTerminalPhase) {
+  constructor(private readonly root: HTMLElement, private readonly phase: GhostTerminalPhase, private readonly enterTown: () => void = () => {}) {
     const terminal = root.querySelector<HTMLElement>('[data-ghost-terminal]');
     const status = root.querySelector<HTMLElement>('[data-game-status]');
     if (!terminal || !status) throw new Error('Ghost Terminal UI shell is incomplete.');
@@ -123,6 +123,15 @@ export class GameUi {
       this.line(TERMINAL_COPY.complete, 'complete'),
       this.line('DISPLAY BUS // 640×480 // STANDBY', 'progress'),
     );
+    const enter = document.createElement('button');
+    enter.type = 'button';
+    enter.className = 'terminal-continue';
+    enter.textContent = 'ENTER THE TOWN';
+    enter.addEventListener('click', () => {
+      enter.disabled = true;
+      this.enterTown();
+    }, { once: true });
+    complete.append(enter);
     target.append(complete);
     this.status.textContent = TERMINAL_COPY.handoff;
   }

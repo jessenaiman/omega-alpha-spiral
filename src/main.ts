@@ -4,6 +4,11 @@ import { loadLineage } from './game/session-store.js';
 import { GhostTerminalPhase } from './phases/GhostTerminalPhase.js';
 import './styles.css';
 import { GameUi } from './ui/GameUi.js';
+import { MapHud } from './ui/MapHud.js';
+import { ExplorationPhase } from './phases/ExplorationPhase.js';
+import { TownMap } from './world/TownMap.js';
+import { InputController } from './core/InputController.js';
+import { FixedLoop } from './core/FixedLoop.js';
 
 const canvas = document.querySelector<HTMLCanvasElement>('[data-game-canvas]');
 const status = document.querySelector<HTMLElement>('[data-game-status]');
@@ -33,13 +38,58 @@ try {
   const phase = new GhostTerminalPhase(runState.displayInstance, action => {
     runState = reduceRun(runState, action);
   });
-  const ui = new GameUi(shell, phase);
+  let disposeMap = () => {};
+  let activeExploration: ExplorationPhase | null = null;
+  let frameCount = 0;
+  if (new URLSearchParams(location.search).has('debug')) {
+    Object.assign(window, { __THREE_GAME_DIAGNOSTICS__: {
+      renderer: renderer.info,
+      get state() {
+        const map = activeExploration?.snapshot();
+        return { phase: runState.phase, frame: frameCount, player: map?.player ?? null,
+          restored: map?.restored.length ?? 0, complete: map?.complete ?? false };
+      },
+    } });
+  }
+  const ui = new GameUi(shell, phase, () => {
+    if (runState.phase !== 'exploration') return;
+    shell.querySelector('[data-ghost-terminal]')?.remove();
+    shell.classList.add('map-mode');
+    renderer.setSize(640, 480, false);
+    const town = new TownMap();
+    const hud = new MapHud(shell);
+    const exploration = new ExplorationPhase(action => {
+      runState = reduceRun(runState, action);
+    }, event => { status.textContent = `${event.type} · ${event.sourceId ?? ''}`; });
+    activeExploration = exploration;
+    const input = new InputController(canvas);
+    let paused = false;
+    const loop = new FixedLoop(dt => {
+      frameCount++;
+      const frame = input.sample();
+      if (frame.pausePressed) paused = !paused;
+      if (!paused) {
+        exploration.update(dt, { x: frame.move.x, z: frame.move.y });
+        if (frame.actPressed) exploration.act();
+      }
+    }, () => {
+      const snapshot = exploration.snapshot();
+      town.update(snapshot);
+      hud.update(snapshot, paused);
+      renderer.render(town.scene, town.camera);
+    });
+    canvas.focus();
+    loop.start();
+    disposeMap = () => { loop.stop(); input.dispose(); hud.dispose(); town.dispose(); };
+  });
   status.textContent = 'GHOST TERMINAL · READY';
 
-  window.addEventListener('pagehide', () => {
+  window.addEventListener('pagehide', event => {
+    if (event.persisted) return;
+    disposeMap();
     ui.dispose();
     renderer.dispose();
-  }, { once: true });
+  });
 } catch (error) {
   if (errorBox) {
     errorBox.hidden = false;
