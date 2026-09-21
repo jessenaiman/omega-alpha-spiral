@@ -42,3 +42,35 @@ spatial language of the three choices.
 - Choice order is not randomized; learning the three spatial identities matters
   more than novelty.
 - No generated dialogue at runtime; every selectable line is authored and reviewable.
+
+## Loop 2 — Three.js Game UI Designer
+
+### Intent
+
+Make the speaker readable from the writing itself, not only from color, and keep
+the interface diegetic instead of returning to a terminal panel.
+
+### Changed
+
+- Light writes on an exact baseline with zero glyph drift or skew.
+- Shadow writes in hard five-character segments that abruptly change X/Y/Z
+  direction, preserving straight strokes rather than a smooth wave.
+- Ambition bends each line into a shallow forward arc.
+- Responses switch to the selected Dreamweaver's historical pixel depth and
+  remain anchored beneath that Dreamweaver's symbol.
+- Diegetic speaker labels now name role as well as identity:
+  `LIGHT // WITNESS`, `SHADOW // VEIL`, `AMBITION // VECTOR`.
+- Accessible radio values and legend now describe the actual Dreamweaver choice,
+  replacing stale fantasy/romance/horror semantics.
+- Touch direction buttons gain a clear pressed state while retaining the same
+  movement intent path as keyboard controls.
+- Resolved role-review defects: Light's response anchor no longer drifts and its
+  choice plane is unrotated; Light settles while speaking; all identity labels
+  now emit beneath their symbols; Shadow's glyph backing is near-black rather
+  than the shared blue-gray.
+
+### Deliberate limits
+
+- No new DOM panel or HUD was added; the 3D writing and symbols remain primary.
+- No image asset was generated because the requested identity is procedural type
+  and geometry, not a flat badge.

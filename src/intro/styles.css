@@ -193,7 +193,12 @@
 .os-touch button[data-os-move='down'] { grid-column: 2; grid-row: 2; }
 .os-touch button[data-os-move='right'] { grid-column: 3; grid-row: 2; }
 .os-touch button:focus-visible,
-.os-touch button[data-os-active='true'] { border-color: var(--os-white); color: var(--os-white); }
+.os-touch button[data-os-active='true'] {
+  background: var(--os-surface);
+  border-color: var(--os-white);
+  color: var(--os-white);
+  transform: translateY(1px);
+}
 .os-sr {
   clip-path: inset(50%);
   height: var(--os-size-xxxs);

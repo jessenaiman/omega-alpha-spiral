@@ -17,7 +17,8 @@ const ATLAS_ROWS: number = 7;
 const GLYPH_CAPACITY: number = 256;
 // Owner order follows chronicle.ts: Light, Shadow, Ambition.
 const INK: number[] = [0xdcefff, 0xd44854, 0xe7b45a];
-const VOICE_NAMES: string[] = ['LIGHT', 'SHADOW', 'AMBITION'];
+const BACK_INK: number[] = [0x395057, 0x050103, 0x4a3510];
+const VOICE_NAMES: string[] = ['LIGHT // WITNESS', 'SHADOW // VEIL', 'AMBITION // VECTOR'];
 const ASIDES: string[] = ["They've already tried that.", 'Still looking for the beginning.', 'Let them try.'];
 const CURSOR_PERIOD_MS: number = 1150;
 const ASIDE_HOLD_MS: number = 4300;
@@ -105,6 +106,7 @@ class GlyphRibbon {
   private _text: string = '';
   private _columns: number = 40;
   private _format: number = 0;
+  private _ownerStyle: number = -1;
   private _atlases: CanvasTexture[];
 
   constructor(atlases: CanvasTexture[]) {
@@ -132,13 +134,15 @@ class GlyphRibbon {
     this.root.add(back, front);
   }
 
-  public setText(text: string, format: number, columns: number, color: number = INK[0]): void {
+  public setText(text: string, format: number, columns: number, color: number = INK[0], ownerStyle: number = -1): void {
     format = Math.max(0, Math.min(this._atlases.length - 1, format));
     this._front.color.setHex(color);
-    if (this._text === text && this._format === format && this._columns === columns) return;
+    this._back.color.setHex(ownerStyle >= 0 ? BACK_INK[ownerStyle] : 0x395057);
+    if (this._text === text && this._format === format && this._columns === columns && this._ownerStyle === ownerStyle) return;
     this._text = text;
     this._format = format;
     this._columns = columns;
+    this._ownerStyle = ownerStyle;
     this._front.map = this._atlases[format];
     this._back.map = this._atlases[format];
     let glyph: number = 0;
@@ -162,12 +166,27 @@ class GlyphRibbon {
       if (letter === '\n') { row += 1; column = 0; continue; }
       if (glyph >= GLYPH_CAPACITY) break;
       if (column >= this._columns) { row += 1; column = 0; }
-      const x: number = column * 0.64;
-      const y: number = -row * 1.35;
-      const drift: number = Math.sin(seconds * 0.32 + glyph * 0.21) * disorder;
+      let x: number = column * 0.64;
+      let y: number = -row * 1.35;
+      const ownerStyle: number = this._ownerStyle;
+      const drift: number = ownerStyle === 0 ? 0 : Math.sin(seconds * 0.32 + glyph * 0.21) * disorder;
       const eraDepth: number[] = [0.5, 0.8, 1.25, 1.8, 2.6];
-      const z: number = Math.sin(glyph * 0.71 + seconds * 0.2) * disorder * BOOT_EFFECTS.depthDrift * 3 * eraDepth[this._format];
-      const skew: number = Math.cos(glyph * 0.37) * disorder * BOOT_EFFECTS.planeSkew;
+      let z: number = ownerStyle === 0 ? 0 : Math.sin(glyph * 0.71 + seconds * 0.2) * disorder * BOOT_EFFECTS.depthDrift * 3 * eraDepth[this._format];
+      let skew: number = ownerStyle === 0 ? 0 : Math.cos(glyph * 0.37) * disorder * BOOT_EFFECTS.planeSkew;
+      if (ownerStyle === 1) {
+        const segment: number = Math.floor(column / 5) % 3;
+        x += (segment - 1) * 0.24;
+        y += segment === 1 ? 0.08 : -0.04;
+        z = (segment - 1) * disorder * 0.22;
+        skew = segment === 1 ? -0.12 : 0.12;
+      }
+      if (ownerStyle === 2) {
+        const arc: number = Math.sin(Math.min(1, column / Math.max(1, this._columns - 1)) * Math.PI);
+        x += arc * 0.2;
+        y += arc * (0.32 + disorder * 0.2);
+        z += arc * 0.24;
+        skew += arc * 0.08;
+      }
       this._positions.set([x, y + drift, z, x + 1, y + drift, z, x + 1 + skew, y + 1 + drift, z, x + skew, y + 1 + drift, z], glyph * 12);
       column += 1;
       glyph += 1;
@@ -217,7 +236,7 @@ export class SpatialBootScene {
   private _hovered: number = -1;
   private _pointer: Vector2 = new Vector2();
   private _raycaster: Raycaster = new Raycaster();
-  private _fossils: Array<{ text: string; era: number; color: number }> = [];
+  private _fossils: Array<{ text: string; era: number; color: number; owner: number }> = [];
   private _voiceStarts: Vector3[] = [new Vector3(), new Vector3(), new Vector3()];
   private _voiceResting: Vector3[] = [new Vector3(), new Vector3(), new Vector3()];
   private _trailPoint: Vector3 = new Vector3();
@@ -256,7 +275,7 @@ export class SpatialBootScene {
       target.name = String(index);
       this._targets.push(target);
       this._root.add(target);
-      this._ribbons[14 + index].setText(`[ ${VOICE_NAMES[index]} ]`, index + 1, 18, INK[index]);
+      this._ribbons[14 + index].setText(`[ ${VOICE_NAMES[index]} ]`, index + 1, 24, INK[index], index);
     }
     this._createPlayer();
     this._createPath();
@@ -342,22 +361,23 @@ export class SpatialBootScene {
     const transcriptLines: string[] = frame.transcript.split('\n');
     this._ribbons[0].setText(frame.phase === 'command' || frame.phase === 'cursor' ? frame.transcript : transcriptLines.filter((line: string): boolean => !line.startsWith('dreamweaver[')).join('\n'), frame.format, columns);
     for (let index: number = 0; index < 3; index += 1) {
-      this._ribbons[index + 1].setText(transcriptLines.find((line: string): boolean => line.startsWith(`dreamweaver[0${index + 1}]`)) ?? '', index, columns, INK[index]);
+      this._ribbons[index + 1].setText(transcriptLines.find((line: string): boolean => line.startsWith(`dreamweaver[0${index + 1}]`)) ?? '', index, columns, INK[index], index);
     }
     this._ribbons[4].setText(frame.prelude, 0, this._isNarrow ? 40 : 78, 0x7e9399);
     const responseColor: number = frame.phase === 'response' && this._selected >= 0 ? INK[this._selected] : INK[0];
     const questionColumns: number = frame.phase === 'response' ? (this._isNarrow ? 20 : 27) : columns;
-    this._ribbons[5].setText(frame.question, frame.format, questionColumns, responseColor);
+    const responseOwner: number = frame.phase === 'response' ? this._selected : -1;
+    this._ribbons[5].setText(frame.question, responseOwner >= 0 ? responseOwner + 1 : frame.format, questionColumns, responseColor, responseOwner);
     this._ribbons[6].setText(BOOT_SYMBOLS, 2, columns, 0x9ca5a8);
     const asideText: string = frame.hint ?? this._aside;
     const asideVoice: number = frame.hint ? Math.max(0, Math.min(4, frame.format)) : Math.max(this._voice, 0);
     this._ribbons[7].setText(asideText, asideVoice, this._isNarrow ? 30 : 42, frame.hint ? 0x9ca5a8 : INK[Math.max(this._voice, 0)]);
     for (let index: number = 0; index < 3; index += 1) {
-      this._ribbons[8 + index].setText(`${index + 1}  ${frame.choices[index] ?? BOOT_OPTIONS[index]}`, index + 1, this._isNarrow ? 14 : 18, INK[index]);
+      this._ribbons[8 + index].setText(`${index + 1}  ${frame.choices[index] ?? BOOT_OPTIONS[index]}`, index + 1, this._isNarrow ? 14 : 18, INK[index], index);
     }
     for (let index: number = 0; index < 3; index += 1) {
       const fossil = this._fossils[index];
-      this._ribbons[11 + index].setText(fossil?.text ?? '', fossil?.era ?? 0, this._isNarrow ? 34 : 62, fossil?.color ?? INK[index]);
+      this._ribbons[11 + index].setText(fossil?.text ?? '', fossil?.era ?? 0, this._isNarrow ? 34 : 62, fossil?.color ?? INK[index], fossil?.owner ?? index);
     }
   }
 
@@ -395,7 +415,7 @@ export class SpatialBootScene {
   public getPhysicsDiagnostics(): IntroPhysicsDiagnostics { return this._physics.getDiagnostics(); }
 
   public archive(text: string, era: number, owner: number): void {
-    this._fossils.unshift({ text, era, color: INK[Math.max(0, Math.min(2, owner))] });
+    this._fossils.unshift({ text, era, color: INK[Math.max(0, Math.min(2, owner))], owner });
     this._fossils.length = Math.min(this._fossils.length, 3);
     if (this._frame) this.setFrame(this._frame);
   }
@@ -586,7 +606,8 @@ export class SpatialBootScene {
       const smoothEntrance: number = entrance * entrance * (3 - 2 * entrance);
       const start: Vector3 = this._voiceStarts[index];
       const resting: Vector3 = this._voiceResting[index];
-      this._setVoiceResting(resting, index, frame.format, seconds, isReduced || isWaiting);
+      const isSpeaking: boolean = (frame.phase === 'response' && this._selected === index) || (this._voice === index && elapsedMs - this._asideAt < ASIDE_HOLD_MS);
+      this._setVoiceResting(resting, index, frame.format, seconds, isReduced || isWaiting || (isSpeaking && index === 0));
       const finalProgress: number = isFinal ? Math.min(Math.max((frame.phaseElapsedMs ?? 0) / 9200, 0), 1) : 0;
       if (isFinal) {
         resting.x *= 1 - finalProgress;
@@ -599,7 +620,6 @@ export class SpatialBootScene {
       if (index === 0) voice.rotation.set(0, 0, isReduced || isWaiting ? 0 : Math.sin(seconds * 0.2) * 0.025);
       if (index === 1) voice.rotation.set(0, 0, isReduced || isWaiting ? -0.12 : (Math.floor(seconds * 0.6) % 5 - 2) * 0.08);
       if (index === 2) voice.rotation.set(0, 0, isReduced || isWaiting ? 0.08 : seconds * 0.16);
-      const isSpeaking: boolean = (frame.phase === 'response' && this._selected === index) || (this._voice === index && elapsedMs - this._asideAt < ASIDE_HOLD_MS);
       const speakingPulse: number = isReduced ? 1 : 1 + Math.sin(seconds * 5.4) * 0.1;
       voice.scale.setScalar(isSpeaking ? 1.45 * speakingPulse : 1);
       if (isFinal) voice.scale.multiplyScalar(1 - finalProgress * 0.74);
@@ -628,14 +648,14 @@ export class SpatialBootScene {
     const responseAnchor: Vector3 | null = responseOwner >= 0 ? this._voices[responseOwner].position : null;
     question.position.set(
       responseAnchor ? responseAnchor.x - this._width * (this._isNarrow ? 0.16 : 0.19) : left,
-      isFinal ? 2.55 : responseAnchor ? responseAnchor.y - 0.72 : isWaiting ? 0.68 : -0.8 + Math.min(Math.max((seconds - 13) / 16, 0), 1) * 1.45,
+      isFinal ? 2.55 : responseAnchor ? responseAnchor.y - 0.96 : isWaiting ? 0.68 : -0.8 + Math.min(Math.max((seconds - 13) / 16, 0), 1) * 1.45,
       responseAnchor ? responseAnchor.z + 0.14 : 0.25,
     );
     question.scale.setScalar(isFinal ? scale * (this._isNarrow ? 0.62 : 0.68) : responseAnchor ? scale * 0.52 : scale);
     if (responseOwner === 0) question.rotation.set(0, 0, 0);
     if (responseOwner === 1) question.rotation.set(-0.08, -0.14, 0.025);
     if (responseOwner === 2) question.rotation.set(-0.16, 0.18, -0.035);
-    if (!isReduced && !isSettled) {
+    if (!isReduced && !isSettled && responseOwner !== 0) {
       question.position.x += Math.sin(seconds * 0.16) * 0.3;
       question.position.z += Math.sin(seconds * 0.25) * BOOT_EFFECTS.depthDrift * 2.5;
       if (responseOwner < 0) question.rotation.set(-0.3, (frame.format - 1) * BOOT_EFFECTS.planeSkew * 0.65 + Math.sin(seconds * 0.2) * 0.15, (frame.format - 1) * 0.055);
@@ -653,9 +673,10 @@ export class SpatialBootScene {
       const choice: Group = this._ribbons[index + 8].root;
       choice.visible = isWaiting;
       const voicePosition: Vector3 = this._voices[index].position;
-      choice.position.set(voicePosition.x - this._width * (this._isNarrow ? 0.12 : 0.15), voicePosition.y - 0.76, voicePosition.z + 0.08);
+      choice.position.set(voicePosition.x - this._width * (this._isNarrow ? 0.12 : 0.15), voicePosition.y - 1, voicePosition.z + 0.08);
       choice.scale.setScalar(scale * (this._isNarrow ? 0.37 : 0.39));
-      choice.rotation.set(index === 0 ? -0.08 : index === 1 ? -0.18 : -0.28, (index - 1) * 0.16, (index - 1) * 0.018);
+      if (index === 0) choice.rotation.set(0, 0, 0);
+      else choice.rotation.set(index === 1 ? -0.18 : -0.28, (index - 1) * 0.16, (index - 1) * 0.018);
       const target: Mesh<BoxGeometry, MeshBasicMaterial> = this._targets[index];
       target.visible = isWaiting;
       target.position.set(voicePosition.x, choice.position.y - 0.22, 0.18);
@@ -664,7 +685,7 @@ export class SpatialBootScene {
       if (this._hovered === index) choice.position.y += scale * 0.12;
       const speaker: Group = this._ribbons[14 + index].root;
       speaker.visible = isWaiting || (frame.phase === 'response' && this._selected === index);
-      speaker.position.set(voicePosition.x - 0.48, voicePosition.y + 0.44, voicePosition.z + 0.04);
+      speaker.position.set(voicePosition.x - 0.48, voicePosition.y - 0.46, voicePosition.z + 0.04);
       speaker.scale.setScalar(scale * 0.28);
       speaker.rotation.set(0, 0, index === 1 ? -0.04 : index === 2 ? 0.04 : 0);
       this._physicsTargets[index].x = target.position.x;
