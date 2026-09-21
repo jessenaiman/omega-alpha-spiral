@@ -5,8 +5,8 @@ import { ACESFilmicToneMapping, Mesh, PerspectiveCamera, PlaneGeometry, Scene, S
 import distantUrl from '../../assets/intro/optical-variations/optical-a-distant.webp';
 import foldUrl from '../../assets/intro/optical-variations/optical-b-fold.webp';
 import thresholdUrl from '../../assets/intro/optical-variations/optical-c-threshold.webp';
-import { CHRONICLE_FINAL, CHRONICLE_FINAL_DRAFT, CHRONICLE_QUESTIONS, type ChronicleQuestion } from './chronicle';
-import { BOOT_OPTIONS, createBootFrames, type BootFrame } from './ghostwriting';
+import { CHRONICLE_FINAL, CHRONICLE_FINAL_DRAFT, createChronicleQuestions, type ChronicleQuestion } from './chronicle';
+import { createBootFrames, type BootFrame } from './ghostwriting';
 import { IntroAudio } from './IntroAudio';
 import type { IntroPhysicsDiagnostics } from './IntroPhysics';
 import { BOOT_EFFECTS, SpatialBootScene } from './SpatialBootScene';
@@ -110,7 +110,8 @@ export class BootScene {
   private _vfx: ThreeVfxRenderer | null = null;
   private _dust: ThreeVfxEffectInstance | null = null;
   private _abort: AbortController = new AbortController();
-  private _frames: BootFrame[] = createBootFrames(String(SEED));
+  private _questions: readonly ChronicleQuestion[] = createChronicleQuestions(SEED);
+  private _frames: BootFrame[] = createBootFrames(String(SEED), this._questions[0]);
   private _frameIndex: number = -1;
   private _elapsedMs: number = 0;
   private _motionMs: number = 0;
@@ -155,7 +156,9 @@ export class BootScene {
     this._accessibleQuestion = getElement('#os-accessible-question-ts', HTMLElement);
     this._choices = getElement('#os-choices-ts', HTMLFieldSetElement);
     this._isDebug = new URLSearchParams(location.search).has('debug');
-    document.querySelectorAll<HTMLElement>('.os-choice-copy').forEach((element: HTMLElement, index: number): void => { element.textContent = BOOT_OPTIONS[index]; });
+    document.querySelectorAll<HTMLElement>('.os-choice-copy').forEach((element: HTMLElement, index: number): void => {
+      element.textContent = this._questions[0].choices[index]?.text ?? '';
+    });
     const canvas: HTMLCanvasElement = getElement('#os-canvas-ts', HTMLCanvasElement);
     const motion: MediaQueryList = matchMedia('(prefers-reduced-motion: reduce)');
     this._isReduced = motion.matches;
@@ -351,7 +354,7 @@ export class BootScene {
         }
       }
       const firstMix: number = this._isReduced ? 0 : Math.min(Math.max((displayMs - FIRST_DISSOLVE_MS) / DISSOLVE_DURATION_MS, 0), 1);
-      const targetSecondMix: number = this._storyMode === 'boot' ? 0 : this._storyMode === 'final' || this._storyMode === 'complete' ? 1 : this._questionIndex / Math.max(1, CHRONICLE_QUESTIONS.length - 1);
+      const targetSecondMix: number = this._storyMode === 'boot' ? 0 : this._storyMode === 'final' || this._storyMode === 'complete' ? 1 : this._questionIndex / Math.max(1, this._questions.length - 1);
       this._secondMix += (targetSecondMix - this._secondMix) * Math.min(1, delta * (this._isReduced ? 60 : 0.42));
       this._plate.material.uniforms.firstMix.value = firstMix;
       this._plate.material.uniforms.secondMix.value = this._secondMix;
@@ -433,7 +436,7 @@ export class BootScene {
     this._highlightChoice(index);
     this._selectedChoice = index;
     this._answersCommitted += 1;
-    const question: ChronicleQuestion = CHRONICLE_QUESTIONS[this._questionIndex];
+    const question: ChronicleQuestion = this._questions[this._questionIndex];
     this._spatial.commitChoice(index);
     this._spatial.setPlayerStage(this._answersCommitted);
     this._spatial.archive(question.choices[index].text, question.era, index);
@@ -465,14 +468,14 @@ export class BootScene {
     this._storyStartedAt = performance.now();
     this._canContinue = false;
     this._spatial.beginJourney();
-    this._applyFrame(this._storyFrame('', 'travel', CHRONICLE_QUESTIONS[index].era, 'W / ↑  //  WALK UNTIL IT ASKS', 0));
+    this._applyFrame(this._storyFrame('', 'travel', this._questions[index].era, 'W / ↑  //  WALK UNTIL IT ASKS', 0));
   }
 
   private _beginQuestion(): void {
     this._storyMode = 'question';
     this._storyStartedAt = performance.now();
     this._canContinue = false;
-    this._audio.era(CHRONICLE_QUESTIONS[this._questionIndex].era);
+    this._audio.era(this._questions[this._questionIndex].era);
   }
 
   private _beginFinal(): void {
@@ -492,14 +495,14 @@ export class BootScene {
       return;
     }
     if (this._storyMode === 'response') {
-      if (this._questionIndex >= CHRONICLE_QUESTIONS.length - 1) this._beginFinal();
+      if (this._questionIndex >= this._questions.length - 1) this._beginFinal();
       else this._beginTravel(this._questionIndex + 1);
     }
   }
 
   private _updateStory(now: number): void {
     const elapsedMs: number = Math.max(0, now - this._storyStartedAt);
-    const question: ChronicleQuestion = CHRONICLE_QUESTIONS[Math.min(this._questionIndex, CHRONICLE_QUESTIONS.length - 1)];
+    const question: ChronicleQuestion = this._questions[Math.min(this._questionIndex, this._questions.length - 1)];
     if (this._storyMode === 'prelude') {
       const text: string = this._typed(question.prelude, elapsedMs, 44);
       const complete: boolean = text.length >= question.prelude.length;
@@ -529,7 +532,7 @@ export class BootScene {
       const complete: boolean = typed.length >= response.length;
       const display: string = this._dreamweaverWriting(typed, elapsedMs, this._selectedChoice, complete);
       this._canContinue = complete;
-      this._applyFrame(this._storyFrame(display, 'response', question.era, complete ? (this._questionIndex < CHRONICLE_QUESTIONS.length - 1 ? 'ENTER  //  WALK ON' : 'ENTER  //  OPEN THE THRESHOLD') : undefined, elapsedMs));
+      this._applyFrame(this._storyFrame(display, 'response', question.era, complete ? (this._questionIndex < this._questions.length - 1 ? 'ENTER  //  WALK ON' : 'ENTER  //  OPEN THE THRESHOLD') : undefined, elapsedMs));
       return;
     }
     if (this._storyMode === 'final') {
@@ -541,7 +544,7 @@ export class BootScene {
   }
 
   private _storyFrame(text: string, phase: BootFrame['phase'], format: number, hint: string | undefined, phaseElapsedMs: number, isCorrupt: boolean = false): BootFrame {
-    const question: ChronicleQuestion = CHRONICLE_QUESTIONS[Math.min(this._questionIndex, CHRONICLE_QUESTIONS.length - 1)];
+    const question: ChronicleQuestion = this._questions[Math.min(this._questionIndex, this._questions.length - 1)];
     return {
       at: this._motionMs,
       prelude: phase === 'question' || phase === 'waiting' ? question.prelude : phase === 'final' || phase === 'complete' ? question.prelude : '',
@@ -770,7 +773,8 @@ export class BootScene {
       seed: async (value: string | number): Promise<{ seed: string }> => {
         await this._spatialReady;
         this._seed = String(value);
-        this._frames = createBootFrames(this._seed);
+        this._questions = createChronicleQuestions(this._seed);
+        this._frames = createBootFrames(this._seed, this._questions[0]);
         this._reset();
         return { seed: this._seed };
       },
@@ -814,7 +818,7 @@ export class BootScene {
     this._clearNativeChoices();
     if (name.startsWith('question-')) {
       const questionIndex: number = Number(name.slice(-1)) - 1;
-      const question: ChronicleQuestion | undefined = CHRONICLE_QUESTIONS[questionIndex];
+      const question: ChronicleQuestion | undefined = this._questions[questionIndex];
       if (!question) throw new Error(`Unknown test state: ${name}`);
       this._questionIndex = questionIndex;
       this._answersCommitted = questionIndex;
@@ -825,7 +829,7 @@ export class BootScene {
       this._refreshStaticFrame();
       return;
     }
-    this._questionIndex = CHRONICLE_QUESTIONS.length - 1;
+    this._questionIndex = this._questions.length - 1;
     this._storyStartedAt = performance.now();
     if (name === 'final-door') {
       this._storyMode = 'final';
@@ -846,7 +850,7 @@ export class BootScene {
 
   private _getDiagnosticState(): IntroDiagnosticState {
     const phase: BootFrame['phase'] = (this._root?.dataset.osPhaseTs as BootFrame['phase'] | undefined) ?? 'cursor';
-    const questionNumber: number = Math.min(this._questionIndex + 1, CHRONICLE_QUESTIONS.length);
+    const questionNumber: number = Math.min(this._questionIndex + 1, this._questions.length);
     const objective: string = this._storyMode === 'complete'
       ? 'opening-complete'
       : this._storyMode === 'final'

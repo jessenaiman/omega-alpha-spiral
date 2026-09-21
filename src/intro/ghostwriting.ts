@@ -1,5 +1,5 @@
 import { createRng } from '../core/random';
-import { CHRONICLE_OPENING_LOG, CHRONICLE_QUESTIONS, CHRONICLE_SYMBOLS } from './chronicle';
+import { CHRONICLE_OPENING_LOG, CHRONICLE_QUESTIONS, CHRONICLE_SYMBOLS, type ChronicleQuestion } from './chronicle';
 
 export interface BootFrame {
   at: number;
@@ -24,13 +24,30 @@ export const BOOT_OPTIONS: string[] = CHRONICLE_QUESTIONS[0].choices.map((option
 export const BOOT_SYMBOLS: string = CHRONICLE_SYMBOLS;
 const QUESTION_SOURCE: string = 'If you could [hear|be] only one story..:\n[what|who] would [it|you] be?';
 
+function addQuestionAttempts(question: string): string {
+  if (question === CHRONICLE_QUESTIONS[0].question) return QUESTION_SOURCE;
+  const openingAttempts: Readonly<Record<string, string>> = {
+    If: '[When|If]',
+    When: '[If|When]',
+    Is: '[Does|Is]',
+    What: '[Who|What]',
+  };
+  const firstWord: string = question.split(/\s/, 1)[0] ?? '';
+  let attempted: string = openingAttempts[firstWord]
+    ? `${openingAttempts[firstWord]}${question.slice(firstWord.length)}`
+    : question;
+  if (/\byou\b/i.test(attempted)) attempted = attempted.replace(/\byou\b/i, '[I|you]');
+  if (/\bwhat\b/i.test(attempted)) attempted = attempted.replace(/\bwhat\b/i, '[where|what]');
+  return attempted;
+}
+
 /** Materialize timing once: render rate must not change the spelling or pauses. */
-export function createBootFrames(seed: string): BootFrame[] {
+export function createBootFrames(seed: string, opening: ChronicleQuestion = CHRONICLE_QUESTIONS[0]): BootFrame[] {
   const random = createRng(seed).fork('ghostwriting');
   const text: Record<'prelude' | 'question' | 'transcript', string> = { prelude: '', question: '', transcript: '' };
   let phase: BootFrame['phase'] = 'cursor';
   let format: number = 0;
-  const choices: readonly string[] = BOOT_OPTIONS;
+  const choices: readonly string[] = opening.choices.map((choice): string => choice.text);
   const frames: BootFrame[] = [{ at: 0, ...text, choices, isCorrupt: false, phase, format }];
   let at: number = FIRST_INK_MS;
   const record = (isCorrupt: boolean = false): void => { frames.push({ at, ...text, choices, isCorrupt, phase, format }); };
@@ -91,8 +108,9 @@ export function createBootFrames(seed: string): BootFrame[] {
   // Brackets are authored attempts, not punctuation to print or rewrite ourselves.
   const attempts: RegExp = /\[([^|\]]+)\|([^\]]+)\]/g;
   let offset: number = 0;
-  for (const match of QUESTION_SOURCE.matchAll(attempts)) {
-    type('question', QUESTION_SOURCE.slice(offset, match.index));
+  const questionSource: string = addQuestionAttempts(opening.question);
+  for (const match of questionSource.matchAll(attempts)) {
+    type('question', questionSource.slice(offset, match.index));
     type('question', match[1]);
     at += CORRECTION_PAUSE_MS;
     format = (format + 1) % 3;
@@ -102,7 +120,7 @@ export function createBootFrames(seed: string): BootFrame[] {
     type('question', match[2]);
     offset = match.index + match[0].length;
   }
-  type('question', QUESTION_SOURCE.slice(offset));
+  type('question', questionSource.slice(offset));
   text.transcript += '\nretry.\nquestion ... ready';
   at += CORRECTION_PAUSE_MS;
   frames.push({ at, ...text, choices, isCorrupt: false, phase: 'waiting', format: 1 });
