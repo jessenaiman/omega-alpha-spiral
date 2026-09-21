@@ -19,7 +19,7 @@
   "dependencies": {
     "lil-gui": "0.21.0",
     "nixie-fx": "^0.1.7",
-    "three": "^0.186.0"
+    "three": "0.185.1"
   },
   "devDependencies": {
     "@gltf-transform/cli": "4.5.0",
