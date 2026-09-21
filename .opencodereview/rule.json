@@ -1,0 +1,30 @@
+{
+  "include": ["src/**/*.ts"],
+  "exclude": ["artifacts/**", "assets/**", "project-management/**", "docs/**", ".worktrees/**"],
+  "rules": [
+    {
+      "path": "**/*.test.ts",
+      "rule": "This is a test file. Review it alongside the diff: flag weakened assertions, deleted tests, invented evidence, or hardcoded expected values that were never actually measured."
+    },
+    {
+      "path": "**/reduced*motion*.ts",
+      "rule": "Reduced-motion mode must replace rotation, shake, roll, FOV punch, and rotated glitches with cuts, wipes, and static displacement."
+    },
+    {
+      "path": "**/*{timer,clock,count,dialog,dialogue,text,narrat}*.ts",
+      "rule": "Reading is never timed: no countdown, auto-advance timer, or timeout may be attached to reading text. Flag any."
+    },
+    {
+      "path": "src/**/*.ts",
+      "rule": "All randomness must route through the seeded RNG and its forks — warmup use, visual randomness included. Flag Math.random() and Date.now()-based gameplay randomness. Determinism contract: same seed and inputs must reproduce the run."
+    },
+    {
+      "path": "src/**/*.ts",
+      "rule": "Fixed vocabulary: public names Light/Shadow/Ambition, code ids luminary/shadow/ambition. Flag identifiers using mischief, wrath, or trickster."
+    },
+    {
+      "path": "src/**/*{ui,overlay,hud,canvas,render,scene}*.ts",
+      "rule": "Colour never carries meaning alone — every important cue needs shape, motion, label, or sound as well. Flag colour-only differentiators."
+    }
+  ]
+}

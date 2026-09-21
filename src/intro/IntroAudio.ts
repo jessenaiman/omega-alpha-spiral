@@ -97,17 +97,24 @@ export class IntroAudio {
 
   public dreamweaver(index: number): void {
     if (!this._ready() || !this._cooldown(`voice-${index}`, 220)) return;
-    const roots: number[] = [392, 233, 92];
-    const waves: OscillatorType[] = ['sine', 'triangle', 'sawtooth'];
+    const roots: number[] = [392, 92, 233];
+    const waves: OscillatorType[] = ['sine', 'sawtooth', 'triangle'];
     this._tone(roots[index], 0.42, 'voice', 0.12, waves[index], 0.035);
     this._tone(roots[index] * (index === 2 ? 1.49 : 1.25), 0.58, 'voice', 0.045, waves[index], 0.11);
   }
 
   public choose(index: number): void {
     if (!this._ready()) return;
-    const roots: number[] = [330, 220, 110];
-    this._tone(roots[index], 0.16, 'sfx', 0.16, index === 0 ? 'sine' : index === 1 ? 'triangle' : 'sawtooth', 0.01);
+    const roots: number[] = [330, 110, 220];
+    this._tone(roots[index], 0.16, 'sfx', 0.16, index === 0 ? 'sine' : index === 1 ? 'sawtooth' : 'triangle', 0.01);
     this._tone(roots[index] * 1.5, 0.32, 'sfx', 0.08, 'sine', 0.07);
+  }
+
+  public move(stage: number): void {
+    if (!this._ready() || !this._cooldown('move', 145)) return;
+    const base: number = 58 + Math.max(0, Math.min(4, stage)) * 18;
+    this._noise(0.032, 'sfx', 0.08, 540 + stage * 120);
+    this._tone(base, 0.075, 'sfx', 0.07, stage < 2 ? 'square' : 'triangle');
   }
 
   public transition(): void {

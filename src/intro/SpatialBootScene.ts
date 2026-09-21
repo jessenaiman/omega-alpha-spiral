@@ -1,11 +1,12 @@
 import {
-  AdditiveBlending, BoxGeometry, BufferAttribute, BufferGeometry, CanvasTexture, DoubleSide,
-  Group, Line, LineBasicMaterial, Mesh, MeshBasicMaterial, NearestFilter, PerspectiveCamera, Raycaster,
-  Scene, SRGBColorSpace, TorusGeometry, Vector2, Vector3,
+  AdditiveBlending, AmbientLight, BoxGeometry, BufferAttribute, BufferGeometry, CanvasTexture, DirectionalLight, DoubleSide,
+  Group, Line, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, MeshStandardMaterial, NearestFilter, PerspectiveCamera, PointLight, Raycaster,
+  Scene, SRGBColorSpace, Vector2, Vector3,
 } from 'three';
 
 import { BOOT_OPTIONS, BOOT_SYMBOLS, type BootFrame } from './ghostwriting';
 import { IntroParticleField } from './IntroParticleField';
+import { INTRO_JOURNEY_SENSOR_INDEX, IntroPhysics, type IntroPhysicsDiagnostics, type IntroPhysicsPosition, type IntroPhysicsStep } from './IntroPhysics';
 
 // Recorded first draw (seed 472): UI pixel-font-step .619, gameplay depth-drift
 // .472, stack plane-skew .716. Deliberately independent, bounded experiments.
@@ -14,11 +15,59 @@ const GLYPHS: string = Array.from({ length: 95 }, (_: unknown, index: number): s
 const ATLAS_COLUMNS: number = 16;
 const ATLAS_ROWS: number = 7;
 const GLYPH_CAPACITY: number = 256;
-const INK: number[] = [0xdce7e8, 0xd7bb85, 0xcc606b];
+// Owner order follows chronicle.ts: Light, Shadow, Ambition.
+const INK: number[] = [0xdcefff, 0xd44854, 0xe7b45a];
+const VOICE_NAMES: string[] = ['LIGHT', 'SHADOW', 'AMBITION'];
 const ASIDES: string[] = ["They've already tried that.", 'Still looking for the beginning.', 'Let them try.'];
 const CURSOR_PERIOD_MS: number = 1150;
 const ASIDE_HOLD_MS: number = 4300;
 const VOICE_COOLDOWN_MS: number = 2500;
+const PATH_VERTEX_CAPACITY: number = 96;
+
+type VoiceMaterial = LineBasicMaterial | MeshBasicMaterial;
+
+interface DreamweaverMark {
+  root: Group;
+  materials: VoiceMaterial[];
+}
+
+function createDreamweaverMark(owner: number): DreamweaverMark {
+  const root: Group = new Group();
+  const geometry: BufferGeometry = new BufferGeometry();
+  const points: Vector3[] = [];
+  if (owner === 0) {
+    const segments: number[][] = [
+      [-0.32, 0, 0, 0.32, 0, 0], [0, -0.32, 0, 0, 0.32, 0],
+      [-0.23, -0.23, 0, 0.23, 0.23, 0], [-0.23, 0.23, 0, 0.23, -0.23, 0],
+    ];
+    geometry.setAttribute('position', new BufferAttribute(new Float32Array(segments.flat()), 3));
+  } else if (owner === 1) {
+    points.push(
+      new Vector3(-0.34, 0.28, 0), new Vector3(-0.04, 0.12, 0),
+      new Vector3(-0.27, -0.03, 0), new Vector3(0.08, -0.13, 0),
+      new Vector3(-0.03, -0.34, 0), new Vector3(0.34, -0.19, 0),
+    );
+    geometry.setFromPoints(points);
+  } else {
+    for (let index: number = 0; index < 56; index += 1) {
+      const t: number = index / 55;
+      const angle: number = t * Math.PI * 3.8;
+      const radius: number = 0.035 + t * 0.3;
+      points.push(new Vector3(Math.cos(angle) * radius, Math.sin(angle) * radius, 0));
+    }
+    geometry.setFromPoints(points);
+  }
+  const main: LineBasicMaterial = new LineBasicMaterial({ color: INK[owner], transparent: true, opacity: 0.96, toneMapped: false });
+  const halo: LineBasicMaterial = new LineBasicMaterial({ color: INK[owner], transparent: true, opacity: 0.2, blending: AdditiveBlending, depthWrite: false, toneMapped: false });
+  const line: Line | LineSegments = owner === 0 ? new LineSegments(geometry, main) : new Line(geometry, main);
+  const glow: Line | LineSegments = owner === 0 ? new LineSegments(geometry, halo) : new Line(geometry, halo);
+  glow.scale.setScalar(1.22);
+  glow.position.z = -0.035;
+  const coreMaterial: MeshBasicMaterial = new MeshBasicMaterial({ color: INK[owner], transparent: true, opacity: 0.82, toneMapped: false });
+  const core: Mesh<BoxGeometry, MeshBasicMaterial> = new Mesh(new BoxGeometry(0.065, 0.065, 0.065), coreMaterial);
+  root.add(glow, line, core);
+  return { root, materials: [main, halo, coreMaterial] };
+}
 
 /** One reusable glyph atlas per historical font, never a texture per letter. */
 function createAtlas(format: number): CanvasTexture {
@@ -140,10 +189,24 @@ export class SpatialBootScene {
   private _ribbons: GlyphRibbon[] = [];
   private _cursor: Mesh<BoxGeometry, MeshBasicMaterial> | null = null;
   private _particles: IntroParticleField = new IntroParticleField();
-  private _voices: Mesh<TorusGeometry, MeshBasicMaterial>[] = [];
+  private _physics: IntroPhysics = new IntroPhysics();
+  private _voices: Group[] = [];
+  private _voiceMaterials: VoiceMaterial[][] = [];
   private _trails: Line<BufferGeometry, LineBasicMaterial>[] = [];
   private _voiceAppearedAt: number[] = [-1, -1, -1];
   private _targets: Mesh<BoxGeometry, MeshBasicMaterial>[] = [];
+  private _player: Group = new Group();
+  private _playerCore: Mesh<BoxGeometry, MeshStandardMaterial> | null = null;
+  private _playerOutline: LineSegments<BufferGeometry, LineBasicMaterial> | null = null;
+  private _playerStage: number = 0;
+  private _path: LineSegments<BufferGeometry, LineBasicMaterial> | null = null;
+  private _pathPositions: Float32Array = new Float32Array(PATH_VERTEX_CAPACITY * 3);
+  private _movement: Vector2 = new Vector2();
+  private _lastUpdateMs: number = 0;
+  private _lastPhase: BootFrame['phase'] | '' = '';
+  private _journeyActive: boolean = false;
+  private _journeyComplete: boolean = false;
+  private _choiceArmed: boolean = false;
   private _frame: BootFrame | null = null;
   private _width: number = 8;
   private _isNarrow: boolean = false;
@@ -155,12 +218,19 @@ export class SpatialBootScene {
   private _pointer: Vector2 = new Vector2();
   private _raycaster: Raycaster = new Raycaster();
   private _fossils: Array<{ text: string; era: number; color: number }> = [];
+  private _voiceStarts: Vector3[] = [new Vector3(), new Vector3(), new Vector3()];
+  private _voiceResting: Vector3[] = [new Vector3(), new Vector3(), new Vector3()];
+  private _trailPoint: Vector3 = new Vector3();
+  private _physicsTargets: IntroPhysicsPosition[] = [
+    { x: 0, y: 0, z: 0.18 }, { x: 0, y: 0, z: 0.18 }, { x: 0, y: 0, z: 0.18 },
+  ];
 
-  public init(scene: Scene): void {
+  public init(scene: Scene): Promise<void> {
     this._atlases = [0, 1, 2, 3, 4].map(createAtlas);
     this._particles.init(this._root);
-    // command, three boot slots, archive, question, symbols, aside, three choices, three fossils
-    for (let index: number = 0; index < 14; index += 1) {
+    // command, three boot slots, archive, question, symbols, aside, three choices,
+    // three fossils, and three diegetic speaker names.
+    for (let index: number = 0; index < 17; index += 1) {
       const ribbon: GlyphRibbon = new GlyphRibbon(this._atlases);
       ribbon.init();
       this._ribbons.push(ribbon);
@@ -169,12 +239,10 @@ export class SpatialBootScene {
     this._cursor = new Mesh(new BoxGeometry(0.13, 0.24, 0.09), new MeshBasicMaterial({ color: INK[0] }));
     this._root.add(this._cursor);
     for (let index: number = 0; index < 3; index += 1) {
-      const voice: Mesh<TorusGeometry, MeshBasicMaterial> = new Mesh(
-        new TorusGeometry(0.27, 0.025, 4, index === 2 ? 3 : index === 1 ? 5 : 32),
-        new MeshBasicMaterial({ color: INK[index], transparent: true, opacity: 0.9, toneMapped: false }),
-      );
-      this._voices.push(voice);
-      this._root.add(voice);
+      const mark: DreamweaverMark = createDreamweaverMark(index);
+      this._voices.push(mark.root);
+      this._voiceMaterials.push(mark.materials);
+      this._root.add(mark.root);
       const trailGeometry: BufferGeometry = new BufferGeometry();
       trailGeometry.setAttribute('position', new BufferAttribute(new Float32Array(72 * 3), 3));
       const trailMaterial: LineBasicMaterial = new LineBasicMaterial({
@@ -188,8 +256,78 @@ export class SpatialBootScene {
       target.name = String(index);
       this._targets.push(target);
       this._root.add(target);
+      this._ribbons[14 + index].setText(`[ ${VOICE_NAMES[index]} ]`, index + 1, 18, INK[index]);
     }
+    this._createPlayer();
+    this._createPath();
+    const ambient: AmbientLight = new AmbientLight(0x7893a3, 0.62);
+    const key: DirectionalLight = new DirectionalLight(0xe7f5ff, 2.4);
+    key.position.set(-3.5, 4.5, 5.5);
+    const rim: PointLight = new PointLight(0xe7b45a, 8, 9, 2);
+    rim.position.set(2.8, -1.4, 2.5);
+    this._root.add(ambient, key, rim);
     scene.add(this._root);
+    return this._physics.init();
+  }
+
+  private _createPlayer(): void {
+    const coreMaterial: MeshStandardMaterial = new MeshStandardMaterial({
+      color: 0xbfd5df, emissive: 0x223a46, emissiveIntensity: 0.7, metalness: 0.72, roughness: 0.28,
+    });
+    this._playerCore = new Mesh(new BoxGeometry(0.18, 0.18, 0.18), coreMaterial);
+    const layerSegments: number[] = [
+      // Stage 1: cursor rails.
+      -0.13, -0.31, 0, -0.13, 0.31, 0, 0.13, -0.31, 0, 0.13, 0.31, 0,
+      -0.13, 0.31, 0, 0.13, 0.31, 0, -0.13, -0.31, 0, 0.13, -0.31, 0,
+      // Stage 2: a decision diamond.
+      0, 0.43, 0, 0.3, 0, 0, 0.3, 0, 0, 0, -0.43, 0,
+      0, -0.43, 0, -0.3, 0, 0, -0.3, 0, 0, 0, 0.43, 0,
+      // Stage 3: depth rails.
+      -0.3, 0, 0, -0.2, 0, 0.24, 0.3, 0, 0, 0.2, 0, 0.24,
+      0, 0.43, 0, 0, 0.28, 0.24, 0, -0.43, 0, 0, -0.28, 0.24,
+      // Stage 4: an unfinished crown/open threshold.
+      -0.34, 0.34, 0.04, -0.12, 0.53, 0.04, -0.12, 0.53, 0.04, 0, 0.38, 0.04,
+      0, 0.38, 0.04, 0.12, 0.53, 0.04, 0.12, 0.53, 0.04, 0.34, 0.34, 0.04,
+    ];
+    const outlineGeometry: BufferGeometry = new BufferGeometry();
+    outlineGeometry.setAttribute('position', new BufferAttribute(new Float32Array(layerSegments), 3));
+    outlineGeometry.setDrawRange(0, 0);
+    const outlineMaterial: LineBasicMaterial = new LineBasicMaterial({ color: 0xc9edff, transparent: true, opacity: 0.78, blending: AdditiveBlending, depthWrite: false, toneMapped: false });
+    this._playerOutline = new LineSegments(outlineGeometry, outlineMaterial);
+    this._player.add(this._playerOutline, this._playerCore);
+    this._player.position.set(0, -2.55, 0.52);
+    this._root.add(this._player);
+  }
+
+  private _createPath(): void {
+    const geometry: BufferGeometry = new BufferGeometry();
+    geometry.setAttribute('position', new BufferAttribute(this._pathPositions, 3));
+    geometry.setDrawRange(0, 0);
+    const material: LineBasicMaterial = new LineBasicMaterial({ color: 0x66808d, transparent: true, opacity: 0.24, blending: AdditiveBlending, depthWrite: false, toneMapped: false });
+    this._path = new LineSegments(geometry, material);
+    this._path.frustumCulled = false;
+    this._root.add(this._path);
+  }
+
+  public setMovement(x: number, y: number): void {
+    this._movement.set(Math.max(-1, Math.min(1, x)), Math.max(-1, Math.min(1, y)));
+  }
+
+  public beginJourney(): void {
+    this._journeyActive = true;
+    this._journeyComplete = false;
+    this._choiceArmed = false;
+    this._player.position.set((this._selected - 1) * this._width * 0.16, -2.45, 0.58);
+    this._physics.activateJourney(
+      { x: this._player.position.x, y: this._player.position.y, z: this._player.position.z },
+      { x: 0, y: 2.5, z: 0.26 },
+    );
+  }
+
+  public setPlayerStage(stage: number): void {
+    this._playerStage = Math.max(0, Math.min(4, Math.floor(stage)));
+    this._playerOutline?.geometry.setDrawRange(0, this._playerStage * 8);
+    if (this._playerCore) this._playerCore.scale.setScalar(0.72 + this._playerStage * 0.1);
   }
 
   public resize(aspect: number): void {
@@ -201,18 +339,21 @@ export class SpatialBootScene {
   public setFrame(frame: BootFrame): void {
     this._frame = frame;
     const columns: number = frame.phase === 'final' || frame.phase === 'complete' ? (this._isNarrow ? 32 : 52) : this._isNarrow ? 29 : 42;
-    this._ribbons[0].setText(frame.transcript.split('\n')[0], frame.format, columns);
+    const transcriptLines: string[] = frame.transcript.split('\n');
+    this._ribbons[0].setText(frame.phase === 'command' || frame.phase === 'cursor' ? frame.transcript : transcriptLines.filter((line: string): boolean => !line.startsWith('dreamweaver[')).join('\n'), frame.format, columns);
     for (let index: number = 0; index < 3; index += 1) {
-      this._ribbons[index + 1].setText(frame.transcript.split('\n')[index + 1] ?? '', index, columns, INK[index]);
+      this._ribbons[index + 1].setText(transcriptLines.find((line: string): boolean => line.startsWith(`dreamweaver[0${index + 1}]`)) ?? '', index, columns, INK[index]);
     }
     this._ribbons[4].setText(frame.prelude, 0, this._isNarrow ? 40 : 78, 0x7e9399);
-    this._ribbons[5].setText(frame.question, frame.format, columns);
+    const responseColor: number = frame.phase === 'response' && this._selected >= 0 ? INK[this._selected] : INK[0];
+    const questionColumns: number = frame.phase === 'response' ? (this._isNarrow ? 20 : 27) : columns;
+    this._ribbons[5].setText(frame.question, frame.format, questionColumns, responseColor);
     this._ribbons[6].setText(BOOT_SYMBOLS, 2, columns, 0x9ca5a8);
     const asideText: string = frame.hint ?? this._aside;
     const asideVoice: number = frame.hint ? Math.max(0, Math.min(4, frame.format)) : Math.max(this._voice, 0);
     this._ribbons[7].setText(asideText, asideVoice, this._isNarrow ? 30 : 42, frame.hint ? 0x9ca5a8 : INK[Math.max(this._voice, 0)]);
     for (let index: number = 0; index < 3; index += 1) {
-      this._ribbons[8 + index].setText(`${index + 1}  ${frame.choices[index] ?? BOOT_OPTIONS[index]}`, Math.max(index, frame.format - 1), this._isNarrow ? 34 : 62, INK[index]);
+      this._ribbons[8 + index].setText(`${index + 1}  ${frame.choices[index] ?? BOOT_OPTIONS[index]}`, index + 1, this._isNarrow ? 14 : 18, INK[index]);
     }
     for (let index: number = 0; index < 3; index += 1) {
       const fossil = this._fossils[index];
@@ -230,6 +371,18 @@ export class SpatialBootScene {
   }
 
   public getVoice(): number { return this._voice; }
+
+  public getPlayerPosition(): { x: number; y: number; z: number } {
+    const position: Vector3 = this._player.position;
+    return { x: position.x, y: position.y, z: position.z };
+  }
+
+  public getChoiceTargets(): Array<{ x: number; y: number; z: number }> {
+    return this._targets.map((target: Mesh<BoxGeometry, MeshBasicMaterial>): { x: number; y: number; z: number } => ({
+      x: target.position.x, y: target.position.y - 0.46, z: target.position.z,
+    }));
+  }
+
   public select(index: number): void {
     if (index >= 0 && index !== this._selected) this._particles.pulse(index);
     this._selected = index;
@@ -238,6 +391,8 @@ export class SpatialBootScene {
   public getParticleDiagnostics(): { lightParticles: number; darkParticles: number; drawCalls: number; surfaceFormation: number } {
     return this._particles.getDiagnostics();
   }
+
+  public getPhysicsDiagnostics(): IntroPhysicsDiagnostics { return this._physics.getDiagnostics(); }
 
   public archive(text: string, era: number, owner: number): void {
     this._fossils.unshift({ text, era, color: INK[Math.max(0, Math.min(2, owner))] });
@@ -263,18 +418,119 @@ export class SpatialBootScene {
     this._hovered = -1;
     this._voiceAppearedAt = [-1, -1, -1];
     this._fossils = [];
+    this._movement.set(0, 0);
+    this._lastUpdateMs = 0;
+    this._lastPhase = '';
+    this._journeyActive = false;
+    this._journeyComplete = false;
+    this._choiceArmed = false;
+    this._player.position.set(0, -2.55, 0.52);
+    this.setPlayerStage(0);
     this._particles.reset();
+    this._physics.reset();
   }
 
-  public update(elapsedMs: number, isReduced: boolean): void {
+  public commitChoice(index: number): void {
+    const target: Mesh<BoxGeometry, MeshBasicMaterial> | undefined = this._targets[index];
+    if (target) this._player.position.set(target.position.x, target.position.y - 0.46, 0.56);
+    this._choiceArmed = false;
+    this._physics.deactivate();
+  }
+
+  private _setVoiceResting(target: Vector3, index: number, era: number, seconds: number, still: boolean): void {
+    const lane: number = this._width * 0.3;
+    const breath: number = still ? 0 : Math.sin(seconds * (0.24 + index * 0.025) + index) * 0.22;
+    if (era <= 1) {
+      target.set((index - 1) * lane, 2.12 + breath, 0.12 + index * 0.16);
+      return;
+    }
+    if (era === 2) {
+      const order: number = index === 0 ? -1 : index === 1 ? 1 : 0;
+      target.set(order * lane, 1.96 + (index === 2 ? 0.58 : 0) + breath, 0.18 + (2 - index) * 0.13);
+      return;
+    }
+    if (era === 3) {
+      const order: number = index === 0 ? 0 : index === 1 ? -1 : 1;
+      target.set(order * lane, index === 0 ? 2.58 : 1.82 + breath, 0.1 + index * 0.15);
+      return;
+    }
+    const order: number = index === 0 ? 1 : index === 1 ? -1 : 0;
+    target.set(order * lane * 0.82, index === 2 ? 2.55 : 1.88 + breath, 0.12 + (index === 2 ? 0 : 0.2));
+  }
+
+  private _writePathSegment(vertex: number, ax: number, ay: number, az: number, bx: number, by: number, bz: number): number {
+    const offset: number = vertex * 3;
+    this._pathPositions[offset] = ax;
+    this._pathPositions[offset + 1] = ay;
+    this._pathPositions[offset + 2] = az;
+    this._pathPositions[offset + 3] = bx;
+    this._pathPositions[offset + 4] = by;
+    this._pathPositions[offset + 5] = bz;
+    return vertex + 2;
+  }
+
+  private _updatePath(isWaiting: boolean, isTravel: boolean, seconds: number): void {
+    if (!this._path) return;
+    this._path.visible = isWaiting || isTravel;
+    if (!this._path.visible) return;
+    let vertex: number = 0;
+    const startX: number = this._player.position.x * 0.18;
+    const startY: number = -2.72;
+    if (isWaiting) {
+      for (let index: number = 0; index < 3; index += 1) {
+        const target: Vector3 = this._targets[index].position;
+        const bendX: number = target.x * 0.54;
+        vertex = this._writePathSegment(vertex, startX, startY, 0.08, bendX, -1.25, 0.02 + index * 0.08);
+        vertex = this._writePathSegment(vertex, bendX, -1.25, 0.02 + index * 0.08, target.x, target.y - 0.48, target.z - 0.08);
+        for (let step: number = 0; step < 4; step += 1) {
+          const t: number = (step + 1) / 5;
+          const cx: number = startX + (target.x - startX) * t;
+          const cy: number = startY + (target.y - 0.48 - startY) * t;
+          vertex = this._writePathSegment(vertex, cx - 0.08, cy, 0.1, cx + 0.08, cy, 0.1);
+        }
+      }
+    } else {
+      const bend: number = Math.sin(seconds * 0.18) * this._width * 0.12;
+      vertex = this._writePathSegment(vertex, -0.42, -2.72, 0.08, bend - 0.28, -0.7, -0.02);
+      vertex = this._writePathSegment(vertex, bend - 0.28, -0.7, -0.02, -0.16, 2.55, -0.28);
+      vertex = this._writePathSegment(vertex, 0.42, -2.72, 0.08, bend + 0.28, -0.7, -0.02);
+      vertex = this._writePathSegment(vertex, bend + 0.28, -0.7, -0.02, 0.16, 2.55, -0.28);
+      for (let step: number = 0; step < 7; step += 1) {
+        const y: number = -2.38 + step * 0.72;
+        const x: number = Math.sin(step * 0.9 + seconds * 0.11) * 0.18;
+        vertex = this._writePathSegment(vertex, x - 0.34, y, 0.04 - step * 0.025, x + 0.34, y, 0.04 - step * 0.025);
+      }
+    }
+    const attribute: BufferAttribute = this._path.geometry.getAttribute('position') as BufferAttribute;
+    attribute.needsUpdate = true;
+    this._path.geometry.setDrawRange(0, vertex);
+    this._path.material.color.setHex(isTravel && this._selected >= 0 ? INK[this._selected] : 0x66808d);
+    this._path.material.opacity = isTravel ? 0.4 : 0.24;
+  }
+
+  public update(elapsedMs: number, isReduced: boolean): number {
     const frame: BootFrame | null = this._frame;
-    if (!frame || !this._cursor) return;
+    if (!frame || !this._cursor) return -1;
     const seconds: number = elapsedMs / 1000;
+    const delta: number = this._lastUpdateMs === 0 ? 0 : Math.min(0.1, Math.max(0, (elapsedMs - this._lastUpdateMs) / 1000));
+    this._lastUpdateMs = elapsedMs;
     const isWaiting: boolean = frame.phase === 'waiting';
     const isBoot: boolean = frame.phase === 'cursor' || frame.phase === 'command';
-    const isStory: boolean = ['waiting', 'prelude', 'response', 'final', 'complete'].includes(frame.phase);
+    const isTravel: boolean = frame.phase === 'travel';
+    const isStory: boolean = frame.phase !== 'cursor' && frame.phase !== 'command' && frame.phase !== 'loading' && frame.phase !== 'writing';
     const isFinal: boolean = frame.phase === 'final' || frame.phase === 'complete';
     const isSettled: boolean = isWaiting || isFinal;
+    const phaseChanged: boolean = frame.phase !== this._lastPhase;
+    if (phaseChanged) {
+      if (isWaiting) {
+        this._player.position.set(0, -2.55, 0.52);
+        this._choiceArmed = true;
+        this._journeyActive = false;
+        this._selected = -1;
+      }
+      if (isTravel && !this._journeyActive) this.beginJourney();
+      this._lastPhase = frame.phase;
+    }
     const disorder: number = isReduced || isSettled ? 0 : frame.isCorrupt ? 1.2 : 0.65;
     const left: number = -this._width * 0.47;
     const scale: number = this._width / (this._isNarrow ? 24 : 32);
@@ -298,13 +554,19 @@ export class SpatialBootScene {
       ribbon.update(seconds, index === 5 || index === 0 ? disorder : disorder * 0.25);
     }
     const command: Group = this._ribbons[0].root;
-    command.visible = !isFinal;
-    command.position.set(isBoot ? -this._width * 0.21 : left, isBoot ? 0.25 : 2.35, isBoot ? 0.7 : 0);
-    command.scale.setScalar(scale * (isBoot ? 1.2 : 0.75));
+    command.visible = frame.phase === 'cursor' || frame.phase === 'command' || frame.phase === 'loading' || frame.phase === 'writing';
+    command.position.set(isBoot ? -this._width * 0.18 : left, isBoot ? 0.42 : 2.35, isBoot ? 1.18 : 0);
+    command.scale.setScalar(scale * (isBoot ? 0.48 : 0.62));
     if (!isReduced && !isWaiting) {
-      command.position.y += Math.sin(seconds * 0.45) * 0.12;
-      command.rotation.y = Math.sin(seconds * 0.23) * BOOT_EFFECTS.planeSkew * 0.22;
+      command.position.x += Math.sin(seconds * 0.19) * (isBoot ? 0.22 : 0.08);
+      command.position.y += Math.sin(seconds * 0.31) * (isBoot ? 0.16 : 0.08);
+      command.position.z += Math.cos(seconds * 0.23) * (isBoot ? 0.16 : 0.04);
+      command.rotation.y = Math.sin(seconds * 0.23) * BOOT_EFFECTS.planeSkew * (isBoot ? 0.48 : 0.18);
+      command.rotation.z = Math.sin(seconds * 0.17) * (isBoot ? 0.025 : 0.008);
     }
+    this._voiceStarts[0].set(-this._width * 0.82, 3.25, -0.7);
+    this._voiceStarts[1].set(this._width * 0.9, 2.75, -0.3);
+    this._voiceStarts[2].set(-this._width * 0.9, -2.7, -0.5);
     for (let index: number = 0; index < 3; index += 1) {
       const slot: Group = this._ribbons[index + 1].root;
       const isLoaded: boolean = frame.transcript.includes(`dreamweaver[0${index + 1}]`);
@@ -312,34 +574,42 @@ export class SpatialBootScene {
       slot.scale.setScalar(scale * 0.55);
       slot.position.set(left + 0.35 + (isReduced ? 0 : index * 0.22), 1.5 - index * 0.4, isReduced ? 0 : index * 0.3);
       if (!isReduced) slot.rotation.y = (index - 1) * 0.24;
-      const voice: Mesh<TorusGeometry, MeshBasicMaterial> = this._voices[index];
+      const voice: Group = this._voices[index];
       const trail: Line<BufferGeometry, LineBasicMaterial> = this._trails[index];
-      const visible: boolean = isLoaded || isStory || this._voice === index;
-      if (visible && this._voiceAppearedAt[index] < 0) this._voiceAppearedAt[index] = elapsedMs;
-      voice.visible = visible;
-      trail.visible = visible;
+      const breach: boolean = frame.phase === 'writing' && (frame.isCorrupt || frame.question.length > 18);
+      const voiceVisible: boolean = breach || isStory || this._voice === index;
+      const trailVisible: boolean = isLoaded || breach || isStory || this._voice === index;
+      if (voiceVisible && this._voiceAppearedAt[index] < 0) this._voiceAppearedAt[index] = elapsedMs;
+      voice.visible = voiceVisible;
+      trail.visible = trailVisible;
       const entrance: number = isReduced ? 1 : Math.min(Math.max((elapsedMs - this._voiceAppearedAt[index]) / 2800, 0), 1);
       const smoothEntrance: number = entrance * entrance * (3 - 2 * entrance);
-      const starts: Vector3[] = [new Vector3(-this._width * 0.82, 3.25, -0.7), new Vector3(-this._width * 0.9, -2.7, -0.3), new Vector3(this._width * 0.88, 2.75, -0.5)];
-      const resting: Vector3 = new Vector3(
-        left + this._width * (index + 0.5) / 3,
-        2.0 + (isWaiting || isReduced ? 0 : Math.sin(seconds * (0.24 + index * 0.025) + index) * 0.3),
-        0.15 + (isWaiting || isReduced ? 0 : index * 0.28),
-      );
+      const start: Vector3 = this._voiceStarts[index];
+      const resting: Vector3 = this._voiceResting[index];
+      this._setVoiceResting(resting, index, frame.format, seconds, isReduced || isWaiting);
       const finalProgress: number = isFinal ? Math.min(Math.max((frame.phaseElapsedMs ?? 0) / 9200, 0), 1) : 0;
       if (isFinal) {
         resting.x *= 1 - finalProgress;
         resting.y = resting.y * (1 - finalProgress) + 0.12 * finalProgress;
         resting.z -= finalProgress * 2.4;
       }
-      voice.position.copy(starts[index]).lerp(resting, smoothEntrance);
-      voice.rotation.set(isReduced || isWaiting ? 0 : seconds * 0.08, 0, isReduced || isWaiting ? 0 : seconds * 0.12 + index);
-      voice.scale.setScalar(this._voice === index && elapsedMs - this._asideAt < ASIDE_HOLD_MS ? 1.6 : 1);
+      if (isReduced) voice.position.copy(resting);
+      else if (smoothEntrance < 0.999) voice.position.copy(start).lerp(resting, smoothEntrance);
+      else voice.position.lerp(resting, Math.min(1, delta * (isTravel ? 0.78 : 1.45)));
+      if (index === 0) voice.rotation.set(0, 0, isReduced || isWaiting ? 0 : Math.sin(seconds * 0.2) * 0.025);
+      if (index === 1) voice.rotation.set(0, 0, isReduced || isWaiting ? -0.12 : (Math.floor(seconds * 0.6) % 5 - 2) * 0.08);
+      if (index === 2) voice.rotation.set(0, 0, isReduced || isWaiting ? 0.08 : seconds * 0.16);
+      const isSpeaking: boolean = (frame.phase === 'response' && this._selected === index) || (this._voice === index && elapsedMs - this._asideAt < ASIDE_HOLD_MS);
+      const speakingPulse: number = isReduced ? 1 : 1 + Math.sin(seconds * 5.4) * 0.1;
+      voice.scale.setScalar(isSpeaking ? 1.45 * speakingPulse : 1);
       if (isFinal) voice.scale.multiplyScalar(1 - finalProgress * 0.74);
+      this._voiceMaterials[index][0].opacity = isSpeaking ? 1 : 0.88;
+      this._voiceMaterials[index][1].opacity = isSpeaking ? 0.48 : 0.16;
+      this._voiceMaterials[index][2].opacity = isSpeaking ? 1 : 0.72;
       const trailPositions: BufferAttribute = trail.geometry.getAttribute('position') as BufferAttribute;
       for (let pointIndex: number = 0; pointIndex < 72; pointIndex += 1) {
         const t: number = pointIndex / 71;
-        const point: Vector3 = starts[index].clone().lerp(voice.position, t);
+        const point: Vector3 = this._trailPoint.copy(start).lerp(voice.position, t);
         const breath: number = Math.sin(t * Math.PI * (2.4 + index * 0.4) + seconds * (0.18 + index * 0.035) + index * 1.7);
         point.y += breath * (1 - t) * (0.34 + index * 0.08);
         point.x += Math.cos(t * 8 + seconds * 0.11 + index) * (1 - t) * 0.18;
@@ -349,17 +619,26 @@ export class SpatialBootScene {
       trailPositions.needsUpdate = true;
       trail.material.opacity = (0.2 + smoothEntrance * 0.34) * (isFinal ? 1 - finalProgress * 0.55 : 1);
     }
-    this._ribbons[4].root.visible = !isBoot && !isFinal;
+    this._ribbons[4].root.visible = !isBoot && !isFinal && !isTravel;
     this._ribbons[4].root.scale.setScalar(scale * 0.37);
     this._ribbons[4].root.position.set(left, 1.65, -0.05);
     const question: Group = this._ribbons[5].root;
     question.visible = frame.question.length > 0;
-    question.position.set(left, isFinal ? 2.55 : isWaiting ? 0.65 : -0.8 + Math.min(Math.max((seconds - 13) / 16, 0), 1) * 1.45, 0.25);
-    question.scale.setScalar(isFinal ? scale * (this._isNarrow ? 0.62 : 0.68) : scale);
+    const responseOwner: number = frame.phase === 'response' ? Math.max(0, this._selected) : -1;
+    const responseAnchor: Vector3 | null = responseOwner >= 0 ? this._voices[responseOwner].position : null;
+    question.position.set(
+      responseAnchor ? responseAnchor.x - this._width * (this._isNarrow ? 0.16 : 0.19) : left,
+      isFinal ? 2.55 : responseAnchor ? responseAnchor.y - 0.72 : isWaiting ? 0.68 : -0.8 + Math.min(Math.max((seconds - 13) / 16, 0), 1) * 1.45,
+      responseAnchor ? responseAnchor.z + 0.14 : 0.25,
+    );
+    question.scale.setScalar(isFinal ? scale * (this._isNarrow ? 0.62 : 0.68) : responseAnchor ? scale * 0.52 : scale);
+    if (responseOwner === 0) question.rotation.set(0, 0, 0);
+    if (responseOwner === 1) question.rotation.set(-0.08, -0.14, 0.025);
+    if (responseOwner === 2) question.rotation.set(-0.16, 0.18, -0.035);
     if (!isReduced && !isSettled) {
       question.position.x += Math.sin(seconds * 0.16) * 0.3;
       question.position.z += Math.sin(seconds * 0.25) * BOOT_EFFECTS.depthDrift * 2.5;
-      question.rotation.set(-0.3, (frame.format - 1) * BOOT_EFFECTS.planeSkew * 0.65 + Math.sin(seconds * 0.2) * 0.15, (frame.format - 1) * 0.055);
+      if (responseOwner < 0) question.rotation.set(-0.3, (frame.format - 1) * BOOT_EFFECTS.planeSkew * 0.65 + Math.sin(seconds * 0.2) * 0.15, (frame.format - 1) * 0.055);
     }
     const symbols: Group = this._ribbons[6].root;
     symbols.visible = frame.prelude.includes(BOOT_SYMBOLS) && !isFinal;
@@ -373,32 +652,97 @@ export class SpatialBootScene {
     for (let index: number = 0; index < 3; index += 1) {
       const choice: Group = this._ribbons[index + 8].root;
       choice.visible = isWaiting;
-      choice.position.set(left, -0.65 - index * 0.57, 0.2);
-      choice.scale.setScalar(scale * (this._isNarrow ? 0.64 : 0.59));
+      const voicePosition: Vector3 = this._voices[index].position;
+      choice.position.set(voicePosition.x - this._width * (this._isNarrow ? 0.12 : 0.15), voicePosition.y - 0.76, voicePosition.z + 0.08);
+      choice.scale.setScalar(scale * (this._isNarrow ? 0.37 : 0.39));
+      choice.rotation.set(index === 0 ? -0.08 : index === 1 ? -0.18 : -0.28, (index - 1) * 0.16, (index - 1) * 0.018);
       const target: Mesh<BoxGeometry, MeshBasicMaterial> = this._targets[index];
       target.visible = isWaiting;
-      target.position.set(0, choice.position.y + 0.01, 0.05);
-      target.scale.set(this._width, 0.5, 1);
+      target.position.set(voicePosition.x, choice.position.y - 0.22, 0.18);
+      target.scale.set(this._width * 0.29, 1.12, 1);
       target.material.opacity = this._selected === index ? 0.19 : this._hovered === index ? 0.1 : 0.02;
-      if (this._selected === index) choice.position.x += scale * 0.3;
+      if (this._hovered === index) choice.position.y += scale * 0.12;
+      const speaker: Group = this._ribbons[14 + index].root;
+      speaker.visible = isWaiting || (frame.phase === 'response' && this._selected === index);
+      speaker.position.set(voicePosition.x - 0.48, voicePosition.y + 0.44, voicePosition.z + 0.04);
+      speaker.scale.setScalar(scale * 0.28);
+      speaker.rotation.set(0, 0, index === 1 ? -0.04 : index === 2 ? 0.04 : 0);
+      this._physicsTargets[index].x = target.position.x;
+      this._physicsTargets[index].y = target.position.y - 0.46;
+      this._physicsTargets[index].z = 0.18;
+    }
+    if (isWaiting) {
+      if (phaseChanged) this._physics.activateAnswers(this._physicsTargets, { x: 0, y: -2.55, z: 0.52 });
+      else this._physics.syncAnswerTargets(this._physicsTargets);
     }
     for (let index: number = 0; index < 3; index += 1) {
       const fossil: Group = this._ribbons[11 + index].root;
       fossil.visible = isStory && !isFinal && Boolean(this._fossils[index]);
-      fossil.position.set(left + 0.18 * index, -2.55 - index * 0.26, -0.75 - index * 0.34);
-      fossil.scale.setScalar(scale * (0.34 - index * 0.045));
-      fossil.rotation.set(-0.1 - index * 0.05, (index - 1) * 0.12, (index - 1) * 0.012);
+      if (isTravel) {
+        fossil.position.set(-this._width * 0.18 + index * this._width * 0.12, -1.48 + index * 0.72, -0.08 - index * 0.16);
+        fossil.scale.setScalar(scale * (0.31 - index * 0.035));
+        fossil.rotation.set(-0.62 - index * 0.06, (index - 1) * 0.14, (index - 1) * 0.02);
+      } else {
+        fossil.position.set(left + 0.18 * index, -2.55 - index * 0.26, -0.75 - index * 0.34);
+        fossil.scale.setScalar(scale * (0.34 - index * 0.045));
+        fossil.rotation.set(-0.1 - index * 0.05, (index - 1) * 0.12, (index - 1) * 0.012);
+      }
       fossil.updateMatrix();
+    }
+    this._updatePath(isWaiting, isTravel, seconds);
+    this._player.visible = isStory && !isFinal;
+    let spatialEvent: number = -1;
+    if (this._player.visible) {
+      if (!isReduced) {
+        this._player.rotation.y = Math.sin(seconds * 0.6) * (0.12 + this._playerStage * 0.025);
+        this._player.rotation.z = Math.sin(seconds * 0.43) * 0.035;
+      } else {
+        this._player.rotation.set(0, 0, 0);
+      }
+      if (isWaiting) {
+        const speed: number = 1.75 + this._playerStage * 0.12;
+        const physicsStep: IntroPhysicsStep = this._physics.step(delta, this._movement.x, this._movement.y, speed, {
+          minX: -this._width * 0.43, maxX: this._width * 0.43, minY: -2.65, maxY: 1.62,
+        });
+        this._player.position.set(physicsStep.position.x, physicsStep.position.y, physicsStep.position.z);
+        let nearest: number = 0;
+        let nearestDistance: number = Number.POSITIVE_INFINITY;
+        for (let index: number = 0; index < 3; index += 1) {
+          const dx: number = Math.abs(this._player.position.x - this._targets[index].position.x);
+          if (dx < nearestDistance) { nearest = index; nearestDistance = dx; }
+        }
+        this._hovered = nearest;
+        if (this._choiceArmed && physicsStep.sensor >= 0 && physicsStep.sensor < 3) {
+          this._choiceArmed = false;
+          spatialEvent = physicsStep.sensor;
+        }
+      } else if (isTravel) {
+        const travelSpeed: number = 1.82 + this._playerStage * 0.14;
+        const physicsStep: IntroPhysicsStep = this._physics.step(delta, this._movement.x * 0.62, Math.max(0, this._movement.y), travelSpeed, {
+          minX: -this._width * 0.28, maxX: this._width * 0.28, minY: -2.45, maxY: 2.62,
+        });
+        this._player.position.set(physicsStep.position.x, physicsStep.position.y, 0.58 - Math.max(0, physicsStep.position.y + 2.45) * 0.11);
+        if (!this._journeyComplete && physicsStep.sensor === INTRO_JOURNEY_SENSOR_INDEX) {
+          this._journeyComplete = true;
+          spatialEvent = -2;
+        }
+      }
+      const pulse: number = isReduced ? 1 : 1 + Math.sin(seconds * 4.2) * 0.045;
+      this._player.scale.setScalar(pulse);
     }
     this._cursor.visible = !isWaiting && frame.phase !== 'complete' && (isReduced || elapsedMs % CURSOR_PERIOD_MS < 690);
     this._cursor.position.copy(isBoot ? command.position : question.visible ? question.position : this._ribbons[3].root.position);
-    const lastLine: string = (isBoot ? frame.transcript : frame.question).split('\n').at(-1) ?? '';
-    this._cursor.position.x += Math.min(lastLine.length, this._isNarrow ? 28 : 41) * 0.64 * scale * (isBoot ? 1.2 : 1);
+    const cursorLines: string[] = (isBoot ? frame.transcript : frame.question).split('\n');
+    const lastLine: string = cursorLines.at(-1) ?? '';
+    this._cursor.position.x += Math.min(lastLine.length, this._isNarrow ? 28 : 41) * 0.64 * scale * (isBoot ? 0.48 : responseAnchor ? 0.52 : 1);
     this._cursor.position.y += scale * 0.45;
-    if (!isBoot && frame.question.includes('\n')) this._cursor.position.y -= scale * 1.35;
+    this._cursor.position.y -= Math.max(0, cursorLines.length - 1) * scale * 1.35 * (isBoot ? 0.48 : responseAnchor ? 0.52 : 1);
     this._cursor.position.z += 0.1;
     this._cursor.rotation.set(0, isReduced ? 0 : Math.sin(seconds * 0.45) * 0.55, isReduced ? 0 : Math.sin(seconds * 0.3) * 0.1);
-    this._cursor.scale.set(frame.format === 1 ? 0.14 : 1, frame.format === 2 ? 0.14 : 1, 1);
+    const cursorScale: number = isBoot ? 0.48 : responseAnchor ? 0.58 : 1;
+    this._cursor.scale.set((frame.format === 1 ? 0.14 : 1) * cursorScale, (frame.format === 2 ? 0.14 : 1) * cursorScale, cursorScale);
+    this._cursor.material.color.setHex(responseOwner >= 0 ? INK[responseOwner] : INK[0]);
+    return spatialEvent;
   }
 
   public destroy(): void {
@@ -406,10 +750,25 @@ export class SpatialBootScene {
     this._ribbons.forEach((ribbon: GlyphRibbon): void => ribbon.destroy());
     this._atlases.forEach((texture: CanvasTexture): void => texture.dispose());
     this._particles.destroy();
-    for (const mesh of [this._cursor, ...this._voices, ...this._targets]) {
-      mesh?.geometry.dispose();
-      mesh?.material.dispose();
-    }
+    this._physics.destroy();
+    this._cursor?.geometry.dispose();
+    this._cursor?.material.dispose();
+    this._targets.forEach((mesh: Mesh<BoxGeometry, MeshBasicMaterial>): void => { mesh.geometry.dispose(); mesh.material.dispose(); });
+    this._voices.forEach((voice: Group): void => {
+      voice.traverse((child): void => {
+        if (!(child instanceof Line) && !(child instanceof Mesh)) return;
+        child.geometry.dispose();
+        const material = child.material;
+        if (Array.isArray(material)) material.forEach((entry): void => entry.dispose());
+        else material.dispose();
+      });
+    });
+    this._playerCore?.geometry.dispose();
+    this._playerCore?.material.dispose();
+    this._playerOutline?.geometry.dispose();
+    this._playerOutline?.material.dispose();
+    this._path?.geometry.dispose();
+    this._path?.material.dispose();
     this._trails.forEach((trail: Line<BufferGeometry, LineBasicMaterial>): void => {
       trail.geometry.dispose();
       trail.material.dispose();

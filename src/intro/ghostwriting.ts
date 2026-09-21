@@ -8,7 +8,7 @@ export interface BootFrame {
   transcript: string;
   choices: readonly string[];
   isCorrupt: boolean;
-  phase: 'cursor' | 'command' | 'loading' | 'writing' | 'waiting' | 'prelude' | 'question' | 'response' | 'final' | 'complete';
+  phase: 'cursor' | 'command' | 'loading' | 'writing' | 'waiting' | 'prelude' | 'question' | 'response' | 'travel' | 'final' | 'complete';
   format: number;
   phaseElapsedMs?: number;
   hint?: string;
@@ -43,6 +43,14 @@ export function createBootFrames(seed: string): BootFrame[] {
       if (letter === '\n') at += CORRECTION_PAUSE_MS / 2;
     }
   };
+  const typeTerminal = (value: string): void => {
+    for (const letter of value) {
+      at += 18 + random.int(22);
+      text.transcript += letter;
+      record();
+      if (letter === '\n') at += 180;
+    }
+  };
   const erase = (field: keyof typeof text, value: string): void => {
     for (const _letter of value) {
       text[field] = text[field].slice(0, -1);
@@ -51,8 +59,19 @@ export function createBootFrames(seed: string): BootFrame[] {
     }
   };
   phase = 'command';
-  type('transcript', BOOT_COMMAND);
+  typeTerminal('$ ./omega');
+  at += 620;
+  format = 0;
+  typeTerminal('\nbash: ./omega: script unfinished');
+  at += 1300;
+  format = 1;
+  typeTerminal('\n$ sh wake-omega');
+  at += 720;
+  typeTerminal('\nwake-omega: line 1: unexpected end');
   at += 1500;
+  format = 2;
+  typeTerminal(`\n$ ${BOOT_COMMAND}`);
+  at += 1700;
   phase = 'loading';
   record();
   for (const slot of ['01', '02', '03']) {

@@ -1,0 +1,5 @@
+1. ✅ C:\Users\jesse\.codex\generated_images\01a0bdf7-6f01-7741-bf5f-0e29c52818aa\exec-63420f0f-9f49-41d4-be1a-6b95497e1e51.png — Frame 01 base pose.
+2. ✅ C:\Users\jesse\.codex\generated_images\01a0bdf7-6f01-7741-bf5f-0e29c52818aa\exec-8033e0ba-7197-4333-96b9-b40f649fe1c9.png — Frame 02 stepped clockwise drift.
+3. ✅ C:\Users\jesse\.codex\generated_images\01a0bdf7-6f01-7741-bf5f-0e29c52818aa\exec-39f2676a-24ab-4f7f-b3bc-a43b264007f1.png — Frame 03 advancing dither crawl.
+4. ✅ C:\Users\jesse\.codex\generated_images\01a0bdf7-6f01-7741-bf5f-0e29c52818aa\exec-08610a15-2dd6-4f4b-a5c6-3a3ab67af1dd.png — Frame 04 farthest blocky drift.
+5. ✅ C:\Users\jesse\.codex\generated_images\01a0bdf7-6f01-7741-bf5f-0e29c52818aa\exec-6cc8674b-7968-4945-9c4c-847daa1142b7.png — Frame 05 near-loop return.

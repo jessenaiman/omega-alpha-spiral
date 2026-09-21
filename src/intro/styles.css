@@ -131,6 +131,7 @@
 .os-boot[data-os-phase-ts='prelude'] .os-footer,
 .os-boot[data-os-phase-ts='question'] .os-footer,
 .os-boot[data-os-phase-ts='response'] .os-footer,
+.os-boot[data-os-phase-ts='travel'] .os-footer,
 .os-boot[data-os-phase-ts='final'] .os-footer,
 .os-boot[data-os-phase-ts='complete'] .os-footer { visibility: visible; }
 .os-replay {
@@ -165,6 +166,34 @@
 .os-boot[data-os-audio-ts='awake'] .os-sound { color: var(--os-amber); }
 .os-error { color: var(--os-error); max-width: var(--os-size-xl); }
 .os-error:empty { display: none; }
+.os-touch {
+  bottom: max(var(--os-space-xl), env(safe-area-inset-bottom));
+  display: none;
+  gap: 0.35rem;
+  grid-template-columns: repeat(3, 3rem);
+  grid-template-rows: repeat(2, 3rem);
+  left: max(var(--os-space-default), env(safe-area-inset-left));
+  position: fixed;
+  touch-action: none;
+  z-index: 3;
+}
+.os-touch button {
+  background: #020607aa;
+  border: 1px solid var(--os-hairline);
+  color: var(--os-silver);
+  font: inherit;
+  font-size: 1.1rem;
+  min-height: 3rem;
+  min-width: 3rem;
+  padding: 0;
+  touch-action: none;
+}
+.os-touch button[data-os-move='up'] { grid-column: 2; }
+.os-touch button[data-os-move='left'] { grid-column: 1; grid-row: 2; }
+.os-touch button[data-os-move='down'] { grid-column: 2; grid-row: 2; }
+.os-touch button[data-os-move='right'] { grid-column: 3; grid-row: 2; }
+.os-touch button:focus-visible,
+.os-touch button[data-os-active='true'] { border-color: var(--os-white); color: var(--os-white); }
 .os-sr {
   clip-path: inset(50%);
   height: var(--os-size-xxxs);
@@ -181,6 +210,11 @@
   .os-terminal { padding: var(--os-space-md) var(--os-space-default); }
   .os-footer { left: var(--os-space-default); right: var(--os-space-default); }
   .os-choice { background: var(--os-surface); }
+}
+@media (pointer: coarse), (width < 760px) {
+  .os-boot[data-os-phase-ts='waiting'] .os-touch,
+  .os-boot[data-os-phase-ts='travel'] .os-touch { display: grid; }
+  .os-footer > span { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   .os-cursor { animation: none; }

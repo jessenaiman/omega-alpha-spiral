@@ -9,4 +9,4 @@ If `docs/adr/` or a relevant ADR does not exist, proceed without inventing one. 
 
 Use glossary terms from `CONTEXT.md` in code, tests, issues, and documentation. Do not replace them with avoided synonyms. If proposed work conflicts with an ADR, name the conflict instead of silently overriding the decision.
 
-Current Dreamweaver canon has exactly three identities: Light (`luminary`), Shadow (`shadow`), and Ambition (`ambition`). `CONTEXT.md` is the authority for their meanings, colours, and visual language.
+Current Dreamweaver canon has exactly three identities: Light (`light`), Shadow (`shadow`), and Ambition (`ambition`). `CONTEXT.md` is the authority for their meanings, colours, and visual language.

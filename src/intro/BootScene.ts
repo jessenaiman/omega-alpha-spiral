@@ -1,6 +1,6 @@
 import { loadVfxExportBundle } from 'nixie-fx/export';
 import { ThreeVfxRenderer, type ThreeVfxEffectInstance } from 'nixie-fx/three';
-import { Mesh, PerspectiveCamera, PlaneGeometry, Scene, ShaderMaterial, SRGBColorSpace, Texture, TextureLoader, Vector2, WebGLRenderer } from 'three';
+import { ACESFilmicToneMapping, Mesh, PerspectiveCamera, PlaneGeometry, Scene, ShaderMaterial, SRGBColorSpace, Texture, TextureLoader, Vector2, WebGLRenderer } from 'three';
 
 import distantUrl from '../../assets/intro/optical-variations/optical-a-distant.webp';
 import foldUrl from '../../assets/intro/optical-variations/optical-b-fold.webp';
@@ -8,6 +8,7 @@ import thresholdUrl from '../../assets/intro/optical-variations/optical-c-thresh
 import { CHRONICLE_FINAL, CHRONICLE_FINAL_DRAFT, CHRONICLE_QUESTIONS, type ChronicleQuestion } from './chronicle';
 import { BOOT_OPTIONS, createBootFrames, type BootFrame } from './ghostwriting';
 import { IntroAudio } from './IntroAudio';
+import type { IntroPhysicsDiagnostics } from './IntroPhysics';
 import { BOOT_EFFECTS, SpatialBootScene } from './SpatialBootScene';
 import dustBundle from './vfx/boot-dust.bundle.json';
 
@@ -18,6 +19,47 @@ const FIRST_DISSOLVE_MS: number = 3500;
 const DISSOLVE_DURATION_MS: number = 2500;
 const ZOOM_DURATION_MS: number = 16000;
 const VIEW_HEIGHT: number = 6.4;
+const TEST_STATE_NAMES = ['boot-cursor', 'question-1', 'question-2', 'question-3', 'question-4', 'final-door', 'complete'] as const;
+type TestStateName = typeof TEST_STATE_NAMES[number];
+type StoryMode = 'boot' | 'waiting' | 'prelude' | 'question' | 'response' | 'travel' | 'final' | 'complete';
+
+interface IntroDiagnosticState {
+  frame: number;
+  phase: BootFrame['phase'];
+  storyMode: StoryMode;
+  questionIndex: number;
+  objective: string;
+  objectiveProgress: number;
+  complete: boolean;
+  failed: boolean;
+  canContinue: boolean;
+  selectedChoice: number;
+  playerPosition: { x: number; y: number; z: number };
+  choiceTargets: Array<{ x: number; y: number; z: number }>;
+  seed: string;
+  audio: { unlocked: boolean; muted: boolean; cueCount: number };
+  physics: IntroPhysicsDiagnostics;
+  viewport: { width: number; height: number; dpr: number };
+  activeLoops: number;
+  pausedForScreenshot: boolean;
+  debugUiHidden: boolean;
+}
+
+interface IntroTestHooks {
+  seed(value: string | number): Promise<{ seed: string }>;
+  setState(name: string): Promise<{ state: TestStateName }>;
+  setPausedForScreenshot(paused?: boolean): void;
+  setReducedMotion(reduced: boolean): void;
+  hideDebugUi(hidden?: boolean): void;
+}
+
+type IntroTestWindow = {
+  __THREE_GAME_DIAGNOSTICS__?: {
+    readonly renderer: { readonly calls: number; readonly triangles: number; readonly geometries: number; readonly textures: number };
+    readonly state: IntroDiagnosticState;
+  };
+  __THREE_GAME_TEST_HOOKS__?: IntroTestHooks;
+};
 const VERTEX_SHADER: string = `
   varying vec2 vUv;
   void main() {
@@ -60,6 +102,7 @@ export class BootScene {
   private _scene: Scene | null = null;
   private _camera: PerspectiveCamera | null = null;
   private _spatial: SpatialBootScene = new SpatialBootScene();
+  private _spatialReady: Promise<void> = Promise.resolve();
   private _audio: IntroAudio = new IntroAudio();
   private _activeChoice: number = 0;
   private _plate: Mesh<PlaneGeometry, ShaderMaterial> | null = null;
@@ -82,7 +125,7 @@ export class BootScene {
   private _question: HTMLElement | null = null;
   private _accessibleQuestion: HTMLElement | null = null;
   private _choices: HTMLFieldSetElement | null = null;
-  private _storyMode: 'boot' | 'waiting' | 'prelude' | 'question' | 'response' | 'final' | 'complete' = 'boot';
+  private _storyMode: StoryMode = 'boot';
   private _questionIndex: number = 0;
   private _storyStartedAt: number = 0;
   private _canContinue: boolean = false;
@@ -94,7 +137,14 @@ export class BootScene {
   private _secondMix: number = 0;
   private _isDebug: boolean = false;
   private _diagnosticFrame: number = 0;
+  private _frameNumber: number = 0;
   private _hasStarted: boolean = false;
+  private _simulationPaused: boolean = false;
+  private _seed: string = String(SEED);
+  private _answersCommitted: number = 0;
+  private _debugUiHidden: boolean = false;
+  private _movementKeys: Set<string> = new Set();
+  private _currentFrame: BootFrame | null = null;
 
   public init(): void {
     this._root = getElement('main', HTMLElement);
@@ -122,6 +172,8 @@ export class BootScene {
     }, { signal });
     window.addEventListener('resize', () => this._resize(), { signal });
     window.addEventListener('keydown', this._onKeyDown, { signal });
+    window.addEventListener('keyup', this._onKeyUp, { signal });
+    window.addEventListener('blur', () => this._clearMovement(), { signal });
     window.addEventListener('pointerdown', (event: PointerEvent) => {
       if (event.target instanceof Element && event.target.closest('#os-sound-ts')) return;
       if (!this._hasStarted) void this._beginBootFromGesture();
@@ -142,6 +194,7 @@ export class BootScene {
       this._spatial.select(this._activeChoice);
       if (this._activeChoice >= 0 && this._storyMode === 'waiting') this._commitChoice(this._activeChoice);
     }, { signal });
+    this._bindTouchControls(signal);
     window.addEventListener('pagehide', (event: PageTransitionEvent) => {
       if (!event.persisted) this.destroy();
     }, { signal });
@@ -150,7 +203,10 @@ export class BootScene {
       if (event.persisted) this._previousMs = performance.now();
     }, { signal });
     document.addEventListener('visibilitychange', () => {
-      if (document.hidden) void this._audio.suspend();
+      if (document.hidden) {
+        this._clearMovement();
+        void this._audio.suspend();
+      }
       else void this._audio.resume();
     }, { signal });
     canvas.addEventListener('webglcontextlost', (event: Event) => {
@@ -160,11 +216,19 @@ export class BootScene {
     try {
       this._renderer = new WebGLRenderer({ canvas, alpha: false, antialias: true });
       this._renderer.setClearColor(0x000000);
-      this._renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      this._renderer.setPixelRatio(Math.min(window.devicePixelRatio, window.innerWidth < 760 ? 1.5 : 2));
+      this._renderer.outputColorSpace = SRGBColorSpace;
+      this._renderer.toneMapping = ACESFilmicToneMapping;
+      this._renderer.toneMappingExposure = 1.08;
       this._scene = new Scene();
       this._camera = new PerspectiveCamera(36, 1, 0.1, 40);
       this._camera.position.z = 10;
-      this._spatial.init(this._scene);
+      if (this._root) this._root.dataset.osPhysicsTs = 'loading';
+      this._spatialReady = this._spatial.init(this._scene).then((): void => {
+        if (this._root) this._root.dataset.osPhysicsTs = 'ready';
+      }).catch((error: unknown): void => {
+        this._showError(error instanceof Error ? `The movement system could not start. ${error.message}` : 'The movement system could not start.');
+      });
       const particleDiagnostics = this._spatial.getParticleDiagnostics();
       if (this._root) {
         this._root.dataset.osParticlesTs = String(particleDiagnostics.lightParticles + particleDiagnostics.darkParticles);
@@ -208,14 +272,7 @@ export class BootScene {
       this._plate.position.z = -1;
       this._scene.add(this._plate);
       this._resize();
-      if (this._isDebug) {
-        Object.assign(window, { __INTRO_DIAGNOSTICS__: {
-          renderer: this._renderer.info,
-          effects: BOOT_EFFECTS,
-          particles: this._spatial.getParticleDiagnostics(),
-          getState: (): object => ({ phase: this._frames[Math.max(0, this._frameIndex)].phase, elapsedMs: this._elapsedMs, frameIndex: this._frameIndex, voice: this._spatial.getVoice(), text: 'batched-glyph-assets' }),
-        } });
-      }
+      if (this._isDebug) this._installTestContracts();
     } catch (error: unknown) {
       this._showError(error instanceof Error ? `The opening could not start. ${error.message}` : 'The opening could not start. Reload to try again.');
     }
@@ -227,7 +284,7 @@ export class BootScene {
     const height: number = window.innerHeight;
     const halfHeight: number = Math.tan(this._camera.fov * Math.PI / 360) * 11;
     const halfWidth: number = halfHeight * width / height;
-    this._renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this._renderer.setPixelRatio(Math.min(window.devicePixelRatio, width < 760 ? 1.5 : 2));
     this._renderer.setSize(width, height, false);
     this._camera.aspect = width / height;
     this._camera.updateProjectionMatrix();
@@ -253,6 +310,9 @@ export class BootScene {
     this._lastAudioPhase = 'cursor';
     this._lastAudioCorrupt = false;
     this._secondMix = 0;
+    this._simulationPaused = false;
+    this._answersCommitted = 0;
+    this._clearMovement();
     this._spatial.reset();
     this._activeChoice = 0;
     getElement('#os-aside-ts', HTMLElement).textContent = '';
@@ -269,8 +329,14 @@ export class BootScene {
 
   private _update = (now: number): void => {
     if (this._isDestroyed || !this._renderer || !this._scene || !this._camera || !this._plate) return;
-      const delta: number = Math.min(Math.max((now - this._previousMs) / 1000, 0), MAX_DELTA_SECONDS);
-      this._previousMs = now;
+    const delta: number = Math.min(Math.max((now - this._previousMs) / 1000, 0), MAX_DELTA_SECONDS);
+    this._previousMs = now;
+    this._frameNumber += 1;
+    if (this._simulationPaused) {
+      this._renderer.render(this._scene, this._camera);
+      this._raf = requestAnimationFrame(this._update);
+      return;
+    }
     if (!document.hidden) {
       this._motionMs += delta * 1000;
       const endMs: number = this._frames[this._frames.length - 1].at;
@@ -293,7 +359,10 @@ export class BootScene {
       this._plate.material.uniforms.reveal.value = this._isReduced ? 0.7 : Math.min(Math.max((displayMs - 4400) / 1600, 0), 0.85);
       this._plate.material.uniforms.drift.value.set(this._isReduced ? 0 : Math.sin(this._motionMs / 13000) * 0.019, this._isReduced ? 0 : Math.cos(this._motionMs / 19000) * 0.013);
       if (this._storyMode !== 'boot' && this._storyMode !== 'waiting' && this._storyMode !== 'complete') this._updateStory(now);
-      this._spatial.update(this._motionMs, this._isReduced);
+      const spatialEvent: number = this._spatial.update(this._motionMs, this._isReduced);
+      if ((this._storyMode === 'waiting' || this._storyMode === 'travel') && this._movementKeys.size > 0) this._audio.move(this._answersCommitted);
+      if (spatialEvent >= 0 && this._storyMode === 'waiting') this._commitChoice(spatialEvent);
+      else if (spatialEvent === -2 && this._storyMode === 'travel') this._beginPrelude(this._questionIndex);
       if (this._root) this._root.dataset.osPlateTs = this._secondMix > 0.98 ? '2' : firstMix === 1 ? '1' : '0';
       const isDustVisible: boolean = !this._isReduced && displayMs > FIRST_DISSOLVE_MS && displayMs < endMs;
       if (isDustVisible) {
@@ -310,6 +379,11 @@ export class BootScene {
         this._root.dataset.osTexturesTs = String(this._renderer.info.memory.textures);
         this._root.dataset.osParticleSurfaceTs = particleDiagnostics.surfaceFormation > 0.002 ? 'formed' : 'open';
         this._root.dataset.osParticleDrawsTs = String(particleDiagnostics.drawCalls);
+        const physicsDiagnostics: IntroPhysicsDiagnostics = this._spatial.getPhysicsDiagnostics();
+        this._root.dataset.osPhysicsBodiesTs = String(physicsDiagnostics.bodies);
+        this._root.dataset.osPhysicsCollidersTs = String(physicsDiagnostics.colliders);
+        this._root.dataset.osPhysicsSensorsTs = String(physicsDiagnostics.activeSensors);
+        this._root.dataset.osPhysicsStepsTs = String(physicsDiagnostics.steps);
       }
     }
     this._raf = requestAnimationFrame(this._update);
@@ -318,12 +392,14 @@ export class BootScene {
   private _applyFrame(frame: BootFrame, fromBoot: boolean = false): void {
     if (!this._root || !this._prelude || !this._question || !this._choices || !this._accessibleQuestion || !this._transcript || !this._feed) return;
     if (this._isReduced && frame.isCorrupt) return;
+    this._currentFrame = frame;
     if (fromBoot && frame.phase === 'waiting') {
       this._storyMode = 'waiting';
       this._questionIndex = 0;
       this._canContinue = false;
     }
     this._root.dataset.osPhaseTs = frame.phase;
+    this._root.dataset.osStoryModeTs = this._storyMode;
     this._root.dataset.osCorruptTs = frame.isCorrupt ? 'true' : 'false';
     this._root.dataset.osFormatTs = frame.phase === 'waiting' ? 'settled' : String(frame.format);
     this._root.dataset.osTextTs = 'three';
@@ -356,7 +432,10 @@ export class BootScene {
     if (this._storyMode !== 'waiting') return;
     this._highlightChoice(index);
     this._selectedChoice = index;
+    this._answersCommitted += 1;
     const question: ChronicleQuestion = CHRONICLE_QUESTIONS[this._questionIndex];
+    this._spatial.commitChoice(index);
+    this._spatial.setPlayerStage(this._answersCommitted);
     this._spatial.archive(question.choices[index].text, question.era, index);
     this._audio.choose(index);
     this._audio.dreamweaver(index);
@@ -364,6 +443,7 @@ export class BootScene {
     this._storyStartedAt = performance.now();
     this._canContinue = false;
     this._setChoicesEnabled(false);
+    this._clearMovement();
   }
 
   private _beginPrelude(index: number): void {
@@ -376,6 +456,16 @@ export class BootScene {
     this._spatial.select(-1);
     this._clearNativeChoices();
     this._audio.transition();
+    this._clearMovement();
+  }
+
+  private _beginTravel(index: number): void {
+    this._questionIndex = index;
+    this._storyMode = 'travel';
+    this._storyStartedAt = performance.now();
+    this._canContinue = false;
+    this._spatial.beginJourney();
+    this._applyFrame(this._storyFrame('', 'travel', CHRONICLE_QUESTIONS[index].era, 'W / ↑  //  WALK UNTIL IT ASKS', 0));
   }
 
   private _beginQuestion(): void {
@@ -403,7 +493,7 @@ export class BootScene {
     }
     if (this._storyMode === 'response') {
       if (this._questionIndex >= CHRONICLE_QUESTIONS.length - 1) this._beginFinal();
-      else this._beginPrelude(this._questionIndex + 1);
+      else this._beginTravel(this._questionIndex + 1);
     }
   }
 
@@ -527,7 +617,7 @@ export class BootScene {
 
   private async _beginBootFromGesture(): Promise<void> {
     if (this._hasStarted) return;
-    const unlocked: boolean = await this._audio.unlock();
+    const [unlocked] = await Promise.all([this._audio.unlock(), this._spatialReady]);
     if (!unlocked) {
       if (this._root) this._root.dataset.osAudioTs = 'unavailable';
       this._syncAudioLabel();
@@ -556,6 +646,48 @@ export class BootScene {
     button.setAttribute('aria-pressed', String(this._audio.unlocked && !this._audio.muted));
   }
 
+  private _syncMovement(): void {
+    const left: number = this._movementKeys.has('ArrowLeft') || this._movementKeys.has('a') || this._movementKeys.has('touch-left') ? 1 : 0;
+    const right: number = this._movementKeys.has('ArrowRight') || this._movementKeys.has('d') || this._movementKeys.has('touch-right') ? 1 : 0;
+    const down: number = this._movementKeys.has('ArrowDown') || this._movementKeys.has('s') || this._movementKeys.has('touch-down') ? 1 : 0;
+    const up: number = this._movementKeys.has('ArrowUp') || this._movementKeys.has('w') || this._movementKeys.has('touch-up') ? 1 : 0;
+    this._spatial.setMovement(right - left, up - down);
+  }
+
+  private _bindTouchControls(signal: AbortSignal): void {
+    document.querySelectorAll<HTMLButtonElement>('[data-os-move]').forEach((button: HTMLButtonElement): void => {
+      const direction: string = button.dataset.osMove ?? '';
+      const key: string = `touch-${direction}`;
+      const release = (): void => {
+        button.dataset.osActive = 'false';
+        this._movementKeys.delete(key);
+        this._syncMovement();
+      };
+      button.addEventListener('pointerdown', (event: PointerEvent): void => {
+        event.preventDefault();
+        button.setPointerCapture(event.pointerId);
+        button.dataset.osActive = 'true';
+        this._movementKeys.add(key);
+        this._syncMovement();
+      }, { signal });
+      button.addEventListener('pointerup', release, { signal });
+      button.addEventListener('pointercancel', release, { signal });
+      button.addEventListener('lostpointercapture', release, { signal });
+    });
+  }
+
+  private _clearMovement(): void {
+    this._movementKeys.clear();
+    this._spatial.setMovement(0, 0);
+    document.querySelectorAll<HTMLButtonElement>('[data-os-move]').forEach((button: HTMLButtonElement): void => { button.dataset.osActive = 'false'; });
+  }
+
+  private _onKeyUp = (event: KeyboardEvent): void => {
+    const key: string = event.key.length === 1 ? event.key.toLowerCase() : event.key;
+    if (!this._movementKeys.delete(key)) return;
+    this._syncMovement();
+  };
+
   private _onKeyDown = (event: KeyboardEvent): void => {
     if (event.repeat || event.ctrlKey || event.metaKey || event.altKey || ['Tab', 'Shift', 'Control', 'Alt', 'Meta', 'Escape'].includes(event.key)) return;
     if (event.target instanceof Element && event.target.closest('button, input')) return;
@@ -564,6 +696,13 @@ export class BootScene {
       return;
     }
     void this._unlockAudio();
+    const key: string = event.key.length === 1 ? event.key.toLowerCase() : event.key;
+    if ((this._storyMode === 'waiting' || this._storyMode === 'travel') && ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'w', 'a', 's', 'd'].includes(key)) {
+      event.preventDefault();
+      this._movementKeys.add(key);
+      this._syncMovement();
+      return;
+    }
     if (this._storyMode === 'boot') {
       const aside: string | null = this._spatial.interrupt(this._motionMs);
       if (aside) {
@@ -579,10 +718,8 @@ export class BootScene {
       this._advanceStory();
       return;
     }
-    if (this._storyMode === 'waiting' && ['ArrowDown', 'ArrowUp', ' ', 'Enter', '1', '2', '3'].includes(event.key)) {
+    if (this._storyMode === 'waiting' && [' ', 'Enter', '1', '2', '3'].includes(event.key)) {
       event.preventDefault();
-      if (event.key === 'ArrowDown') this._activeChoice = (this._activeChoice + 1) % 3;
-      if (event.key === 'ArrowUp') this._activeChoice = (this._activeChoice + 2) % 3;
       if (['1', '2', '3'].includes(event.key)) {
         this._activeChoice = Number(event.key) - 1;
         this._commitChoice(this._activeChoice);
@@ -611,5 +748,134 @@ export class BootScene {
     this._textures.forEach((texture: Texture): void => texture.dispose());
     this._audio.destroy();
     this._renderer?.dispose();
+    const testWindow = window as unknown as IntroTestWindow;
+    delete testWindow.__THREE_GAME_DIAGNOSTICS__;
+    delete testWindow.__THREE_GAME_TEST_HOOKS__;
+  }
+
+  private _installTestContracts(): void {
+    if (!this._renderer) return;
+    const scene: BootScene = this;
+    const testWindow = window as unknown as IntroTestWindow;
+    testWindow.__THREE_GAME_DIAGNOSTICS__ = {
+      renderer: {
+        get calls(): number { return scene._renderer?.info.render.calls ?? 0; },
+        get triangles(): number { return scene._renderer?.info.render.triangles ?? 0; },
+        get geometries(): number { return scene._renderer?.info.memory.geometries ?? 0; },
+        get textures(): number { return scene._renderer?.info.memory.textures ?? 0; },
+      },
+      get state(): IntroDiagnosticState { return scene._getDiagnosticState(); },
+    };
+    testWindow.__THREE_GAME_TEST_HOOKS__ = {
+      seed: async (value: string | number): Promise<{ seed: string }> => {
+        await this._spatialReady;
+        this._seed = String(value);
+        this._frames = createBootFrames(this._seed);
+        this._reset();
+        return { seed: this._seed };
+      },
+      setState: async (name: string): Promise<{ state: TestStateName }> => {
+        await this._spatialReady;
+        if (!TEST_STATE_NAMES.includes(name as TestStateName)) throw new Error(`Unknown test state: ${name}`);
+        const state: TestStateName = name as TestStateName;
+        this._applyTestState(state);
+        return { state };
+      },
+      setPausedForScreenshot: (paused: boolean = true): void => {
+        this._simulationPaused = paused;
+        this._previousMs = performance.now();
+      },
+      setReducedMotion: (reduced: boolean): void => {
+        this._isReduced = reduced;
+        if (this._root) this._root.dataset.osReducedMotionTs = String(reduced);
+        this._refreshStaticFrame();
+      },
+      hideDebugUi: (hidden: boolean = true): void => {
+        this._debugUiHidden = hidden;
+        if (this._root) this._root.dataset.osDebugUiHiddenTs = String(hidden);
+      },
+    };
+  }
+
+  private _applyTestState(name: TestStateName): void {
+    if (!this._root) throw new Error('Intro test state requested before initialization');
+    if (name === 'boot-cursor') {
+      this._reset();
+      return;
+    }
+    this._hasStarted = true;
+    this._root.dataset.osStartedTs = 'true';
+    this._elapsedMs = this._frames.at(-1)?.at ?? 0;
+    this._frameIndex = this._frames.length - 1;
+    this._selectedChoice = -1;
+    this._activeChoice = 0;
+    this._canContinue = false;
+    this._spatial.select(-1);
+    this._clearNativeChoices();
+    if (name.startsWith('question-')) {
+      const questionIndex: number = Number(name.slice(-1)) - 1;
+      const question: ChronicleQuestion | undefined = CHRONICLE_QUESTIONS[questionIndex];
+      if (!question) throw new Error(`Unknown test state: ${name}`);
+      this._questionIndex = questionIndex;
+      this._answersCommitted = questionIndex;
+      this._spatial.setPlayerStage(questionIndex);
+      this._storyMode = 'waiting';
+      this._storyStartedAt = performance.now();
+      this._applyFrame(this._storyFrame(question.question, 'waiting', question.era, undefined, 0));
+      this._refreshStaticFrame();
+      return;
+    }
+    this._questionIndex = CHRONICLE_QUESTIONS.length - 1;
+    this._storyStartedAt = performance.now();
+    if (name === 'final-door') {
+      this._storyMode = 'final';
+      this._applyFrame(this._storyFrame(CHRONICLE_FINAL_DRAFT, 'final', 4, undefined, 4400));
+      this._refreshStaticFrame();
+      return;
+    }
+    this._storyMode = 'complete';
+    this._applyFrame(this._storyFrame(CHRONICLE_FINAL, 'complete', 4, 'ALL THREE FOLLOWED', 12000));
+    this._refreshStaticFrame();
+  }
+
+  private _refreshStaticFrame(): void {
+    if (!this._renderer || !this._scene || !this._camera || !this._currentFrame) return;
+    this._spatial.update(this._motionMs, this._isReduced);
+    this._renderer.render(this._scene, this._camera);
+  }
+
+  private _getDiagnosticState(): IntroDiagnosticState {
+    const phase: BootFrame['phase'] = (this._root?.dataset.osPhaseTs as BootFrame['phase'] | undefined) ?? 'cursor';
+    const questionNumber: number = Math.min(this._questionIndex + 1, CHRONICLE_QUESTIONS.length);
+    const objective: string = this._storyMode === 'complete'
+      ? 'opening-complete'
+      : this._storyMode === 'final'
+        ? 'reach-final-door'
+        : this._storyMode === 'travel'
+          ? `walk-to-question-${questionNumber}`
+        : this._storyMode === 'waiting'
+          ? `answer-question-${questionNumber}`
+          : `advance-${this._storyMode}`;
+    return {
+      frame: this._frameNumber,
+      phase,
+      storyMode: this._storyMode,
+      questionIndex: this._questionIndex,
+      objective,
+      objectiveProgress: this._answersCommitted,
+      complete: this._storyMode === 'complete',
+      failed: false,
+      canContinue: this._canContinue,
+      selectedChoice: this._selectedChoice >= 0 ? this._selectedChoice : this._activeChoice,
+      playerPosition: this._spatial.getPlayerPosition(),
+      choiceTargets: this._spatial.getChoiceTargets(),
+      seed: this._seed,
+      audio: { unlocked: this._audio.unlocked, muted: this._audio.muted, cueCount: this._audio.cueCount },
+      physics: this._spatial.getPhysicsDiagnostics(),
+      viewport: { width: window.innerWidth, height: window.innerHeight, dpr: this._renderer?.getPixelRatio() ?? 1 },
+      activeLoops: this._isDestroyed || !this._raf ? 0 : 1,
+      pausedForScreenshot: this._simulationPaused,
+      debugUiHidden: this._debugUiHidden,
+    };
   }
 }

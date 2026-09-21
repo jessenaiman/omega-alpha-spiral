@@ -1,3 +1,32 @@
+# Chronicle Intro — active visual/gameplay iteration
+
+## Current intent
+
+- Player promise: steer an unfinished self through existential questions that physically author it.
+- Core loop: move the forming pixel toward one of three in-world Dreamweaver answers, receive that voice's response, then walk the transformed route to the next question.
+- Preserve the approved four-question chronicle, chronological typing eras, audible ghostwriting, three followers, and final threshold.
+- This pass implements decisions already made. New interlude prose and further concept brainstorming remain deferred.
+
+## Active checklist
+
+- [x] Small drifting bash-loader opening with failed invocations and input-gated success.
+- [x] Deep star volume and three converging color strands.
+- [x] Oversized player pixel that gains authored layers after each answer.
+- [x] Diegetic three-lane answer approach and real steering input.
+- [x] Distinct Light, Shadow, and Ambition silhouettes and spatial writing treatments.
+- [x] First-question stall that becomes the visible Dreamweaver breach.
+- [x] Player-controlled passages and changing Dreamweaver layouts between questions.
+- [x] Final three-strand threshold preserved.
+- [ ] Basic owner play check requested; no speculative test expansion.
+
+## Implementation boundary
+
+- Procedural Three.js only for this iteration; no external generation job.
+- No physics dependency: bounded deterministic planar steering is sufficient for this narrative passage.
+- Existing accessible DOM mirror and click/number shortcuts remain available while arrow/WASD becomes the default spatial interaction.
+
+---
+
 # Loop Lab — progress
 
 A learning iteration on the existing repo, beside the other pages. Crude first pass on purpose:

@@ -1,0 +1,12 @@
+You are generating CONCEPT FRAMES ONLY with your native ChatGPT/OpenAI image_gen tool. Do not run shell commands, do not edit, create or delete files in the repository, do not change any configuration, do not install anything.
+
+Attached image: the current opening background plate of the game "Omega Spiral" (an analog-optical cosmic still). It is the reference for composition only.
+
+TASK: generate exactly 5 images, in order, as a motion sequence of that plate rendered in an EXTREMELY LOW-TECH, LOW-PIXEL-DEPTH style (style B).
+- The whole frame must look like it is being displayed by a crude early machine: large visible square pixels, heavily reduced colour depth (a small fixed palette of maybe 8-16 colours), ordered dithering, banded gradients, coarse blocky contours, faint scanlines and slight pixel crawl.
+- Keep the reference's composition, palette family and dark left third, but rebuilt out of chunky pixels: the bright structures become jagged stepped blocks; the fine grain becomes dithered noise.
+- The 5 frames are 5 moments of the same slow looping drift (frames 01 to 05) where the blocky structures shift, the dither pattern crawls, and frame 05 nearly returns to frame 01 so it can loop. Motion from stepping and pattern shift, not from smooth blur.
+- Keep it beautiful and strange, not a broken image: it must still read as the same cosmic place.
+- No text, no letters, no UI, no terminal, no faces, no watermark, no logos. Wide landscape 16:9 framing.
+
+After generating, reply with a numbered list of exactly 5 entries: the absolute path of each generated PNG file and one short line describing that frame. Do not describe anything else.

@@ -28,8 +28,9 @@ const LIGHT_VERTEX: string = `
     float phase = aSeed * 6.2831853;
     float drift = time * (0.055 + aSeed * 0.025);
     float eraOrder = uEra * 0.035;
-    p.x += sin(phase + drift + p.y * 0.21) * (0.18 + aSeed * 0.22 - eraOrder);
-    p.y += cos(phase * 1.31 - drift * 0.73 + p.x * 0.16) * (0.14 + aSeed * 0.18 - eraOrder * 0.6);
+    float depth = smoothstep(-0.9, 4.8, p.z);
+    p.x += sin(phase + drift + p.y * 0.21) * (0.18 + aSeed * 0.22 - eraOrder) * (0.7 + depth * 1.2);
+    p.y += cos(phase * 1.31 - drift * 0.73 + p.x * 0.16) * (0.14 + aSeed * 0.18 - eraOrder * 0.6) * (0.72 + depth);
     p.z += sin(phase * 2.1 + drift) * 0.22;
 
     float chosen = 1.0 - step(0.45, abs(aKind - uOwner));
@@ -41,11 +42,12 @@ const LIGHT_VERTEX: string = `
     float amber = step(0.5, aKind) * (1.0 - step(1.5, aKind));
     float red = step(1.5, aKind) * (1.0 - step(2.5, aKind));
     float star = step(2.5, aKind);
-    vColor = silver * vec3(0.78, 0.90, 0.94)
-      + amber * vec3(1.0, 0.55, 0.10)
-      + red * vec3(1.0, 0.13, 0.22)
+    vColor = silver * vec3(0.78, 0.90, 0.98)
+      + amber * vec3(1.0, 0.16, 0.24)
+      + red * vec3(1.0, 0.66, 0.16)
       + star * vec3(0.72, 0.80, 0.88);
-    vAlpha = mix(0.2, 0.78, fract(aSeed * 31.7)) * (1.0 - uDisintegrate * 0.45);
+    float reveal = mix(smoothstep(0.8 + aSeed * 1.8, 5.2 + aSeed * 2.8, uTime), 1.0, uReduced);
+    vAlpha = mix(0.2, 0.78, fract(aSeed * 31.7)) * reveal * (1.0 - uDisintegrate * 0.45);
 
     vec4 mvPosition = modelViewMatrix * vec4(p, 1.0);
     gl_PointSize = clamp(aSize * (150.0 / max(1.0, -mvPosition.z)), 0.75, 5.5);
@@ -269,13 +271,22 @@ export class IntroParticleField {
     const sizes: Float32Array = new Float32Array(count);
     const random = this._random(472);
     for (let index: number = 0; index < count; index += 1) {
-      const kind: number = index % 7 < 2 ? index % 3 : 3;
+      const kind: number = index % 8 < 3 ? index % 3 : 3;
       const seed: number = random();
-      const angle: number = random() * TAU + kind * 1.72;
-      const radius: number = 2.4 + Math.pow(random(), 0.72) * 11.5;
-      positions[index * 3] = Math.cos(angle) * radius * (1.12 + random() * 0.34);
-      positions[index * 3 + 1] = Math.sin(angle) * radius * 0.62 + (kind === 1 ? -0.9 : kind === 2 ? 0.8 : 0);
-      positions[index * 3 + 2] = -0.96 + random() * 0.62;
+      if (kind < 3) {
+        const strandT: number = Math.pow(random(), 0.78);
+        const angle: number = kind * TAU / 3 + strandT * (3.4 + kind * 0.28);
+        const radius: number = 0.38 + strandT * 11.4;
+        positions[index * 3] = Math.cos(angle) * radius * (1.05 + random() * 0.12);
+        positions[index * 3 + 1] = Math.sin(angle) * radius * 0.54 + (kind - 1) * 0.24;
+        positions[index * 3 + 2] = -0.82 + strandT * 5.4 + random() * 0.24;
+      } else {
+        const angle: number = random() * TAU;
+        const radius: number = 2.2 + Math.pow(random(), 0.72) * 12.5;
+        positions[index * 3] = Math.cos(angle) * radius * (1.06 + random() * 0.38);
+        positions[index * 3 + 1] = Math.sin(angle) * radius * 0.66;
+        positions[index * 3 + 2] = -0.88 + random() * 5.7;
+      }
       seeds[index] = seed;
       kinds[index] = kind;
       sizes[index] = kind === 3 ? 0.5 + random() * 1.35 : 1.15 + random() * 2.2;
