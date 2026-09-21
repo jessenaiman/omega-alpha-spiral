@@ -3,7 +3,47 @@ import { expect, test } from '@playwright/test';
 const QUESTION: string = 'If you could be only one story..:\nwho would you be?';
 const LAST_OPTION: string = 'A romance— written in stardust and sacrifice? | A horror— that whispers your name in the dark?';
 
-test('three dreamweavers boot in-world, ask the question, and wait without advancing', async ({ page }, testInfo) => {
+test('the opening waits on its cursor until a gesture wakes audible ghostwriting', async ({ page }) => {
+  await page.goto('/intro.html');
+  const boot = page.locator('main');
+  const sound = page.getByRole('button', { name: /wake sound|sound awake/ });
+  await expect(boot).toHaveAttribute('data-os-art-ts', 'ready');
+  await expect(boot).toHaveAttribute('data-os-phase-ts', 'cursor');
+  await expect(sound).toBeHidden();
+  await page.waitForTimeout(2_200);
+  await expect(boot).toHaveAttribute('data-os-phase-ts', 'cursor');
+  await page.keyboard.press('Enter');
+  await expect(boot).toHaveAttribute('data-os-audio-ts', 'awake');
+  await expect(sound).toBeVisible();
+  await expect(boot).toHaveAttribute('data-os-phase-ts', 'command', { timeout: 5_000 });
+  await expect.poll(async () => Number(await boot.getAttribute('data-os-audio-cues-ts') ?? 0)).toBeGreaterThan(1);
+});
+
+test('ghostwriting emits distinct typing, erasing, hesitation, and correction cues', async ({ page }) => {
+  test.setTimeout(45_000);
+  await page.goto('/intro.html');
+  const boot = page.locator('main');
+  await expect(boot).toHaveAttribute('data-os-art-ts', 'ready');
+  await page.keyboard.press('Enter');
+  await expect(boot).toHaveAttribute('data-os-phase-ts', 'waiting', { timeout: 35_000 });
+  await expect.poll(async () => Number(await boot.getAttribute('data-os-audio-types-ts') ?? 0)).toBeGreaterThan(10);
+  await expect.poll(async () => Number(await boot.getAttribute('data-os-audio-erases-ts') ?? 0)).toBeGreaterThan(1);
+  await expect.poll(async () => Number(await boot.getAttribute('data-os-audio-hesitations-ts') ?? 0)).toBeGreaterThan(0);
+  await expect.poll(async () => Number(await boot.getAttribute('data-os-audio-corrections-ts') ?? 0)).toBeGreaterThan(0);
+});
+
+test('ghostwriting remains over the open particle field without a black reading surface', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/intro.html?debug');
+  const boot = page.locator('main');
+  await expect(boot).toHaveAttribute('data-os-art-ts', 'ready');
+  await expect(boot).toHaveAttribute('data-os-phase-ts', 'cursor');
+  await page.keyboard.press('Enter');
+  await expect(boot).toHaveAttribute('data-os-phase-ts', 'waiting');
+  await expect(boot).toHaveAttribute('data-os-particle-surface-ts', 'open');
+});
+
+test('three dreamweavers boot in-world, ask the question, and enter an authored response', async ({ page }, testInfo) => {
   test.setTimeout(60_000);
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
@@ -14,6 +54,9 @@ test('three dreamweavers boot in-world, ask the question, and wait without advan
   await expect(page.locator('#os-feed-ts')).toBeVisible();
   await expect(boot).toHaveAttribute('data-os-art-ts', 'ready');
   await expect(boot).toHaveAttribute('data-os-text-ts', 'three');
+  await expect(boot).toHaveAttribute('data-os-particles-ts', '20000');
+  await expect(boot).toHaveAttribute('data-os-particle-draws-ts', '1');
+  await page.keyboard.press('Enter');
   // Boot must be staged: typed command, three load slots, then the question.
   await expect(boot).toHaveAttribute('data-os-phase-ts', 'command', { timeout: 15_000 });
   await expect(boot).toHaveAttribute('data-os-phase-ts', 'loading', { timeout: 20_000 });
@@ -25,16 +68,9 @@ test('three dreamweavers boot in-world, ask the question, and wait without advan
   await expect(page.getByRole('radio')).toHaveCount(3);
   await page.getByRole('radio').first().focus();
   await page.keyboard.press('Space');
-  await expect(page.getByRole('radio').first()).toBeChecked();
-  await page.keyboard.press('ArrowDown');
-  await expect(page.getByRole('radio').nth(1)).toBeChecked();
-  await page.keyboard.press('ArrowUp');
-  await page.keyboard.press('ArrowUp');
-  await expect(page.getByRole('radio').nth(2)).toBeChecked();
-  await page.keyboard.press('Enter');
-  await expect(page.getByRole('radio').nth(2)).toBeChecked();
-  await page.waitForTimeout(2500);
-  await expect(boot).toHaveAttribute('data-os-phase-ts', 'waiting');
+  await expect(page.locator('input[name="story"]').first()).toBeChecked();
+  await expect(boot).toHaveAttribute('data-os-phase-ts', 'response');
+  await expect(page.locator('#os-question-ts')).toContainText('A journey');
   expect(errors).toEqual([]);
 });
 
@@ -42,7 +78,9 @@ test('reduced motion keeps a readable mirror and usable choices on a narrow scre
   await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/intro.html');
-  // Reduced motion shows the settled waiting state immediately.
+  await expect(page.locator('main')).toHaveAttribute('data-os-phase-ts', 'cursor');
+  await page.keyboard.press('Enter');
+  // Reduced motion shows the settled waiting state immediately after the required start gesture.
   await expect(page.locator('main')).toHaveAttribute('data-os-phase-ts', 'waiting');
   await expect(page.locator('#os-question-ts')).toHaveText(QUESTION);
   await expect(page.locator('main')).toHaveAttribute('data-os-corrupt-ts', 'false');
@@ -52,21 +90,22 @@ test('reduced motion keeps a readable mirror and usable choices on a narrow scre
   await page.keyboard.press('Space');
   await expect(page.getByRole('radio').last()).toBeChecked();
   await page.screenshot({ path: testInfo.outputPath('mobile-waiting.png'), fullPage: true });
-  await page.getByRole('button', { name: /replay boot/ }).click();
-  // Reduced motion returns to the settled phase within one frame; assert its observable outcome.
+  await page.getByRole('button', { name: /replay opening/ }).click();
+  // Replay always returns to the cursor gate, including reduced motion.
   await expect(page.locator('input:checked')).toHaveCount(0);
-  await expect(page.locator('main')).toHaveAttribute('data-os-phase-ts', 'waiting');
+  await expect(page.locator('main')).toHaveAttribute('data-os-phase-ts', 'cursor');
 });
 
 test('motion preference changes finish the question without rewinding it', async ({ page }) => {
   await page.goto('/intro.html');
   await expect(page.locator('main')).toHaveAttribute('data-os-art-ts', 'ready');
+  await page.keyboard.press('Enter');
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await expect(page.locator('main')).toHaveAttribute('data-os-phase-ts', 'waiting');
   await expect(page.locator('#os-question-ts')).toHaveText(QUESTION);
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await expect(page.locator('#os-question-ts')).toHaveText(QUESTION);
-  await page.getByRole('button', { name: /replay boot/ }).click();
+  await page.getByRole('button', { name: /replay opening/ }).click();
   await expect(page.locator('main')).toHaveAttribute('data-os-phase-ts', 'cursor');
   await expect(page.locator('input[name="story"]').first()).toBeDisabled();
 });
@@ -84,6 +123,8 @@ test('a non-modifier keypress surfaces a third voice aside without advancing the
   await page.goto('/intro.html');
   const boot = page.locator('main');
   await expect(boot).toHaveAttribute('data-os-art-ts', 'ready');
+  await page.keyboard.press('Enter');
+  await expect(boot).toHaveAttribute('data-os-phase-ts', 'command', { timeout: 5_000 });
   const earlyPhase = await boot.getAttribute('data-os-phase-ts');
   expect(earlyPhase).toBeTruthy();
   if (!earlyPhase || earlyPhase === 'waiting') throw new Error('the boot must be staged before the first keypress');

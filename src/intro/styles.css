@@ -127,7 +127,12 @@
   right: var(--os-space-lg);
   visibility: hidden;
 }
-.os-boot[data-os-phase-ts='waiting'] .os-footer { visibility: visible; }
+.os-boot[data-os-phase-ts='waiting'] .os-footer,
+.os-boot[data-os-phase-ts='prelude'] .os-footer,
+.os-boot[data-os-phase-ts='question'] .os-footer,
+.os-boot[data-os-phase-ts='response'] .os-footer,
+.os-boot[data-os-phase-ts='final'] .os-footer,
+.os-boot[data-os-phase-ts='complete'] .os-footer { visibility: visible; }
 .os-replay {
   background: var(--os-clear);
   border: 1px solid var(--os-hairline);
@@ -139,6 +144,25 @@
 }
 .os-replay:focus-visible { outline: 2px solid var(--os-white); }
 .os-replay:hover { background: var(--os-surface); }
+.os-sound {
+  background: #02060799;
+  border: 1px solid var(--os-hairline);
+  color: var(--os-dim);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--os-font-xs);
+  letter-spacing: var(--os-tracking-lg);
+  min-height: var(--os-size-default);
+  padding: var(--os-space-xs) var(--os-space-sm);
+  position: fixed;
+  right: var(--os-space-default);
+  top: var(--os-space-default);
+  z-index: 2;
+}
+.os-sound:hover,
+.os-sound:focus-visible { border-color: var(--os-silver); color: var(--os-white); }
+.os-boot[data-os-started-ts='false'] .os-sound { pointer-events: none; visibility: hidden; }
+.os-boot[data-os-audio-ts='awake'] .os-sound { color: var(--os-amber); }
 .os-error { color: var(--os-error); max-width: var(--os-size-xl); }
 .os-error:empty { display: none; }
 .os-sr {

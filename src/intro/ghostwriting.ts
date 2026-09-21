@@ -1,14 +1,17 @@
 import { createRng } from '../core/random';
-import script from '../../project-management/official game docs (read-only)/chapter-zero-stages/stage_1_opening/ghost.json';
+import { CHRONICLE_OPENING_LOG, CHRONICLE_QUESTIONS, CHRONICLE_SYMBOLS } from './chronicle';
 
 export interface BootFrame {
   at: number;
   prelude: string;
   question: string;
   transcript: string;
+  choices: readonly string[];
   isCorrupt: boolean;
-  phase: 'cursor' | 'command' | 'loading' | 'writing' | 'waiting';
+  phase: 'cursor' | 'command' | 'loading' | 'writing' | 'waiting' | 'prelude' | 'question' | 'response' | 'final' | 'complete';
   format: number;
+  phaseElapsedMs?: number;
+  hint?: string;
 }
 
 const FIRST_INK_MS: number = 1800;
@@ -17,9 +20,9 @@ const LETTER_RANGE_MS: number = 100;
 const ERASURE_MS: number = 65;
 const CORRECTION_PAUSE_MS: number = 950;
 export const BOOT_COMMAND: string = '/run omega.sh';
-export const BOOT_OPTIONS: string[] = script.scenes[0].choice!.options.map((option): string => option.text);
-export const BOOT_SYMBOLS: string = script.scenes.find((scene): boolean => scene.id === 'scene_006_secret')!.lines![4];
-const QUESTION_SOURCE: string = (script.scenes[0].choice!.question as string[]).join('\n'); // First scene has the authored two-line question.
+export const BOOT_OPTIONS: string[] = CHRONICLE_QUESTIONS[0].choices.map((option): string => option.text);
+export const BOOT_SYMBOLS: string = CHRONICLE_SYMBOLS;
+const QUESTION_SOURCE: string = 'If you could [hear|be] only one story..:\n[what|who] would [it|you] be?';
 
 /** Materialize timing once: render rate must not change the spelling or pauses. */
 export function createBootFrames(seed: string): BootFrame[] {
@@ -27,9 +30,10 @@ export function createBootFrames(seed: string): BootFrame[] {
   const text: Record<'prelude' | 'question' | 'transcript', string> = { prelude: '', question: '', transcript: '' };
   let phase: BootFrame['phase'] = 'cursor';
   let format: number = 0;
-  const frames: BootFrame[] = [{ at: 0, ...text, isCorrupt: false, phase, format }];
+  const choices: readonly string[] = BOOT_OPTIONS;
+  const frames: BootFrame[] = [{ at: 0, ...text, choices, isCorrupt: false, phase, format }];
   let at: number = FIRST_INK_MS;
-  const record = (isCorrupt: boolean = false): void => { frames.push({ at, ...text, isCorrupt, phase, format }); };
+  const record = (isCorrupt: boolean = false): void => { frames.push({ at, ...text, choices, isCorrupt, phase, format }); };
   const type = (field: keyof typeof text, value: string): void => {
     for (const letter of value) {
       at += LETTER_MIN_MS + random.int(LETTER_RANGE_MS);
@@ -61,7 +65,7 @@ export function createBootFrames(seed: string): BootFrame[] {
     record();
   }
   at += 900;
-  text.prelude = script.scenes[0].lines![0];
+  text.prelude = CHRONICLE_OPENING_LOG;
   record();
   at = Math.max(at + CORRECTION_PAUSE_MS, 13000);
   phase = 'writing';
@@ -82,6 +86,6 @@ export function createBootFrames(seed: string): BootFrame[] {
   type('question', QUESTION_SOURCE.slice(offset));
   text.transcript += '\nretry.\nquestion ... ready';
   at += CORRECTION_PAUSE_MS;
-  frames.push({ at, ...text, isCorrupt: false, phase: 'waiting', format: 0 });
+  frames.push({ at, ...text, choices, isCorrupt: false, phase: 'waiting', format: 1 });
   return frames;
 }

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createBootFrames } from '../../src/intro/ghostwriting';
+import { CHRONICLE_FINAL, CHRONICLE_QUESTIONS } from '../../src/intro/chronicle';
 
 const QUESTION: string = 'If you could be only one story..:\nwho would you be?';
 
@@ -30,4 +31,12 @@ test('cursor boots the script before voices load; question remains ambiguous for
   assert.ok(frames.filter((frame) => frame.at < 10000).every((frame) => frame.question === ''));
   assert.ok(frames.some((frame, index) => index > 0 && frame.question.length < frames[index - 1].question.length), 'The question must erase and retry');
   assert.ok(frames.filter((frame) => frame.isCorrupt).length <= 3, 'Failures must be rare, not continuous glitch noise');
+});
+
+test('the runtime chronicle owns four questions, three answers each, and a plural ending', () => {
+  assert.equal(CHRONICLE_QUESTIONS.length, 4);
+  assert.ok(CHRONICLE_QUESTIONS.every((question) => question.choices.length === 3));
+  assert.equal(CHRONICLE_QUESTIONS[3].prelude.includes('∞ ◊ Ω ≋ ※'), true);
+  assert.match(CHRONICLE_FINAL, /Dreamweaver threads following - 03/);
+  assert.doesNotMatch(CHRONICLE_FINAL, /thread selected/);
 });
