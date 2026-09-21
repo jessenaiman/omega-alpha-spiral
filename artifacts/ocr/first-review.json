@@ -1,0 +1,75 @@
+{
+  "status": "complete",
+  "llm": {
+    "provider": "openrouter",
+    "model": "nvidia/nemotron-3-super-120b-a12b:free"
+  },
+  "message": "Review complete: 0 finding(s) across 1 selected item(s).",
+  "summary": {
+    "files_reviewed": 1,
+    "comments": 0,
+    "total_tokens": 4880,
+    "input_tokens": 3393,
+    "output_tokens": 1487,
+    "elapsed": "16s"
+  },
+  "tool_calls": {
+    "total": 0,
+    "by_tool": {},
+    "failure": 0,
+    "failure_by_tool": {},
+    "failure_details": []
+  },
+  "comments": [],
+  "groups": [
+    {
+      "label": "artifacts/intro-profile/desktop/desktop.json",
+      "files": [
+        "artifacts/intro-profile/desktop/desktop.json"
+      ]
+    }
+  ],
+  "session_id": "3c6b4c4e-9a9e-4ece-8158-46df352123a4",
+  "manifest": {
+    "schema_version": "ocr.run-manifest/v1",
+    "run_id": "3c6b4c4e-9a9e-4ece-8158-46df352123a4",
+    "operation": "review",
+    "terminal_state": "complete",
+    "repository": {
+      "identity_sha256": "9ddb1910be64d819393edac181694bcde0a4692b420fc2e25275a8f2dbefa1e9"
+    },
+    "input": {
+      "mode": "workspace",
+      "resolved_base": "5f8e29b6c33a9d68e9f9bb03c9b42665a2468c44",
+      "source_artifact_sha256": "eab444818dbe9d7d599f8c86c60d015527f93b9a8a82a48800976ec4d195f9bb"
+    },
+    "execution": {
+      "ocr_version": "v1.12.7",
+      "provider": "openrouter",
+      "model": "nvidia/nemotron-3-super-120b-a12b:free",
+      "configured_concurrency": 8,
+      "rule_config_sha256": "ddb40005eb732cb8b37d8d3dc1acb82f3aa51fded408c899a092c10349c369c4",
+      "runtime_config_sha256": "4baddff4663a8079cc12ed28272655dffb0478ee82f55625768dfffb895adf6a"
+    },
+    "coverage": {
+      "selected": [
+        {
+          "item_id": "bb0be638cba4d47b3087234e1ea1cf3d2791e81ea638ba7247aac234b9d174dd",
+          "path": "artifacts/intro-profile/desktop/desktop.json",
+          "fingerprint": "b5eaaab5a9ef48975ac4e78277b31992128e1262728bef43063c6b767df61bdc"
+        }
+      ],
+      "completed": [
+        {
+          "item_id": "bb0be638cba4d47b3087234e1ea1cf3d2791e81ea638ba7247aac234b9d174dd",
+          "path": "artifacts/intro-profile/desktop/desktop.json",
+          "fingerprint": "b5eaaab5a9ef48975ac4e78277b31992128e1262728bef43063c6b767df61bdc"
+        }
+      ],
+      "reused": [],
+      "failed": [],
+      "waived": []
+    },
+    "elapsed_ms": 16022
+  }
+}

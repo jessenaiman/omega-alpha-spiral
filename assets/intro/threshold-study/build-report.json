@@ -1,0 +1,24 @@
+{
+  "scene": "Threshold_Study_01",
+  "original_scene": "Scene",
+  "original_objects_preserved": [
+    "Cube",
+    "Light",
+    "Camera"
+  ],
+  "kit_meshes": [
+    "bar",
+    "corner",
+    "chip"
+  ],
+  "pieces": 17,
+  "scene_objects": 28,
+  "frames": [
+    1,
+    192
+  ],
+  "current_frame": 160,
+  "blend_file": "C:\\SpiralDrive\\omega-alpha-spiral\\assets\\intro\\threshold-study\\threshold-study-v01.blend",
+  "preview_only_collection": "Threshold_Preview_Only",
+  "notes": "Asset study only; no reference textures, no narrative changes, no gameplay integration."
+}

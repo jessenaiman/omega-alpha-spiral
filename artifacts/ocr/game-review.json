@@ -1,0 +1,75 @@
+{
+  "status": "complete",
+  "llm": {
+    "provider": "openrouter",
+    "model": "nvidia/nemotron-3-super-120b-a12b:free"
+  },
+  "message": "Review complete: 0 finding(s) across 1 selected item(s).",
+  "summary": {
+    "files_reviewed": 1,
+    "comments": 0,
+    "total_tokens": 4273,
+    "input_tokens": 3321,
+    "output_tokens": 952,
+    "elapsed": "7s"
+  },
+  "tool_calls": {
+    "total": 0,
+    "by_tool": {},
+    "failure": 0,
+    "failure_by_tool": {},
+    "failure_details": []
+  },
+  "comments": [],
+  "groups": [
+    {
+      "label": ".opencodereview/rule.json",
+      "files": [
+        ".opencodereview/rule.json"
+      ]
+    }
+  ],
+  "session_id": "fc6a39d5-6ea1-426d-bd65-399a0726256a",
+  "manifest": {
+    "schema_version": "ocr.run-manifest/v1",
+    "run_id": "fc6a39d5-6ea1-426d-bd65-399a0726256a",
+    "operation": "review",
+    "terminal_state": "complete",
+    "repository": {
+      "identity_sha256": "9ddb1910be64d819393edac181694bcde0a4692b420fc2e25275a8f2dbefa1e9"
+    },
+    "input": {
+      "mode": "workspace",
+      "resolved_base": "5f8e29b6c33a9d68e9f9bb03c9b42665a2468c44",
+      "source_artifact_sha256": "0de6e4217577c6e012cc9b2cd8d9d2221e08ab9fa0a23487589b4041eef6f383"
+    },
+    "execution": {
+      "ocr_version": "v1.12.7",
+      "provider": "openrouter",
+      "model": "nvidia/nemotron-3-super-120b-a12b:free",
+      "configured_concurrency": 8,
+      "rule_config_sha256": "d0dbf60454db1c8758de873889abf612cec7606ced4f12fc794090fb93c9271c",
+      "runtime_config_sha256": "4baddff4663a8079cc12ed28272655dffb0478ee82f55625768dfffb895adf6a"
+    },
+    "coverage": {
+      "selected": [
+        {
+          "item_id": "a649c4dd053e8f79d212366ae8b38f2056eee467af221427caef1f2ba7331b61",
+          "path": ".opencodereview/rule.json",
+          "fingerprint": "9206042eb7d03b65d82e7376fc671d3015ee8875df5322e105b5d626b08d6bc5"
+        }
+      ],
+      "completed": [
+        {
+          "item_id": "a649c4dd053e8f79d212366ae8b38f2056eee467af221427caef1f2ba7331b61",
+          "path": ".opencodereview/rule.json",
+          "fingerprint": "9206042eb7d03b65d82e7376fc671d3015ee8875df5322e105b5d626b08d6bc5"
+        }
+      ],
+      "reused": [],
+      "failed": [],
+      "waived": []
+    },
+    "elapsed_ms": 6868
+  }
+}
