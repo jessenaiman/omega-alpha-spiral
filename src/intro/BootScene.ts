@@ -1,6 +1,7 @@
 import { loadVfxExportBundle } from 'nixie-fx/export';
 import { ThreeVfxRenderer, type ThreeVfxEffectInstance } from 'nixie-fx/three';
-import { ACESFilmicToneMapping, Mesh, PerspectiveCamera, PlaneGeometry, Scene, ShaderMaterial, SRGBColorSpace, Texture, TextureLoader, Vector2, WebGLRenderer } from 'three';
+import { ACESFilmicToneMapping, Mesh, PerspectiveCamera, PlaneGeometry, PMREMGenerator, Scene, ShaderMaterial, SRGBColorSpace, Texture, TextureLoader, Vector2, WebGLRenderer } from 'three';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 import distantUrl from '../../assets/intro/optical-variations/optical-a-distant.webp';
 import foldUrl from '../../assets/intro/optical-variations/optical-b-fold.webp';
@@ -107,6 +108,7 @@ export class BootScene {
   private _activeChoice: number = 0;
   private _plate: Mesh<PlaneGeometry, ShaderMaterial> | null = null;
   private _textures: Texture[] = [];
+  private _environment: Texture | null = null;
   private _vfx: ThreeVfxRenderer | null = null;
   private _dust: ThreeVfxEffectInstance | null = null;
   private _abort: AbortController = new AbortController();
@@ -224,6 +226,10 @@ export class BootScene {
       this._renderer.toneMapping = ACESFilmicToneMapping;
       this._renderer.toneMappingExposure = 1.08;
       this._scene = new Scene();
+      const pmrem: PMREMGenerator = new PMREMGenerator(this._renderer);
+      this._environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+      this._scene.environment = this._environment;
+      pmrem.dispose();
       this._camera = new PerspectiveCamera(36, 1, 0.1, 40);
       this._camera.position.z = 10;
       if (this._root) this._root.dataset.osPhysicsTs = 'loading';
@@ -749,6 +755,7 @@ export class BootScene {
     this._plate?.geometry.dispose();
     this._plate?.material.dispose();
     this._textures.forEach((texture: Texture): void => texture.dispose());
+    this._environment?.dispose();
     this._audio.destroy();
     this._renderer?.dispose();
     const testWindow = window as unknown as IntroTestWindow;

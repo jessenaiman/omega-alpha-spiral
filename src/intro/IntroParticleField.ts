@@ -39,12 +39,13 @@ const LIGHT_VERTEX: string = `
     p.z -= uDisintegrate * (2.0 + aSeed * 4.0);
 
     float silver = 1.0 - step(0.5, aKind);
-    float amber = step(0.5, aKind) * (1.0 - step(1.5, aKind));
-    float red = step(1.5, aKind) * (1.0 - step(2.5, aKind));
+    float shadow = step(0.5, aKind) * (1.0 - step(1.5, aKind));
+    float ambition = step(1.5, aKind) * (1.0 - step(2.5, aKind));
     float star = step(2.5, aKind);
+    float ambitionCounter = step(0.72, fract(aSeed * 19.7));
     vColor = silver * vec3(0.78, 0.90, 0.98)
-      + amber * vec3(1.0, 0.16, 0.24)
-      + red * vec3(1.0, 0.66, 0.16)
+      + shadow * vec3(0.96, 0.08, 0.14)
+      + ambition * mix(vec3(1.0, 0.72, 0.12), vec3(0.25, 0.12, 0.52), ambitionCounter * 0.48)
       + star * vec3(0.72, 0.80, 0.88);
     float reveal = mix(smoothstep(0.8 + aSeed * 1.8, 5.2 + aSeed * 2.8, uTime), 1.0, uReduced);
     vAlpha = mix(0.2, 0.78, fract(aSeed * 31.7)) * reveal * (1.0 - uDisintegrate * 0.45);
@@ -158,17 +159,18 @@ const VEIL_FRAGMENT: string = `
     float time = uTime * mix(1.0, 0.0, uReduced);
     float grain = noise21(p * 8.0 + vec2(time * 0.035, -time * 0.024));
     float coarse = noise21(p * 2.7 - vec2(time * 0.018, time * 0.012));
-    vec2 q = abs(p) - vec2(0.93, 0.88);
-    float boxDistance = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0);
+    float eventRadius = length(vec2(p.x, p.y / 0.78));
     float breathingEdge = (grain - 0.5) * 0.075 + sin(time * 0.22 + p.y * 5.0) * 0.008;
-    float inside = 1.0 - smoothstep(-0.015, 0.045, boxDistance + breathingEdge);
+    float inside = 1.0 - smoothstep(0.86, 0.98, eventRadius + breathingEdge);
+    float rim = 1.0 - smoothstep(0.018, 0.085, abs(eventRadius - 0.9 - breathingEdge));
 
     float gathering = smoothstep(coarse * 0.58 - 0.18, coarse * 0.58 + 0.18, uFormation);
     float pinholes = smoothstep(0.12, 0.48, grain + uFormation * 0.45);
     float rippleRadius = (1.0 - uRipple) * 1.35;
     float rippleRing = 1.0 - smoothstep(0.025, 0.095, abs(length(p) - rippleRadius));
     float disintegrated = mix(1.0, 0.16 + grain * 0.24, uDisintegrate);
-    float alpha = inside * gathering * pinholes * disintegrated * (0.82 + uFormation * 0.13);
+    float alpha = inside * gathering * pinholes * disintegrated * (0.78 + uFormation * 0.16);
+    alpha = max(alpha, rim * uFormation * 0.26 * (1.0 - uDisintegrate));
     alpha *= 1.0 - rippleRing * uRipple * 0.28;
     if (alpha < 0.008) discard;
     gl_FragColor = vec4(vec3(0.002, 0.006, 0.008), alpha);
@@ -328,8 +330,10 @@ export class IntroParticleField {
       positions[index * 3] = Math.cos(angle) * radius;
       positions[index * 3 + 1] = Math.sin(angle) * radius * 0.72;
       positions[index * 3 + 2] = -0.08 + random() * 0.12;
-      targets[index * 3] = (random() * 2 - 1) * 0.96;
-      targets[index * 3 + 1] = (random() * 2 - 1) * 0.91;
+      const targetAngle: number = random() * TAU;
+      const targetRadius: number = Math.sqrt(random()) * 0.94;
+      targets[index * 3] = Math.cos(targetAngle) * targetRadius;
+      targets[index * 3 + 1] = Math.sin(targetAngle) * targetRadius * 0.78;
       targets[index * 3 + 2] = 0.015 + random() * 0.035;
       seeds[index] = seed;
       sizes[index] = 0.8 + random() * 2.4;

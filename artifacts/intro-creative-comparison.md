@@ -74,3 +74,47 @@ the interface diegetic instead of returning to a terminal panel.
 - No new DOM panel or HUD was added; the 3D writing and symbols remain primary.
 - No image asset was generated because the requested identity is procedural type
   and geometry, not a flat badge.
+
+## Loop 3 — Three.js AAA Graphics Builder
+
+### Intent
+
+Restore dimensional authored form without turning the opening into a neon demo or
+letting particles substitute for geometry.
+
+### Changed
+
+- Rebuilt the particle-built black surface as an elliptical event horizon rather
+  than a rectangular text panel. It accumulates across the four questions and
+  disintegrates at the final door.
+- Added layered depth geometry and local practical light to each Dreamweaver mark:
+  blue-white prismatic recession for Light, near-black depth behind Shadow's red,
+  and a subordinate violet countertone behind Ambition's yellow spiral.
+- Added a neutral environment reflection so the growing player object's metal and
+  roughness hierarchy read as material rather than flat gray.
+- The player now retains four small answer-memory rails; each answer adds visible
+  substance in the responding Dreamweaver's color without selecting one final
+  Dreamweaver.
+- Replaced the final player-outline crown with an unfinished open threshold and
+  fixed the fourth-stage draw range so the full authored form appears.
+
+### Budget choices
+
+- Kept one shared symbol geometry per Dreamweaver and added only one depth echo and
+  one short-range practical light each.
+- Skipped fullscreen bloom/post; additive symbol halos and authored geometry carry
+  the read without a mobile render-target penalty.
+- Existing particle counts remain unchanged; the event horizon reuses the current
+  dark field and shader rather than adding a new system.
+
+### Dreamweaver review
+
+- Light: replaced the curved ingress with exact linear interpolation, settled the
+  mark during speech, and kept Light memory rails unrotated.
+- Shadow: replaced the duplicate-line-only depth with physical dark-red box
+  segments whose opacity rises when Shadow speaks; its core now has a lit PBR
+  material rather than an unlit square.
+- Ambition: carried the subordinate violet countertone into a minority of its
+  yellow strand particles and bends its player memories progressively.
+- Changed the global rim from amber to cool neutral so it cannot recolor Light;
+  Ambition keeps its own local yellow practical.
