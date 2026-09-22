@@ -119,6 +119,8 @@ export class BootScene {
   private _gamepadMoveY: number = 0;
   private _controlsDiscovered: boolean = false;
   private _lastInputMode: 'controller' | 'keyboard' | 'touch' = 'controller';
+  private _actionDiscovered: boolean = false;
+  private _pendingChoice: number = -1;
   private _interlude: ChronicleInterlude | null = null;
   private _currentFrame: BootFrame | null = null;
 
@@ -268,6 +270,8 @@ export class BootScene {
     this._gamepadMoveX = 0;
     this._gamepadMoveY = 0;
     this._controlsDiscovered = false;
+    this._actionDiscovered = false;
+    this._pendingChoice = -1;
     this._interlude = null;
     this._simulationPaused = false;
     this._answersCommitted = 0;
@@ -321,7 +325,10 @@ export class BootScene {
       const spatialEvent: number = this._spatial.update(this._motionMs, this._isReduced);
       this._updateCamera(delta);
       if ((this._storyMode === 'waiting' || this._storyMode === 'travel') && (this._movementKeys.size > 0 || this._gamepadMoveX !== 0 || this._gamepadMoveY !== 0)) this._audio.move(this._answersCommitted);
-      if (spatialEvent >= 0 && this._storyMode === 'waiting') this._commitChoice(spatialEvent);
+      if (spatialEvent >= 0 && this._storyMode === 'waiting') {
+        if (this._questionIndex === 0) this._commitChoice(spatialEvent);
+        else this._stageChoice(spatialEvent);
+      }
       else if (spatialEvent === -2 && this._storyMode === 'travel') this._beginPrelude(this._questionIndex);
       if (this._root) this._root.dataset.osBackgroundTs = 'celestial-depth-field';
       const isDustVisible: boolean = !this._isReduced && displayMs > FIRST_DISSOLVE_MS && displayMs < endMs;
@@ -415,6 +422,7 @@ export class BootScene {
     if (this._storyMode !== 'waiting') return;
     this._highlightChoice(index);
     this._selectedChoice = index;
+    this._pendingChoice = -1;
     this._answersCommitted += 1;
     const question: ChronicleQuestion = this._questions[this._questionIndex];
     this._spatial.commitChoice(index);
@@ -429,12 +437,21 @@ export class BootScene {
     this._clearMovement();
   }
 
+  private _stageChoice(index: number): void {
+    if (this._storyMode !== 'waiting') return;
+    this._pendingChoice = index;
+    this._highlightChoice(index);
+    this._clearMovement();
+    getElement('#os-hint-ts', HTMLElement).textContent = this._controlHint();
+  }
+
   private _beginPrelude(index: number): void {
     this._questionIndex = index;
     this._storyMode = 'prelude';
     this._storyStartedAt = performance.now();
     this._canContinue = false;
     this._selectedChoice = -1;
+    this._pendingChoice = -1;
     this._activeChoice = 0;
     this._spatial.select(-1);
     this._clearNativeChoices();
@@ -713,6 +730,10 @@ export class BootScene {
   }
 
   private _syncMovement(): void {
+    if (this._pendingChoice >= 0) {
+      this._spatial.setMovement(0, 0);
+      return;
+    }
     const left: number = this._movementKeys.has('ArrowLeft') || this._movementKeys.has('a') || this._movementKeys.has('touch-left') ? 1 : 0;
     const right: number = this._movementKeys.has('ArrowRight') || this._movementKeys.has('d') || this._movementKeys.has('touch-right') ? 1 : 0;
     const down: number = this._movementKeys.has('ArrowDown') || this._movementKeys.has('s') || this._movementKeys.has('touch-down') ? 1 : 0;
@@ -724,9 +745,13 @@ export class BootScene {
 
   private _controlHint(): string {
     if (!this._controlsDiscovered) return '';
-    if (this._storyMode === 'doorway') return this._lastInputMode === 'controller' ? 'A · cross the threshold' : 'Enter · step through';
-    if (this._canContinue) return this._lastInputMode === 'controller' ? 'A · continue' : 'Enter · continue';
+    if (this._storyMode === 'doorway') return this._actionDiscovered ? (this._lastInputMode === 'controller' ? 'A · cross the threshold' : 'Enter · step through') : '';
+    if (this._canContinue) return this._actionDiscovered ? (this._lastInputMode === 'controller' ? 'A · continue' : 'Enter · continue') : '';
     if (this._storyMode !== 'waiting' && this._storyMode !== 'travel') return '';
+    if (this._pendingChoice >= 0) {
+      if (!this._actionDiscovered) return '';
+      return this._lastInputMode === 'controller' ? 'A · answer' : 'Enter · answer';
+    }
     if (this._lastInputMode === 'controller') return 'left stick · move';
     if (this._lastInputMode === 'touch') return 'move';
     return 'WASD / arrows · move';
@@ -745,6 +770,7 @@ export class BootScene {
     this._gamepadMoveY = intents.moveY;
     const usedController: boolean = intents.moveX !== 0 || intents.moveY !== 0 || intents.act || intents.dash || intents.pause;
     if (usedController) this._discoverControls('controller');
+    if (intents.act || intents.dash) this._actionDiscovered = true;
     if (!this._hasStarted && usedController) {
       // Gamepad polling is not consistently recognized as browser activation.
       // Start the visual timeline, then let the next recognized gesture wake audio.
@@ -757,7 +783,11 @@ export class BootScene {
       this._enterDoor();
       return;
     }
-    if (this._canContinue && intents.act) this._advanceStory();
+    if (this._storyMode === 'waiting' && this._pendingChoice >= 0 && (intents.act || intents.dash)) {
+      this._commitChoice(this._pendingChoice);
+      return;
+    }
+    if (this._canContinue && (intents.act || intents.dash)) this._advanceStory();
   }
 
   private _bindTouchControls(signal: AbortSignal): void {
@@ -807,6 +837,11 @@ export class BootScene {
     }
     void this._unlockAudio();
     const key: string = event.key.length === 1 ? event.key.toLowerCase() : event.key;
+    const isAction: boolean = event.key === 'Enter' || event.key === ' ';
+    if (isAction) {
+      this._actionDiscovered = true;
+      this._discoverControls('keyboard');
+    }
     if (this._storyMode === 'doorway' && ['Enter', ' ', 'ArrowUp', 'w'].includes(key)) {
       event.preventDefault();
       this._enterDoor();
@@ -834,6 +869,11 @@ export class BootScene {
       this._advanceStory();
       return;
     }
+    if (this._storyMode === 'waiting' && this._pendingChoice >= 0 && isAction) {
+      event.preventDefault();
+      this._commitChoice(this._pendingChoice);
+      return;
+    }
     if (this._storyMode === 'waiting' && [' ', 'Enter', '1', '2', '3'].includes(event.key)) {
       event.preventDefault();
       if (['1', '2', '3'].includes(event.key)) {
@@ -841,7 +881,9 @@ export class BootScene {
         this._commitChoice(this._activeChoice);
         return;
       }
-      if (event.key === 'Enter' || event.key === ' ') this._commitChoice(this._activeChoice);
+      if (event.key === 'Enter' || event.key === ' ') {
+        if (this._questionIndex === 0) this._commitChoice(this._activeChoice);
+      }
       else this._highlightChoice(this._activeChoice);
     }
   };
@@ -925,6 +967,7 @@ export class BootScene {
     this._elapsedMs = this._frames.at(-1)?.at ?? 0;
     this._frameIndex = this._frames.length - 1;
     this._selectedChoice = -1;
+    this._pendingChoice = -1;
     this._activeChoice = 0;
     this._canContinue = false;
     this._spatial.select(-1);

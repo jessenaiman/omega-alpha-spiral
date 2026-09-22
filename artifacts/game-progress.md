@@ -109,6 +109,21 @@
 - [ ] Runtime timing, occlusion, final-camera, and Chapter Two handoff remain
   owner-gated and unverified in this checkpoint.
 
+## Controller-first tutorial acts checkpoint — September 22, 2026
+
+- [x] Kept the first question as pure embodied discovery: walk into the answer.
+- [x] Starting with question two, arriving at a word stages it and waits for a
+  deliberate action press before recording the answer.
+- [x] Kept action labels hidden until the player has actually pressed an action;
+  movement labels likewise remain a consequence of discovered input modality.
+- [x] Made the controller's south-face action advance dialogue and answer staged
+  words, matching the diegetic `A` label instead of listening only to the west
+  face button.
+- [x] Preserved DOM, pointer, and number-key commitment as accessibility mirrors;
+  controller and keyboard play retain the authored embodied route.
+- [ ] Runtime controller feel, target hold, and discovery clarity remain
+  owner-gated and unverified in this checkpoint.
+
 ## Active checklist
 
 - [x] Small drifting bash-loader opening with failed invocations and input-gated success.
