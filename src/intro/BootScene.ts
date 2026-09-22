@@ -111,6 +111,7 @@ export class BootScene {
   private _simulationPaused: boolean = false;
   private _seed: string = String(SEED);
   private _answersCommitted: number = 0;
+  private _chapterTwoStarted: boolean = false;
   private _debugUiHidden: boolean = false;
   private _movementKeys: Set<string> = new Set();
   private _input: InputController = createInputController();
@@ -270,6 +271,7 @@ export class BootScene {
     this._interlude = null;
     this._simulationPaused = false;
     this._answersCommitted = 0;
+    this._chapterTwoStarted = false;
     this._clearMovement();
     this._spatial.reset();
     this._activeChoice = 0;
@@ -315,7 +317,7 @@ export class BootScene {
           this._applyFrame(this._frames[next], true);
         }
       }
-      if (!['boot', 'waiting', 'doorway', 'complete'].includes(this._storyMode)) this._updateStory(now);
+      if (!['boot', 'waiting', 'doorway'].includes(this._storyMode)) this._updateStory(now);
       const spatialEvent: number = this._spatial.update(this._motionMs, this._isReduced);
       this._updateCamera(delta);
       if ((this._storyMode === 'waiting' || this._storyMode === 'travel') && (this._movementKeys.size > 0 || this._gamepadMoveX !== 0 || this._gamepadMoveY !== 0)) this._audio.move(this._answersCommitted);
@@ -389,10 +391,11 @@ export class BootScene {
     const player = this._spatial.getPlayerPosition();
     const isQuestion: boolean = this._storyMode === 'waiting' || this._storyMode === 'question';
     const isTravel: boolean = this._storyMode === 'travel';
+    const isThreshold: boolean = this._storyMode === 'doorway' || this._storyMode === 'complete';
     const targetX: number = isTravel ? player.x * 0.08 : 0;
-    const targetY: number = isTravel ? player.y * 0.055 : isQuestion ? 0.08 : 0;
-    const targetZ: number = isQuestion ? 8.85 : isTravel ? 9.65 : this._storyMode === 'boot' ? 10.25 : 9.6;
-    const blend: number = this._isReduced ? 1 : 1 - Math.exp(-Math.max(0, delta) * (isQuestion ? 2.6 : 1.6));
+    const targetY: number = isTravel ? player.y * 0.055 : isQuestion ? 0.08 : isThreshold ? 0.12 : 0;
+    const targetZ: number = isQuestion ? 8.85 : isTravel ? 9.65 : isThreshold ? 8.35 : this._storyMode === 'boot' ? 10.25 : 9.6;
+    const blend: number = this._isReduced ? 1 : 1 - Math.exp(-Math.max(0, delta) * (isQuestion ? 2.6 : isThreshold ? 2.2 : 1.6));
     this._camera.position.x += (targetX - this._camera.position.x) * blend;
     this._camera.position.y += (targetY - this._camera.position.y) * blend;
     this._camera.position.z += (targetZ - this._camera.position.z) * blend;
@@ -499,10 +502,11 @@ export class BootScene {
   private _enterDoor(): void {
     if (this._storyMode !== 'doorway') return;
     this._storyMode = 'complete';
+    this._storyStartedAt = performance.now();
+    this._chapterTwoStarted = false;
     this._canContinue = false;
     this._clearMovement();
-    this._applyFrame(this._storyFrame(CHRONICLE_FINAL, 'complete', 4, 'ALL THREE FOLLOWED', 12000));
-    this._chapterTwo.start('All Three');
+    this._applyFrame(this._storyFrame(CHRONICLE_FINAL, 'complete', 4, 'ALL THREE FOLLOWED', 0));
   }
 
   private _updateStory(now: number): void {
@@ -554,6 +558,15 @@ export class BootScene {
       const complete: boolean = text.length >= CHRONICLE_FINAL.length;
       if (complete) this._storyMode = 'doorway';
       this._applyFrame(this._storyFrame(text, complete ? 'doorway' : 'final', 4, complete ? 'ALL THREE FOLLOWED' : undefined, elapsedMs));
+      return;
+    }
+    if (this._storyMode === 'complete') {
+      const crossingMs: number = this._isReduced ? 0 : 2800;
+      this._applyFrame(this._storyFrame(CHRONICLE_FINAL, 'complete', 4, 'ALL THREE FOLLOWED', elapsedMs));
+      if (!this._chapterTwoStarted && elapsedMs >= crossingMs) {
+        this._chapterTwoStarted = true;
+        this._chapterTwo.start('All Three');
+      }
     }
   }
 

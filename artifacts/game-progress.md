@@ -94,6 +94,21 @@
   controller actions appear only after that modality has actually been used.
 - [ ] Runtime audio unlock, mix, timing, and visible-page checks remain owner-gated.
 
+## Embodied threshold checkpoint — September 21, 2026
+
+- [x] Replaced the instant cut into Chapter Two with a 2.8-second authored
+  crossing beat; the next scene now starts only after the crossing completes.
+- [x] Kept the neutral player visible at the open threshold and moved its fully
+  accumulated form through the particle surface.
+- [x] Extended all three procedural path grammars from their Dreamweaver marks
+  to the moving player so Light, Shadow, and Ambition visibly follow together.
+- [x] Moved the black-surface disintegration onto the actual crossing instead
+  of spending the effect while the final text is still being written.
+- [x] Accumulated answer colors in the player's neutral core and let prior
+  answers strengthen later route echoes without implying allegiance.
+- [ ] Runtime timing, occlusion, final-camera, and Chapter Two handoff remain
+  owner-gated and unverified in this checkpoint.
+
 ## Active checklist
 
 - [x] Small drifting bash-loader opening with failed invocations and input-gated success.

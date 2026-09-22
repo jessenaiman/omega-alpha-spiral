@@ -376,6 +376,7 @@ export class SpatialBootScene {
   private _playerOutline: LineSegments<BufferGeometry, LineBasicMaterial> | null = null;
   private _playerMemories: Array<Mesh<BoxGeometry, MeshStandardMaterial>> = [];
   private _playerStage: number = 0;
+  private _choiceHistory: number[] = [];
   private _paths: Array<LineSegments<BufferGeometry, LineBasicMaterial>> = [];
   private _pathEchoes: Array<LineSegments<BufferGeometry, LineBasicMaterial>> = [];
   private _pathPositions: Float32Array[] = [];
@@ -648,6 +649,7 @@ export class SpatialBootScene {
     this._hovered = -1;
     this._voiceAppearedAt = [-1, -1, -1];
     this._fossils = [];
+    this._choiceHistory = [];
     this._movement.set(0, 0);
     this._lastUpdateMs = 0;
     this._lastPhase = '';
@@ -657,6 +659,7 @@ export class SpatialBootScene {
     this._choiceArmed = false;
     this._player.position.set(0, -2.55, 0.52);
     this.setPlayerStage(0);
+    this._retunePlayer();
     this._particles.reset();
     this._physics.reset();
   }
@@ -664,6 +667,7 @@ export class SpatialBootScene {
   public commitChoice(index: number): void {
     const target: Mesh<BoxGeometry, MeshBasicMaterial> | undefined = this._targets[index];
     if (target) this._player.position.set(target.position.x, target.position.y - 0.46, 0.56);
+    this._choiceHistory.push(Math.max(0, Math.min(2, index)));
     const memory: Mesh<BoxGeometry, MeshStandardMaterial> | undefined = this._playerMemories[Math.min(this._playerStage, this._playerMemories.length - 1)];
     if (memory) {
       memory.material.color.setHex(INK[Math.max(0, Math.min(2, index))]);
@@ -672,8 +676,21 @@ export class SpatialBootScene {
       memory.rotation.z = index === 0 ? 0 : index === 1 ? (this._playerStage % 2 === 0 ? 0.62 : -0.82) : 0.34 + this._playerStage * 0.38;
       memory.visible = true;
     }
+    this._retunePlayer();
     this._choiceArmed = false;
     this._physics.deactivate();
+  }
+
+  private _retunePlayer(): void {
+    if (!this._playerCore) return;
+    const neutral: Color = new Color(0xbfd5df);
+    const imprint: Color = new Color(0, 0, 0);
+    this._choiceHistory.forEach((owner: number): void => { imprint.add(new Color(INK[owner])); });
+    if (this._choiceHistory.length > 0) imprint.multiplyScalar(1 / this._choiceHistory.length);
+    else imprint.copy(neutral);
+    this._playerCore.material.color.copy(neutral).lerp(imprint, 0.38);
+    this._playerCore.material.emissive.copy(imprint).multiplyScalar(0.32);
+    this._playerCore.material.emissiveIntensity = 0.7 + this._choiceHistory.length * 0.13;
   }
 
   private _setVoiceResting(target: Vector3, index: number, era: number, seconds: number, still: boolean): void {
@@ -737,14 +754,14 @@ export class SpatialBootScene {
     return out.set(x, y + desire * 0.18, from.z + (goal.z - from.z) * t + desire);
   }
 
-  private _updatePath(isWaiting: boolean, isTravel: boolean, seconds: number, callingVoice: number): void {
+  private _updatePath(isWaiting: boolean, isTravel: boolean, isThreshold: boolean, crossingProgress: number, seconds: number, callingVoice: number): void {
     const elapsedMs: number = seconds * 1000;
     for (let owner: number = 0; owner < 3; owner += 1) {
       const path: LineSegments<BufferGeometry, LineBasicMaterial> = this._paths[owner];
       const echo: LineSegments<BufferGeometry, LineBasicMaterial> = this._pathEchoes[owner];
       const activeTravel: boolean = isTravel && this._selected === owner;
       const activeCall: boolean = callingVoice === owner;
-      const visible: boolean = activeCall || isWaiting || activeTravel;
+      const visible: boolean = activeCall || isWaiting || activeTravel || isThreshold;
       path.visible = visible;
       echo.visible = visible;
       this._pathLights[owner].visible = visible;
@@ -752,15 +769,22 @@ export class SpatialBootScene {
         this._pathLights[owner].intensity = 0;
         continue;
       }
-      this._pathFrom.set(
-        activeTravel ? (owner - 1) * this._width * 0.16 : 0,
-        activeTravel ? -2.45 : -2.62,
-        activeTravel ? 0.4 : 0.14,
-      );
+      if (isThreshold) {
+        this._pathFrom.copy(this._voices[owner].position);
+        this._pathGoal.set(0, -2.45 + crossingProgress * 2.58, 0.34 - crossingProgress * 3.28);
+      } else {
+        this._pathFrom.set(
+          activeTravel ? (owner - 1) * this._width * 0.16 : 0,
+          activeTravel ? -2.45 : -2.62,
+          activeTravel ? 0.4 : 0.14,
+        );
+      }
       if (activeTravel) this._pathGoal.set(0, 2.62, -0.72);
       else {
-        const target: Vector3 = this._targets[owner].position;
-        this._pathGoal.set(target.x, target.y - 0.48, target.z - 0.58);
+        if (!isThreshold) {
+          const target: Vector3 = this._targets[owner].position;
+          this._pathGoal.set(target.x, target.y - 0.48, target.z - 0.58);
+        }
       }
       const samples: number = owner === 0 ? 16 : owner === 1 ? 15 : 26;
       let vertex: number = 0;
@@ -791,14 +815,19 @@ export class SpatialBootScene {
       attribute.needsUpdate = true;
       path.geometry.setDrawRange(0, revealedVertices);
       const hovered: boolean = isWaiting && this._hovered === owner;
-      const emphasis: number = activeCall || activeTravel ? 1 : hovered ? 0.78 : 0.34;
-      path.material.opacity = (0.16 + emphasis * 0.42) * (owner === 1 ? 0.82 : 1);
-      echo.material.opacity = emphasis * (owner === 2 ? 0.34 : owner === 1 ? 0.22 : 0.12);
-      const lightProgress: number = activeCall ? callProgress : hovered || activeTravel ? (Math.sin(seconds * 0.72) * 0.5 + 0.5) : 0;
+      const resonance: number = this._choiceHistory.length === 0
+        ? 0
+        : this._choiceHistory.filter((choice: number): boolean => choice === owner).length / this._choiceHistory.length;
+      const emphasis: number = activeCall || activeTravel || isThreshold ? 1 : hovered ? 0.78 : 0.34;
+      path.material.opacity = ((0.16 + emphasis * 0.42) + resonance * 0.1) * (owner === 1 ? 0.82 : 1);
+      echo.material.opacity = emphasis * (owner === 2 ? 0.34 : owner === 1 ? 0.22 : 0.12) + resonance * 0.16;
+      const lightProgress: number = isThreshold
+        ? Math.min(1, 0.22 + crossingProgress * 0.78)
+        : activeCall ? callProgress : hovered || activeTravel ? (Math.sin(seconds * 0.72) * 0.5 + 0.5) : 0;
       this._samplePath(owner, lightProgress, this._pathFrom, this._pathGoal, seconds, this._pathCurrent);
       this._pathLights[owner].position.copy(this._pathCurrent);
       this._pathLights[owner].position.z += 0.36;
-      this._pathLights[owner].intensity = emphasis * (activeCall ? 7.5 : hovered || activeTravel ? 4.2 : 0.45);
+      this._pathLights[owner].intensity = emphasis * (isThreshold ? 6.4 : activeCall ? 7.5 : hovered || activeTravel ? 4.2 : 0.45);
     }
   }
 
@@ -812,8 +841,10 @@ export class SpatialBootScene {
     const isBoot: boolean = frame.phase === 'cursor' || frame.phase === 'command';
     const isTravel: boolean = frame.phase === 'travel';
     const isStory: boolean = frame.phase !== 'cursor' && frame.phase !== 'command' && frame.phase !== 'loading' && frame.phase !== 'writing';
-    const isFinal: boolean = frame.phase === 'final' || frame.phase === 'complete';
-    const isSettled: boolean = isWaiting || isFinal;
+    const isThreshold: boolean = frame.phase === 'final' || frame.phase === 'doorway' || frame.phase === 'complete';
+    const isCrossing: boolean = frame.phase === 'complete';
+    const crossingProgress: number = isCrossing ? Math.min(1, Math.max(0, (frame.phaseElapsedMs ?? 0) / 2800)) : 0;
+    const isSettled: boolean = isWaiting || isThreshold;
     const phaseChanged: boolean = frame.phase !== this._lastPhase;
     if (phaseChanged) {
       if (frame.phase === 'command' && this._backgroundStartedAt < 0) this._backgroundStartedAt = elapsedMs;
@@ -823,6 +854,7 @@ export class SpatialBootScene {
         this._journeyActive = false;
         this._selected = -1;
       }
+      if (frame.phase === 'doorway') this._player.position.set(0, -2.45, 0.52);
       if (isTravel && !this._journeyActive) this.beginJourney();
       this._lastPhase = frame.phase;
     }
@@ -830,17 +862,17 @@ export class SpatialBootScene {
     const left: number = -this._width * 0.47;
     const scale: number = this._width / (this._isNarrow ? 24 : 32);
     const panelX: number = isSettled ? 0 : left * 0.22;
-    const panelY: number = isFinal ? -0.15 : 0.15;
+    const panelY: number = isThreshold ? -0.15 : 0.15;
     const panelWidth: number = this._width * (isSettled ? 1.06 : 0.76) * 0.5;
-    const panelHeight: number = (isFinal ? 6.25 : isWaiting ? 5.3 : frame.phase === 'loading' ? 2.4 : 4.3) * 0.5;
+    const panelHeight: number = (isThreshold ? 6.25 : isWaiting ? 5.3 : frame.phase === 'loading' ? 2.4 : 4.3) * 0.5;
     const panelRx: number = isReduced || isSettled ? 0 : 0.2;
     const panelRy: number = isReduced || isSettled ? 0 : (frame.format - 1) * 0.32;
     const panelRz: number = isReduced || isSettled ? 0 : -0.055;
     this._particles.setPanelTransform(panelX, panelY, -0.45, panelWidth, panelHeight, panelRx, panelRy, panelRz);
     // Ordinary questions live directly in the celestial volume. The black
     // particle surface belongs only to the final threshold payoff.
-    const formation: number = isFinal ? 1 : 0;
-    const disintegrate: number = isFinal ? Math.min(1, Math.max(0, ((frame.phaseElapsedMs ?? 0) - 5600) / 6800)) : 0;
+    const formation: number = isThreshold ? 1 : 0;
+    const disintegrate: number = isCrossing ? crossingProgress : frame.phase === 'doorway' ? 0.06 : 0;
     const starReveal: number = isStory || isWaiting
       ? 1
       : this._backgroundStartedAt < 0 ? 0 : isReduced ? 1 : Math.min(1, (elapsedMs - this._backgroundStartedAt) / 5200);
@@ -891,8 +923,10 @@ export class SpatialBootScene {
       const isSpeaking: boolean = (frame.phase === 'response' && (frame.speaker ?? this._selected) === index) || (this._voice === index && elapsedMs - this._asideAt < ASIDE_HOLD_MS);
       const isNewestArrival: boolean = frame.phase === 'loading' && newestVoice === index;
       this._setVoiceResting(resting, index, frame.format, seconds, isReduced || isWaiting || (isSpeaking && index === 0));
-      const finalProgress: number = isFinal ? Math.min(Math.max((frame.phaseElapsedMs ?? 0) / 9200, 0), 1) : 0;
-      if (isFinal) {
+      const finalProgress: number = frame.phase === 'final'
+        ? Math.min(Math.max((frame.phaseElapsedMs ?? 0) / 9200, 0), 1)
+        : frame.phase === 'doorway' || frame.phase === 'complete' ? 1 : 0;
+      if (isThreshold) {
         resting.x *= 1 - finalProgress;
         resting.y = resting.y * (1 - finalProgress) + 0.12 * finalProgress;
         resting.z -= finalProgress * 2.4;
@@ -905,7 +939,7 @@ export class SpatialBootScene {
       if (index === 2) voice.rotation.set(0, 0, isReduced || isWaiting ? 0.08 : seconds * 0.16);
       const speakingPulse: number = isReduced ? 1 : 1 + Math.sin(seconds * 5.4) * 0.1;
       voice.scale.setScalar(isSpeaking ? 1.45 * speakingPulse : isNewestArrival ? 1.12 * speakingPulse : 1);
-      if (isFinal) voice.scale.multiplyScalar(1 - finalProgress * 0.74);
+      if (isThreshold) voice.scale.multiplyScalar(1 - finalProgress * 0.74);
       const observerFade: number = frame.phase === 'loading' && index < newestVoice ? 0.42 : 1;
       this._voiceMaterials[index][0].opacity = (isSpeaking ? 1 : 0.88) * observerFade;
       this._voiceMaterials[index][1].opacity = (isSpeaking ? 0.48 : 0.16) * observerFade;
@@ -927,9 +961,9 @@ export class SpatialBootScene {
         trailPositions.setXYZ(pointIndex, point.x, point.y, point.z);
       }
       trailPositions.needsUpdate = true;
-      trail.material.opacity = (0.12 + smoothEntrance * (isNewestArrival ? 0.48 : 0.24)) * observerFade * (isFinal ? 1 - finalProgress * 0.55 : 1);
+      trail.material.opacity = (0.12 + smoothEntrance * (isNewestArrival ? 0.48 : 0.24)) * observerFade * (isThreshold ? 1 - finalProgress * 0.55 : 1);
     }
-    this._ribbons[4].root.visible = !isBoot && !isFinal && !isTravel;
+    this._ribbons[4].root.visible = !isBoot && !isThreshold && !isTravel;
     this._ribbons[4].root.scale.setScalar(scale * 0.37);
     this._ribbons[4].root.position.set(left, 1.65, -0.05);
     const question: Group = this._ribbons[5].root;
@@ -938,10 +972,10 @@ export class SpatialBootScene {
     const responseAnchor: Vector3 | null = responseOwner >= 0 ? this._voices[responseOwner].position : null;
     question.position.set(
       responseAnchor ? responseAnchor.x - this._width * (this._isNarrow ? 0.16 : 0.19) : left,
-      isFinal ? 2.55 : responseAnchor ? responseAnchor.y - 0.96 : isWaiting ? 0.68 : -0.8 + Math.min(Math.max((seconds - 13) / 16, 0), 1) * 1.45,
+      isThreshold ? 2.55 : responseAnchor ? responseAnchor.y - 0.96 : isWaiting ? 0.68 : -0.8 + Math.min(Math.max((seconds - 13) / 16, 0), 1) * 1.45,
       responseAnchor ? responseAnchor.z + 0.14 : 0.25,
     );
-    question.scale.setScalar(isFinal ? scale * (this._isNarrow ? 0.62 : 0.68) : responseAnchor ? scale * 0.52 : scale);
+    question.scale.setScalar(isThreshold ? scale * (this._isNarrow ? 0.62 : 0.68) : responseAnchor ? scale * 0.52 : scale);
     if (responseOwner === 0) question.rotation.set(0, 0, 0);
     if (responseOwner === 1) question.rotation.set(-0.08, -0.14, 0.025);
     if (responseOwner === 2) question.rotation.set(-0.16, 0.18, -0.035);
@@ -951,7 +985,7 @@ export class SpatialBootScene {
       if (responseOwner < 0) question.rotation.set(-0.3, (frame.format - 1) * BOOT_EFFECTS.planeSkew * 0.65 + Math.sin(seconds * 0.2) * 0.15, (frame.format - 1) * 0.055);
     }
     const symbols: Group = this._ribbons[6].root;
-    symbols.visible = frame.prelude.includes(BOOT_SYMBOLS) && !isFinal;
+    symbols.visible = frame.prelude.includes(BOOT_SYMBOLS) && !isThreshold;
     symbols.position.set(left, -2.35, 0);
     symbols.scale.setScalar(scale * 1.05);
     const aside: Group = this._ribbons[7].root;
@@ -995,7 +1029,7 @@ export class SpatialBootScene {
     }
     for (let index: number = 0; index < 3; index += 1) {
       const fossil: Group = this._ribbons[11 + index].root;
-      fossil.visible = isStory && !isFinal && Boolean(this._fossils[index]);
+      fossil.visible = isStory && !isThreshold && Boolean(this._fossils[index]);
       if (isTravel) {
         fossil.position.set(-this._width * 0.18 + index * this._width * 0.12, -1.48 + index * 0.72, -0.08 - index * 0.16);
         fossil.scale.setScalar(scale * (0.31 - index * 0.035));
@@ -1007,8 +1041,8 @@ export class SpatialBootScene {
       }
       fossil.updateMatrix();
     }
-    this._updatePath(isWaiting, isTravel, seconds, frame.phase === 'loading' ? newestVoice : -1);
-    this._player.visible = isStory && !isFinal;
+    this._updatePath(isWaiting, isTravel, isThreshold, crossingProgress, seconds, frame.phase === 'loading' ? newestVoice : -1);
+    this._player.visible = isStory && frame.phase !== 'final';
     let spatialEvent: number = -1;
     if (this._player.visible) {
       if (!isReduced) {
@@ -1060,8 +1094,13 @@ export class SpatialBootScene {
           this._journeyComplete = true;
           spatialEvent = -2;
         }
+      } else if (frame.phase === 'doorway') {
+        this._player.position.set(0, -2.45, 0.52);
+      } else if (isCrossing) {
+        const eased: number = crossingProgress * crossingProgress * (3 - 2 * crossingProgress);
+        this._player.position.set(0, -2.45 + eased * 2.58, 0.52 - eased * 3.46);
       }
-      const pulse: number = isReduced ? 1 : 1 + Math.sin(seconds * 4.2) * 0.045;
+      const pulse: number = (isReduced ? 1 : 1 + Math.sin(seconds * 4.2) * 0.045) * (isCrossing ? 1 - crossingProgress * 0.72 : 1);
       this._player.scale.setScalar(pulse);
     }
     this._cursor.visible = !isWaiting && frame.phase !== 'complete' && (isReduced || elapsedMs % CURSOR_PERIOD_MS < 690);
