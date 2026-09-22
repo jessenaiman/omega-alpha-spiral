@@ -320,6 +320,34 @@ export function createChronicleQuestions(seed: string | number): readonly Chroni
   });
 }
 
+export interface ChronicleInterlude {
+  readonly owner: DreamweaverOwner;
+  readonly ownerIndex: number;
+  readonly text: string;
+}
+
+const INTERLUDE_OWNERS: readonly DreamweaverOwner[] = ['light', 'shadow', 'ambition'];
+const INTERLUDE_TEXT: Readonly<Record<number, readonly string[]>> = {
+  0: [
+    'The answer is recorded; its meaning remains yours. What will you carry forward?',
+    'You answered. Was that certainty, or relief that the question stopped looking at you?',
+    'Whatever you answer, the unfinished future is already asking what your hands will make.',
+  ],
+  2: [
+    'A name draws a boundary. What does it protect, and what remains outside?',
+    'Names hide choices. Which part are you hoping no one asks about?',
+    'A name points forward; what you build next may outlive the reason you began.',
+  ],
+};
+
+/** A second observer speaks only at two thresholds and never claims the choice. */
+export function getChronicleInterlude(questionIndex: number, selectedIndex: number): ChronicleInterlude | null {
+  const candidates: readonly string[] | undefined = INTERLUDE_TEXT[questionIndex];
+  if (!candidates) return null;
+  const ownerIndex: number = questionIndex === 0 ? (selectedIndex + 1) % 3 : (selectedIndex + 2) % 3;
+  return { owner: INTERLUDE_OWNERS[ownerIndex], ownerIndex, text: candidates[ownerIndex] };
+}
+
 export const CHRONICLE_FINAL_DRAFT: string = '[SYSTEM: Dreamweaver thread selected - {{THREAD_NAME}}]';
 export const CHRONICLE_FINAL: string = [
   '[SYSTEM: Dreamweaver threads following - 03]',

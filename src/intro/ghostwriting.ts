@@ -12,13 +12,15 @@ export interface BootFrame {
   format: number;
   phaseElapsedMs?: number;
   hint?: string;
+  /** Dreamweaver currently authoring response text; independent of the chosen route. */
+  speaker?: number;
 }
 
-const FIRST_INK_MS: number = 1800;
-const LETTER_MIN_MS: number = 85;
-const LETTER_RANGE_MS: number = 100;
-const ERASURE_MS: number = 65;
-const CORRECTION_PAUSE_MS: number = 950;
+const FIRST_INK_MS: number = 900;
+const LETTER_MIN_MS: number = 42;
+const LETTER_RANGE_MS: number = 62;
+const ERASURE_MS: number = 38;
+const CORRECTION_PAUSE_MS: number = 520;
 export const BOOT_COMMAND: string = '/run omega.sh';
 export const BOOT_OPTIONS: string[] = CHRONICLE_QUESTIONS[0].choices.map((option): string => option.text);
 export const BOOT_SYMBOLS: string = CHRONICLE_SYMBOLS;
@@ -77,33 +79,21 @@ export function createBootFrames(seed: string, opening: ChronicleQuestion = CHRO
   };
   phase = 'command';
   typeTerminal('$ ./omega');
-  at += 620;
+  at += 360;
   format = 0;
   typeTerminal('\nbash: ./omega: script unfinished');
-  at += 1300;
+  at += 620;
   format = 1;
   typeTerminal('\n$ sh wake-omega');
-  at += 720;
+  at += 420;
   typeTerminal('\nwake-omega: line 1: unexpected end');
-  at += 1500;
+  at += 720;
   format = 2;
   typeTerminal(`\n$ ${BOOT_COMMAND}`);
-  at += 1700;
-  phase = 'loading';
-  record();
-  for (const slot of ['01', '02', '03']) {
-    at += 1000;
-    text.transcript += `\ndreamweaver[${slot}] ...`;
-    format = random.int(3);
-    record();
-    at += 700;
-    text.transcript += ' loaded';
-    record();
-  }
-  at += 900;
+  at += 780;
+  format = 3;
   text.prelude = CHRONICLE_OPENING_LOG;
   record();
-  at = Math.max(at + CORRECTION_PAUSE_MS, 13000);
   phase = 'writing';
   // Brackets are authored attempts, not punctuation to print or rewrite ourselves.
   const attempts: RegExp = /\[([^|\]]+)\|([^\]]+)\]/g;
@@ -113,7 +103,7 @@ export function createBootFrames(seed: string, opening: ChronicleQuestion = CHRO
     type('question', questionSource.slice(offset, match.index));
     type('question', match[1]);
     at += CORRECTION_PAUSE_MS;
-    format = (format + 1) % 3;
+    format = Math.min(5, format + 1);
     record(true);
     erase('question', match[1]);
     at += CORRECTION_PAUSE_MS;
@@ -121,8 +111,23 @@ export function createBootFrames(seed: string, opening: ChronicleQuestion = CHRO
     offset = match.index + match[0].length;
   }
   type('question', questionSource.slice(offset));
-  text.transcript += '\nretry.\nquestion ... ready';
+  at += 720;
+  text.transcript += '\nquestion ... stalled';
+  record(true);
+  phase = 'loading';
+  for (const [index, slot] of ['01', '02', '03'].entries()) {
+    // Each breach gets a complete visual beat. Previous arrivals remain as
+    // witnesses instead of three simultaneous loading indicators.
+    at += index === 0 ? 1250 : 2200;
+    format = 5;
+    text.transcript += `\ndreamweaver[${slot}] ...`;
+    record();
+    at += 1750;
+    text.transcript += ' present';
+    record();
+  }
+  text.transcript += '\nquestion ... held open';
   at += CORRECTION_PAUSE_MS;
-  frames.push({ at, ...text, choices, isCorrupt: false, phase: 'waiting', format: 1 });
+  frames.push({ at, ...text, choices, isCorrupt: false, phase: 'waiting', format: 5 });
   return frames;
 }

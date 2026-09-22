@@ -9,62 +9,134 @@ const DESKTOP_DARK_PARTICLES: number = 9000;
 const MOBILE_LIGHT_PARTICLES: number = 5200;
 const MOBILE_DARK_PARTICLES: number = 4300;
 
+const NEBULA_VERTEX: string = `
+  varying vec2 vUv;
+  void main() {
+    vUv = uv;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`;
+
+const NEBULA_FRAGMENT: string = `
+  uniform float uTime;
+  uniform float uReveal;
+  uniform float uEra;
+  uniform float uReduced;
+  varying vec2 vUv;
+
+  float hash21(vec2 p) {
+    p = fract(p * vec2(123.34, 456.21));
+    p += dot(p, p + 45.32);
+    return fract(p.x * p.y);
+  }
+
+  float noise21(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    f = f * f * (3.0 - 2.0 * f);
+    return mix(mix(hash21(i), hash21(i + vec2(1.0, 0.0)), f.x),
+      mix(hash21(i + vec2(0.0, 1.0)), hash21(i + vec2(1.0)), f.x), f.y);
+  }
+
+  float fbm(vec2 p) {
+    float value = 0.0;
+    float amplitude = 0.52;
+    for (int octave = 0; octave < 4; octave++) {
+      value += noise21(p) * amplitude;
+      p = mat2(1.62, 1.18, -1.18, 1.62) * p + 0.17;
+      amplitude *= 0.48;
+    }
+    return value;
+  }
+
+  void main() {
+    vec2 p = (vUv * 2.0 - 1.0) * vec2(1.7, 1.0);
+    float time = uTime * mix(1.0, 0.0, uReduced);
+    vec2 drift = vec2(time * 0.006, -time * 0.004);
+    float broad = fbm(p * 1.18 + drift);
+    float thread = fbm(p * 2.7 - drift * 1.6 + broad * 0.42);
+    float cloud = smoothstep(0.48, 0.82, broad * 0.66 + thread * 0.56);
+    float readingCorridor = smoothstep(0.12, 0.72, length(p * vec2(0.72, 1.18)));
+    float vignette = 1.0 - smoothstep(0.82, 1.9, length(p));
+    float capability = 0.64 + min(uEra, 5.0) * 0.055;
+    float alpha = cloud * mix(0.22, 1.0, readingCorridor) * vignette * uReveal * capability * 0.2;
+    vec3 cold = vec3(0.055, 0.11, 0.23);
+    vec3 warm = vec3(0.22, 0.11, 0.075);
+    vec3 color = mix(cold, warm, smoothstep(0.54, 0.78, thread));
+    if (alpha < 0.004) discard;
+    gl_FragColor = vec4(color, alpha);
+    #include <colorspace_fragment>
+  }
+`;
+
 const LIGHT_VERTEX: string = `
   attribute float aSeed;
   attribute float aKind;
+  attribute float aProgress;
   attribute float aSize;
   uniform float uTime;
   uniform float uEra;
   uniform float uPulse;
   uniform float uOwner;
+  uniform float uStarReveal;
   uniform float uDisintegrate;
   uniform float uReduced;
   varying vec3 vColor;
   varying float vAlpha;
+  varying float vTemperature;
 
   void main() {
     vec3 p = position;
     float time = uTime * mix(1.0, 0.0, uReduced);
     float phase = aSeed * 6.2831853;
-    float drift = time * (0.055 + aSeed * 0.025);
-    float eraOrder = uEra * 0.035;
-    float depth = smoothstep(-0.9, 4.8, p.z);
-    p.x += sin(phase + drift + p.y * 0.21) * (0.18 + aSeed * 0.22 - eraOrder) * (0.7 + depth * 1.2);
-    p.y += cos(phase * 1.31 - drift * 0.73 + p.x * 0.16) * (0.14 + aSeed * 0.18 - eraOrder * 0.6) * (0.72 + depth);
-    p.z += sin(phase * 2.1 + drift) * 0.22;
+    float drift = time * (0.018 + aSeed * 0.014);
+    float depth = smoothstep(-1.8, 4.8, p.z);
+    float orbit = drift * (0.16 + depth * 0.22);
+    mat2 rotation = mat2(cos(orbit), -sin(orbit), sin(orbit), cos(orbit));
+    p.xy = rotation * p.xy;
+    p.x += sin(phase + drift + p.y * 0.16) * (0.035 + aSeed * 0.12) * (0.7 + depth);
+    p.y += cos(phase * 1.31 - drift * 0.73 + p.x * 0.12) * (0.028 + aSeed * 0.09) * (0.72 + depth);
+    p.z += sin(phase * 2.1 + drift) * 0.12;
 
-    float chosen = 1.0 - step(0.45, abs(aKind - uOwner));
-    p.xy *= 1.0 + chosen * uPulse * (0.08 + 0.04 * sin(phase));
-    p.xy = mix(p.xy, p.xy * 0.12, uDisintegrate);
-    p.z -= uDisintegrate * (2.0 + aSeed * 4.0);
+    float ownerDirection = (uOwner - 1.0) * 0.08;
+    p.x += ownerDirection * uPulse * (0.4 + depth);
+    p.xy *= 1.0 + uPulse * (0.025 + 0.025 * sin(phase));
+    p.xy = mix(p.xy, p.xy * 0.16, uDisintegrate);
+    p.z -= uDisintegrate * (1.4 + aSeed * 3.2);
 
-    float silver = 1.0 - step(0.5, aKind);
-    float shadow = step(0.5, aKind) * (1.0 - step(1.5, aKind));
-    float ambition = step(1.5, aKind) * (1.0 - step(2.5, aKind));
-    float star = step(2.5, aKind);
-    float ambitionCounter = step(0.72, fract(aSeed * 19.7));
-    vColor = silver * vec3(0.78, 0.90, 0.98)
-      + shadow * vec3(0.96, 0.08, 0.14)
-      + ambition * mix(vec3(1.0, 0.72, 0.12), vec3(0.25, 0.12, 0.52), ambitionCounter * 0.48)
-      + star * vec3(0.72, 0.80, 0.88);
-    float reveal = mix(smoothstep(0.8 + aSeed * 1.8, 5.2 + aSeed * 2.8, uTime), 1.0, uReduced);
-    vAlpha = mix(0.2, 0.78, fract(aSeed * 31.7)) * reveal * (1.0 - uDisintegrate * 0.45);
+    float cold = 1.0 - step(0.5, aKind);
+    float warm = step(0.5, aKind) * (1.0 - step(1.5, aKind));
+    float distant = step(1.5, aKind);
+    vColor = cold * vec3(0.68, 0.82, 1.0)
+      + warm * vec3(1.0, 0.82, 0.56)
+      + distant * vec3(0.5, 0.62, 0.82);
+    vTemperature = aKind;
+    float depthBand = aProgress * 0.74;
+    float reveal = smoothstep(depthBand, depthBand + 0.18, uStarReveal);
+    float eraCapability = 0.56 + min(uEra, 5.0) * 0.07;
+    vAlpha = mix(0.16, 0.74, fract(aSeed * 31.7)) * reveal * eraCapability * (1.0 - uDisintegrate * 0.38);
 
     vec4 mvPosition = modelViewMatrix * vec4(p, 1.0);
-    gl_PointSize = clamp(aSize * (150.0 / max(1.0, -mvPosition.z)), 0.75, 5.5);
+    gl_PointSize = clamp(aSize * (150.0 / max(1.0, -mvPosition.z)), 0.7, 4.8);
     gl_Position = projectionMatrix * mvPosition;
   }
 `;
 
 const LIGHT_FRAGMENT: string = `
+  uniform float uEra;
   varying vec3 vColor;
   varying float vAlpha;
+  varying float vTemperature;
   void main() {
     vec2 point = gl_PointCoord - 0.5;
     float radius = length(point);
     float core = 1.0 - smoothstep(0.04, 0.5, radius);
     float spark = 1.0 - smoothstep(0.0, 0.48, max(abs(point.x), abs(point.y)));
-    float alpha = max(core, spark * 0.32) * vAlpha;
+    float pixel = step(max(abs(point.x), abs(point.y)), 0.42);
+    float modern = smoothstep(2.0, 5.0, uEra);
+    float starShape = mix(pixel, max(core, spark * 0.34), modern);
+    float twinkle = 0.92 + 0.08 * sin(vTemperature * 2.4 + gl_FragCoord.x * 0.013 + gl_FragCoord.y * 0.009);
+    float alpha = starShape * vAlpha * twinkle;
     if (alpha < 0.012) discard;
     gl_FragColor = vec4(vColor * (0.7 + core * 0.8), alpha);
     #include <colorspace_fragment>
@@ -181,16 +253,20 @@ export interface ParticleFieldState {
   formation: number;
   disintegrate: number;
   era: number;
+  starReveal: number;
   reduced: boolean;
 }
 
 export class IntroParticleField {
   public readonly root: Group = new Group();
+  private readonly _fieldRoot: Group = new Group();
   private readonly _panelRoot: Group = new Group();
   private _lightGeometry: BufferGeometry | null = null;
+  private _nebulaGeometry: PlaneGeometry | null = null;
   private _darkGeometry: BufferGeometry | null = null;
   private _veilGeometry: PlaneGeometry | null = null;
   private _lightMaterial: ShaderMaterial | null = null;
+  private _nebulaMaterial: ShaderMaterial | null = null;
   private _darkMaterial: ShaderMaterial | null = null;
   private _veilMaterial: ShaderMaterial | null = null;
   private _lightCount: number = 0;
@@ -204,11 +280,16 @@ export class IntroParticleField {
     const isMobile: boolean = window.innerWidth < 760;
     this._lightCount = isMobile ? MOBILE_LIGHT_PARTICLES : DESKTOP_LIGHT_PARTICLES;
     this._darkCount = isMobile ? MOBILE_DARK_PARTICLES : DESKTOP_DARK_PARTICLES;
+    this._createNebula();
     this._createLightField(this._lightCount);
     this._createDarkField(this._darkCount);
     this._createVeil();
-    this.root.add(this._panelRoot);
+    this.root.add(this._fieldRoot, this._panelRoot);
     parent.add(this.root);
+  }
+
+  public setFieldWidth(width: number): void {
+    this._fieldRoot.scale.x = Math.max(0.48, Math.min(1, width / 8));
   }
 
   public setPanelTransform(x: number, y: number, z: number, width: number, height: number, rx: number, ry: number, rz: number): void {
@@ -236,6 +317,7 @@ export class IntroParticleField {
     this._pulse = Math.max(0, this._pulse - delta * 0.72);
     const disintegrate: number = state.reduced ? 0 : Math.max(0, Math.min(1, state.disintegrate));
     const formation: number = Math.max(0, Math.min(1, state.formation));
+    const starReveal: number = Math.max(0, Math.min(1, state.starReveal));
     this._formation = formation;
     for (const material of [this._lightMaterial, this._darkMaterial, this._veilMaterial]) {
       material.uniforms.uTime.value = seconds;
@@ -243,8 +325,15 @@ export class IntroParticleField {
       material.uniforms.uReduced.value = state.reduced ? 1 : 0;
       material.uniforms.uDisintegrate.value = disintegrate;
     }
-    this._lightMaterial.uniforms.uEra.value = Math.max(0, Math.min(4, state.era));
+    this._lightMaterial.uniforms.uEra.value = Math.max(0, Math.min(5, state.era));
     this._lightMaterial.uniforms.uOwner.value = this._owner;
+    this._lightMaterial.uniforms.uStarReveal.value = starReveal;
+    if (this._nebulaMaterial) {
+      this._nebulaMaterial.uniforms.uTime.value = seconds;
+      this._nebulaMaterial.uniforms.uReveal.value = starReveal;
+      this._nebulaMaterial.uniforms.uEra.value = Math.max(0, Math.min(5, state.era));
+      this._nebulaMaterial.uniforms.uReduced.value = state.reduced ? 1 : 0;
+    }
     this._darkMaterial.uniforms.uFormation.value = formation;
     this._darkMaterial.uniforms.uOwner.value = this._owner;
     this._veilMaterial.uniforms.uFormation.value = formation;
@@ -253,55 +342,72 @@ export class IntroParticleField {
   }
 
   public getDiagnostics(): { lightParticles: number; darkParticles: number; drawCalls: number; surfaceFormation: number } {
-    return { lightParticles: this._lightCount, darkParticles: this._darkCount, drawCalls: this._formation > 0.002 ? 3 : 1, surfaceFormation: this._formation };
+    return { lightParticles: this._lightCount, darkParticles: this._darkCount, drawCalls: 2 + (this._formation > 0.002 ? 2 : 0), surfaceFormation: this._formation };
   }
 
   public destroy(): void {
     this.root.removeFromParent();
     this._lightGeometry?.dispose();
+    this._nebulaGeometry?.dispose();
     this._darkGeometry?.dispose();
     this._veilGeometry?.dispose();
     this._lightMaterial?.dispose();
+    this._nebulaMaterial?.dispose();
     this._darkMaterial?.dispose();
     this._veilMaterial?.dispose();
+  }
+
+  private _createNebula(): void {
+    this._nebulaGeometry = new PlaneGeometry(24, 15);
+    this._nebulaMaterial = new ShaderMaterial({
+      uniforms: {
+        uTime: { value: 0 }, uReveal: { value: 0 }, uEra: { value: 0 }, uReduced: { value: 0 },
+      },
+      vertexShader: NEBULA_VERTEX,
+      fragmentShader: NEBULA_FRAGMENT,
+      transparent: true,
+      depthTest: false,
+      depthWrite: false,
+      blending: AdditiveBlending,
+      toneMapped: false,
+    });
+    const nebula: Mesh<PlaneGeometry, ShaderMaterial> = new Mesh(this._nebulaGeometry, this._nebulaMaterial);
+    nebula.position.z = -4.6;
+    nebula.renderOrder = -40;
+    this._fieldRoot.add(nebula);
   }
 
   private _createLightField(count: number): void {
     const positions: Float32Array = new Float32Array(count * 3);
     const seeds: Float32Array = new Float32Array(count);
     const kinds: Float32Array = new Float32Array(count);
+    const progresses: Float32Array = new Float32Array(count);
     const sizes: Float32Array = new Float32Array(count);
     const random = this._random(472);
     for (let index: number = 0; index < count; index += 1) {
-      const kind: number = index % 8 < 3 ? index % 3 : 3;
+      const kind: number = Math.floor(random() * 3);
       const seed: number = random();
-      if (kind < 3) {
-        const strandT: number = Math.pow(random(), 0.78);
-        const angle: number = kind * TAU / 3 + strandT * (3.4 + kind * 0.28);
-        const radius: number = 0.38 + strandT * 11.4;
-        positions[index * 3] = Math.cos(angle) * radius * (1.05 + random() * 0.12);
-        positions[index * 3 + 1] = Math.sin(angle) * radius * 0.54 + (kind - 1) * 0.24;
-        positions[index * 3 + 2] = -0.82 + strandT * 5.4 + random() * 0.24;
-      } else {
-        const angle: number = random() * TAU;
-        const radius: number = 2.2 + Math.pow(random(), 0.72) * 12.5;
-        positions[index * 3] = Math.cos(angle) * radius * (1.06 + random() * 0.38);
-        positions[index * 3 + 1] = Math.sin(angle) * radius * 0.66;
-        positions[index * 3 + 2] = -0.88 + random() * 5.7;
-      }
+      const angle: number = random() * TAU;
+      const radius: number = 3.1 + Math.pow(random(), 0.68) * 13.8;
+      positions[index * 3] = Math.cos(angle) * radius * (1.04 + random() * 0.42);
+      positions[index * 3 + 1] = Math.sin(angle) * radius * (0.52 + random() * 0.2);
+      positions[index * 3 + 2] = -3.8 + random() * 10.4;
+      progresses[index] = Math.min(1, Math.max(0, (positions[index * 3 + 2] + 3.8) / 10.4 * 0.65 + random() * 0.35));
       seeds[index] = seed;
       kinds[index] = kind;
-      sizes[index] = kind === 3 ? 0.5 + random() * 1.35 : 1.15 + random() * 2.2;
+      sizes[index] = 0.45 + random() * (kind === 2 ? 1.1 : 1.8);
     }
     this._lightGeometry = new BufferGeometry();
     this._lightGeometry.setAttribute('position', new BufferAttribute(positions, 3));
     this._lightGeometry.setAttribute('aSeed', new BufferAttribute(seeds, 1));
     this._lightGeometry.setAttribute('aKind', new BufferAttribute(kinds, 1));
+    this._lightGeometry.setAttribute('aProgress', new BufferAttribute(progresses, 1));
     this._lightGeometry.setAttribute('aSize', new BufferAttribute(sizes, 1));
     this._lightMaterial = new ShaderMaterial({
       uniforms: {
         uTime: { value: 0 }, uEra: { value: 0 }, uPulse: { value: 0 },
-        uOwner: { value: 1 }, uDisintegrate: { value: 0 }, uReduced: { value: 0 },
+        uOwner: { value: 1 }, uStarReveal: { value: 0 },
+        uDisintegrate: { value: 0 }, uReduced: { value: 0 },
       },
       vertexShader: LIGHT_VERTEX,
       fragmentShader: LIGHT_FRAGMENT,
@@ -314,7 +420,7 @@ export class IntroParticleField {
     const points: Points<BufferGeometry, ShaderMaterial> = new Points(this._lightGeometry, this._lightMaterial);
     points.frustumCulled = false;
     points.renderOrder = -30;
-    this.root.add(points);
+    this._fieldRoot.add(points);
   }
 
   private _createDarkField(count: number): void {

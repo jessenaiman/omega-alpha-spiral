@@ -1,13 +1,12 @@
 import { loadVfxExportBundle } from 'nixie-fx/export';
 import { ThreeVfxRenderer, type ThreeVfxEffectInstance } from 'nixie-fx/three';
-import { ACESFilmicToneMapping, Mesh, PerspectiveCamera, PlaneGeometry, PMREMGenerator, Scene, ShaderMaterial, SRGBColorSpace, Texture, TextureLoader, Vector2, WebGLRenderer } from 'three';
+import { ACESFilmicToneMapping, PerspectiveCamera, PMREMGenerator, Scene, SRGBColorSpace, Texture, Vector3, WebGLRenderer } from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
-import distantUrl from '../../assets/intro/optical-variations/optical-a-distant.webp';
-import foldUrl from '../../assets/intro/optical-variations/optical-b-fold.webp';
-import thresholdUrl from '../../assets/intro/optical-variations/optical-c-threshold.webp';
-import { CHRONICLE_FINAL, CHRONICLE_FINAL_DRAFT, createChronicleQuestions, type ChronicleQuestion } from './chronicle';
+import { createInputController, type InputController, type Intents } from '../core/input';
+import { CHRONICLE_FINAL, CHRONICLE_FINAL_DRAFT, createChronicleQuestions, getChronicleInterlude, type ChronicleInterlude, type ChronicleQuestion } from './chronicle';
 import { createBootFrames, type BootFrame } from './ghostwriting';
+import { getIntroEra } from './IntroEraDesign';
 import { IntroAudio } from './IntroAudio';
 import type { IntroPhysicsDiagnostics } from './IntroPhysics';
 import { BOOT_EFFECTS, SpatialBootScene } from './SpatialBootScene';
@@ -16,14 +15,11 @@ import dustBundle from './vfx/boot-dust.bundle.json';
 
 const SEED: number = 472;
 const MAX_DELTA_SECONDS: number = 0.1;
-const PLATE_URLS: string[] = [distantUrl, foldUrl, thresholdUrl];
 const FIRST_DISSOLVE_MS: number = 3500;
-const DISSOLVE_DURATION_MS: number = 2500;
-const ZOOM_DURATION_MS: number = 16000;
 const VIEW_HEIGHT: number = 6.4;
 const TEST_STATE_NAMES = ['boot-cursor', 'question-1', 'question-2', 'question-3', 'question-4', 'final-door', 'complete'] as const;
 type TestStateName = typeof TEST_STATE_NAMES[number];
-type StoryMode = 'boot' | 'waiting' | 'prelude' | 'question' | 'response' | 'travel' | 'final' | 'doorway' | 'complete';
+type StoryMode = 'boot' | 'waiting' | 'prelude' | 'question' | 'response' | 'commentary' | 'travel' | 'final' | 'doorway' | 'complete';
 
 interface IntroDiagnosticState {
   frame: number;
@@ -36,6 +32,9 @@ interface IntroDiagnosticState {
   failed: boolean;
   canContinue: boolean;
   selectedChoice: number;
+  pendingChoice: number;
+  actionDiscovered: boolean;
+  tutorialAct: 'movement' | 'action' | 'resonance';
   playerPosition: { x: number; y: number; z: number };
   choiceTargets: Array<{ x: number; y: number; z: number }>;
   seed: string;
@@ -62,37 +61,6 @@ type IntroTestWindow = {
   };
   __THREE_GAME_TEST_HOOKS__?: IntroTestHooks;
 };
-const VERTEX_SHADER: string = `
-  varying vec2 vUv;
-  void main() {
-    vUv = uv;
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-  }
-`;
-const FRAGMENT_SHADER: string = `
-  uniform sampler2D distantImage;
-  uniform sampler2D foldImage;
-  uniform sampler2D thresholdImage;
-  uniform float firstMix;
-  uniform float secondMix;
-  uniform float zoom;
-  uniform float viewAspect;
-  uniform float imageAspect;
-  uniform float reveal;
-  uniform vec2 drift;
-  varying vec2 vUv;
-  void main() {
-    vec2 cover = vec2(min(viewAspect / imageAspect, 1.0), min(imageAspect / viewAspect, 1.0)) / zoom;
-    vec2 center = clamp(vec2(0.65, 0.55), cover * 0.5, 1.0 - cover * 0.5);
-    vec2 uv = clamp((vUv - 0.5) * cover + center + drift, 0.001, 0.999);
-    // The imperfect double contours are intentional: the script is trying alternatives.
-    vec3 ink = mix(texture2D(distantImage, uv).rgb, texture2D(foldImage, uv).rgb, smoothstep(0.0, 1.0, firstMix));
-    ink = mix(ink, texture2D(thresholdImage, uv).rgb, smoothstep(0.0, 1.0, secondMix));
-    gl_FragColor = vec4(ink * reveal, 1.0);
-    #include <colorspace_fragment>
-  }
-`;
-
 function getElement<T extends HTMLElement>(selector: string, kind: { new(): T }): T {
   const element: Element | null = document.querySelector(selector);
   if (!(element instanceof kind)) throw new Error(`Missing boot element: ${selector}`);
@@ -103,13 +71,12 @@ export class BootScene {
   private _renderer: WebGLRenderer | null = null;
   private _scene: Scene | null = null;
   private _camera: PerspectiveCamera | null = null;
+  private _cameraLook: Vector3 = new Vector3();
   private _spatial: SpatialBootScene = new SpatialBootScene();
   private _chapterTwo: ChapterTwoScene = new ChapterTwoScene();
   private _spatialReady: Promise<void> = Promise.resolve();
   private _audio: IntroAudio = new IntroAudio();
   private _activeChoice: number = 0;
-  private _plate: Mesh<PlaneGeometry, ShaderMaterial> | null = null;
-  private _textures: Texture[] = [];
   private _environment: Texture | null = null;
   private _vfx: ThreeVfxRenderer | null = null;
   private _dust: ThreeVfxEffectInstance | null = null;
@@ -139,16 +106,25 @@ export class BootScene {
   private _lastAudioFormat: number = 0;
   private _lastAudioPhase: BootFrame['phase'] = 'cursor';
   private _lastAudioCorrupt: boolean = false;
-  private _secondMix: number = 0;
   private _isDebug: boolean = false;
   private _diagnosticFrame: number = 0;
   private _frameNumber: number = 0;
   private _hasStarted: boolean = false;
+  private _isStarting: boolean = false;
   private _simulationPaused: boolean = false;
   private _seed: string = String(SEED);
   private _answersCommitted: number = 0;
+  private _chapterTwoStarted: boolean = false;
   private _debugUiHidden: boolean = false;
   private _movementKeys: Set<string> = new Set();
+  private _input: InputController = createInputController();
+  private _gamepadMoveX: number = 0;
+  private _gamepadMoveY: number = 0;
+  private _controlsDiscovered: boolean = false;
+  private _lastInputMode: 'controller' | 'keyboard' | 'touch' = 'controller';
+  private _actionDiscovered: boolean = false;
+  private _pendingChoice: number = -1;
+  private _interlude: ChronicleInterlude | null = null;
   private _currentFrame: BootFrame | null = null;
 
   public init(): void {
@@ -252,47 +228,18 @@ export class BootScene {
       if (!effect) throw new Error('Boot dust is missing');
       this._vfx = new ThreeVfxRenderer({ scene: this._scene, camera: this._camera });
       this._dust = this._vfx.createEffect(effect, { seed: SEED, autoStart: false });
-      let loaded: number = 0;
-      const loader: TextureLoader = new TextureLoader();
-      this._textures = PLATE_URLS.map((url: string): Texture => {
-        const texture: Texture = loader.load(url, (image: Texture): void => {
-          if (this._isDestroyed) { image.dispose(); return; }
-          loaded += 1;
-          if (loaded !== PLATE_URLS.length || !this._plate || !this._root) return;
-          if (!(image.image instanceof HTMLImageElement)) {
-            this._showError('The opening image could not decode. Reload to try again.');
-            return;
-          }
-          this._plate.material.uniforms.imageAspect.value = image.image.width / image.image.height;
-          this._root.dataset.osArtTs = 'ready';
-          this._previousMs = performance.now();
-          this._raf = requestAnimationFrame(this._update);
-        }, undefined, () => this._showError('The opening image could not load. Reload to try again.'));
-        texture.colorSpace = SRGBColorSpace;
-        return texture;
-      });
-      const material: ShaderMaterial = new ShaderMaterial({
-        uniforms: {
-          distantImage: { value: this._textures[0] }, foldImage: { value: this._textures[1] }, thresholdImage: { value: this._textures[2] },
-          firstMix: { value: 0 }, secondMix: { value: 0 }, zoom: { value: 1 }, viewAspect: { value: 1 }, imageAspect: { value: 1 },
-          reveal: { value: 0 }, drift: { value: new Vector2() },
-        },
-        vertexShader: VERTEX_SHADER,
-        fragmentShader: FRAGMENT_SHADER,
-        depthWrite: false,
-      });
-      this._plate = new Mesh(new PlaneGeometry(2, 2), material);
-      this._plate.position.z = -1;
-      this._scene.add(this._plate);
       this._resize();
       if (this._isDebug) this._installTestContracts();
+      if (this._root) this._root.dataset.osArtTs = 'ready';
+      this._previousMs = performance.now();
+      this._raf = requestAnimationFrame(this._update);
     } catch (error: unknown) {
       this._showError(error instanceof Error ? `The opening could not start. ${error.message}` : 'The opening could not start. Reload to try again.');
     }
   }
 
   private _resize(): void {
-    if (!this._renderer || !this._camera || !this._plate || !this._dust) return;
+    if (!this._renderer || !this._camera || !this._dust) return;
     const width: number = window.innerWidth;
     const height: number = window.innerHeight;
     const halfHeight: number = Math.tan(this._camera.fov * Math.PI / 360) * 11;
@@ -301,9 +248,7 @@ export class BootScene {
     this._renderer.setSize(width, height, false);
     this._camera.aspect = width / height;
     this._camera.updateProjectionMatrix();
-    this._plate.scale.set(halfWidth, halfHeight, 1);
     this._spatial.resize(width / height);
-    this._plate.material.uniforms.viewAspect.value = width / height;
     this._dust.root.position.set(halfWidth * 0.3, VIEW_HEIGHT * 0.05, 0);
   }
 
@@ -315,6 +260,7 @@ export class BootScene {
     this._previousMs = performance.now();
     this._storyMode = 'boot';
     this._hasStarted = false;
+    this._isStarting = false;
     this._questionIndex = 0;
     this._storyStartedAt = 0;
     this._canContinue = false;
@@ -323,9 +269,16 @@ export class BootScene {
     this._lastAudioFormat = 0;
     this._lastAudioPhase = 'cursor';
     this._lastAudioCorrupt = false;
-    this._secondMix = 0;
+    this._input.releaseAll();
+    this._gamepadMoveX = 0;
+    this._gamepadMoveY = 0;
+    this._controlsDiscovered = false;
+    this._actionDiscovered = false;
+    this._pendingChoice = -1;
+    this._interlude = null;
     this._simulationPaused = false;
     this._answersCommitted = 0;
+    this._chapterTwoStarted = false;
     this._clearMovement();
     this._spatial.reset();
     this._activeChoice = 0;
@@ -343,7 +296,7 @@ export class BootScene {
   }
 
   private _update = (now: number): void => {
-    if (this._isDestroyed || !this._renderer || !this._scene || !this._camera || !this._plate) return;
+    if (this._isDestroyed || !this._renderer || !this._scene || !this._camera) return;
     const delta: number = Math.min(Math.max((now - this._previousMs) / 1000, 0), MAX_DELTA_SECONDS);
     this._previousMs = now;
     this._frameNumber += 1;
@@ -358,6 +311,7 @@ export class BootScene {
       return;
     }
     if (!document.hidden) {
+      this._pollController();
       this._motionMs += delta * 1000;
       const endMs: number = this._frames[this._frames.length - 1].at;
       if (this._storyMode === 'boot' && this._hasStarted) this._elapsedMs = this._isReduced ? endMs : Math.min(this._elapsedMs + delta * 1000, endMs);
@@ -370,20 +324,16 @@ export class BootScene {
           this._applyFrame(this._frames[next], true);
         }
       }
-      const firstMix: number = this._isReduced ? 0 : Math.min(Math.max((displayMs - FIRST_DISSOLVE_MS) / DISSOLVE_DURATION_MS, 0), 1);
-      const targetSecondMix: number = this._storyMode === 'boot' ? 0 : ['final', 'doorway', 'complete'].includes(this._storyMode) ? 1 : this._questionIndex / Math.max(1, this._questions.length - 1);
-      this._secondMix += (targetSecondMix - this._secondMix) * Math.min(1, delta * (this._isReduced ? 60 : 0.42));
-      this._plate.material.uniforms.firstMix.value = firstMix;
-      this._plate.material.uniforms.secondMix.value = this._secondMix;
-      this._plate.material.uniforms.zoom.value = this._isReduced ? 1 : 1 + Math.min(this._motionMs / ZOOM_DURATION_MS, 1) * 0.06 + this._questionIndex * 0.009;
-      this._plate.material.uniforms.reveal.value = this._isReduced ? 0.7 : Math.min(Math.max((displayMs - 4400) / 1600, 0), 0.85);
-      this._plate.material.uniforms.drift.value.set(this._isReduced ? 0 : Math.sin(this._motionMs / 13000) * 0.019, this._isReduced ? 0 : Math.cos(this._motionMs / 19000) * 0.013);
-      if (!['boot', 'waiting', 'doorway', 'complete'].includes(this._storyMode)) this._updateStory(now);
+      if (!['boot', 'waiting', 'doorway'].includes(this._storyMode)) this._updateStory(now);
       const spatialEvent: number = this._spatial.update(this._motionMs, this._isReduced);
-      if ((this._storyMode === 'waiting' || this._storyMode === 'travel') && this._movementKeys.size > 0) this._audio.move(this._answersCommitted);
-      if (spatialEvent >= 0 && this._storyMode === 'waiting') this._commitChoice(spatialEvent);
+      this._updateCamera(delta);
+      if ((this._storyMode === 'waiting' || this._storyMode === 'travel') && (this._movementKeys.size > 0 || this._gamepadMoveX !== 0 || this._gamepadMoveY !== 0)) this._audio.move(this._answersCommitted);
+      if (spatialEvent >= 0 && this._storyMode === 'waiting') {
+        if (this._questionIndex === 0) this._commitChoice(spatialEvent);
+        else this._stageChoice(spatialEvent);
+      }
       else if (spatialEvent === -2 && this._storyMode === 'travel') this._beginPrelude(this._questionIndex);
-      if (this._root) this._root.dataset.osPlateTs = this._secondMix > 0.98 ? '2' : firstMix === 1 ? '1' : '0';
+      if (this._root) this._root.dataset.osBackgroundTs = 'celestial-depth-field';
       const isDustVisible: boolean = !this._isReduced && displayMs > FIRST_DISSOLVE_MS && displayMs < endMs;
       if (isDustVisible) {
         this._dust?.play();
@@ -422,14 +372,16 @@ export class BootScene {
     this._root.dataset.osStoryModeTs = this._storyMode;
     this._root.dataset.osCorruptTs = frame.isCorrupt ? 'true' : 'false';
     this._root.dataset.osFormatTs = frame.phase === 'waiting' ? 'settled' : String(frame.format);
+    this._root.dataset.osEraTs = getIntroEra(frame.format).label;
     this._root.dataset.osTextTs = 'three';
     this._root.dataset.osQuestionTs = String(this._questionIndex);
+    this._root.dataset.osTutorialActTs = this._tutorialAct();
     this._root.dataset.osCanContinueTs = String(this._canContinue);
     const enter: HTMLButtonElement = getElement('#os-enter-ts', HTMLButtonElement);
     enter.hidden = this._storyMode !== 'doorway';
     enter.disabled = this._storyMode !== 'doorway';
     this._root.dataset.osDoorTs = this._storyMode === 'doorway' ? 'ready' : this._storyMode === 'complete' ? 'crossed' : 'forming';
-    getElement('#os-hint-ts', HTMLElement).textContent = this._storyMode === 'doorway' ? 'Enter · W · step through' : frame.hint ?? 'WASD / arrows · walk into an answer · 1 2 3 / click';
+    getElement('#os-hint-ts', HTMLElement).textContent = [frame.hint, this._controlHint()].filter(Boolean).join(' · ');
     this._spatial.setFrame(frame);
     this._prelude.textContent = frame.prelude;
     this._transcript.textContent = frame.transcript;
@@ -445,6 +397,23 @@ export class BootScene {
     this._soundFrame(frame);
   }
 
+  private _updateCamera(delta: number): void {
+    if (!this._camera) return;
+    const player = this._spatial.getPlayerPosition();
+    const isQuestion: boolean = this._storyMode === 'waiting' || this._storyMode === 'question';
+    const isTravel: boolean = this._storyMode === 'travel';
+    const isThreshold: boolean = this._storyMode === 'doorway' || this._storyMode === 'complete';
+    const targetX: number = isTravel ? player.x * 0.08 : 0;
+    const targetY: number = isTravel ? player.y * 0.055 : isQuestion ? 0.08 : isThreshold ? 0.12 : 0;
+    const targetZ: number = isQuestion ? 8.85 : isTravel ? 9.65 : isThreshold ? 8.35 : this._storyMode === 'boot' ? 10.25 : 9.6;
+    const blend: number = this._isReduced ? 1 : 1 - Math.exp(-Math.max(0, delta) * (isQuestion ? 2.6 : isThreshold ? 2.2 : 1.6));
+    this._camera.position.x += (targetX - this._camera.position.x) * blend;
+    this._camera.position.y += (targetY - this._camera.position.y) * blend;
+    this._camera.position.z += (targetZ - this._camera.position.z) * blend;
+    this._cameraLook.set(0, isQuestion ? 0.08 : isTravel ? player.y * 0.025 : 0, 0);
+    this._camera.lookAt(this._cameraLook);
+  }
+
   private _highlightChoice(index: number): void {
     const inputs: NodeListOf<HTMLInputElement> = document.querySelectorAll<HTMLInputElement>('input[name="story"]');
     if (!inputs[index] || inputs[index].disabled) return;
@@ -457,6 +426,7 @@ export class BootScene {
     if (this._storyMode !== 'waiting') return;
     this._highlightChoice(index);
     this._selectedChoice = index;
+    this._pendingChoice = -1;
     this._answersCommitted += 1;
     const question: ChronicleQuestion = this._questions[this._questionIndex];
     this._spatial.commitChoice(index);
@@ -471,12 +441,22 @@ export class BootScene {
     this._clearMovement();
   }
 
+  private _stageChoice(index: number): void {
+    if (this._storyMode !== 'waiting') return;
+    this._pendingChoice = index;
+    this._highlightChoice(index);
+    this._spatial.stageChoice(index);
+    this._clearMovement();
+    getElement('#os-hint-ts', HTMLElement).textContent = this._controlHint();
+  }
+
   private _beginPrelude(index: number): void {
     this._questionIndex = index;
     this._storyMode = 'prelude';
     this._storyStartedAt = performance.now();
     this._canContinue = false;
     this._selectedChoice = -1;
+    this._pendingChoice = -1;
     this._activeChoice = 0;
     this._spatial.select(-1);
     this._clearNativeChoices();
@@ -490,7 +470,21 @@ export class BootScene {
     this._storyStartedAt = performance.now();
     this._canContinue = false;
     this._spatial.beginJourney();
-    this._applyFrame(this._storyFrame('', 'travel', this._questions[index].era, 'W / ↑  //  WALK UNTIL IT ASKS', 0));
+    this._applyFrame(this._storyFrame('', 'travel', this._questions[index].era, undefined, 0));
+  }
+
+  private _beginCommentary(interlude: ChronicleInterlude): void {
+    this._interlude = interlude;
+    this._storyMode = 'commentary';
+    this._storyStartedAt = performance.now();
+    this._canContinue = false;
+    this._audio.commentary(interlude.ownerIndex);
+  }
+
+  private _continueAfterResponse(): void {
+    this._interlude = null;
+    if (this._questionIndex >= this._questions.length - 1) this._beginFinal();
+    else this._beginTravel(this._questionIndex + 1);
   }
 
   private _beginQuestion(): void {
@@ -517,18 +511,24 @@ export class BootScene {
       return;
     }
     if (this._storyMode === 'response') {
-      if (this._questionIndex >= this._questions.length - 1) this._beginFinal();
-      else this._beginTravel(this._questionIndex + 1);
+      const interlude: ChronicleInterlude | null = getChronicleInterlude(this._questionIndex, this._selectedChoice);
+      if (interlude) this._beginCommentary(interlude);
+      else this._continueAfterResponse();
+      return;
+    }
+    if (this._storyMode === 'commentary') {
+      this._continueAfterResponse();
     }
   }
 
   private _enterDoor(): void {
     if (this._storyMode !== 'doorway') return;
     this._storyMode = 'complete';
+    this._storyStartedAt = performance.now();
+    this._chapterTwoStarted = false;
     this._canContinue = false;
     this._clearMovement();
-    this._applyFrame(this._storyFrame(CHRONICLE_FINAL, 'complete', 4, 'ALL THREE FOLLOWED', 12000));
-    this._chapterTwo.start('All Three');
+    this._applyFrame(this._storyFrame(CHRONICLE_FINAL, 'complete', 4, 'ALL THREE FOLLOWED', 0));
   }
 
   private _updateStory(now: number): void {
@@ -538,7 +538,7 @@ export class BootScene {
       const text: string = this._typed(question.prelude, elapsedMs, 44);
       const complete: boolean = text.length >= question.prelude.length;
       this._canContinue = complete;
-      this._applyFrame(this._storyFrame(text, 'prelude', question.era, complete ? 'ENTER  //  LET IT ASK' : undefined, elapsedMs));
+      this._applyFrame(this._storyFrame(text, 'prelude', question.era, complete ? 'THE QUESTION IS READY' : undefined, elapsedMs));
       return;
     }
     if (this._storyMode === 'question') {
@@ -558,23 +558,41 @@ export class BootScene {
     }
     if (this._storyMode === 'response' && this._selectedChoice >= 0) {
       const response: string = question.choices[this._selectedChoice].response;
-      const speed: number[] = [43, 39, 35, 32];
-      const typed: string = this._typed(response, elapsedMs, speed[this._questionIndex]);
-      const complete: boolean = typed.length >= response.length;
-      const display: string = this._dreamweaverWriting(typed, elapsedMs, this._selectedChoice, complete);
+      const beat = this._responseBeat(response, elapsedMs, this._selectedChoice);
+      const display: string = this._dreamweaverWriting(beat.text, elapsedMs, this._selectedChoice, beat.complete);
+      const complete: boolean = beat.complete;
       this._canContinue = complete;
-      this._applyFrame(this._storyFrame(display, 'response', question.era, complete ? (this._questionIndex < this._questions.length - 1 ? 'ENTER  //  WALK ON' : 'ENTER  //  OPEN THE THRESHOLD') : undefined, elapsedMs));
+      this._applyFrame(this._storyFrame(display, 'response', question.era, complete ? (this._questionIndex < this._questions.length - 1 ? 'THE PATH IS OPEN' : 'THE THRESHOLD IS OPEN') : undefined, elapsedMs, false, this._selectedChoice));
+      return;
+    }
+    if (this._storyMode === 'commentary' && this._interlude) {
+      const silenceMs: number[] = [650, 1250, 480];
+      const speedMs: number[] = [38, 48, 32];
+      const writingMs: number = Math.max(0, elapsedMs - silenceMs[this._interlude.ownerIndex]);
+      const typed: string = this._typed(this._interlude.text, writingMs, speedMs[this._interlude.ownerIndex]);
+      const complete: boolean = typed.length >= this._interlude.text.length;
+      this._canContinue = complete;
+      this._applyFrame(this._storyFrame(typed, 'response', question.era, complete ? 'THE PATH IS OPEN' : undefined, elapsedMs, false, this._interlude.ownerIndex));
       return;
     }
     if (this._storyMode === 'final') {
       const text: string = this._finalText(elapsedMs);
       const complete: boolean = text.length >= CHRONICLE_FINAL.length;
       if (complete) this._storyMode = 'doorway';
-      this._applyFrame(this._storyFrame(text, complete ? 'doorway' : 'final', 4, complete ? 'ALL THREE FOLLOWED · STEP THROUGH' : undefined, elapsedMs));
+      this._applyFrame(this._storyFrame(text, complete ? 'doorway' : 'final', 4, complete ? 'ALL THREE FOLLOWED' : undefined, elapsedMs));
+      return;
+    }
+    if (this._storyMode === 'complete') {
+      const crossingMs: number = this._isReduced ? 0 : 2800;
+      this._applyFrame(this._storyFrame(CHRONICLE_FINAL, 'complete', 4, 'ALL THREE FOLLOWED', elapsedMs));
+      if (!this._chapterTwoStarted && elapsedMs >= crossingMs) {
+        this._chapterTwoStarted = true;
+        this._chapterTwo.start('All Three');
+      }
     }
   }
 
-  private _storyFrame(text: string, phase: BootFrame['phase'], format: number, hint: string | undefined, phaseElapsedMs: number, isCorrupt: boolean = false): BootFrame {
+  private _storyFrame(text: string, phase: BootFrame['phase'], format: number, hint: string | undefined, phaseElapsedMs: number, isCorrupt: boolean = false, speaker?: number): BootFrame {
     const question: ChronicleQuestion = this._questions[Math.min(this._questionIndex, this._questions.length - 1)];
     return {
       at: this._motionMs,
@@ -587,12 +605,45 @@ export class BootScene {
       format,
       phaseElapsedMs,
       hint,
+      speaker,
     };
   }
 
   private _typed(text: string, elapsedMs: number, millisecondsPerCharacter: number): string {
     if (this._isReduced) return text;
     return text.slice(0, Math.min(text.length, Math.floor(elapsedMs / millisecondsPerCharacter)));
+  }
+
+  private _responseBeat(response: string, elapsedMs: number, owner: number): { text: string; complete: boolean } {
+    if (this._isReduced) return { text: response, complete: true };
+    const parts: string[] = response.split('\n\n');
+    const body: string = parts[0] ?? response;
+    const audit: string = parts.slice(1).join('\n\n');
+    const lines: string[] = body.split('\n').filter(Boolean);
+    const speeds: number[] = [42, 48, 34];
+    const gaps: number[] = [620, 1120, 420];
+    const openingSilence: number[] = [280, 920, 480];
+    let cursor: number = openingSilence[owner];
+    let visible: string = '';
+    for (let index: number = 0; index < lines.length; index += 1) {
+      const line: string = lines[index];
+      const available: number = Math.max(0, elapsedMs - cursor);
+      const count: number = Math.min(line.length, Math.floor(available / speeds[owner]));
+      visible += line.slice(0, count);
+      if (count < line.length) return { text: visible, complete: false };
+      if (index < lines.length - 1) visible += '\n';
+      cursor += line.length * speeds[owner] + gaps[owner];
+    }
+    const showAudit: boolean = this._questionIndex === 0 || this._questionIndex === this._questions.length - 1;
+    if (showAudit && audit) {
+      cursor += 760;
+      const available: number = Math.max(0, elapsedMs - cursor);
+      const count: number = Math.min(audit.length, Math.floor(available / 28));
+      visible += `\n\n${audit.slice(0, count)}`;
+      if (count < audit.length) return { text: visible, complete: false };
+      cursor += audit.length * 28;
+    }
+    return { text: visible, complete: elapsedMs >= cursor + 520 };
   }
 
   private _dreamweaverWriting(text: string, elapsedMs: number, owner: number, complete: boolean): string {
@@ -649,12 +700,14 @@ export class BootScene {
     this._root.dataset.osAudioCorrectionsTs = String(cues.correction);
   }
 
-  private async _beginBootFromGesture(): Promise<void> {
-    if (this._hasStarted) return;
+  private async _beginBootFromGesture(allowSilentStart: boolean = false): Promise<void> {
+    if (this._hasStarted || this._isStarting) return;
+    this._isStarting = true;
     const [unlocked] = await Promise.all([this._audio.unlock(), this._spatialReady]);
-    if (!unlocked) {
+    if (!unlocked && !allowSilentStart) {
       if (this._root) this._root.dataset.osAudioTs = 'unavailable';
       this._syncAudioLabel();
+      this._isStarting = false;
       return;
     }
     this._hasStarted = true;
@@ -666,6 +719,7 @@ export class BootScene {
     this._syncAudioDiagnostics();
     this._previousMs = performance.now();
     this._syncAudioLabel();
+    this._isStarting = false;
   }
 
   private async _unlockAudio(): Promise<void> {
@@ -681,11 +735,70 @@ export class BootScene {
   }
 
   private _syncMovement(): void {
+    if (this._pendingChoice >= 0) {
+      this._spatial.setMovement(0, 0);
+      return;
+    }
     const left: number = this._movementKeys.has('ArrowLeft') || this._movementKeys.has('a') || this._movementKeys.has('touch-left') ? 1 : 0;
     const right: number = this._movementKeys.has('ArrowRight') || this._movementKeys.has('d') || this._movementKeys.has('touch-right') ? 1 : 0;
     const down: number = this._movementKeys.has('ArrowDown') || this._movementKeys.has('s') || this._movementKeys.has('touch-down') ? 1 : 0;
     const up: number = this._movementKeys.has('ArrowUp') || this._movementKeys.has('w') || this._movementKeys.has('touch-up') ? 1 : 0;
-    this._spatial.setMovement(right - left, up - down);
+    const moveX: number = Math.max(-1, Math.min(1, right - left + this._gamepadMoveX));
+    const moveY: number = Math.max(-1, Math.min(1, up - down + this._gamepadMoveY));
+    this._spatial.setMovement(moveX, moveY);
+  }
+
+  private _controlHint(): string {
+    if (!this._controlsDiscovered) return '';
+    if (this._storyMode === 'doorway') return this._actionDiscovered ? (this._lastInputMode === 'controller' ? 'A · cross the threshold' : 'Enter · step through') : '';
+    if (this._canContinue) return this._actionDiscovered ? (this._lastInputMode === 'controller' ? 'A · continue' : 'Enter · continue') : '';
+    if (this._storyMode !== 'waiting' && this._storyMode !== 'travel') return '';
+    if (this._pendingChoice >= 0) {
+      if (!this._actionDiscovered) return '';
+      return this._lastInputMode === 'controller' ? 'A · answer' : 'Enter · answer';
+    }
+    if (this._lastInputMode === 'controller') return 'left stick · move';
+    if (this._lastInputMode === 'touch') return 'move';
+    return 'WASD / arrows · move';
+  }
+
+  private _tutorialAct(): 'movement' | 'action' | 'resonance' {
+    if (this._questionIndex === 0) return 'movement';
+    if (this._questionIndex === 1) return 'action';
+    return 'resonance';
+  }
+
+  private _discoverControls(mode: 'controller' | 'keyboard' | 'touch'): void {
+    this._controlsDiscovered = true;
+    this._lastInputMode = mode;
+    if (this._root) this._root.dataset.osControlsTs = mode;
+    getElement('#os-hint-ts', HTMLElement).textContent = this._controlHint();
+  }
+
+  private _pollController(): void {
+    const intents: Intents = this._input.readIntents();
+    this._gamepadMoveX = intents.moveX;
+    this._gamepadMoveY = intents.moveY;
+    const usedController: boolean = intents.moveX !== 0 || intents.moveY !== 0 || intents.act || intents.dash || intents.pause;
+    if (usedController) this._discoverControls('controller');
+    if (intents.act || intents.dash) this._actionDiscovered = true;
+    if (!this._hasStarted && usedController) {
+      // Gamepad polling is not consistently recognized as browser activation.
+      // Start the visual timeline, then let the next recognized gesture wake audio.
+      void this._beginBootFromGesture(true);
+      return;
+    }
+    if (this._storyMode === 'waiting' || this._storyMode === 'travel') this._syncMovement();
+    else if (this._gamepadMoveX !== 0 || this._gamepadMoveY !== 0) this._spatial.setMovement(0, 0);
+    if (this._storyMode === 'doorway' && (intents.act || intents.dash)) {
+      this._enterDoor();
+      return;
+    }
+    if (this._storyMode === 'waiting' && this._pendingChoice >= 0 && (intents.act || intents.dash)) {
+      this._commitChoice(this._pendingChoice);
+      return;
+    }
+    if (this._canContinue && (intents.act || intents.dash)) this._advanceStory();
   }
 
   private _bindTouchControls(signal: AbortSignal): void {
@@ -702,6 +815,7 @@ export class BootScene {
         button.setPointerCapture(event.pointerId);
         button.dataset.osActive = 'true';
         this._movementKeys.add(key);
+        this._discoverControls('touch');
         this._syncMovement();
       }, { signal });
       button.addEventListener('pointerup', release, { signal });
@@ -712,6 +826,8 @@ export class BootScene {
 
   private _clearMovement(): void {
     this._movementKeys.clear();
+    this._gamepadMoveX = 0;
+    this._gamepadMoveY = 0;
     this._spatial.setMovement(0, 0);
     document.querySelectorAll<HTMLButtonElement>('[data-os-move]').forEach((button: HTMLButtonElement): void => { button.dataset.osActive = 'false'; });
   }
@@ -732,6 +848,11 @@ export class BootScene {
     }
     void this._unlockAudio();
     const key: string = event.key.length === 1 ? event.key.toLowerCase() : event.key;
+    const isAction: boolean = event.key === 'Enter' || event.key === ' ';
+    if (isAction) {
+      this._actionDiscovered = true;
+      this._discoverControls('keyboard');
+    }
     if (this._storyMode === 'doorway' && ['Enter', ' ', 'ArrowUp', 'w'].includes(key)) {
       event.preventDefault();
       this._enterDoor();
@@ -740,6 +861,7 @@ export class BootScene {
     if ((this._storyMode === 'waiting' || this._storyMode === 'travel') && ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'w', 'a', 's', 'd'].includes(key)) {
       event.preventDefault();
       this._movementKeys.add(key);
+      this._discoverControls('keyboard');
       this._syncMovement();
       return;
     }
@@ -758,6 +880,11 @@ export class BootScene {
       this._advanceStory();
       return;
     }
+    if (this._storyMode === 'waiting' && this._pendingChoice >= 0 && isAction) {
+      event.preventDefault();
+      this._commitChoice(this._pendingChoice);
+      return;
+    }
     if (this._storyMode === 'waiting' && [' ', 'Enter', '1', '2', '3'].includes(event.key)) {
       event.preventDefault();
       if (['1', '2', '3'].includes(event.key)) {
@@ -765,7 +892,9 @@ export class BootScene {
         this._commitChoice(this._activeChoice);
         return;
       }
-      if (event.key === 'Enter' || event.key === ' ') this._commitChoice(this._activeChoice);
+      if (event.key === 'Enter' || event.key === ' ') {
+        if (this._questionIndex === 0) this._commitChoice(this._activeChoice);
+      }
       else this._highlightChoice(this._activeChoice);
     }
   };
@@ -782,11 +911,9 @@ export class BootScene {
     cancelAnimationFrame(this._raf);
     this._abort.abort();
     this._vfx?.destroy();
+    this._input.dispose();
     this._spatial.destroy();
     this._chapterTwo.destroy();
-    this._plate?.geometry.dispose();
-    this._plate?.material.dispose();
-    this._textures.forEach((texture: Texture): void => texture.dispose());
     this._environment?.dispose();
     this._audio.destroy();
     this._renderer?.dispose();
@@ -851,6 +978,7 @@ export class BootScene {
     this._elapsedMs = this._frames.at(-1)?.at ?? 0;
     this._frameIndex = this._frames.length - 1;
     this._selectedChoice = -1;
+    this._pendingChoice = -1;
     this._activeChoice = 0;
     this._canContinue = false;
     this._spatial.select(-1);
@@ -873,7 +1001,7 @@ export class BootScene {
     this._storyStartedAt = performance.now();
     if (name === 'final-door') {
       this._storyMode = 'doorway';
-      this._applyFrame(this._storyFrame(CHRONICLE_FINAL, 'doorway', 4, 'ALL THREE FOLLOWED · STEP THROUGH', 12000));
+      this._applyFrame(this._storyFrame(CHRONICLE_FINAL, 'doorway', 4, 'ALL THREE FOLLOWED', 12000));
       this._spatial.settleForTestState(this._motionMs);
       this._refreshStaticFrame();
       return;
@@ -915,6 +1043,9 @@ export class BootScene {
       failed: false,
       canContinue: this._canContinue,
       selectedChoice: this._selectedChoice >= 0 ? this._selectedChoice : this._activeChoice,
+      pendingChoice: this._pendingChoice,
+      actionDiscovered: this._actionDiscovered,
+      tutorialAct: this._tutorialAct(),
       playerPosition: this._spatial.getPlayerPosition(),
       choiceTargets: this._spatial.getChoiceTargets(),
       seed: this._seed,
