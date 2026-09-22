@@ -4,6 +4,7 @@ interface BotState {
   frame: number;
   storyMode: string;
   canContinue: boolean;
+  pendingChoice: number;
   objectiveProgress: number;
   complete: boolean;
   playerPosition: { x: number; y: number; z: number };
@@ -92,9 +93,12 @@ test('observable bot steers through four answer routes and steps through the fin
     await steer(
       page,
       async (): Promise<number> => (await readState(page)).choiceTargets[choice].x,
-      (state: BotState): boolean => state.storyMode === 'response',
+      (state: BotState): boolean => state.storyMode === 'response' || state.pendingChoice === choice,
       metrics,
     );
+    const reached: BotState = await readState(page);
+    if (reached.storyMode === 'waiting' && reached.pendingChoice === choice) await page.keyboard.press('Enter');
+    await expect.poll(async (): Promise<string> => (await readState(page)).storyMode).toBe('response');
     await expect.poll(async (): Promise<boolean> => (await readState(page)).canContinue).toBe(true);
     await page.keyboard.press('Enter');
     if (question < metrics.choices.length - 1) {
