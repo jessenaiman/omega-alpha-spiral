@@ -1,44 +1,21 @@
 {
   "version": 1,
-  "runId": "pass-3",
+  "runId": "team-foundation-20260922",
   "captures": [
     {
       "mode": "desktop",
-      "state": "active-play",
-      "report": "artifacts/pass-3/desktop-active-play.json"
+      "state": "question-4",
+      "report": "artifacts/team-foundation-20260922/desktop-question-4.json"
     },
     {
       "mode": "mobile",
-      "state": "active-play",
-      "report": "artifacts/pass-3/mobile-active-play.json"
+      "state": "question-2",
+      "report": "artifacts/team-foundation-20260922/mobile-question-2.json"
     },
     {
       "mode": "desktop",
-      "state": "game-over",
-      "report": "artifacts/pass-3/desktop-game-over.json"
-    },
-    {
-      "mode": "desktop",
-      "state": "menu",
-      "report": "artifacts/pass-3/desktop-menu.json"
-    },
-    {
-      "mode": "desktop",
-      "state": "victory",
-      "report": "artifacts/pass-3/desktop-victory.json"
+      "state": "complete",
+      "report": "artifacts/team-foundation-20260922/desktop-complete.json"
     }
-  ],
-  "artifacts": [
-    "spiral-breaker.html",
-    "src/arcade/game/rules.ts",
-    "src/arcade/game/autopilot.ts",
-    "src/arcade/game/tuning.ts",
-    "src/arcade/host.ts",
-    "src/arcade/present/renderer.ts",
-    "src/arcade/present/actors.ts",
-    "src/arcade/present/vfx.ts",
-    "src/arcade/audio/sfx.ts",
-    "src/arcade/ui/hud.ts",
-    "artifacts/qa/bot-playtest.json"
   ]
 }

@@ -15,6 +15,7 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host 127.0.0.1",
     "inspect:canvas": "node scripts/inspect-threejs-canvas.mjs",
+    "verify:visual": "python .agents/skills/threejs-game-director/scripts/check_evidence.py . --manifest artifacts/evidence.json --report artifacts/final-evidence.md",
     "prepare": "husky"
   },
   "dependencies": {
