@@ -3,8 +3,10 @@ import { ThreeVfxRenderer, type ThreeVfxEffectInstance } from 'nixie-fx/three';
 import { ACESFilmicToneMapping, PerspectiveCamera, PMREMGenerator, Scene, SRGBColorSpace, Texture, WebGLRenderer } from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
+import { createInputController, type InputController, type Intents } from '../core/input';
 import { CHRONICLE_FINAL, CHRONICLE_FINAL_DRAFT, createChronicleQuestions, type ChronicleQuestion } from './chronicle';
 import { createBootFrames, type BootFrame } from './ghostwriting';
+import { getIntroEra } from './IntroEraDesign';
 import { IntroAudio } from './IntroAudio';
 import type { IntroPhysicsDiagnostics } from './IntroPhysics';
 import { BOOT_EFFECTS, SpatialBootScene } from './SpatialBootScene';
@@ -104,11 +106,17 @@ export class BootScene {
   private _diagnosticFrame: number = 0;
   private _frameNumber: number = 0;
   private _hasStarted: boolean = false;
+  private _isStarting: boolean = false;
   private _simulationPaused: boolean = false;
   private _seed: string = String(SEED);
   private _answersCommitted: number = 0;
   private _debugUiHidden: boolean = false;
   private _movementKeys: Set<string> = new Set();
+  private _input: InputController = createInputController();
+  private _gamepadMoveX: number = 0;
+  private _gamepadMoveY: number = 0;
+  private _controlsDiscovered: boolean = false;
+  private _lastInputMode: 'controller' | 'keyboard' | 'touch' = 'controller';
   private _currentFrame: BootFrame | null = null;
 
   public init(): void {
@@ -244,6 +252,7 @@ export class BootScene {
     this._previousMs = performance.now();
     this._storyMode = 'boot';
     this._hasStarted = false;
+    this._isStarting = false;
     this._questionIndex = 0;
     this._storyStartedAt = 0;
     this._canContinue = false;
@@ -252,6 +261,10 @@ export class BootScene {
     this._lastAudioFormat = 0;
     this._lastAudioPhase = 'cursor';
     this._lastAudioCorrupt = false;
+    this._input.releaseAll();
+    this._gamepadMoveX = 0;
+    this._gamepadMoveY = 0;
+    this._controlsDiscovered = false;
     this._simulationPaused = false;
     this._answersCommitted = 0;
     this._clearMovement();
@@ -286,6 +299,7 @@ export class BootScene {
       return;
     }
     if (!document.hidden) {
+      this._pollController();
       this._motionMs += delta * 1000;
       const endMs: number = this._frames[this._frames.length - 1].at;
       if (this._storyMode === 'boot' && this._hasStarted) this._elapsedMs = this._isReduced ? endMs : Math.min(this._elapsedMs + delta * 1000, endMs);
@@ -300,10 +314,10 @@ export class BootScene {
       }
       if (!['boot', 'waiting', 'doorway', 'complete'].includes(this._storyMode)) this._updateStory(now);
       const spatialEvent: number = this._spatial.update(this._motionMs, this._isReduced);
-      if ((this._storyMode === 'waiting' || this._storyMode === 'travel') && this._movementKeys.size > 0) this._audio.move(this._answersCommitted);
+      if ((this._storyMode === 'waiting' || this._storyMode === 'travel') && (this._movementKeys.size > 0 || this._gamepadMoveX !== 0 || this._gamepadMoveY !== 0)) this._audio.move(this._answersCommitted);
       if (spatialEvent >= 0 && this._storyMode === 'waiting') this._commitChoice(spatialEvent);
       else if (spatialEvent === -2 && this._storyMode === 'travel') this._beginPrelude(this._questionIndex);
-      if (this._root) this._root.dataset.osBackgroundTs = 'procedural-lemniscate';
+      if (this._root) this._root.dataset.osBackgroundTs = 'celestial-depth-field';
       const isDustVisible: boolean = !this._isReduced && displayMs > FIRST_DISSOLVE_MS && displayMs < endMs;
       if (isDustVisible) {
         this._dust?.play();
@@ -342,6 +356,7 @@ export class BootScene {
     this._root.dataset.osStoryModeTs = this._storyMode;
     this._root.dataset.osCorruptTs = frame.isCorrupt ? 'true' : 'false';
     this._root.dataset.osFormatTs = frame.phase === 'waiting' ? 'settled' : String(frame.format);
+    this._root.dataset.osEraTs = getIntroEra(frame.format).label;
     this._root.dataset.osTextTs = 'three';
     this._root.dataset.osQuestionTs = String(this._questionIndex);
     this._root.dataset.osCanContinueTs = String(this._canContinue);
@@ -349,7 +364,7 @@ export class BootScene {
     enter.hidden = this._storyMode !== 'doorway';
     enter.disabled = this._storyMode !== 'doorway';
     this._root.dataset.osDoorTs = this._storyMode === 'doorway' ? 'ready' : this._storyMode === 'complete' ? 'crossed' : 'forming';
-    getElement('#os-hint-ts', HTMLElement).textContent = this._storyMode === 'doorway' ? 'Enter · W · step through' : frame.hint ?? 'WASD / arrows · walk into an answer · 1 2 3 / click';
+    getElement('#os-hint-ts', HTMLElement).textContent = frame.hint ?? this._controlHint();
     this._spatial.setFrame(frame);
     this._prelude.textContent = frame.prelude;
     this._transcript.textContent = frame.transcript;
@@ -569,12 +584,14 @@ export class BootScene {
     this._root.dataset.osAudioCorrectionsTs = String(cues.correction);
   }
 
-  private async _beginBootFromGesture(): Promise<void> {
-    if (this._hasStarted) return;
+  private async _beginBootFromGesture(allowSilentStart: boolean = false): Promise<void> {
+    if (this._hasStarted || this._isStarting) return;
+    this._isStarting = true;
     const [unlocked] = await Promise.all([this._audio.unlock(), this._spatialReady]);
-    if (!unlocked) {
+    if (!unlocked && !allowSilentStart) {
       if (this._root) this._root.dataset.osAudioTs = 'unavailable';
       this._syncAudioLabel();
+      this._isStarting = false;
       return;
     }
     this._hasStarted = true;
@@ -586,6 +603,7 @@ export class BootScene {
     this._syncAudioDiagnostics();
     this._previousMs = performance.now();
     this._syncAudioLabel();
+    this._isStarting = false;
   }
 
   private async _unlockAudio(): Promise<void> {
@@ -605,7 +623,46 @@ export class BootScene {
     const right: number = this._movementKeys.has('ArrowRight') || this._movementKeys.has('d') || this._movementKeys.has('touch-right') ? 1 : 0;
     const down: number = this._movementKeys.has('ArrowDown') || this._movementKeys.has('s') || this._movementKeys.has('touch-down') ? 1 : 0;
     const up: number = this._movementKeys.has('ArrowUp') || this._movementKeys.has('w') || this._movementKeys.has('touch-up') ? 1 : 0;
-    this._spatial.setMovement(right - left, up - down);
+    const moveX: number = Math.max(-1, Math.min(1, right - left + this._gamepadMoveX));
+    const moveY: number = Math.max(-1, Math.min(1, up - down + this._gamepadMoveY));
+    this._spatial.setMovement(moveX, moveY);
+  }
+
+  private _controlHint(): string {
+    if (!this._controlsDiscovered) return '';
+    if (this._storyMode === 'doorway') return this._lastInputMode === 'controller' ? 'A · cross the threshold' : 'Enter · step through';
+    if (this._storyMode !== 'waiting' && this._storyMode !== 'travel') return '';
+    if (this._lastInputMode === 'controller') return 'left stick · move';
+    if (this._lastInputMode === 'touch') return 'move';
+    return 'WASD / arrows · move';
+  }
+
+  private _discoverControls(mode: 'controller' | 'keyboard' | 'touch'): void {
+    this._controlsDiscovered = true;
+    this._lastInputMode = mode;
+    if (this._root) this._root.dataset.osControlsTs = mode;
+    getElement('#os-hint-ts', HTMLElement).textContent = this._controlHint();
+  }
+
+  private _pollController(): void {
+    const intents: Intents = this._input.readIntents();
+    this._gamepadMoveX = intents.moveX;
+    this._gamepadMoveY = intents.moveY;
+    const usedController: boolean = intents.moveX !== 0 || intents.moveY !== 0 || intents.act || intents.dash || intents.pause;
+    if (usedController) this._discoverControls('controller');
+    if (!this._hasStarted && usedController) {
+      // Gamepad polling is not consistently recognized as browser activation.
+      // Start the visual timeline, then let the next recognized gesture wake audio.
+      void this._beginBootFromGesture(true);
+      return;
+    }
+    if (this._storyMode === 'waiting' || this._storyMode === 'travel') this._syncMovement();
+    else if (this._gamepadMoveX !== 0 || this._gamepadMoveY !== 0) this._spatial.setMovement(0, 0);
+    if (this._storyMode === 'doorway' && (intents.act || intents.dash)) {
+      this._enterDoor();
+      return;
+    }
+    if (this._canContinue && intents.act) this._advanceStory();
   }
 
   private _bindTouchControls(signal: AbortSignal): void {
@@ -622,6 +679,7 @@ export class BootScene {
         button.setPointerCapture(event.pointerId);
         button.dataset.osActive = 'true';
         this._movementKeys.add(key);
+        this._discoverControls('touch');
         this._syncMovement();
       }, { signal });
       button.addEventListener('pointerup', release, { signal });
@@ -632,6 +690,8 @@ export class BootScene {
 
   private _clearMovement(): void {
     this._movementKeys.clear();
+    this._gamepadMoveX = 0;
+    this._gamepadMoveY = 0;
     this._spatial.setMovement(0, 0);
     document.querySelectorAll<HTMLButtonElement>('[data-os-move]').forEach((button: HTMLButtonElement): void => { button.dataset.osActive = 'false'; });
   }
@@ -660,6 +720,7 @@ export class BootScene {
     if ((this._storyMode === 'waiting' || this._storyMode === 'travel') && ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'w', 'a', 's', 'd'].includes(key)) {
       event.preventDefault();
       this._movementKeys.add(key);
+      this._discoverControls('keyboard');
       this._syncMovement();
       return;
     }
@@ -702,6 +763,7 @@ export class BootScene {
     cancelAnimationFrame(this._raf);
     this._abort.abort();
     this._vfx?.destroy();
+    this._input.dispose();
     this._spatial.destroy();
     this._chapterTwo.destroy();
     this._environment?.dispose();

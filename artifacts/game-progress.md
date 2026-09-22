@@ -7,7 +7,30 @@
 - Preserve the approved four-question chronicle, chronological typing eras, audible ghostwriting, three followers, and final threshold.
 - This pass implements decisions already made. New interlude prose and further concept brainstorming remain deferred.
 
-## Procedural lemniscate checkpoint — September 21, 2026
+## Layered display chronology checkpoint — September 21, 2026
+
+- [x] Replaced single-era font swapping with a six-generation display composite:
+  Atari 2600, IBM PC/CGA, Commodore 64, Macintosh, Amiga, then Nintendo.
+- [x] Each generation supplies its own raster density, palette, bit depth,
+  scanline strength, buried-layer persistence, and native signal damage.
+- [x] Recovered generations remain faintly visible beneath the current one;
+  newer technology accumulates instead of erasing the older display.
+- [x] Scrambling is now a downstream signal-damage pass over the composited
+  historical output, not the source of the typography.
+- [x] Dreamweaver breach beats are separated in time. Earlier arrivals dim into
+  witnesses while the newest strand and silhouette command attention.
+- [x] Superseded the full-screen lemniscate with a neutral celestial depth field;
+  Dreamweaver colors now belong to their calls and paths rather than the backdrop.
+- [x] Added a procedural, slowly drifting nebula plane behind the 3D star volume;
+  its shader deliberately clears the central reading corridor.
+- [x] Scene One now owns this celestial world. Logo/title-introduction design is
+  explicitly deferred instead of being implied by the first playable scene.
+- [ ] Basic build and live-page check require owner approval under repository
+  testing rules; this checkpoint is not yet claimed verified at runtime.
+- [ ] Next creative loop: author Light's straight cut, Shadow's segmented route,
+  and Ambition's yellow/violet counter-curve as distinct calling paths.
+
+## Superseded procedural lemniscate checkpoint — September 21, 2026
 
 - [x] Removed the three optical reference plates from the intro runtime.
 - [x] Replaced them with one Bernoulli lemniscate rendered as moving GPU pixels
@@ -19,10 +42,27 @@
 - [x] Responsive scaling keeps the equation visible on narrow viewports without
   introducing a second background implementation.
 - [x] Live desktop inspection confirms the equation and pixel circulation render.
+- [x] Owner review rejected the equation as the first-scene background. It remains
+  historical comparison evidence only and is removed from the runtime.
 - [ ] Recompose boot/question text around a protected central reading corridor.
 - [ ] Convert the three visual strands into the authored 3D travel paths.
-- [ ] Add controller-first forward/back movement and diegetic control discovery.
+- [x] Add controller-first forward/back movement and diegetic control discovery.
 - [ ] Make each Dreamweaver call illuminate its path toward the player.
+
+## Scene One celestial/controller checkpoint — September 21, 2026
+
+- [x] Removed the rejected lemniscate particles and line meshes from runtime.
+- [x] Added a procedural celestial volume: neutral temperature-varied stars,
+  depth-banded reveal, slow parallax orbit, and a low-opacity nebula shader.
+- [x] Preserved the center as negative space for questions; the final black
+  particle threshold no longer forms behind ordinary question states.
+- [x] Reused the shared input-intent controller for left-stick movement and
+  controller action edges instead of adding intro-only gamepad polling.
+- [x] Removed the travel-only forward clamp; backward movement now reaches the
+  same deterministic physics step as forward movement.
+- [x] Removed always-visible control instructions. The input hint appears only
+  after the player first uses keyboard, touch, or controller input.
+- [ ] Runtime build and live visual/controller checks remain owner-gated.
 
 ## Active checklist
 

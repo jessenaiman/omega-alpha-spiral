@@ -1,10 +1,11 @@
 import {
-  AdditiveBlending, AmbientLight, BoxGeometry, BufferAttribute, BufferGeometry, CanvasTexture, DirectionalLight, DoubleSide,
+  AdditiveBlending, AmbientLight, BoxGeometry, BufferAttribute, BufferGeometry, CanvasTexture, Color, DirectionalLight, DoubleSide,
   Group, Line, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, MeshStandardMaterial, NearestFilter, PerspectiveCamera, PointLight, Raycaster,
-  Scene, SRGBColorSpace, Vector2, Vector3,
+  Scene, ShaderMaterial, SRGBColorSpace, Vector2, Vector3,
 } from 'three';
 
 import { BOOT_OPTIONS, BOOT_SYMBOLS, type BootFrame } from './ghostwriting';
+import { getIntroEra, INTRO_ERAS, type IntroEraDesign } from './IntroEraDesign';
 import { IntroParticleField } from './IntroParticleField';
 import { INTRO_JOURNEY_SENSOR_INDEX, IntroPhysics, type IntroPhysicsDiagnostics, type IntroPhysicsPosition, type IntroPhysicsStep } from './IntroPhysics';
 
@@ -24,6 +25,100 @@ const CURSOR_PERIOD_MS: number = 1150;
 const ASIDE_HOLD_MS: number = 4300;
 const VOICE_COOLDOWN_MS: number = 2500;
 const PATH_VERTEX_CAPACITY: number = 96;
+
+const GLYPH_VERTEX: string = `
+  varying vec2 vUv;
+  void main() {
+    vUv = uv;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`;
+
+const GLYPH_FRAGMENT: string = `
+  uniform sampler2D uMap0;
+  uniform sampler2D uMap1;
+  uniform sampler2D uMap2;
+  uniform sampler2D uMap3;
+  uniform sampler2D uMap4;
+  uniform sampler2D uMap5;
+  uniform vec3 uColor;
+  uniform vec3 uInk0;
+  uniform vec3 uInk1;
+  uniform vec3 uInk2;
+  uniform vec3 uInk3;
+  uniform vec3 uInk4;
+  uniform vec3 uInk5;
+  uniform float uKeep0;
+  uniform float uKeep1;
+  uniform float uKeep2;
+  uniform float uKeep3;
+  uniform float uKeep4;
+  uniform float uKeep5;
+  uniform float uUseOverride;
+  uniform float uEra;
+  uniform float uTime;
+  uniform float uScanline;
+  uniform float uDamage;
+  uniform float uBitDepth;
+  varying vec2 vUv;
+
+  float hash21(vec2 p) {
+    p = fract(p * vec2(123.34, 456.21));
+    p += dot(p, p + 45.32);
+    return fract(p.x * p.y);
+  }
+
+  float isCurrent(float era) {
+    return 1.0 - step(0.49, abs(uEra - era));
+  }
+
+  float isReached(float era) {
+    return step(era - 0.01, uEra);
+  }
+
+  void main() {
+    // Damage is deliberately downstream: first reconstruct every display era,
+    // then let Omega's unstable signal injure the resulting composite.
+    float damageBand = step(0.92, hash21(vec2(floor(gl_FragCoord.y * 0.22), floor(uTime * 7.0))));
+    vec2 damagedUv = vUv;
+    damagedUv.x += (hash21(vec2(floor(uTime * 9.0), gl_FragCoord.y)) - 0.5) * uDamage * damageBand * 0.018;
+
+    vec4 s0 = texture2D(uMap0, damagedUv);
+    vec4 s1 = texture2D(uMap1, damagedUv);
+    vec4 s2 = texture2D(uMap2, damagedUv);
+    vec4 s3 = texture2D(uMap3, damagedUv);
+    vec4 s4 = texture2D(uMap4, damagedUv);
+    vec4 s5 = texture2D(uMap5, damagedUv);
+    float w0 = isReached(0.0) * mix(uKeep0, 1.0, isCurrent(0.0));
+    float w1 = isReached(1.0) * mix(uKeep1, 1.0, isCurrent(1.0));
+    float w2 = isReached(2.0) * mix(uKeep2, 1.0, isCurrent(2.0));
+    float w3 = isReached(3.0) * mix(uKeep3, 1.0, isCurrent(3.0));
+    float w4 = isReached(4.0) * mix(uKeep4, 1.0, isCurrent(4.0));
+    float w5 = isReached(5.0) * mix(uKeep5, 1.0, isCurrent(5.0));
+    float a0 = s0.a * w0;
+    float a1 = s1.a * w1;
+    float a2 = s2.a * w2;
+    float a3 = s3.a * w3;
+    float a4 = s4.a * w4;
+    float a5 = s5.a * w5;
+    float energy = a0 + a1 + a2 + a3 + a4 + a5;
+    float alpha = 1.0 - (1.0 - a0) * (1.0 - a1) * (1.0 - a2) * (1.0 - a3) * (1.0 - a4) * (1.0 - a5);
+    vec3 layeredColor = (uInk0 * a0 + uInk1 * a1 + uInk2 * a2 + uInk3 * a3 + uInk4 * a4 + uInk5 * a5) / max(energy, 0.001);
+    vec3 ink = mix(layeredColor, uColor, uUseOverride);
+    float paletteLevels = max(2.0, exp2(min(6.0, uBitDepth)));
+    ink = floor(ink * paletteLevels + 0.5) / paletteLevels;
+    float row = fract(gl_FragCoord.y * mix(0.5, 0.24, step(3.5, uEra)));
+    float scan = 1.0 - uScanline * step(0.5, row);
+    float dropout = step(0.08 + uDamage * 0.2, hash21(vec2(floor(gl_FragCoord.x * 0.18), floor(uTime * 5.0) + gl_FragCoord.y)));
+    float unstable = mix(1.0, dropout, uDamage * damageBand);
+    float atari = isCurrent(0.0);
+    float dither = step(0.34, fract(gl_FragCoord.x * 0.25) + fract(gl_FragCoord.y * 0.25));
+    alpha *= scan * unstable * mix(1.0, dither, atari * 0.22);
+    if (alpha < 0.035) discard;
+    gl_FragColor = vec4(ink * mix(0.82, 1.0, scan), alpha);
+    #include <colorspace_fragment>
+  }
+`;
 
 type VoiceMaterial = LineBasicMaterial | MeshBasicMaterial | MeshStandardMaterial;
 
@@ -102,15 +197,15 @@ function createDreamweaverMark(owner: number): DreamweaverMark {
 
 /** One reusable glyph atlas per historical font, never a texture per letter. */
 function createAtlas(format: number): CanvasTexture {
-  const cellSizes: number[] = [Math.round(24 * BOOT_EFFECTS.pixelStep), 24, 36, 48, 64];
-  const cell: number = cellSizes[format];
+  const era: IntroEraDesign = getIntroEra(format);
+  const cell: number = Math.max(10, Math.round(era.cell * (format === 0 ? BOOT_EFFECTS.pixelStep : 1)));
   const canvas: HTMLCanvasElement = document.createElement('canvas');
   canvas.width = ATLAS_COLUMNS * cell;
   canvas.height = ATLAS_ROWS * cell;
   const context: CanvasRenderingContext2D | null = canvas.getContext('2d');
   if (!context) throw new Error('Cannot create glyph assets');
-  const families: string[] = ['monospace', '"Lucida Console", monospace', '"Courier New", monospace', 'Consolas, monospace', 'ui-monospace, monospace'];
-  context.font = `${format === 2 ? 700 : 400} ${Math.floor(cell * 0.77)}px ${families[format]}`;
+  context.imageSmoothingEnabled = false;
+  context.font = `${era.weight} ${Math.floor(cell * 0.77)}px ${era.font}`;
   context.fillStyle = '#ffffff';
   context.textAlign = 'center';
   context.textBaseline = 'middle';
@@ -131,8 +226,8 @@ class GlyphRibbon {
   private _geometry: BufferGeometry = new BufferGeometry();
   private _positions: Float32Array = new Float32Array(GLYPH_CAPACITY * 12);
   private _uvs: Float32Array = new Float32Array(GLYPH_CAPACITY * 8);
-  private _front: MeshBasicMaterial;
-  private _back: MeshBasicMaterial;
+  private _front: ShaderMaterial;
+  private _back: ShaderMaterial;
   private _text: string = '';
   private _columns: number = 40;
   private _format: number = 0;
@@ -141,9 +236,28 @@ class GlyphRibbon {
 
   constructor(atlases: CanvasTexture[]) {
     this._atlases = atlases;
-    this._front = new MeshBasicMaterial({ map: atlases[0], color: INK[0], transparent: true, alphaTest: 0.08, depthWrite: false, side: DoubleSide });
+    const era: IntroEraDesign = getIntroEra(0);
+    const uniforms = {
+      uMap0: { value: atlases[0] }, uMap1: { value: atlases[1] }, uMap2: { value: atlases[2] },
+      uMap3: { value: atlases[3] }, uMap4: { value: atlases[4] }, uMap5: { value: atlases[5] },
+      uColor: { value: new Color(era.ink) },
+      uInk0: { value: new Color(INTRO_ERAS[0].ink) }, uInk1: { value: new Color(INTRO_ERAS[1].ink) },
+      uInk2: { value: new Color(INTRO_ERAS[2].ink) }, uInk3: { value: new Color(INTRO_ERAS[3].ink) },
+      uInk4: { value: new Color(INTRO_ERAS[4].ink) }, uInk5: { value: new Color(INTRO_ERAS[5].ink) },
+      uKeep0: { value: INTRO_ERAS[0].retention }, uKeep1: { value: INTRO_ERAS[1].retention },
+      uKeep2: { value: INTRO_ERAS[2].retention }, uKeep3: { value: INTRO_ERAS[3].retention },
+      uKeep4: { value: INTRO_ERAS[4].retention }, uKeep5: { value: INTRO_ERAS[5].retention },
+      uUseOverride: { value: 0 }, uEra: { value: 0 }, uTime: { value: 0 },
+      uScanline: { value: era.scanline }, uDamage: { value: era.damage }, uBitDepth: { value: era.bitDepth },
+    };
+    this._front = new ShaderMaterial({
+      uniforms,
+      vertexShader: GLYPH_VERTEX, fragmentShader: GLYPH_FRAGMENT,
+      transparent: true, depthWrite: false, side: DoubleSide, toneMapped: false,
+    });
     this._back = this._front.clone();
-    this._back.color.setHex(0x395057);
+    this._back.uniforms.uColor.value = new Color(era.echo);
+    this._back.uniforms.uUseOverride.value = 1;
   }
 
   public init(): void {
@@ -164,17 +278,23 @@ class GlyphRibbon {
     this.root.add(back, front);
   }
 
-  public setText(text: string, format: number, columns: number, color: number = INK[0], ownerStyle: number = -1): void {
+  public setText(text: string, format: number, columns: number, color?: number, ownerStyle: number = -1): void {
     format = Math.max(0, Math.min(this._atlases.length - 1, format));
-    this._front.color.setHex(color);
-    this._back.color.setHex(ownerStyle >= 0 ? BACK_INK[ownerStyle] : 0x395057);
+    const era: IntroEraDesign = getIntroEra(format);
+    this._front.uniforms.uColor.value.setHex(color ?? era.ink);
+    this._front.uniforms.uUseOverride.value = color !== undefined || ownerStyle >= 0 ? 1 : 0;
+    this._back.uniforms.uColor.value.setHex(ownerStyle >= 0 ? BACK_INK[ownerStyle] : era.echo);
     if (this._text === text && this._format === format && this._columns === columns && this._ownerStyle === ownerStyle) return;
     this._text = text;
     this._format = format;
     this._columns = columns;
     this._ownerStyle = ownerStyle;
-    this._front.map = this._atlases[format];
-    this._back.map = this._atlases[format];
+    this._front.uniforms.uEra.value = format;
+    this._back.uniforms.uEra.value = format;
+    this._front.uniforms.uScanline.value = era.scanline;
+    this._back.uniforms.uScanline.value = era.scanline;
+    this._front.uniforms.uBitDepth.value = era.bitDepth;
+    this._back.uniforms.uBitDepth.value = era.bitDepth;
     let glyph: number = 0;
     for (const letter of text) {
       if (letter === '\n' || glyph >= GLYPH_CAPACITY) continue;
@@ -189,6 +309,12 @@ class GlyphRibbon {
   }
 
   public update(seconds: number, disorder: number): void {
+    this._front.uniforms.uTime.value = seconds;
+    this._back.uniforms.uTime.value = seconds;
+    const era: IntroEraDesign = getIntroEra(this._format);
+    const damage: number = Math.min(1, era.damage + disorder * 0.58);
+    this._front.uniforms.uDamage.value = damage;
+    this._back.uniforms.uDamage.value = damage * 0.72;
     let column: number = 0;
     let row: number = 0;
     let glyph: number = 0;
@@ -196,13 +322,14 @@ class GlyphRibbon {
       if (letter === '\n') { row += 1; column = 0; continue; }
       if (glyph >= GLYPH_CAPACITY) break;
       if (column >= this._columns) { row += 1; column = 0; }
-      let x: number = column * 0.64;
-      let y: number = -row * 1.35;
+      const snap: number = 0.018 + era.pixelSnap * 0.075;
+      let x: number = Math.round(column * 0.64 / snap) * snap;
+      let y: number = Math.round(-row * 1.35 / snap) * snap;
       const ownerStyle: number = this._ownerStyle;
-      const drift: number = ownerStyle === 0 ? 0 : Math.sin(seconds * 0.32 + glyph * 0.21) * disorder;
-      const eraDepth: number[] = [0.5, 0.8, 1.25, 1.8, 2.6];
-      let z: number = ownerStyle === 0 ? 0 : Math.sin(glyph * 0.71 + seconds * 0.2) * disorder * BOOT_EFFECTS.depthDrift * 3 * eraDepth[this._format];
-      let skew: number = ownerStyle === 0 ? 0 : Math.cos(glyph * 0.37) * disorder * BOOT_EFFECTS.planeSkew;
+      const authoredDisorder: number = ownerStyle >= 0 ? disorder * 0.28 : 0;
+      const drift: number = ownerStyle === 0 ? 0 : Math.sin(seconds * 0.32 + glyph * 0.21) * authoredDisorder;
+      let z: number = ownerStyle === 0 ? 0 : Math.sin(glyph * 0.71 + seconds * 0.2) * (ownerStyle >= 0 ? authoredDisorder * 0.6 : era.depth);
+      let skew: number = ownerStyle === 0 ? 0 : Math.cos(glyph * 0.37) * authoredDisorder * 0.18;
       if (ownerStyle === 1) {
         const segment: number = Math.floor(column / 5) % 3;
         x += (segment - 1) * 0.24;
@@ -255,7 +382,6 @@ export class SpatialBootScene {
   private _lastUpdateMs: number = 0;
   private _lastPhase: BootFrame['phase'] | '' = '';
   private _backgroundStartedAt: number = -1;
-  private _strandStartedAt: number = -1;
   private _journeyActive: boolean = false;
   private _journeyComplete: boolean = false;
   private _choiceArmed: boolean = false;
@@ -278,7 +404,7 @@ export class SpatialBootScene {
   ];
 
   public init(scene: Scene): Promise<void> {
-    this._atlases = [0, 1, 2, 3, 4].map(createAtlas);
+    this._atlases = INTRO_ERAS.map((era: IntroEraDesign): CanvasTexture => createAtlas(era.id));
     this._particles.init(this._root);
     // command, three boot slots, archive, question, symbols, aside, three choices,
     // three fossils, and three diegetic speaker names.
@@ -423,7 +549,7 @@ export class SpatialBootScene {
     this._ribbons[5].setText(frame.question, responseOwner >= 0 ? responseOwner + 1 : frame.format, questionColumns, responseColor, responseOwner);
     this._ribbons[6].setText(BOOT_SYMBOLS, 2, columns, 0x9ca5a8);
     const asideText: string = frame.hint ?? this._aside;
-    const asideVoice: number = frame.hint ? Math.max(0, Math.min(4, frame.format)) : Math.max(this._voice, 0);
+    const asideVoice: number = frame.hint ? Math.max(0, Math.min(5, frame.format)) : Math.max(this._voice, 0);
     this._ribbons[7].setText(asideText, asideVoice, this._isNarrow ? 30 : 42, frame.hint ? 0x9ca5a8 : INK[Math.max(this._voice, 0)]);
     for (let index: number = 0; index < 3; index += 1) {
       this._ribbons[8 + index].setText(`${index + 1}  ${frame.choices[index] ?? BOOT_OPTIONS[index]}`, index + 1, this._isNarrow ? 14 : 18, INK[index], index);
@@ -499,7 +625,6 @@ export class SpatialBootScene {
     this._lastUpdateMs = 0;
     this._lastPhase = '';
     this._backgroundStartedAt = -1;
-    this._strandStartedAt = -1;
     this._journeyActive = false;
     this._journeyComplete = false;
     this._choiceArmed = false;
@@ -610,7 +735,6 @@ export class SpatialBootScene {
     const phaseChanged: boolean = frame.phase !== this._lastPhase;
     if (phaseChanged) {
       if (frame.phase === 'command' && this._backgroundStartedAt < 0) this._backgroundStartedAt = elapsedMs;
-      if (frame.phase === 'writing' && this._strandStartedAt < 0) this._strandStartedAt = elapsedMs;
       if (isWaiting) {
         this._player.position.set(0, -2.55, 0.52);
         this._choiceArmed = true;
@@ -620,7 +744,7 @@ export class SpatialBootScene {
       if (isTravel && !this._journeyActive) this.beginJourney();
       this._lastPhase = frame.phase;
     }
-    const disorder: number = isReduced || isSettled ? 0 : frame.isCorrupt ? 1.2 : 0.65;
+    const disorder: number = isReduced || isSettled ? 0 : frame.isCorrupt ? 1.2 : 0.18;
     const left: number = -this._width * 0.47;
     const scale: number = this._width / (this._isNarrow ? 24 : 32);
     const panelX: number = isSettled ? 0 : left * 0.22;
@@ -631,15 +755,14 @@ export class SpatialBootScene {
     const panelRy: number = isReduced || isSettled ? 0 : (frame.format - 1) * 0.32;
     const panelRz: number = isReduced || isSettled ? 0 : -0.055;
     this._particles.setPanelTransform(panelX, panelY, -0.45, panelWidth, panelHeight, panelRx, panelRy, panelRz);
-    const formation: number = isBoot ? 0 : isFinal ? 1 : isStory ? Math.min(0.9, 0.18 + frame.format * 0.18) : 0;
+    // Ordinary questions live directly in the celestial volume. The black
+    // particle surface belongs only to the final threshold payoff.
+    const formation: number = isFinal ? 1 : 0;
     const disintegrate: number = isFinal ? Math.min(1, Math.max(0, ((frame.phaseElapsedMs ?? 0) - 5600) / 6800)) : 0;
     const starReveal: number = isStory || isWaiting
       ? 1
       : this._backgroundStartedAt < 0 ? 0 : isReduced ? 1 : Math.min(1, (elapsedMs - this._backgroundStartedAt) / 5200);
-    const strandReveal: number = isStory || isWaiting
-      ? 1
-      : this._strandStartedAt < 0 ? 0 : isReduced ? 1 : Math.min(1, (elapsedMs - this._strandStartedAt) / 7200);
-    this._particles.update(elapsedMs, { formation, disintegrate, era: frame.format, starReveal, strandReveal, reduced: isReduced });
+    this._particles.update(elapsedMs, { formation, disintegrate, era: frame.format, starReveal, reduced: isReduced });
     for (let index: number = 0; index < this._ribbons.length; index += 1) {
       const ribbon: GlyphRibbon = this._ribbons[index];
       ribbon.root.visible = true;
@@ -662,16 +785,18 @@ export class SpatialBootScene {
     this._voiceStarts[0].set(-this._width * 0.82, 3.25, -0.7);
     this._voiceStarts[1].set(this._width * 0.9, 2.75, -0.3);
     this._voiceStarts[2].set(-this._width * 0.9, -2.7, -0.5);
+    const loadedVoices: boolean[] = [0, 1, 2].map((index: number): boolean => frame.transcript.includes(`dreamweaver[0${index + 1}]`));
+    const newestVoice: number = loadedVoices.lastIndexOf(true);
     for (let index: number = 0; index < 3; index += 1) {
       const slot: Group = this._ribbons[index + 1].root;
-      const isLoaded: boolean = frame.transcript.includes(`dreamweaver[0${index + 1}]`);
+      const isLoaded: boolean = loadedVoices[index];
       slot.visible = (frame.phase === 'loading' || frame.phase === 'writing') && isLoaded;
       slot.scale.setScalar(scale * 0.55);
       slot.position.set(left + 0.35 + (isReduced ? 0 : index * 0.22), 1.5 - index * 0.4, isReduced ? 0 : index * 0.3);
       if (!isReduced) slot.rotation.y = (index - 1) * 0.24;
       const voice: Group = this._voices[index];
       const trail: Line<BufferGeometry, LineBasicMaterial> = this._trails[index];
-      const breach: boolean = frame.phase === 'writing' && (frame.isCorrupt || frame.question.length > 18);
+      const breach: boolean = frame.phase === 'loading' && isLoaded;
       const voiceVisible: boolean = breach || isStory || this._voice === index;
       const trailVisible: boolean = breach || isStory || this._voice === index;
       if (voiceVisible && this._voiceAppearedAt[index] < 0) this._voiceAppearedAt[index] = elapsedMs;
@@ -682,6 +807,7 @@ export class SpatialBootScene {
       const start: Vector3 = this._voiceStarts[index];
       const resting: Vector3 = this._voiceResting[index];
       const isSpeaking: boolean = (frame.phase === 'response' && this._selected === index) || (this._voice === index && elapsedMs - this._asideAt < ASIDE_HOLD_MS);
+      const isNewestArrival: boolean = frame.phase === 'loading' && newestVoice === index;
       this._setVoiceResting(resting, index, frame.format, seconds, isReduced || isWaiting || (isSpeaking && index === 0));
       const finalProgress: number = isFinal ? Math.min(Math.max((frame.phaseElapsedMs ?? 0) / 9200, 0), 1) : 0;
       if (isFinal) {
@@ -696,12 +822,13 @@ export class SpatialBootScene {
       if (index === 1) voice.rotation.set(0, 0, isReduced || isWaiting ? -0.12 : (Math.floor(seconds * 0.6) % 5 - 2) * 0.08);
       if (index === 2) voice.rotation.set(0, 0, isReduced || isWaiting ? 0.08 : seconds * 0.16);
       const speakingPulse: number = isReduced ? 1 : 1 + Math.sin(seconds * 5.4) * 0.1;
-      voice.scale.setScalar(isSpeaking ? 1.45 * speakingPulse : 1);
+      voice.scale.setScalar(isSpeaking ? 1.45 * speakingPulse : isNewestArrival ? 1.12 * speakingPulse : 1);
       if (isFinal) voice.scale.multiplyScalar(1 - finalProgress * 0.74);
-      this._voiceMaterials[index][0].opacity = isSpeaking ? 1 : 0.88;
-      this._voiceMaterials[index][1].opacity = isSpeaking ? 0.48 : 0.16;
-      this._voiceMaterials[index][2].opacity = isSpeaking ? 1 : 0.72;
-      this._voiceMaterials[index][3].opacity = isSpeaking ? 0.58 : index === 1 ? 0.08 : 0.28;
+      const observerFade: number = frame.phase === 'loading' && index < newestVoice ? 0.42 : 1;
+      this._voiceMaterials[index][0].opacity = (isSpeaking ? 1 : 0.88) * observerFade;
+      this._voiceMaterials[index][1].opacity = (isSpeaking ? 0.48 : 0.16) * observerFade;
+      this._voiceMaterials[index][2].opacity = (isSpeaking ? 1 : 0.72) * observerFade;
+      this._voiceMaterials[index][3].opacity = (isSpeaking ? 0.58 : index === 1 ? 0.08 : 0.28) * observerFade;
       if (this._voiceMaterials[index][4]) this._voiceMaterials[index][4].opacity = isSpeaking ? 0.82 : 0.18;
       const trailPositions: BufferAttribute = trail.geometry.getAttribute('position') as BufferAttribute;
       for (let pointIndex: number = 0; pointIndex < 72; pointIndex += 1) {
@@ -718,7 +845,7 @@ export class SpatialBootScene {
         trailPositions.setXYZ(pointIndex, point.x, point.y, point.z);
       }
       trailPositions.needsUpdate = true;
-      trail.material.opacity = (0.2 + smoothEntrance * 0.34) * (isFinal ? 1 - finalProgress * 0.55 : 1);
+      trail.material.opacity = (0.12 + smoothEntrance * (isNewestArrival ? 0.48 : 0.24)) * observerFade * (isFinal ? 1 - finalProgress * 0.55 : 1);
     }
     this._ribbons[4].root.visible = !isBoot && !isFinal && !isTravel;
     this._ribbons[4].root.scale.setScalar(scale * 0.37);
@@ -820,7 +947,7 @@ export class SpatialBootScene {
         }
       } else if (isTravel) {
         const travelSpeed: number = 1.82 + this._playerStage * 0.14;
-        const physicsStep: IntroPhysicsStep = this._physics.step(delta, this._movement.x * 0.62, Math.max(0, this._movement.y), travelSpeed, {
+        const physicsStep: IntroPhysicsStep = this._physics.step(delta, this._movement.x * 0.62, this._movement.y, travelSpeed, {
           minX: -this._width * 0.28, maxX: this._width * 0.28, minY: -2.45, maxY: 2.62,
         });
         this._player.position.set(physicsStep.position.x, physicsStep.position.y, 0.58 - Math.max(0, physicsStep.position.y + 2.45) * 0.11);
