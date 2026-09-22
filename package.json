@@ -14,7 +14,8 @@
     "test": "npm run test:unit && npm run test:browser",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host 127.0.0.1",
-    "inspect:canvas": "node scripts/inspect-threejs-canvas.mjs"
+    "inspect:canvas": "node scripts/inspect-threejs-canvas.mjs",
+    "prepare": "husky"
   },
   "dependencies": {
     "@dimforge/rapier3d-compat": "^0.20.0",
