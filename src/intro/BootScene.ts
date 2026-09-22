@@ -34,6 +34,7 @@ interface IntroDiagnosticState {
   selectedChoice: number;
   pendingChoice: number;
   actionDiscovered: boolean;
+  tutorialAct: 'movement' | 'action' | 'resonance';
   playerPosition: { x: number; y: number; z: number };
   choiceTargets: Array<{ x: number; y: number; z: number }>;
   seed: string;
@@ -374,6 +375,7 @@ export class BootScene {
     this._root.dataset.osEraTs = getIntroEra(frame.format).label;
     this._root.dataset.osTextTs = 'three';
     this._root.dataset.osQuestionTs = String(this._questionIndex);
+    this._root.dataset.osTutorialActTs = this._tutorialAct();
     this._root.dataset.osCanContinueTs = String(this._canContinue);
     const enter: HTMLButtonElement = getElement('#os-enter-ts', HTMLButtonElement);
     enter.hidden = this._storyMode !== 'doorway';
@@ -760,6 +762,12 @@ export class BootScene {
     return 'WASD / arrows · move';
   }
 
+  private _tutorialAct(): 'movement' | 'action' | 'resonance' {
+    if (this._questionIndex === 0) return 'movement';
+    if (this._questionIndex === 1) return 'action';
+    return 'resonance';
+  }
+
   private _discoverControls(mode: 'controller' | 'keyboard' | 'touch'): void {
     this._controlsDiscovered = true;
     this._lastInputMode = mode;
@@ -1037,6 +1045,7 @@ export class BootScene {
       selectedChoice: this._selectedChoice >= 0 ? this._selectedChoice : this._activeChoice,
       pendingChoice: this._pendingChoice,
       actionDiscovered: this._actionDiscovered,
+      tutorialAct: this._tutorialAct(),
       playerPosition: this._spatial.getPlayerPosition(),
       choiceTargets: this._spatial.getChoiceTargets(),
       seed: this._seed,

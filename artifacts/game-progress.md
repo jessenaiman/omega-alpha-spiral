@@ -123,6 +123,10 @@
   face button.
 - [x] Preserved DOM, pointer, and number-key commitment as accessibility mirrors;
   controller and keyboard play retain the authored embodied route.
+- [x] Question three unlocks accumulated route resonance: the echo layers now
+  reveal the prior two answers while a second observer can enter the exchange.
+- [x] Exposed the current `movement`, `action`, or `resonance` act through the
+  existing diagnostics and root dataset for bots and visual review.
 - [ ] Runtime controller feel, target hold, and discovery clarity remain
   owner-gated and unverified in this checkpoint.
 

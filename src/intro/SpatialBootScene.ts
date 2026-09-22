@@ -824,7 +824,9 @@ export class SpatialBootScene {
       attribute.needsUpdate = true;
       path.geometry.setDrawRange(0, revealedVertices);
       const hovered: boolean = isWaiting && this._hovered === owner;
-      const resonance: number = this._choiceHistory.length === 0
+      // The first two acts teach movement and deliberate action. Only then do
+      // prior answers visibly bias the echo layer of later routes.
+      const resonance: number = this._choiceHistory.length < 2
         ? 0
         : this._choiceHistory.filter((choice: number): boolean => choice === owner).length / this._choiceHistory.length;
       const emphasis: number = activeCall || activeTravel || isThreshold ? 1 : hovered ? 0.78 : 0.34;
