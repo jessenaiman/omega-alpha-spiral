@@ -80,6 +80,20 @@
   pull the camera back to the center before movement resumes.
 - [ ] Runtime build, visible-page, and controller checks remain owner-gated.
 
+## Dialogue and audio dramaturgy checkpoint — September 21, 2026
+
+- [x] Replaced uniform response typing with owner-specific line beats: measured
+  Light pauses, longer Shadow silence, and faster forward-pulling Ambition cadence.
+- [x] Limited machine audit lines to the first and final thresholds instead of
+  appending the same status rhythm after every answer.
+- [x] Added selective second-observer interjections only after questions one and
+  three; they evaluate without claiming that the player chose a Dreamweaver.
+- [x] Added distinct interjection gestures and spatial left/center/right panning
+  while preserving procedural, portable Web Audio synthesis.
+- [x] Separated narrative status from discovered control hints; keyboard or
+  controller actions appear only after that modality has actually been used.
+- [ ] Runtime audio unlock, mix, timing, and visible-page checks remain owner-gated.
+
 ## Active checklist
 
 - [x] Small drifting bash-loader opening with failed invocations and input-gated success.

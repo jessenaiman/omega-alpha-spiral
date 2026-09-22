@@ -569,9 +569,10 @@ export class SpatialBootScene {
       this._ribbons[index + 1].setText(transcriptLines.find((line: string): boolean => line.startsWith(`dreamweaver[0${index + 1}]`)) ?? '', index, columns, INK[index], index);
     }
     this._ribbons[4].setText(frame.prelude, 0, this._isNarrow ? 40 : 78, 0x7e9399);
-    const responseColor: number = frame.phase === 'response' && this._selected >= 0 ? INK[this._selected] : INK[0];
+    const speakingOwner: number = frame.phase === 'response' ? Math.max(0, frame.speaker ?? this._selected) : -1;
+    const responseColor: number = speakingOwner >= 0 ? INK[speakingOwner] : INK[0];
     const questionColumns: number = frame.phase === 'response' ? (this._isNarrow ? 20 : 27) : columns;
-    const responseOwner: number = frame.phase === 'response' ? this._selected : -1;
+    const responseOwner: number = speakingOwner;
     this._ribbons[5].setText(frame.question, responseOwner >= 0 ? responseOwner + 1 : frame.format, questionColumns, responseColor, responseOwner);
     this._ribbons[6].setText(BOOT_SYMBOLS, 2, columns, 0x9ca5a8);
     const asideText: string = frame.hint ?? this._aside;
@@ -887,7 +888,7 @@ export class SpatialBootScene {
       const smoothEntrance: number = entrance * entrance * (3 - 2 * entrance);
       const start: Vector3 = this._voiceStarts[index];
       const resting: Vector3 = this._voiceResting[index];
-      const isSpeaking: boolean = (frame.phase === 'response' && this._selected === index) || (this._voice === index && elapsedMs - this._asideAt < ASIDE_HOLD_MS);
+      const isSpeaking: boolean = (frame.phase === 'response' && (frame.speaker ?? this._selected) === index) || (this._voice === index && elapsedMs - this._asideAt < ASIDE_HOLD_MS);
       const isNewestArrival: boolean = frame.phase === 'loading' && newestVoice === index;
       this._setVoiceResting(resting, index, frame.format, seconds, isReduced || isWaiting || (isSpeaking && index === 0));
       const finalProgress: number = isFinal ? Math.min(Math.max((frame.phaseElapsedMs ?? 0) / 9200, 0), 1) : 0;
@@ -933,7 +934,7 @@ export class SpatialBootScene {
     this._ribbons[4].root.position.set(left, 1.65, -0.05);
     const question: Group = this._ribbons[5].root;
     question.visible = frame.question.length > 0;
-    const responseOwner: number = frame.phase === 'response' ? Math.max(0, this._selected) : -1;
+    const responseOwner: number = frame.phase === 'response' ? Math.max(0, frame.speaker ?? this._selected) : -1;
     const responseAnchor: Vector3 | null = responseOwner >= 0 ? this._voices[responseOwner].position : null;
     question.position.set(
       responseAnchor ? responseAnchor.x - this._width * (this._isNarrow ? 0.16 : 0.19) : left,
@@ -980,7 +981,7 @@ export class SpatialBootScene {
       );
       if (this._hovered === index) choice.position.y += scale * 0.12;
       const speaker: Group = this._ribbons[14 + index].root;
-      speaker.visible = isWaiting || (frame.phase === 'response' && this._selected === index);
+      speaker.visible = isWaiting || (frame.phase === 'response' && (frame.speaker ?? this._selected) === index);
       speaker.position.set(voicePosition.x - 0.48, voicePosition.y - 0.46, voicePosition.z + 0.04);
       speaker.scale.setScalar(scale * 0.28);
       speaker.rotation.set(0, 0, index === 1 ? -0.04 : index === 2 ? 0.04 : 0);

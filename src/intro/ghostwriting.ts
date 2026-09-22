@@ -12,6 +12,8 @@ export interface BootFrame {
   format: number;
   phaseElapsedMs?: number;
   hint?: string;
+  /** Dreamweaver currently authoring response text; independent of the chosen route. */
+  speaker?: number;
 }
 
 const FIRST_INK_MS: number = 900;

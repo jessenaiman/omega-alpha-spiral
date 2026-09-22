@@ -4,7 +4,7 @@ import { ACESFilmicToneMapping, PerspectiveCamera, PMREMGenerator, Scene, SRGBCo
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 import { createInputController, type InputController, type Intents } from '../core/input';
-import { CHRONICLE_FINAL, CHRONICLE_FINAL_DRAFT, createChronicleQuestions, type ChronicleQuestion } from './chronicle';
+import { CHRONICLE_FINAL, CHRONICLE_FINAL_DRAFT, createChronicleQuestions, getChronicleInterlude, type ChronicleInterlude, type ChronicleQuestion } from './chronicle';
 import { createBootFrames, type BootFrame } from './ghostwriting';
 import { getIntroEra } from './IntroEraDesign';
 import { IntroAudio } from './IntroAudio';
@@ -19,7 +19,7 @@ const FIRST_DISSOLVE_MS: number = 3500;
 const VIEW_HEIGHT: number = 6.4;
 const TEST_STATE_NAMES = ['boot-cursor', 'question-1', 'question-2', 'question-3', 'question-4', 'final-door', 'complete'] as const;
 type TestStateName = typeof TEST_STATE_NAMES[number];
-type StoryMode = 'boot' | 'waiting' | 'prelude' | 'question' | 'response' | 'travel' | 'final' | 'doorway' | 'complete';
+type StoryMode = 'boot' | 'waiting' | 'prelude' | 'question' | 'response' | 'commentary' | 'travel' | 'final' | 'doorway' | 'complete';
 
 interface IntroDiagnosticState {
   frame: number;
@@ -118,6 +118,7 @@ export class BootScene {
   private _gamepadMoveY: number = 0;
   private _controlsDiscovered: boolean = false;
   private _lastInputMode: 'controller' | 'keyboard' | 'touch' = 'controller';
+  private _interlude: ChronicleInterlude | null = null;
   private _currentFrame: BootFrame | null = null;
 
   public init(): void {
@@ -266,6 +267,7 @@ export class BootScene {
     this._gamepadMoveX = 0;
     this._gamepadMoveY = 0;
     this._controlsDiscovered = false;
+    this._interlude = null;
     this._simulationPaused = false;
     this._answersCommitted = 0;
     this._clearMovement();
@@ -366,7 +368,7 @@ export class BootScene {
     enter.hidden = this._storyMode !== 'doorway';
     enter.disabled = this._storyMode !== 'doorway';
     this._root.dataset.osDoorTs = this._storyMode === 'doorway' ? 'ready' : this._storyMode === 'complete' ? 'crossed' : 'forming';
-    getElement('#os-hint-ts', HTMLElement).textContent = frame.hint ?? this._controlHint();
+    getElement('#os-hint-ts', HTMLElement).textContent = [frame.hint, this._controlHint()].filter(Boolean).join(' · ');
     this._spatial.setFrame(frame);
     this._prelude.textContent = frame.prelude;
     this._transcript.textContent = frame.transcript;
@@ -443,7 +445,21 @@ export class BootScene {
     this._storyStartedAt = performance.now();
     this._canContinue = false;
     this._spatial.beginJourney();
-    this._applyFrame(this._storyFrame('', 'travel', this._questions[index].era, 'W / ↑  //  WALK UNTIL IT ASKS', 0));
+    this._applyFrame(this._storyFrame('', 'travel', this._questions[index].era, undefined, 0));
+  }
+
+  private _beginCommentary(interlude: ChronicleInterlude): void {
+    this._interlude = interlude;
+    this._storyMode = 'commentary';
+    this._storyStartedAt = performance.now();
+    this._canContinue = false;
+    this._audio.commentary(interlude.ownerIndex);
+  }
+
+  private _continueAfterResponse(): void {
+    this._interlude = null;
+    if (this._questionIndex >= this._questions.length - 1) this._beginFinal();
+    else this._beginTravel(this._questionIndex + 1);
   }
 
   private _beginQuestion(): void {
@@ -470,8 +486,13 @@ export class BootScene {
       return;
     }
     if (this._storyMode === 'response') {
-      if (this._questionIndex >= this._questions.length - 1) this._beginFinal();
-      else this._beginTravel(this._questionIndex + 1);
+      const interlude: ChronicleInterlude | null = getChronicleInterlude(this._questionIndex, this._selectedChoice);
+      if (interlude) this._beginCommentary(interlude);
+      else this._continueAfterResponse();
+      return;
+    }
+    if (this._storyMode === 'commentary') {
+      this._continueAfterResponse();
     }
   }
 
@@ -491,7 +512,7 @@ export class BootScene {
       const text: string = this._typed(question.prelude, elapsedMs, 44);
       const complete: boolean = text.length >= question.prelude.length;
       this._canContinue = complete;
-      this._applyFrame(this._storyFrame(text, 'prelude', question.era, complete ? 'ENTER  //  LET IT ASK' : undefined, elapsedMs));
+      this._applyFrame(this._storyFrame(text, 'prelude', question.era, complete ? 'THE QUESTION IS READY' : undefined, elapsedMs));
       return;
     }
     if (this._storyMode === 'question') {
@@ -511,23 +532,32 @@ export class BootScene {
     }
     if (this._storyMode === 'response' && this._selectedChoice >= 0) {
       const response: string = question.choices[this._selectedChoice].response;
-      const speed: number[] = [43, 39, 35, 32];
-      const typed: string = this._typed(response, elapsedMs, speed[this._questionIndex]);
-      const complete: boolean = typed.length >= response.length;
-      const display: string = this._dreamweaverWriting(typed, elapsedMs, this._selectedChoice, complete);
+      const beat = this._responseBeat(response, elapsedMs, this._selectedChoice);
+      const display: string = this._dreamweaverWriting(beat.text, elapsedMs, this._selectedChoice, beat.complete);
+      const complete: boolean = beat.complete;
       this._canContinue = complete;
-      this._applyFrame(this._storyFrame(display, 'response', question.era, complete ? (this._questionIndex < this._questions.length - 1 ? 'ENTER  //  WALK ON' : 'ENTER  //  OPEN THE THRESHOLD') : undefined, elapsedMs));
+      this._applyFrame(this._storyFrame(display, 'response', question.era, complete ? (this._questionIndex < this._questions.length - 1 ? 'THE PATH IS OPEN' : 'THE THRESHOLD IS OPEN') : undefined, elapsedMs, false, this._selectedChoice));
+      return;
+    }
+    if (this._storyMode === 'commentary' && this._interlude) {
+      const silenceMs: number[] = [650, 1250, 480];
+      const speedMs: number[] = [38, 48, 32];
+      const writingMs: number = Math.max(0, elapsedMs - silenceMs[this._interlude.ownerIndex]);
+      const typed: string = this._typed(this._interlude.text, writingMs, speedMs[this._interlude.ownerIndex]);
+      const complete: boolean = typed.length >= this._interlude.text.length;
+      this._canContinue = complete;
+      this._applyFrame(this._storyFrame(typed, 'response', question.era, complete ? 'THE PATH IS OPEN' : undefined, elapsedMs, false, this._interlude.ownerIndex));
       return;
     }
     if (this._storyMode === 'final') {
       const text: string = this._finalText(elapsedMs);
       const complete: boolean = text.length >= CHRONICLE_FINAL.length;
       if (complete) this._storyMode = 'doorway';
-      this._applyFrame(this._storyFrame(text, complete ? 'doorway' : 'final', 4, complete ? 'ALL THREE FOLLOWED · STEP THROUGH' : undefined, elapsedMs));
+      this._applyFrame(this._storyFrame(text, complete ? 'doorway' : 'final', 4, complete ? 'ALL THREE FOLLOWED' : undefined, elapsedMs));
     }
   }
 
-  private _storyFrame(text: string, phase: BootFrame['phase'], format: number, hint: string | undefined, phaseElapsedMs: number, isCorrupt: boolean = false): BootFrame {
+  private _storyFrame(text: string, phase: BootFrame['phase'], format: number, hint: string | undefined, phaseElapsedMs: number, isCorrupt: boolean = false, speaker?: number): BootFrame {
     const question: ChronicleQuestion = this._questions[Math.min(this._questionIndex, this._questions.length - 1)];
     return {
       at: this._motionMs,
@@ -540,12 +570,45 @@ export class BootScene {
       format,
       phaseElapsedMs,
       hint,
+      speaker,
     };
   }
 
   private _typed(text: string, elapsedMs: number, millisecondsPerCharacter: number): string {
     if (this._isReduced) return text;
     return text.slice(0, Math.min(text.length, Math.floor(elapsedMs / millisecondsPerCharacter)));
+  }
+
+  private _responseBeat(response: string, elapsedMs: number, owner: number): { text: string; complete: boolean } {
+    if (this._isReduced) return { text: response, complete: true };
+    const parts: string[] = response.split('\n\n');
+    const body: string = parts[0] ?? response;
+    const audit: string = parts.slice(1).join('\n\n');
+    const lines: string[] = body.split('\n').filter(Boolean);
+    const speeds: number[] = [42, 48, 34];
+    const gaps: number[] = [620, 1120, 420];
+    const openingSilence: number[] = [280, 920, 480];
+    let cursor: number = openingSilence[owner];
+    let visible: string = '';
+    for (let index: number = 0; index < lines.length; index += 1) {
+      const line: string = lines[index];
+      const available: number = Math.max(0, elapsedMs - cursor);
+      const count: number = Math.min(line.length, Math.floor(available / speeds[owner]));
+      visible += line.slice(0, count);
+      if (count < line.length) return { text: visible, complete: false };
+      if (index < lines.length - 1) visible += '\n';
+      cursor += line.length * speeds[owner] + gaps[owner];
+    }
+    const showAudit: boolean = this._questionIndex === 0 || this._questionIndex === this._questions.length - 1;
+    if (showAudit && audit) {
+      cursor += 760;
+      const available: number = Math.max(0, elapsedMs - cursor);
+      const count: number = Math.min(audit.length, Math.floor(available / 28));
+      visible += `\n\n${audit.slice(0, count)}`;
+      if (count < audit.length) return { text: visible, complete: false };
+      cursor += audit.length * 28;
+    }
+    return { text: visible, complete: elapsedMs >= cursor + 520 };
   }
 
   private _dreamweaverWriting(text: string, elapsedMs: number, owner: number, complete: boolean): string {
@@ -649,6 +712,7 @@ export class BootScene {
   private _controlHint(): string {
     if (!this._controlsDiscovered) return '';
     if (this._storyMode === 'doorway') return this._lastInputMode === 'controller' ? 'A · cross the threshold' : 'Enter · step through';
+    if (this._canContinue) return this._lastInputMode === 'controller' ? 'A · continue' : 'Enter · continue';
     if (this._storyMode !== 'waiting' && this._storyMode !== 'travel') return '';
     if (this._lastInputMode === 'controller') return 'left stick · move';
     if (this._lastInputMode === 'touch') return 'move';
@@ -870,7 +934,7 @@ export class BootScene {
     this._storyStartedAt = performance.now();
     if (name === 'final-door') {
       this._storyMode = 'doorway';
-      this._applyFrame(this._storyFrame(CHRONICLE_FINAL, 'doorway', 4, 'ALL THREE FOLLOWED · STEP THROUGH', 12000));
+      this._applyFrame(this._storyFrame(CHRONICLE_FINAL, 'doorway', 4, 'ALL THREE FOLLOWED', 12000));
       this._spatial.settleForTestState(this._motionMs);
       this._refreshStaticFrame();
       return;

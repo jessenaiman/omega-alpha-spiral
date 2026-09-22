@@ -99,8 +99,27 @@ export class IntroAudio {
     if (!this._ready() || !this._cooldown(`voice-${index}`, 220)) return;
     const roots: number[] = [392, 92, 233];
     const waves: OscillatorType[] = ['sine', 'sawtooth', 'triangle'];
-    this._tone(roots[index], 0.42, 'voice', 0.12, waves[index], 0.035);
-    this._tone(roots[index] * (index === 2 ? 1.49 : 1.25), 0.58, 'voice', 0.045, waves[index], 0.11);
+    const pan: number[] = [-0.62, 0, 0.62];
+    this._tone(roots[index], 0.42, 'voice', 0.12, waves[index], 0.035, pan[index]);
+    this._tone(roots[index] * (index === 2 ? 1.49 : 1.25), 0.58, 'voice', 0.045, waves[index], 0.11, pan[index]);
+  }
+
+  public commentary(index: number): void {
+    if (!this._ready() || !this._cooldown(`commentary-${index}`, 650)) return;
+    const pan: number[] = [-0.62, 0, 0.62];
+    if (index === 0) {
+      this._tone(784, 0.34, 'voice', 0.11, 'sine', 0, pan[index]);
+      this._tone(1176, 0.16, 'voice', 0.035, 'sine', 0.035, pan[index]);
+      return;
+    }
+    if (index === 1) {
+      this._noise(0.028, 'voice', 0.13, 420, 0, pan[index]);
+      this._tone(78, 0.065, 'voice', 0.1, 'square', 0, pan[index]);
+      this._tone(69, 0.065, 'voice', 0.08, 'square', 0.17, pan[index]);
+      return;
+    }
+    this._sweep(174, 262, 0.62, 'voice', 0.09, 'triangle', 0, pan[index]);
+    this._tone(139, 0.42, 'voice', 0.035, 'sine', 0.54, pan[index]);
   }
 
   public choose(index: number): void {
@@ -209,7 +228,7 @@ export class IntroAudio {
     return true;
   }
 
-  private _tone(frequency: number, duration: number, group: AudioGroup, level: number, type: OscillatorType, delay: number = 0): void {
+  private _tone(frequency: number, duration: number, group: AudioGroup, level: number, type: OscillatorType, delay: number = 0, pan: number = 0): void {
     if (!this._context || !this._groups[group]) return;
     const start: number = this._context.currentTime + delay;
     const oscillator: OscillatorNode = this._context.createOscillator();
@@ -220,12 +239,32 @@ export class IntroAudio {
     gain.gain.setValueAtTime(0.0001, start);
     gain.gain.exponentialRampToValueAtTime(level, start + Math.min(0.008, duration * 0.25));
     gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
-    oscillator.connect(gain).connect(this._groups[group]);
+    const panner: StereoPannerNode = this._context.createStereoPanner();
+    panner.pan.value = Math.max(-1, Math.min(1, pan));
+    oscillator.connect(gain).connect(panner).connect(this._groups[group]);
     oscillator.start(start);
     oscillator.stop(start + duration + 0.02);
   }
 
-  private _noise(duration: number, group: AudioGroup, level: number, highpassFrequency: number, delay: number = 0): void {
+  private _sweep(from: number, to: number, duration: number, group: AudioGroup, level: number, type: OscillatorType, delay: number = 0, pan: number = 0): void {
+    if (!this._context || !this._groups[group]) return;
+    const start: number = this._context.currentTime + delay;
+    const oscillator: OscillatorNode = this._context.createOscillator();
+    const gain: GainNode = this._context.createGain();
+    const panner: StereoPannerNode = this._context.createStereoPanner();
+    oscillator.type = type;
+    oscillator.frequency.setValueAtTime(Math.max(24, from), start);
+    oscillator.frequency.exponentialRampToValueAtTime(Math.max(24, to), start + duration);
+    gain.gain.setValueAtTime(0.0001, start);
+    gain.gain.exponentialRampToValueAtTime(level, start + 0.04);
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+    panner.pan.value = Math.max(-1, Math.min(1, pan));
+    oscillator.connect(gain).connect(panner).connect(this._groups[group]);
+    oscillator.start(start);
+    oscillator.stop(start + duration + 0.02);
+  }
+
+  private _noise(duration: number, group: AudioGroup, level: number, highpassFrequency: number, delay: number = 0, pan: number = 0): void {
     if (!this._context || !this._groups[group] || !this._noiseBuffer) return;
     const start: number = this._context.currentTime + delay;
     const source: AudioBufferSourceNode = this._context.createBufferSource();
@@ -237,7 +276,9 @@ export class IntroAudio {
     gain.gain.setValueAtTime(0.0001, start);
     gain.gain.exponentialRampToValueAtTime(level, start + 0.004);
     gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
-    source.connect(filter).connect(gain).connect(this._groups[group]);
+    const panner: StereoPannerNode = this._context.createStereoPanner();
+    panner.pan.value = Math.max(-1, Math.min(1, pan));
+    source.connect(filter).connect(gain).connect(panner).connect(this._groups[group]);
     source.start(start, 0, duration);
     source.stop(start + duration + 0.01);
   }
