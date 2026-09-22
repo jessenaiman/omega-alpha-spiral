@@ -376,8 +376,14 @@ export class SpatialBootScene {
   private _playerOutline: LineSegments<BufferGeometry, LineBasicMaterial> | null = null;
   private _playerMemories: Array<Mesh<BoxGeometry, MeshStandardMaterial>> = [];
   private _playerStage: number = 0;
-  private _path: LineSegments<BufferGeometry, LineBasicMaterial> | null = null;
-  private _pathPositions: Float32Array = new Float32Array(PATH_VERTEX_CAPACITY * 3);
+  private _paths: Array<LineSegments<BufferGeometry, LineBasicMaterial>> = [];
+  private _pathEchoes: Array<LineSegments<BufferGeometry, LineBasicMaterial>> = [];
+  private _pathPositions: Float32Array[] = [];
+  private _pathLights: PointLight[] = [];
+  private _pathFrom: Vector3 = new Vector3();
+  private _pathGoal: Vector3 = new Vector3();
+  private _pathPrevious: Vector3 = new Vector3();
+  private _pathCurrent: Vector3 = new Vector3();
   private _movement: Vector2 = new Vector2();
   private _lastUpdateMs: number = 0;
   private _lastPhase: BootFrame['phase'] | '' = '';
@@ -493,13 +499,33 @@ export class SpatialBootScene {
   }
 
   private _createPath(): void {
-    const geometry: BufferGeometry = new BufferGeometry();
-    geometry.setAttribute('position', new BufferAttribute(this._pathPositions, 3));
-    geometry.setDrawRange(0, 0);
-    const material: LineBasicMaterial = new LineBasicMaterial({ color: 0x66808d, transparent: true, opacity: 0.24, blending: AdditiveBlending, depthWrite: false, toneMapped: false });
-    this._path = new LineSegments(geometry, material);
-    this._path.frustumCulled = false;
-    this._root.add(this._path);
+    const echoColors: readonly number[] = [0x36576a, 0x030102, 0x60428f];
+    for (let owner: number = 0; owner < 3; owner += 1) {
+      const positions: Float32Array = new Float32Array(PATH_VERTEX_CAPACITY * 3);
+      const geometry: BufferGeometry = new BufferGeometry();
+      geometry.setAttribute('position', new BufferAttribute(positions, 3));
+      geometry.setDrawRange(0, 0);
+      const material: LineBasicMaterial = new LineBasicMaterial({
+        color: INK[owner], transparent: true, opacity: 0,
+        blending: AdditiveBlending, depthWrite: false, toneMapped: false,
+      });
+      const line: LineSegments<BufferGeometry, LineBasicMaterial> = new LineSegments(geometry, material);
+      line.frustumCulled = false;
+      const echoMaterial: LineBasicMaterial = new LineBasicMaterial({
+        color: echoColors[owner], transparent: true, opacity: 0,
+        blending: AdditiveBlending, depthWrite: false, toneMapped: false,
+      });
+      const echo: LineSegments<BufferGeometry, LineBasicMaterial> = new LineSegments(geometry, echoMaterial);
+      echo.frustumCulled = false;
+      echo.position.set(owner === 2 ? 0.11 : owner === 1 ? -0.055 : 0, 0, owner === 2 ? -0.1 : -0.055);
+      const light: PointLight = new PointLight(INK[owner], 0, 2.4, 2);
+      light.visible = false;
+      this._pathPositions.push(positions);
+      this._paths.push(line);
+      this._pathEchoes.push(echo);
+      this._pathLights.push(light);
+      this._root.add(echo, line, light);
+    }
   }
 
   public setMovement(x: number, y: number): void {
@@ -670,54 +696,109 @@ export class SpatialBootScene {
     target.set(order * lane * 0.82, index === 2 ? 2.55 : 1.88 + breath, 0.12 + (index === 2 ? 0 : 0.2));
   }
 
-  private _writePathSegment(vertex: number, ax: number, ay: number, az: number, bx: number, by: number, bz: number): number {
+  private _writePathSegment(owner: number, vertex: number, ax: number, ay: number, az: number, bx: number, by: number, bz: number): number {
     const offset: number = vertex * 3;
-    this._pathPositions[offset] = ax;
-    this._pathPositions[offset + 1] = ay;
-    this._pathPositions[offset + 2] = az;
-    this._pathPositions[offset + 3] = bx;
-    this._pathPositions[offset + 4] = by;
-    this._pathPositions[offset + 5] = bz;
+    const positions: Float32Array = this._pathPositions[owner];
+    positions[offset] = ax;
+    positions[offset + 1] = ay;
+    positions[offset + 2] = az;
+    positions[offset + 3] = bx;
+    positions[offset + 4] = by;
+    positions[offset + 5] = bz;
     return vertex + 2;
   }
 
-  private _updatePath(isWaiting: boolean, isTravel: boolean, seconds: number): void {
-    if (!this._path) return;
-    this._path.visible = isWaiting || isTravel;
-    if (!this._path.visible) return;
-    let vertex: number = 0;
-    const startX: number = this._player.position.x * 0.18;
-    const startY: number = -2.72;
-    if (isWaiting) {
-      for (let index: number = 0; index < 3; index += 1) {
-        const target: Vector3 = this._targets[index].position;
-        const bendX: number = target.x * 0.54;
-        vertex = this._writePathSegment(vertex, startX, startY, 0.08, bendX, -1.25, 0.02 + index * 0.08);
-        vertex = this._writePathSegment(vertex, bendX, -1.25, 0.02 + index * 0.08, target.x, target.y - 0.48, target.z - 0.08);
-        for (let step: number = 0; step < 4; step += 1) {
-          const t: number = (step + 1) / 5;
-          const cx: number = startX + (target.x - startX) * t;
-          const cy: number = startY + (target.y - 0.48 - startY) * t;
-          vertex = this._writePathSegment(vertex, cx - 0.08, cy, 0.1, cx + 0.08, cy, 0.1);
-        }
-      }
-    } else {
-      const bend: number = Math.sin(seconds * 0.18) * this._width * 0.12;
-      vertex = this._writePathSegment(vertex, -0.42, -2.72, 0.08, bend - 0.28, -0.7, -0.02);
-      vertex = this._writePathSegment(vertex, bend - 0.28, -0.7, -0.02, -0.16, 2.55, -0.28);
-      vertex = this._writePathSegment(vertex, 0.42, -2.72, 0.08, bend + 0.28, -0.7, -0.02);
-      vertex = this._writePathSegment(vertex, bend + 0.28, -0.7, -0.02, 0.16, 2.55, -0.28);
-      for (let step: number = 0; step < 7; step += 1) {
-        const y: number = -2.38 + step * 0.72;
-        const x: number = Math.sin(step * 0.9 + seconds * 0.11) * 0.18;
-        vertex = this._writePathSegment(vertex, x - 0.34, y, 0.04 - step * 0.025, x + 0.34, y, 0.04 - step * 0.025);
-      }
+  private _samplePath(owner: number, t: number, from: Vector3, goal: Vector3, seconds: number, out: Vector3): Vector3 {
+    const y: number = from.y + (goal.y - from.y) * t;
+    if (owner === 0) {
+      return out.set(from.x + (goal.x - from.x) * t, y, from.z + (goal.z - from.z) * t);
     }
-    const attribute: BufferAttribute = this._path.geometry.getAttribute('position') as BufferAttribute;
-    attribute.needsUpdate = true;
-    this._path.geometry.setDrawRange(0, vertex);
-    this._path.material.color.setHex(isTravel && this._selected >= 0 ? INK[this._selected] : 0x66808d);
-    this._path.material.opacity = isTravel ? 0.4 : 0.24;
+    if (owner === 1) {
+      const segment: number = Math.min(2, Math.floor(t * 3));
+      const local: number = Math.min(1, t * 3 - segment);
+      const x1: number = from.x - this._width * 0.055;
+      const x2: number = goal.x + this._width * 0.045;
+      const x: number = segment === 0
+        ? from.x + (x1 - from.x) * local
+        : segment === 1 ? x1 + (x2 - x1) * local : x2 + (goal.x - x2) * local;
+      const steppedZ: number = from.z + (goal.z - from.z) * t - Math.floor(t * 4) * 0.035;
+      return out.set(x, y, steppedZ);
+    }
+    const inverse: number = 1 - t;
+    const direction: number = goal.x === from.x ? 1 : Math.sign(goal.x - from.x);
+    const control1X: number = from.x + direction * this._width * 0.14;
+    const control2X: number = goal.x - direction * this._width * 0.1;
+    const x: number = inverse * inverse * inverse * from.x
+      + 3 * inverse * inverse * t * control1X
+      + 3 * inverse * t * t * control2X
+      + t * t * t * goal.x;
+    const desire: number = Math.sin(t * Math.PI) * (0.3 + Math.sin(seconds * 0.25) * 0.035);
+    return out.set(x, y + desire * 0.18, from.z + (goal.z - from.z) * t + desire);
+  }
+
+  private _updatePath(isWaiting: boolean, isTravel: boolean, seconds: number, callingVoice: number): void {
+    const elapsedMs: number = seconds * 1000;
+    for (let owner: number = 0; owner < 3; owner += 1) {
+      const path: LineSegments<BufferGeometry, LineBasicMaterial> = this._paths[owner];
+      const echo: LineSegments<BufferGeometry, LineBasicMaterial> = this._pathEchoes[owner];
+      const activeTravel: boolean = isTravel && this._selected === owner;
+      const activeCall: boolean = callingVoice === owner;
+      const visible: boolean = activeCall || isWaiting || activeTravel;
+      path.visible = visible;
+      echo.visible = visible;
+      this._pathLights[owner].visible = visible;
+      if (!visible) {
+        this._pathLights[owner].intensity = 0;
+        continue;
+      }
+      this._pathFrom.set(
+        activeTravel ? (owner - 1) * this._width * 0.16 : 0,
+        activeTravel ? -2.45 : -2.62,
+        activeTravel ? 0.4 : 0.14,
+      );
+      if (activeTravel) this._pathGoal.set(0, 2.62, -0.72);
+      else {
+        const target: Vector3 = this._targets[owner].position;
+        this._pathGoal.set(target.x, target.y - 0.48, target.z - 0.58);
+      }
+      const samples: number = owner === 0 ? 16 : owner === 1 ? 15 : 26;
+      let vertex: number = 0;
+      this._samplePath(owner, 0, this._pathFrom, this._pathGoal, seconds, this._pathPrevious);
+      for (let sample: number = 1; sample <= samples; sample += 1) {
+        const t: number = sample / samples;
+        this._samplePath(owner, t, this._pathFrom, this._pathGoal, seconds, this._pathCurrent);
+        vertex = this._writePathSegment(owner, vertex,
+          this._pathPrevious.x, this._pathPrevious.y, this._pathPrevious.z,
+          this._pathCurrent.x, this._pathCurrent.y, this._pathCurrent.z);
+        if (sample % (owner === 1 ? 3 : 4) === 0 && vertex + 2 <= PATH_VERTEX_CAPACITY) {
+          const dx: number = this._pathCurrent.x - this._pathPrevious.x;
+          const dy: number = this._pathCurrent.y - this._pathPrevious.y;
+          const length: number = Math.max(0.001, Math.hypot(dx, dy));
+          const width: number = owner === 0 ? 0.11 : owner === 1 ? 0.075 : 0.095 + Math.sin(t * Math.PI) * 0.045;
+          const px: number = -dy / length * width;
+          const py: number = dx / length * width;
+          vertex = this._writePathSegment(owner, vertex,
+            this._pathCurrent.x - px, this._pathCurrent.y - py, this._pathCurrent.z,
+            this._pathCurrent.x + px, this._pathCurrent.y + py, this._pathCurrent.z);
+        }
+        this._pathPrevious.copy(this._pathCurrent);
+      }
+      const appearedAt: number = this._voiceAppearedAt[owner];
+      const callProgress: number = !activeCall || appearedAt < 0 ? 1 : Math.min(1, Math.max(0, (elapsedMs - appearedAt) / 2500));
+      const revealedVertices: number = Math.max(0, Math.floor(vertex * callProgress / 2) * 2);
+      const attribute: BufferAttribute = path.geometry.getAttribute('position') as BufferAttribute;
+      attribute.needsUpdate = true;
+      path.geometry.setDrawRange(0, revealedVertices);
+      const hovered: boolean = isWaiting && this._hovered === owner;
+      const emphasis: number = activeCall || activeTravel ? 1 : hovered ? 0.78 : 0.34;
+      path.material.opacity = (0.16 + emphasis * 0.42) * (owner === 1 ? 0.82 : 1);
+      echo.material.opacity = emphasis * (owner === 2 ? 0.34 : owner === 1 ? 0.22 : 0.12);
+      const lightProgress: number = activeCall ? callProgress : hovered || activeTravel ? (Math.sin(seconds * 0.72) * 0.5 + 0.5) : 0;
+      this._samplePath(owner, lightProgress, this._pathFrom, this._pathGoal, seconds, this._pathCurrent);
+      this._pathLights[owner].position.copy(this._pathCurrent);
+      this._pathLights[owner].position.z += 0.36;
+      this._pathLights[owner].intensity = emphasis * (activeCall ? 7.5 : hovered || activeTravel ? 4.2 : 0.45);
+    }
   }
 
   public update(elapsedMs: number, isReduced: boolean): number {
@@ -881,15 +962,22 @@ export class SpatialBootScene {
       const choice: Group = this._ribbons[index + 8].root;
       choice.visible = isWaiting;
       const voicePosition: Vector3 = this._voices[index].position;
-      choice.position.set(voicePosition.x - this._width * (this._isNarrow ? 0.12 : 0.15), voicePosition.y - 1, voicePosition.z + 0.08);
       choice.scale.setScalar(scale * (this._isNarrow ? 0.37 : 0.39));
       if (index === 0) choice.rotation.set(0, 0, 0);
       else choice.rotation.set(index === 1 ? -0.18 : -0.28, (index - 1) * 0.16, (index - 1) * 0.018);
       const target: Mesh<BoxGeometry, MeshBasicMaterial> = this._targets[index];
       target.visible = isWaiting;
-      target.position.set(voicePosition.x, choice.position.y - 0.22, 0.18);
+      target.position.set(voicePosition.x, voicePosition.y - 1.22, 0.18);
       target.scale.set(this._width * 0.29, 1.12, 1);
       target.material.opacity = 0;
+      this._pathFrom.set(0, -2.62, 0.14);
+      this._pathGoal.set(target.position.x, target.position.y - 0.48, target.position.z - 0.58);
+      this._samplePath(index, 0.64, this._pathFrom, this._pathGoal, seconds, this._pathCurrent);
+      choice.position.set(
+        this._pathCurrent.x - this._width * (this._isNarrow ? 0.1 : 0.13),
+        this._pathCurrent.y + 0.12,
+        this._pathCurrent.z + 0.22,
+      );
       if (this._hovered === index) choice.position.y += scale * 0.12;
       const speaker: Group = this._ribbons[14 + index].root;
       speaker.visible = isWaiting || (frame.phase === 'response' && this._selected === index);
@@ -918,7 +1006,7 @@ export class SpatialBootScene {
       }
       fossil.updateMatrix();
     }
-    this._updatePath(isWaiting, isTravel, seconds);
+    this._updatePath(isWaiting, isTravel, seconds, frame.phase === 'loading' ? newestVoice : -1);
     this._player.visible = isStory && !isFinal;
     let spatialEvent: number = -1;
     if (this._player.visible) {
@@ -933,24 +1021,40 @@ export class SpatialBootScene {
         const physicsStep: IntroPhysicsStep = this._physics.step(delta, this._movement.x, this._movement.y, speed, {
           minX: -this._width * 0.43, maxX: this._width * 0.43, minY: -2.65, maxY: 1.62,
         });
-        this._player.position.set(physicsStep.position.x, physicsStep.position.y, physicsStep.position.z);
         let nearest: number = 0;
         let nearestDistance: number = Number.POSITIVE_INFINITY;
         for (let index: number = 0; index < 3; index += 1) {
-          const dx: number = Math.abs(this._player.position.x - this._targets[index].position.x);
+          const dx: number = Math.abs(physicsStep.position.x - this._targets[index].position.x);
           if (dx < nearestDistance) { nearest = index; nearestDistance = dx; }
         }
         this._hovered = nearest;
+        const target: Vector3 = this._targets[nearest].position;
+        const progress: number = Math.min(1, Math.max(0, (physicsStep.position.y + 2.65) / 4.27));
+        const lockRaw: number = Math.min(1, Math.max(0, (progress - 0.08) / 0.42));
+        const laneLock: number = lockRaw * lockRaw * (3 - 2 * lockRaw);
+        this._pathFrom.set(0, -2.65, 0.34);
+        this._pathGoal.set(target.x, target.y - 0.48, target.z - 0.58);
+        this._samplePath(nearest, progress, this._pathFrom, this._pathGoal, seconds, this._pathCurrent);
+        this._player.position.set(
+          physicsStep.position.x * (1 - laneLock) + this._pathCurrent.x * laneLock,
+          physicsStep.position.y,
+          physicsStep.position.z * (1 - laneLock) + (this._pathCurrent.z + 0.18) * laneLock,
+        );
         if (this._choiceArmed && physicsStep.sensor >= 0 && physicsStep.sensor < 3) {
           this._choiceArmed = false;
           spatialEvent = physicsStep.sensor;
         }
       } else if (isTravel) {
         const travelSpeed: number = 1.82 + this._playerStage * 0.14;
-        const physicsStep: IntroPhysicsStep = this._physics.step(delta, this._movement.x * 0.62, this._movement.y, travelSpeed, {
+        const physicsStep: IntroPhysicsStep = this._physics.step(delta, 0, this._movement.y, travelSpeed, {
           minX: -this._width * 0.28, maxX: this._width * 0.28, minY: -2.45, maxY: 2.62,
         });
-        this._player.position.set(physicsStep.position.x, physicsStep.position.y, 0.58 - Math.max(0, physicsStep.position.y + 2.45) * 0.11);
+        const progress: number = Math.min(1, Math.max(0, (physicsStep.position.y + 2.45) / 5.07));
+        this._pathFrom.set((this._selected - 1) * this._width * 0.16, -2.45, 0.4);
+        this._pathGoal.set(0, 2.62, -0.72);
+        this._samplePath(Math.max(0, this._selected), progress, this._pathFrom, this._pathGoal, seconds, this._pathCurrent);
+        this._player.position.copy(this._pathCurrent);
+        this._player.position.z += 0.18;
         if (!this._journeyComplete && physicsStep.sensor === INTRO_JOURNEY_SENSOR_INDEX) {
           this._journeyComplete = true;
           spatialEvent = -2;
@@ -1000,8 +1104,11 @@ export class SpatialBootScene {
       memory.geometry.dispose();
       memory.material.dispose();
     });
-    this._path?.geometry.dispose();
-    this._path?.material.dispose();
+    this._paths.forEach((path: LineSegments<BufferGeometry, LineBasicMaterial>): void => {
+      path.geometry.dispose();
+      path.material.dispose();
+    });
+    this._pathEchoes.forEach((echo: LineSegments<BufferGeometry, LineBasicMaterial>): void => echo.material.dispose());
     this._trails.forEach((trail: Line<BufferGeometry, LineBasicMaterial>): void => {
       trail.geometry.dispose();
       trail.material.dispose();

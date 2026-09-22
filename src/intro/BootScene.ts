@@ -1,6 +1,6 @@
 import { loadVfxExportBundle } from 'nixie-fx/export';
 import { ThreeVfxRenderer, type ThreeVfxEffectInstance } from 'nixie-fx/three';
-import { ACESFilmicToneMapping, PerspectiveCamera, PMREMGenerator, Scene, SRGBColorSpace, Texture, WebGLRenderer } from 'three';
+import { ACESFilmicToneMapping, PerspectiveCamera, PMREMGenerator, Scene, SRGBColorSpace, Texture, Vector3, WebGLRenderer } from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 import { createInputController, type InputController, type Intents } from '../core/input';
@@ -68,6 +68,7 @@ export class BootScene {
   private _renderer: WebGLRenderer | null = null;
   private _scene: Scene | null = null;
   private _camera: PerspectiveCamera | null = null;
+  private _cameraLook: Vector3 = new Vector3();
   private _spatial: SpatialBootScene = new SpatialBootScene();
   private _chapterTwo: ChapterTwoScene = new ChapterTwoScene();
   private _spatialReady: Promise<void> = Promise.resolve();
@@ -314,6 +315,7 @@ export class BootScene {
       }
       if (!['boot', 'waiting', 'doorway', 'complete'].includes(this._storyMode)) this._updateStory(now);
       const spatialEvent: number = this._spatial.update(this._motionMs, this._isReduced);
+      this._updateCamera(delta);
       if ((this._storyMode === 'waiting' || this._storyMode === 'travel') && (this._movementKeys.size > 0 || this._gamepadMoveX !== 0 || this._gamepadMoveY !== 0)) this._audio.move(this._answersCommitted);
       if (spatialEvent >= 0 && this._storyMode === 'waiting') this._commitChoice(spatialEvent);
       else if (spatialEvent === -2 && this._storyMode === 'travel') this._beginPrelude(this._questionIndex);
@@ -378,6 +380,22 @@ export class BootScene {
     // Screen readers hear the complete question once, not a stream of corrected letters.
     this._accessibleQuestion.textContent = frame.phase === 'waiting' || frame.phase === 'complete' ? frame.question : '';
     this._soundFrame(frame);
+  }
+
+  private _updateCamera(delta: number): void {
+    if (!this._camera) return;
+    const player = this._spatial.getPlayerPosition();
+    const isQuestion: boolean = this._storyMode === 'waiting' || this._storyMode === 'question';
+    const isTravel: boolean = this._storyMode === 'travel';
+    const targetX: number = isTravel ? player.x * 0.08 : 0;
+    const targetY: number = isTravel ? player.y * 0.055 : isQuestion ? 0.08 : 0;
+    const targetZ: number = isQuestion ? 8.85 : isTravel ? 9.65 : this._storyMode === 'boot' ? 10.25 : 9.6;
+    const blend: number = this._isReduced ? 1 : 1 - Math.exp(-Math.max(0, delta) * (isQuestion ? 2.6 : 1.6));
+    this._camera.position.x += (targetX - this._camera.position.x) * blend;
+    this._camera.position.y += (targetY - this._camera.position.y) * blend;
+    this._camera.position.z += (targetZ - this._camera.position.z) * blend;
+    this._cameraLook.set(0, isQuestion ? 0.08 : isTravel ? player.y * 0.025 : 0, 0);
+    this._camera.lookAt(this._cameraLook);
   }
 
   private _highlightChoice(index: number): void {

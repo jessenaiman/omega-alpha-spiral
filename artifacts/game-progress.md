@@ -48,6 +48,7 @@
 - [ ] Convert the three visual strands into the authored 3D travel paths.
 - [x] Add controller-first forward/back movement and diegetic control discovery.
 - [ ] Make each Dreamweaver call illuminate its path toward the player.
+- [x] Make each Dreamweaver call illuminate its path toward the player.
 
 ## Scene One celestial/controller checkpoint — September 21, 2026
 
@@ -63,6 +64,21 @@
 - [x] Removed always-visible control instructions. The input hint appears only
   after the player first uses keyboard, touch, or controller input.
 - [ ] Runtime build and live visual/controller checks remain owner-gated.
+
+## Authored 3D calling paths checkpoint — September 21, 2026
+
+- [x] Replaced the shared flat guide with three separately batched 3D routes.
+- [x] Light uses an exact straight rail; Shadow uses discrete hard bends with a
+  black echo; Ambition uses a cubic yellow arc with a violet counter-route.
+- [x] During a breach, only the arriving Dreamweaver's route draws toward the
+  player and carries a moving practical light.
+- [x] During questions, horizontal movement selects a route and forward/back
+  motion advances or retreats along it; lane pull increases with progress.
+- [x] Between questions, the player is constrained to the committed route while
+  retaining signed forward/back movement.
+- [x] Answer words are spatially anchored on their routes, and question states
+  pull the camera back to the center before movement resumes.
+- [ ] Runtime build, visible-page, and controller checks remain owner-gated.
 
 ## Active checklist
 
