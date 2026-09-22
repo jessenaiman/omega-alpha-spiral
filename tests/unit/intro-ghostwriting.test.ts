@@ -5,11 +5,12 @@ import { CHRONICLE_FINAL, CHRONICLE_QUESTIONS } from '../../src/intro/chronicle'
 
 const QUESTION: string = 'If you could be only one story..:\nwho would you be?';
 
-test('ghostwriting processes a scrolling transcript with temporary corruption before the question', () => {
+test('ghostwriting attempts a chronological boot with temporary corruption before the question', () => {
   const frames = createBootFrames('472');
   assert.deepEqual(frames, createBootFrames('472'));
   assert.equal(frames[0].phase, 'cursor');
-  assert.ok(frames.some((frame) => 'transcript' in frame && String(frame.transcript).includes('retry.')), 'Missing processed transcript');
+  assert.ok(frames.some((frame) => frame.transcript.includes('script unfinished')), 'Missing failed first invocation');
+  assert.ok(frames.some((frame) => frame.transcript.includes('unexpected end')), 'Missing failed wake script');
   assert.ok(frames.some((frame) => 'isCorrupt' in frame && frame.isCorrupt === true), 'Missing temporary corrupted output');
   const last = frames[frames.length - 1];
   assert.equal(last.question, QUESTION);
@@ -22,15 +23,21 @@ test('ghostwriting processes a scrolling transcript with temporary corruption be
   }
 });
 
-test('cursor boots the script before voices load; question remains ambiguous for ten seconds', () => {
+test('cursor boots the script, the question stalls, then voices breach sequentially', () => {
   const frames = createBootFrames('472');
   const commandIndex = frames.findIndex((frame) => frame.transcript.includes('/run omega.sh'));
-  const voicesIndex = frames.findIndex((frame) => frame.transcript.includes('dreamweaver'));
+  const questionIndex = frames.findIndex((frame) => frame.question.length > 0);
+  const stalledIndex = frames.findIndex((frame) => frame.transcript.includes('question ... stalled'));
+  const lightIndex = frames.findIndex((frame) => frame.transcript.includes('dreamweaver[01]'));
+  const shadowIndex = frames.findIndex((frame) => frame.transcript.includes('dreamweaver[02]'));
+  const ambitionIndex = frames.findIndex((frame) => frame.transcript.includes('dreamweaver[03]'));
   assert.ok(commandIndex >= 0, 'Boot must type /run omega.sh');
-  assert.ok(voicesIndex > commandIndex, 'Voices must load after the command');
-  assert.ok(frames.filter((frame) => frame.at < 10000).every((frame) => frame.question === ''));
+  assert.ok(questionIndex > commandIndex, 'Omega must find the question after the boot command');
+  assert.ok(stalledIndex > questionIndex, 'The written question must visibly stall');
+  assert.ok(lightIndex > stalledIndex, 'Dreamweavers must wait for Omega to stall');
+  assert.ok(lightIndex < shadowIndex && shadowIndex < ambitionIndex, 'Dreamweavers must breach one at a time');
   assert.ok(frames.some((frame, index) => index > 0 && frame.question.length < frames[index - 1].question.length), 'The question must erase and retry');
-  assert.ok(frames.filter((frame) => frame.isCorrupt).length <= 3, 'Failures must be rare, not continuous glitch noise');
+  assert.equal(frames.filter((frame) => frame.isCorrupt).length, 4, 'Only three corrections and the deliberate stall may corrupt');
 });
 
 test('the runtime chronicle owns four questions, three answers each, and a plural ending', () => {

@@ -1118,7 +1118,7 @@ export class SpatialBootScene {
     }
     const stagedChoice: Group | null = isWaiting && this._awaitingAction >= 0 ? this._ribbons[this._awaitingAction + 8].root : null;
     this._cursor.visible = (!isWaiting || Boolean(stagedChoice)) && frame.phase !== 'complete' && (isReduced || elapsedMs % CURSOR_PERIOD_MS < 690);
-    this._cursor.position.copy(stagedChoice ?? (isBoot ? command.position : question.visible ? question.position : this._ribbons[3].root.position));
+    this._cursor.position.copy(stagedChoice ? stagedChoice.position : isBoot ? command.position : question.visible ? question.position : this._ribbons[3].root.position);
     const cursorSource: string = stagedChoice ? (frame.choices[this._awaitingAction] ?? '') : isBoot ? frame.transcript : frame.question;
     const cursorLines: string[] = cursorSource.split('\n');
     const lastLine: string = cursorLines.at(-1) ?? '';
