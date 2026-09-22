@@ -1,11 +1,8 @@
 import { loadVfxExportBundle } from 'nixie-fx/export';
 import { ThreeVfxRenderer, type ThreeVfxEffectInstance } from 'nixie-fx/three';
-import { ACESFilmicToneMapping, Mesh, PerspectiveCamera, PlaneGeometry, PMREMGenerator, Scene, ShaderMaterial, SRGBColorSpace, Texture, TextureLoader, Vector2, WebGLRenderer } from 'three';
+import { ACESFilmicToneMapping, PerspectiveCamera, PMREMGenerator, Scene, SRGBColorSpace, Texture, WebGLRenderer } from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
-import distantUrl from '../../assets/intro/optical-variations/optical-a-distant.webp';
-import foldUrl from '../../assets/intro/optical-variations/optical-b-fold.webp';
-import thresholdUrl from '../../assets/intro/optical-variations/optical-c-threshold.webp';
 import { CHRONICLE_FINAL, CHRONICLE_FINAL_DRAFT, createChronicleQuestions, type ChronicleQuestion } from './chronicle';
 import { createBootFrames, type BootFrame } from './ghostwriting';
 import { IntroAudio } from './IntroAudio';
@@ -16,10 +13,7 @@ import dustBundle from './vfx/boot-dust.bundle.json';
 
 const SEED: number = 472;
 const MAX_DELTA_SECONDS: number = 0.1;
-const PLATE_URLS: string[] = [distantUrl, foldUrl, thresholdUrl];
 const FIRST_DISSOLVE_MS: number = 3500;
-const DISSOLVE_DURATION_MS: number = 2500;
-const ZOOM_DURATION_MS: number = 16000;
 const VIEW_HEIGHT: number = 6.4;
 const TEST_STATE_NAMES = ['boot-cursor', 'question-1', 'question-2', 'question-3', 'question-4', 'final-door', 'complete'] as const;
 type TestStateName = typeof TEST_STATE_NAMES[number];
@@ -62,37 +56,6 @@ type IntroTestWindow = {
   };
   __THREE_GAME_TEST_HOOKS__?: IntroTestHooks;
 };
-const VERTEX_SHADER: string = `
-  varying vec2 vUv;
-  void main() {
-    vUv = uv;
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-  }
-`;
-const FRAGMENT_SHADER: string = `
-  uniform sampler2D distantImage;
-  uniform sampler2D foldImage;
-  uniform sampler2D thresholdImage;
-  uniform float firstMix;
-  uniform float secondMix;
-  uniform float zoom;
-  uniform float viewAspect;
-  uniform float imageAspect;
-  uniform float reveal;
-  uniform vec2 drift;
-  varying vec2 vUv;
-  void main() {
-    vec2 cover = vec2(min(viewAspect / imageAspect, 1.0), min(imageAspect / viewAspect, 1.0)) / zoom;
-    vec2 center = clamp(vec2(0.65, 0.55), cover * 0.5, 1.0 - cover * 0.5);
-    vec2 uv = clamp((vUv - 0.5) * cover + center + drift, 0.001, 0.999);
-    // The imperfect double contours are intentional: the script is trying alternatives.
-    vec3 ink = mix(texture2D(distantImage, uv).rgb, texture2D(foldImage, uv).rgb, smoothstep(0.0, 1.0, firstMix));
-    ink = mix(ink, texture2D(thresholdImage, uv).rgb, smoothstep(0.0, 1.0, secondMix));
-    gl_FragColor = vec4(ink * reveal, 1.0);
-    #include <colorspace_fragment>
-  }
-`;
-
 function getElement<T extends HTMLElement>(selector: string, kind: { new(): T }): T {
   const element: Element | null = document.querySelector(selector);
   if (!(element instanceof kind)) throw new Error(`Missing boot element: ${selector}`);
@@ -108,8 +71,6 @@ export class BootScene {
   private _spatialReady: Promise<void> = Promise.resolve();
   private _audio: IntroAudio = new IntroAudio();
   private _activeChoice: number = 0;
-  private _plate: Mesh<PlaneGeometry, ShaderMaterial> | null = null;
-  private _textures: Texture[] = [];
   private _environment: Texture | null = null;
   private _vfx: ThreeVfxRenderer | null = null;
   private _dust: ThreeVfxEffectInstance | null = null;
@@ -139,7 +100,6 @@ export class BootScene {
   private _lastAudioFormat: number = 0;
   private _lastAudioPhase: BootFrame['phase'] = 'cursor';
   private _lastAudioCorrupt: boolean = false;
-  private _secondMix: number = 0;
   private _isDebug: boolean = false;
   private _diagnosticFrame: number = 0;
   private _frameNumber: number = 0;
@@ -252,47 +212,18 @@ export class BootScene {
       if (!effect) throw new Error('Boot dust is missing');
       this._vfx = new ThreeVfxRenderer({ scene: this._scene, camera: this._camera });
       this._dust = this._vfx.createEffect(effect, { seed: SEED, autoStart: false });
-      let loaded: number = 0;
-      const loader: TextureLoader = new TextureLoader();
-      this._textures = PLATE_URLS.map((url: string): Texture => {
-        const texture: Texture = loader.load(url, (image: Texture): void => {
-          if (this._isDestroyed) { image.dispose(); return; }
-          loaded += 1;
-          if (loaded !== PLATE_URLS.length || !this._plate || !this._root) return;
-          if (!(image.image instanceof HTMLImageElement)) {
-            this._showError('The opening image could not decode. Reload to try again.');
-            return;
-          }
-          this._plate.material.uniforms.imageAspect.value = image.image.width / image.image.height;
-          this._root.dataset.osArtTs = 'ready';
-          this._previousMs = performance.now();
-          this._raf = requestAnimationFrame(this._update);
-        }, undefined, () => this._showError('The opening image could not load. Reload to try again.'));
-        texture.colorSpace = SRGBColorSpace;
-        return texture;
-      });
-      const material: ShaderMaterial = new ShaderMaterial({
-        uniforms: {
-          distantImage: { value: this._textures[0] }, foldImage: { value: this._textures[1] }, thresholdImage: { value: this._textures[2] },
-          firstMix: { value: 0 }, secondMix: { value: 0 }, zoom: { value: 1 }, viewAspect: { value: 1 }, imageAspect: { value: 1 },
-          reveal: { value: 0 }, drift: { value: new Vector2() },
-        },
-        vertexShader: VERTEX_SHADER,
-        fragmentShader: FRAGMENT_SHADER,
-        depthWrite: false,
-      });
-      this._plate = new Mesh(new PlaneGeometry(2, 2), material);
-      this._plate.position.z = -1;
-      this._scene.add(this._plate);
       this._resize();
       if (this._isDebug) this._installTestContracts();
+      if (this._root) this._root.dataset.osArtTs = 'ready';
+      this._previousMs = performance.now();
+      this._raf = requestAnimationFrame(this._update);
     } catch (error: unknown) {
       this._showError(error instanceof Error ? `The opening could not start. ${error.message}` : 'The opening could not start. Reload to try again.');
     }
   }
 
   private _resize(): void {
-    if (!this._renderer || !this._camera || !this._plate || !this._dust) return;
+    if (!this._renderer || !this._camera || !this._dust) return;
     const width: number = window.innerWidth;
     const height: number = window.innerHeight;
     const halfHeight: number = Math.tan(this._camera.fov * Math.PI / 360) * 11;
@@ -301,9 +232,7 @@ export class BootScene {
     this._renderer.setSize(width, height, false);
     this._camera.aspect = width / height;
     this._camera.updateProjectionMatrix();
-    this._plate.scale.set(halfWidth, halfHeight, 1);
     this._spatial.resize(width / height);
-    this._plate.material.uniforms.viewAspect.value = width / height;
     this._dust.root.position.set(halfWidth * 0.3, VIEW_HEIGHT * 0.05, 0);
   }
 
@@ -323,7 +252,6 @@ export class BootScene {
     this._lastAudioFormat = 0;
     this._lastAudioPhase = 'cursor';
     this._lastAudioCorrupt = false;
-    this._secondMix = 0;
     this._simulationPaused = false;
     this._answersCommitted = 0;
     this._clearMovement();
@@ -343,7 +271,7 @@ export class BootScene {
   }
 
   private _update = (now: number): void => {
-    if (this._isDestroyed || !this._renderer || !this._scene || !this._camera || !this._plate) return;
+    if (this._isDestroyed || !this._renderer || !this._scene || !this._camera) return;
     const delta: number = Math.min(Math.max((now - this._previousMs) / 1000, 0), MAX_DELTA_SECONDS);
     this._previousMs = now;
     this._frameNumber += 1;
@@ -370,20 +298,12 @@ export class BootScene {
           this._applyFrame(this._frames[next], true);
         }
       }
-      const firstMix: number = this._isReduced ? 0 : Math.min(Math.max((displayMs - FIRST_DISSOLVE_MS) / DISSOLVE_DURATION_MS, 0), 1);
-      const targetSecondMix: number = this._storyMode === 'boot' ? 0 : ['final', 'doorway', 'complete'].includes(this._storyMode) ? 1 : this._questionIndex / Math.max(1, this._questions.length - 1);
-      this._secondMix += (targetSecondMix - this._secondMix) * Math.min(1, delta * (this._isReduced ? 60 : 0.42));
-      this._plate.material.uniforms.firstMix.value = firstMix;
-      this._plate.material.uniforms.secondMix.value = this._secondMix;
-      this._plate.material.uniforms.zoom.value = this._isReduced ? 1 : 1 + Math.min(this._motionMs / ZOOM_DURATION_MS, 1) * 0.06 + this._questionIndex * 0.009;
-      this._plate.material.uniforms.reveal.value = this._isReduced ? 0.7 : Math.min(Math.max((displayMs - 4400) / 1600, 0), 0.85);
-      this._plate.material.uniforms.drift.value.set(this._isReduced ? 0 : Math.sin(this._motionMs / 13000) * 0.019, this._isReduced ? 0 : Math.cos(this._motionMs / 19000) * 0.013);
       if (!['boot', 'waiting', 'doorway', 'complete'].includes(this._storyMode)) this._updateStory(now);
       const spatialEvent: number = this._spatial.update(this._motionMs, this._isReduced);
       if ((this._storyMode === 'waiting' || this._storyMode === 'travel') && this._movementKeys.size > 0) this._audio.move(this._answersCommitted);
       if (spatialEvent >= 0 && this._storyMode === 'waiting') this._commitChoice(spatialEvent);
       else if (spatialEvent === -2 && this._storyMode === 'travel') this._beginPrelude(this._questionIndex);
-      if (this._root) this._root.dataset.osPlateTs = this._secondMix > 0.98 ? '2' : firstMix === 1 ? '1' : '0';
+      if (this._root) this._root.dataset.osBackgroundTs = 'procedural-lemniscate';
       const isDustVisible: boolean = !this._isReduced && displayMs > FIRST_DISSOLVE_MS && displayMs < endMs;
       if (isDustVisible) {
         this._dust?.play();
@@ -784,9 +704,6 @@ export class BootScene {
     this._vfx?.destroy();
     this._spatial.destroy();
     this._chapterTwo.destroy();
-    this._plate?.geometry.dispose();
-    this._plate?.material.dispose();
-    this._textures.forEach((texture: Texture): void => texture.dispose());
     this._environment?.dispose();
     this._audio.destroy();
     this._renderer?.dispose();

@@ -1,6 +1,6 @@
 import {
   AdditiveBlending, BufferAttribute, BufferGeometry, Group, Mesh, NormalBlending,
-  PlaneGeometry, Points, ShaderMaterial,
+  Line, LineBasicMaterial, PlaneGeometry, Points, ShaderMaterial,
 } from 'three';
 
 const TAU: number = Math.PI * 2;
@@ -8,15 +8,21 @@ const DESKTOP_LIGHT_PARTICLES: number = 11000;
 const DESKTOP_DARK_PARTICLES: number = 9000;
 const MOBILE_LIGHT_PARTICLES: number = 5200;
 const MOBILE_DARK_PARTICLES: number = 4300;
+const STRAND_STARTS: readonly number[] = [0, 0.28, 0.56];
+const STRAND_DURATION: number = 0.44;
+const STRAND_SEGMENTS: readonly number[] = [72, 44, 240];
 
 const LIGHT_VERTEX: string = `
   attribute float aSeed;
   attribute float aKind;
+  attribute float aProgress;
   attribute float aSize;
   uniform float uTime;
   uniform float uEra;
   uniform float uPulse;
   uniform float uOwner;
+  uniform float uStarReveal;
+  uniform float uStrandReveal;
   uniform float uDisintegrate;
   uniform float uReduced;
   varying vec3 vColor;
@@ -28,26 +34,47 @@ const LIGHT_VERTEX: string = `
     float phase = aSeed * 6.2831853;
     float drift = time * (0.055 + aSeed * 0.025);
     float eraOrder = uEra * 0.035;
-    float depth = smoothstep(-0.9, 4.8, p.z);
-    p.x += sin(phase + drift + p.y * 0.21) * (0.18 + aSeed * 0.22 - eraOrder) * (0.7 + depth * 1.2);
-    p.y += cos(phase * 1.31 - drift * 0.73 + p.x * 0.16) * (0.14 + aSeed * 0.18 - eraOrder * 0.6) * (0.72 + depth);
-    p.z += sin(phase * 2.1 + drift) * 0.22;
+    float strand = 1.0 - step(2.5, aKind);
+    float star = step(2.5, aKind);
+    float light = 1.0 - step(0.5, aKind);
+    float shadow = step(0.5, aKind) * (1.0 - step(1.5, aKind));
+    float ambition = step(1.5, aKind) * (1.0 - step(2.5, aKind));
+
+    // Bernoulli lemniscate: three historical renderers discover the same path.
+    float movingProgress = fract(aProgress + time * (0.0024 + aKind * 0.0007));
+    float steps = light * 72.0 + shadow * 44.0 + ambition * 240.0;
+    float sampledProgress = mix(floor(movingProgress * steps) / steps, movingProgress, ambition);
+    float theta = sampledProgress * 6.2831853;
+    float sine = sin(theta);
+    float cosine = cos(theta);
+    float denominator = 1.0 + sine * sine;
+    vec3 curve = vec3(cosine / denominator * 6.25, sine * cosine / denominator * 7.1, -1.35);
+    curve.xy += vec2(-sine, cosine) * (aKind - 1.0) * 0.055;
+    curve.y += shadow * sign(sin(theta * 6.0)) * 0.075;
+    curve.z += sin(theta * 2.0 + aKind * 1.7) * (0.22 + ambition * 0.18) + aKind * 0.12;
+    p = mix(p, curve, strand);
+
+    float depth = smoothstep(-1.8, 4.8, p.z);
+    p.x += sin(phase + drift + p.y * 0.21) * (0.035 + star * (0.17 + aSeed * 0.2 - eraOrder)) * (0.7 + depth * 1.2);
+    p.y += cos(phase * 1.31 - drift * 0.73 + p.x * 0.16) * (0.028 + star * (0.12 + aSeed * 0.16 - eraOrder * 0.6)) * (0.72 + depth);
+    p.z += sin(phase * 2.1 + drift) * mix(0.055, 0.22, star);
 
     float chosen = 1.0 - step(0.45, abs(aKind - uOwner));
     p.xy *= 1.0 + chosen * uPulse * (0.08 + 0.04 * sin(phase));
     p.xy = mix(p.xy, p.xy * 0.12, uDisintegrate);
     p.z -= uDisintegrate * (2.0 + aSeed * 4.0);
 
-    float silver = 1.0 - step(0.5, aKind);
-    float shadow = step(0.5, aKind) * (1.0 - step(1.5, aKind));
-    float ambition = step(1.5, aKind) * (1.0 - step(2.5, aKind));
-    float star = step(2.5, aKind);
+    float silver = light;
     float ambitionCounter = step(0.72, fract(aSeed * 19.7));
     vColor = silver * vec3(0.78, 0.90, 0.98)
       + shadow * vec3(0.96, 0.08, 0.14)
       + ambition * mix(vec3(1.0, 0.72, 0.12), vec3(0.25, 0.12, 0.52), ambitionCounter * 0.48)
       + star * vec3(0.72, 0.80, 0.88);
-    float reveal = mix(smoothstep(0.8 + aSeed * 1.8, 5.2 + aSeed * 2.8, uTime), 1.0, uReduced);
+    float strandStart = aKind * 0.28;
+    float strandHead = clamp((uStrandReveal - strandStart) / 0.44, 0.0, 1.0);
+    float painted = 1.0 - smoothstep(strandHead - 0.035, strandHead + 0.012, aProgress);
+    float strandReveal = painted * smoothstep(0.0, 0.06, strandHead);
+    float reveal = star * uStarReveal + strand * strandReveal;
     vAlpha = mix(0.2, 0.78, fract(aSeed * 31.7)) * reveal * (1.0 - uDisintegrate * 0.45);
 
     vec4 mvPosition = modelViewMatrix * vec4(p, 1.0);
@@ -181,11 +208,14 @@ export interface ParticleFieldState {
   formation: number;
   disintegrate: number;
   era: number;
+  starReveal: number;
+  strandReveal: number;
   reduced: boolean;
 }
 
 export class IntroParticleField {
   public readonly root: Group = new Group();
+  private readonly _fieldRoot: Group = new Group();
   private readonly _panelRoot: Group = new Group();
   private _lightGeometry: BufferGeometry | null = null;
   private _darkGeometry: BufferGeometry | null = null;
@@ -193,22 +223,30 @@ export class IntroParticleField {
   private _lightMaterial: ShaderMaterial | null = null;
   private _darkMaterial: ShaderMaterial | null = null;
   private _veilMaterial: ShaderMaterial | null = null;
+  private _strandGeometries: BufferGeometry[] = [];
+  private _strandMaterials: LineBasicMaterial[] = [];
   private _lightCount: number = 0;
   private _darkCount: number = 0;
   private _pulse: number = 0;
   private _owner: number = 1;
   private _lastSeconds: number = 0;
   private _formation: number = 0;
+  private _strandReveal: number = 0;
 
   public init(parent: Group): void {
     const isMobile: boolean = window.innerWidth < 760;
     this._lightCount = isMobile ? MOBILE_LIGHT_PARTICLES : DESKTOP_LIGHT_PARTICLES;
     this._darkCount = isMobile ? MOBILE_DARK_PARTICLES : DESKTOP_DARK_PARTICLES;
     this._createLightField(this._lightCount);
+    this._createStrandLines();
     this._createDarkField(this._darkCount);
     this._createVeil();
-    this.root.add(this._panelRoot);
+    this.root.add(this._fieldRoot, this._panelRoot);
     parent.add(this.root);
+  }
+
+  public setFieldWidth(width: number): void {
+    this._fieldRoot.scale.x = Math.max(0.48, Math.min(1, width / 8));
   }
 
   public setPanelTransform(x: number, y: number, z: number, width: number, height: number, rx: number, ry: number, rz: number): void {
@@ -226,6 +264,9 @@ export class IntroParticleField {
     this._pulse = 0;
     this._owner = 1;
     this._lastSeconds = 0;
+    this._strandReveal = 0;
+    this._strandGeometries.forEach((geometry: BufferGeometry): void => geometry.setDrawRange(0, 0));
+    this._strandMaterials.forEach((material: LineBasicMaterial): void => { material.opacity = 0; });
   }
 
   public update(elapsedMs: number, state: ParticleFieldState): void {
@@ -236,7 +277,10 @@ export class IntroParticleField {
     this._pulse = Math.max(0, this._pulse - delta * 0.72);
     const disintegrate: number = state.reduced ? 0 : Math.max(0, Math.min(1, state.disintegrate));
     const formation: number = Math.max(0, Math.min(1, state.formation));
+    const starReveal: number = Math.max(0, Math.min(1, state.starReveal));
+    const strandReveal: number = Math.max(0, Math.min(1, state.strandReveal));
     this._formation = formation;
+    this._strandReveal = strandReveal;
     for (const material of [this._lightMaterial, this._darkMaterial, this._veilMaterial]) {
       material.uniforms.uTime.value = seconds;
       material.uniforms.uPulse.value = this._pulse;
@@ -245,15 +289,24 @@ export class IntroParticleField {
     }
     this._lightMaterial.uniforms.uEra.value = Math.max(0, Math.min(4, state.era));
     this._lightMaterial.uniforms.uOwner.value = this._owner;
+    this._lightMaterial.uniforms.uStarReveal.value = starReveal;
+    this._lightMaterial.uniforms.uStrandReveal.value = strandReveal;
     this._darkMaterial.uniforms.uFormation.value = formation;
     this._darkMaterial.uniforms.uOwner.value = this._owner;
     this._veilMaterial.uniforms.uFormation.value = formation;
     this._veilMaterial.uniforms.uRipple.value = this._pulse;
+    this._strandGeometries.forEach((geometry: BufferGeometry, owner: number): void => {
+      const count: number = (geometry.getAttribute('position')?.count ?? 0);
+      const localReveal: number = Math.max(0, Math.min(1, (strandReveal - STRAND_STARTS[owner]) / STRAND_DURATION));
+      geometry.setDrawRange(0, Math.max(0, Math.floor(count * localReveal)));
+      this._strandMaterials[owner].opacity = localReveal <= 0 ? 0 : 0.1 + localReveal * 0.17;
+    });
     this._panelRoot.visible = formation > 0.002 || disintegrate > 0;
   }
 
   public getDiagnostics(): { lightParticles: number; darkParticles: number; drawCalls: number; surfaceFormation: number } {
-    return { lightParticles: this._lightCount, darkParticles: this._darkCount, drawCalls: this._formation > 0.002 ? 3 : 1, surfaceFormation: this._formation };
+    const strandDraws: number = STRAND_STARTS.filter((start: number): boolean => this._strandReveal > start).length;
+    return { lightParticles: this._lightCount, darkParticles: this._darkCount, drawCalls: 1 + strandDraws + (this._formation > 0.002 ? 2 : 0), surfaceFormation: this._formation };
   }
 
   public destroy(): void {
@@ -261,33 +314,37 @@ export class IntroParticleField {
     this._lightGeometry?.dispose();
     this._darkGeometry?.dispose();
     this._veilGeometry?.dispose();
+    this._strandGeometries.forEach((geometry: BufferGeometry): void => geometry.dispose());
     this._lightMaterial?.dispose();
     this._darkMaterial?.dispose();
     this._veilMaterial?.dispose();
+    this._strandMaterials.forEach((material: LineBasicMaterial): void => material.dispose());
   }
 
   private _createLightField(count: number): void {
     const positions: Float32Array = new Float32Array(count * 3);
     const seeds: Float32Array = new Float32Array(count);
     const kinds: Float32Array = new Float32Array(count);
+    const progresses: Float32Array = new Float32Array(count);
     const sizes: Float32Array = new Float32Array(count);
     const random = this._random(472);
     for (let index: number = 0; index < count; index += 1) {
       const kind: number = index % 8 < 3 ? index % 3 : 3;
       const seed: number = random();
       if (kind < 3) {
-        const strandT: number = Math.pow(random(), 0.78);
-        const angle: number = kind * TAU / 3 + strandT * (3.4 + kind * 0.28);
-        const radius: number = 0.38 + strandT * 11.4;
-        positions[index * 3] = Math.cos(angle) * radius * (1.05 + random() * 0.12);
-        positions[index * 3 + 1] = Math.sin(angle) * radius * 0.54 + (kind - 1) * 0.24;
-        positions[index * 3 + 2] = -0.82 + strandT * 5.4 + random() * 0.24;
+        const progress: number = random();
+        const point: readonly [number, number, number] = this._lemniscatePoint(progress, kind);
+        positions[index * 3] = point[0];
+        positions[index * 3 + 1] = point[1];
+        positions[index * 3 + 2] = point[2];
+        progresses[index] = progress;
       } else {
         const angle: number = random() * TAU;
         const radius: number = 2.2 + Math.pow(random(), 0.72) * 12.5;
         positions[index * 3] = Math.cos(angle) * radius * (1.06 + random() * 0.38);
         positions[index * 3 + 1] = Math.sin(angle) * radius * 0.66;
         positions[index * 3 + 2] = -0.88 + random() * 5.7;
+        progresses[index] = random();
       }
       seeds[index] = seed;
       kinds[index] = kind;
@@ -297,11 +354,13 @@ export class IntroParticleField {
     this._lightGeometry.setAttribute('position', new BufferAttribute(positions, 3));
     this._lightGeometry.setAttribute('aSeed', new BufferAttribute(seeds, 1));
     this._lightGeometry.setAttribute('aKind', new BufferAttribute(kinds, 1));
+    this._lightGeometry.setAttribute('aProgress', new BufferAttribute(progresses, 1));
     this._lightGeometry.setAttribute('aSize', new BufferAttribute(sizes, 1));
     this._lightMaterial = new ShaderMaterial({
       uniforms: {
         uTime: { value: 0 }, uEra: { value: 0 }, uPulse: { value: 0 },
-        uOwner: { value: 1 }, uDisintegrate: { value: 0 }, uReduced: { value: 0 },
+        uOwner: { value: 1 }, uStarReveal: { value: 0 }, uStrandReveal: { value: 0 },
+        uDisintegrate: { value: 0 }, uReduced: { value: 0 },
       },
       vertexShader: LIGHT_VERTEX,
       fragmentShader: LIGHT_FRAGMENT,
@@ -314,7 +373,49 @@ export class IntroParticleField {
     const points: Points<BufferGeometry, ShaderMaterial> = new Points(this._lightGeometry, this._lightMaterial);
     points.frustumCulled = false;
     points.renderOrder = -30;
-    this.root.add(points);
+    this._fieldRoot.add(points);
+  }
+
+  private _createStrandLines(): void {
+    const colors: readonly number[] = [0xbfe8ff, 0xcb2334, 0xe8b34c];
+    STRAND_SEGMENTS.forEach((segments: number, owner: number): void => {
+      const positions: Float32Array = new Float32Array((segments + 1) * 3);
+      for (let index: number = 0; index <= segments; index += 1) {
+        const point: readonly [number, number, number] = this._lemniscatePoint(index / segments, owner);
+        positions.set(point, index * 3);
+      }
+      const geometry: BufferGeometry = new BufferGeometry();
+      geometry.setAttribute('position', new BufferAttribute(positions, 3));
+      geometry.setDrawRange(0, 0);
+      const material: LineBasicMaterial = new LineBasicMaterial({
+        color: colors[owner], transparent: true, opacity: 0,
+        blending: AdditiveBlending, depthTest: false, depthWrite: false, toneMapped: false,
+      });
+      const line: Line<BufferGeometry, LineBasicMaterial> = new Line(geometry, material);
+      line.frustumCulled = false;
+      line.renderOrder = -31 + owner;
+      this._strandGeometries.push(geometry);
+      this._strandMaterials.push(material);
+      this._fieldRoot.add(line);
+    });
+  }
+
+  private _lemniscatePoint(progress: number, owner: number): readonly [number, number, number] {
+    const segments: number = STRAND_SEGMENTS[owner];
+    const sampled: number = owner === 2 ? progress : Math.floor(progress * segments) / segments;
+    const theta: number = sampled * TAU;
+    const sine: number = Math.sin(theta);
+    const cosine: number = Math.cos(theta);
+    const denominator: number = 1 + sine * sine;
+    const normalX: number = -sine;
+    const normalY: number = cosine;
+    const offset: number = (owner - 1) * 0.055;
+    const shadowKink: number = owner === 1 ? Math.sign(Math.sin(theta * 6)) * 0.075 : 0;
+    return [
+      cosine / denominator * 6.25 + normalX * offset,
+      sine * cosine / denominator * 7.1 + normalY * offset + shadowKink,
+      -1.35 + Math.sin(theta * 2 + owner * 1.7) * (owner === 2 ? 0.4 : 0.22) + owner * 0.12,
+    ];
   }
 
   private _createDarkField(count: number): void {

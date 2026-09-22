@@ -7,6 +7,23 @@
 - Preserve the approved four-question chronicle, chronological typing eras, audible ghostwriting, three followers, and final threshold.
 - This pass implements decisions already made. New interlude prose and further concept brainstorming remain deferred.
 
+## Procedural lemniscate checkpoint — September 21, 2026
+
+- [x] Removed the three optical reference plates from the intro runtime.
+- [x] Replaced them with one Bernoulli lemniscate rendered as moving GPU pixels
+  plus three progressively drawn lines.
+- [x] Gave the strands distinct construction grammar: Light is polygonal and
+  exact, Shadow introduces angular kinks, Ambition stays continuously curved.
+- [x] Darkness remains the initial frame; stars begin after the player wakes the
+  script, while colored strands wait for Omega's question-writing breach.
+- [x] Responsive scaling keeps the equation visible on narrow viewports without
+  introducing a second background implementation.
+- [x] Live desktop inspection confirms the equation and pixel circulation render.
+- [ ] Recompose boot/question text around a protected central reading corridor.
+- [ ] Convert the three visual strands into the authored 3D travel paths.
+- [ ] Add controller-first forward/back movement and diegetic control discovery.
+- [ ] Make each Dreamweaver call illuminate its path toward the player.
+
 ## Active checklist
 
 - [x] Small drifting bash-loader opening with failed invocations and input-gated success.

@@ -254,6 +254,8 @@ export class SpatialBootScene {
   private _movement: Vector2 = new Vector2();
   private _lastUpdateMs: number = 0;
   private _lastPhase: BootFrame['phase'] | '' = '';
+  private _backgroundStartedAt: number = -1;
+  private _strandStartedAt: number = -1;
   private _journeyActive: boolean = false;
   private _journeyComplete: boolean = false;
   private _choiceArmed: boolean = false;
@@ -402,6 +404,7 @@ export class SpatialBootScene {
   public resize(aspect: number): void {
     this._isNarrow = aspect < 1;
     this._width = Math.min(8, 5.5 * aspect);
+    this._particles.setFieldWidth(this._width);
     if (this._frame) this.setFrame(this._frame);
   }
 
@@ -495,6 +498,8 @@ export class SpatialBootScene {
     this._movement.set(0, 0);
     this._lastUpdateMs = 0;
     this._lastPhase = '';
+    this._backgroundStartedAt = -1;
+    this._strandStartedAt = -1;
     this._journeyActive = false;
     this._journeyComplete = false;
     this._choiceArmed = false;
@@ -604,6 +609,8 @@ export class SpatialBootScene {
     const isSettled: boolean = isWaiting || isFinal;
     const phaseChanged: boolean = frame.phase !== this._lastPhase;
     if (phaseChanged) {
+      if (frame.phase === 'command' && this._backgroundStartedAt < 0) this._backgroundStartedAt = elapsedMs;
+      if (frame.phase === 'writing' && this._strandStartedAt < 0) this._strandStartedAt = elapsedMs;
       if (isWaiting) {
         this._player.position.set(0, -2.55, 0.52);
         this._choiceArmed = true;
@@ -626,7 +633,13 @@ export class SpatialBootScene {
     this._particles.setPanelTransform(panelX, panelY, -0.45, panelWidth, panelHeight, panelRx, panelRy, panelRz);
     const formation: number = isBoot ? 0 : isFinal ? 1 : isStory ? Math.min(0.9, 0.18 + frame.format * 0.18) : 0;
     const disintegrate: number = isFinal ? Math.min(1, Math.max(0, ((frame.phaseElapsedMs ?? 0) - 5600) / 6800)) : 0;
-    this._particles.update(elapsedMs, { formation, disintegrate, era: frame.format, reduced: isReduced });
+    const starReveal: number = isStory || isWaiting
+      ? 1
+      : this._backgroundStartedAt < 0 ? 0 : isReduced ? 1 : Math.min(1, (elapsedMs - this._backgroundStartedAt) / 5200);
+    const strandReveal: number = isStory || isWaiting
+      ? 1
+      : this._strandStartedAt < 0 ? 0 : isReduced ? 1 : Math.min(1, (elapsedMs - this._strandStartedAt) / 7200);
+    this._particles.update(elapsedMs, { formation, disintegrate, era: frame.format, starReveal, strandReveal, reduced: isReduced });
     for (let index: number = 0; index < this._ribbons.length; index += 1) {
       const ribbon: GlyphRibbon = this._ribbons[index];
       ribbon.root.visible = true;
@@ -660,7 +673,7 @@ export class SpatialBootScene {
       const trail: Line<BufferGeometry, LineBasicMaterial> = this._trails[index];
       const breach: boolean = frame.phase === 'writing' && (frame.isCorrupt || frame.question.length > 18);
       const voiceVisible: boolean = breach || isStory || this._voice === index;
-      const trailVisible: boolean = isLoaded || breach || isStory || this._voice === index;
+      const trailVisible: boolean = breach || isStory || this._voice === index;
       if (voiceVisible && this._voiceAppearedAt[index] < 0) this._voiceAppearedAt[index] = elapsedMs;
       voice.visible = voiceVisible;
       trail.visible = trailVisible;
