@@ -164,6 +164,9 @@ export class BootScene {
       if (!this._hasStarted) void this._beginBootFromGesture();
       else void this._unlockAudio();
     }, { signal, capture: true });
+    // Autostart: the story runs on load; audio joins at the first gesture.
+    window.addEventListener('keydown', (): void => { if (this._hasStarted) void this._unlockAudio(); }, { signal, capture: true });
+    void this._beginBootFromGesture(true);
     window.addEventListener('pointermove', (event: PointerEvent): void => {
       if (this._camera) this._spatial.hover(this._spatial.pick(event.clientX, event.clientY, this._camera));
     }, { signal });
@@ -703,7 +706,8 @@ export class BootScene {
   private async _beginBootFromGesture(allowSilentStart: boolean = false): Promise<void> {
     if (this._hasStarted || this._isStarting) return;
     this._isStarting = true;
-    const [unlocked] = await Promise.all([this._audio.unlock(), this._spatialReady]);
+    await this._spatialReady;
+    const unlocked: boolean = allowSilentStart ? false : await this._audio.unlock();
     if (!unlocked && !allowSilentStart) {
       if (this._root) this._root.dataset.osAudioTs = 'unavailable';
       this._syncAudioLabel();
@@ -730,7 +734,7 @@ export class BootScene {
 
   private _syncAudioLabel(): void {
     const button: HTMLButtonElement = getElement('#os-sound-ts', HTMLButtonElement);
-    button.textContent = !this._audio.unlocked ? 'wake sound' : this._audio.muted ? 'sound muted' : 'sound awake';
+    button.textContent = !this._audio.unlocked ? 'sound on' : this._audio.muted ? 'sound muted' : 'sound awake';
     button.setAttribute('aria-pressed', String(this._audio.unlocked && !this._audio.muted));
   }
 
