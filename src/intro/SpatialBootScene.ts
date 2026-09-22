@@ -541,7 +541,7 @@ export class SpatialBootScene {
     this._player.position.set((this._selected - 1) * this._width * 0.16, -2.45, 0.58);
     this._physics.activateJourney(
       { x: this._player.position.x, y: this._player.position.y, z: this._player.position.z },
-      { x: 0, y: 2.5, z: 0.26 },
+      { x: this._player.position.x, y: 2.5, z: 0.26 },
     );
   }
 
