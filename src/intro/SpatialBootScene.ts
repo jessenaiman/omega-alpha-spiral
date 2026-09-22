@@ -399,6 +399,7 @@ export class SpatialBootScene {
   private _asideAt: number = -10000;
   private _aside: string = '';
   private _selected: number = -1;
+  private _awaitingAction: number = -1;
   private _hovered: number = -1;
   private _pointer: Vector2 = new Vector2();
   private _raycaster: Raycaster = new Raycaster();
@@ -615,6 +616,12 @@ export class SpatialBootScene {
     this._selected = index;
   }
 
+  public stageChoice(index: number): void {
+    this._awaitingAction = Math.max(0, Math.min(2, index));
+    this._selected = this._awaitingAction;
+    this._particles.pulse(this._awaitingAction);
+  }
+
   public getParticleDiagnostics(): { lightParticles: number; darkParticles: number; drawCalls: number; surfaceFormation: number } {
     return this._particles.getDiagnostics();
   }
@@ -646,6 +653,7 @@ export class SpatialBootScene {
     this._aside = '';
     this._asideAt = -10000;
     this._selected = -1;
+    this._awaitingAction = -1;
     this._hovered = -1;
     this._voiceAppearedAt = [-1, -1, -1];
     this._fossils = [];
@@ -668,6 +676,7 @@ export class SpatialBootScene {
     const target: Mesh<BoxGeometry, MeshBasicMaterial> | undefined = this._targets[index];
     if (target) this._player.position.set(target.position.x, target.position.y - 0.46, 0.56);
     this._choiceHistory.push(Math.max(0, Math.min(2, index)));
+    this._awaitingAction = -1;
     const memory: Mesh<BoxGeometry, MeshStandardMaterial> | undefined = this._playerMemories[Math.min(this._playerStage, this._playerMemories.length - 1)];
     if (memory) {
       memory.material.color.setHex(INK[Math.max(0, Math.min(2, index))]);
@@ -853,6 +862,7 @@ export class SpatialBootScene {
         this._choiceArmed = true;
         this._journeyActive = false;
         this._selected = -1;
+        this._awaitingAction = -1;
       }
       if (frame.phase === 'doorway') this._player.position.set(0, -2.45, 0.52);
       if (isTravel && !this._journeyActive) this.beginJourney();
@@ -1100,21 +1110,25 @@ export class SpatialBootScene {
         const eased: number = crossingProgress * crossingProgress * (3 - 2 * crossingProgress);
         this._player.position.set(0, -2.45 + eased * 2.58, 0.52 - eased * 3.46);
       }
-      const pulse: number = (isReduced ? 1 : 1 + Math.sin(seconds * 4.2) * 0.045) * (isCrossing ? 1 - crossingProgress * 0.72 : 1);
+      const waitingPulse: number = this._awaitingAction >= 0 && !isReduced ? 1 + Math.sin(seconds * 6.4) * 0.09 : 1;
+      const pulse: number = (isReduced ? 1 : 1 + Math.sin(seconds * 4.2) * 0.045) * waitingPulse * (isCrossing ? 1 - crossingProgress * 0.72 : 1);
       this._player.scale.setScalar(pulse);
     }
-    this._cursor.visible = !isWaiting && frame.phase !== 'complete' && (isReduced || elapsedMs % CURSOR_PERIOD_MS < 690);
-    this._cursor.position.copy(isBoot ? command.position : question.visible ? question.position : this._ribbons[3].root.position);
-    const cursorLines: string[] = (isBoot ? frame.transcript : frame.question).split('\n');
+    const stagedChoice: Group | null = isWaiting && this._awaitingAction >= 0 ? this._ribbons[this._awaitingAction + 8].root : null;
+    this._cursor.visible = (!isWaiting || Boolean(stagedChoice)) && frame.phase !== 'complete' && (isReduced || elapsedMs % CURSOR_PERIOD_MS < 690);
+    this._cursor.position.copy(stagedChoice ?? (isBoot ? command.position : question.visible ? question.position : this._ribbons[3].root.position));
+    const cursorSource: string = stagedChoice ? (frame.choices[this._awaitingAction] ?? '') : isBoot ? frame.transcript : frame.question;
+    const cursorLines: string[] = cursorSource.split('\n');
     const lastLine: string = cursorLines.at(-1) ?? '';
-    this._cursor.position.x += Math.min(lastLine.length, this._isNarrow ? 28 : 41) * 0.64 * scale * (isBoot ? 0.48 : responseAnchor ? 0.52 : 1);
+    const cursorTextScale: number = stagedChoice ? 0.39 : isBoot ? 0.48 : responseAnchor ? 0.52 : 1;
+    this._cursor.position.x += Math.min(lastLine.length, this._isNarrow ? 28 : 41) * 0.64 * scale * cursorTextScale;
     this._cursor.position.y += scale * 0.45;
-    this._cursor.position.y -= Math.max(0, cursorLines.length - 1) * scale * 1.35 * (isBoot ? 0.48 : responseAnchor ? 0.52 : 1);
+    this._cursor.position.y -= Math.max(0, cursorLines.length - 1) * scale * 1.35 * cursorTextScale;
     this._cursor.position.z += 0.1;
     this._cursor.rotation.set(0, isReduced ? 0 : Math.sin(seconds * 0.45) * 0.55, isReduced ? 0 : Math.sin(seconds * 0.3) * 0.1);
-    const cursorScale: number = isBoot ? 0.48 : responseAnchor ? 0.58 : 1;
+    const cursorScale: number = stagedChoice ? 0.44 : isBoot ? 0.48 : responseAnchor ? 0.58 : 1;
     this._cursor.scale.set((frame.format === 1 ? 0.14 : 1) * cursorScale, (frame.format === 2 ? 0.14 : 1) * cursorScale, cursorScale);
-    this._cursor.material.color.setHex(responseOwner >= 0 ? INK[responseOwner] : INK[0]);
+    this._cursor.material.color.setHex(this._awaitingAction >= 0 ? INK[this._awaitingAction] : responseOwner >= 0 ? INK[responseOwner] : INK[0]);
     return spatialEvent;
   }
 

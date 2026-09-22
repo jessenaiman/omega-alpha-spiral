@@ -32,6 +32,8 @@ interface IntroDiagnosticState {
   failed: boolean;
   canContinue: boolean;
   selectedChoice: number;
+  pendingChoice: number;
+  actionDiscovered: boolean;
   playerPosition: { x: number; y: number; z: number };
   choiceTargets: Array<{ x: number; y: number; z: number }>;
   seed: string;
@@ -441,6 +443,7 @@ export class BootScene {
     if (this._storyMode !== 'waiting') return;
     this._pendingChoice = index;
     this._highlightChoice(index);
+    this._spatial.stageChoice(index);
     this._clearMovement();
     getElement('#os-hint-ts', HTMLElement).textContent = this._controlHint();
   }
@@ -1032,6 +1035,8 @@ export class BootScene {
       failed: false,
       canContinue: this._canContinue,
       selectedChoice: this._selectedChoice >= 0 ? this._selectedChoice : this._activeChoice,
+      pendingChoice: this._pendingChoice,
+      actionDiscovered: this._actionDiscovered,
       playerPosition: this._spatial.getPlayerPosition(),
       choiceTargets: this._spatial.getChoiceTargets(),
       seed: this._seed,

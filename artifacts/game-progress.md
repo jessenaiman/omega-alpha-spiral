@@ -114,6 +114,8 @@
 - [x] Kept the first question as pure embodied discovery: walk into the answer.
 - [x] Starting with question two, arriving at a word stages it and waits for a
   deliberate action press before recording the answer.
+- [x] A staged answer gains the tiny blinking era cursor and a stronger player
+  pulse, so the world signals readiness without opening a control panel.
 - [x] Kept action labels hidden until the player has actually pressed an action;
   movement labels likewise remain a consequence of discovered input modality.
 - [x] Made the controller's south-face action advance dialogue and answer staged
