@@ -1,3 +1,9 @@
+/*
+ * Required sources of truth:
+ * .agents/skills/threejs-qa-release/SKILL.md
+ * .agents/skills/threejs-qa-release/references/playtest-bot.md
+ * .agents/skills/threejs-debug-profiler/SKILL.md
+ */
 import { expect, test, type Page, type TestInfo } from "@playwright/test";
 
 type IntroState = {
@@ -106,7 +112,7 @@ async function waitForContinue(page: Page): Promise<void> {
 async function steerIntro(
   page: Page,
   choice: number,
-  metrics: { distance: number; softlocks: number },
+  metrics: { distance: number; softlocks: number }
 ): Promise<void> {
   let horizontal: "ArrowLeft" | "ArrowRight" | null = null;
   let previous: IntroState = await readIntro(page);
@@ -130,7 +136,7 @@ async function steerIntro(
       const moved = Math.hypot(
         state.playerPosition.x - previous.playerPosition.x,
         state.playerPosition.y - previous.playerPosition.y,
-        state.playerPosition.z - previous.playerPosition.z,
+        state.playerPosition.z - previous.playerPosition.z
       );
       metrics.distance += moved;
       if (state.frame > previous.frame && moved < 0.001) stationarySamples += 1;
@@ -151,7 +157,7 @@ async function steerIntro(
 
 async function steerTravel(
   page: Page,
-  metrics: { distance: number; softlocks: number },
+  metrics: { distance: number; softlocks: number }
 ): Promise<void> {
   let previous = await readIntro(page);
   let stationarySamples = 0;
@@ -163,7 +169,7 @@ async function steerTravel(
       const moved = Math.hypot(
         state.playerPosition.x - previous.playerPosition.x,
         state.playerPosition.y - previous.playerPosition.y,
-        state.playerPosition.z - previous.playerPosition.z,
+        state.playerPosition.z - previous.playerPosition.z
       );
       metrics.distance += moved;
       if (state.frame > previous.frame && moved < 0.001) stationarySamples += 1;
@@ -201,7 +207,7 @@ async function finishResponse(page: Page): Promise<string> {
 async function walkChapter(
   page: Page,
   axis: "x" | "z",
-  target: number,
+  target: number
 ): Promise<number> {
   const before = await readChapter(page);
   if (Math.abs(target - before.player[axis]) < 0.2) return 0;
@@ -228,7 +234,7 @@ async function walkChapter(
         requestedTarget: target,
         requestedPositive: positive,
       },
-      { timeout: 15_000 },
+      { timeout: 15_000 }
     );
   } finally {
     await page.keyboard.up(key);
@@ -291,7 +297,7 @@ test("bot playtest: scripted real input completes and retries the playable route
     return applied;
   });
   expect(acknowledgement.state, "bot must start in the requested state").toBe(
-    "boot-cursor",
+    "boot-cursor"
   );
 
   const before = await sample(page);
@@ -321,7 +327,7 @@ test("bot playtest: scripted real input completes and retries the playable route
 
   const introSteps = INPUT_SCRIPT.filter(
     (step): step is Extract<BotStep, { kind: "intro-choice" }> =>
-      step.kind === "intro-choice",
+      step.kind === "intro-choice"
   );
   for (const [index, step] of introSteps.entries()) {
     await steerIntro(page, step.choice, routeMetrics);
@@ -341,7 +347,7 @@ test("bot playtest: scripted real input completes and retries the playable route
         await expect
           .poll(
             async (): Promise<string> => (await readIntro(page)).storyMode,
-            { timeout: 30_000 },
+            { timeout: 30_000 }
           )
           .toBe("doorway");
       }
@@ -369,7 +375,7 @@ test("bot playtest: scripted real input completes and retries the playable route
     .poll(
       async (): Promise<string | null> =>
         page.locator("main").getAttribute("data-chapter"),
-      { timeout: 20_000 },
+      { timeout: 20_000 }
     )
     .toBe("2");
   await expect
@@ -378,7 +384,7 @@ test("bot playtest: scripted real input completes and retries the playable route
 
   const chapterSteps = INPUT_SCRIPT.filter(
     (step): step is Extract<BotStep, { kind: "chapter-room" }> =>
-      step.kind === "chapter-room",
+      step.kind === "chapter-room"
   );
   let room = 0;
   while ((await readChapter(page)).phase !== "complete") {
@@ -425,7 +431,7 @@ test("bot playtest: scripted real input completes and retries the playable route
     .toBe(0);
   await expect
     .poll(
-      async (): Promise<number> => (await readChapter(page)).distanceTravelled,
+      async (): Promise<number> => (await readChapter(page)).distanceTravelled
     )
     .toBe(0);
   const retryVerified = (await readChapter(page)).phase === "exploring";
@@ -459,26 +465,26 @@ test("bot playtest: scripted real input completes and retries the playable route
   expect(consoleErrors, "console errors during bot play").toEqual([]);
   expect(networkErrors, "network errors during bot play").toEqual([]);
   expect(report.framesAdvanced, "game loop must keep running").toBeGreaterThan(
-    100,
+    100
   );
   expect(
     report.distanceTravelled,
-    "player must respond to scripted input",
+    "player must respond to scripted input"
   ).toBeGreaterThan(5);
   expect(
     report.softlockWindows,
-    "held input repeatedly produced no motion or progress",
+    "held input repeatedly produced no motion or progress"
   ).toBeLessThanOrEqual(2);
   expect(
     report.scoreAfter,
-    "scripted route must progress the objective",
+    "scripted route must progress the objective"
   ).toBeGreaterThan(report.scoreBefore);
   expect(
     report.stepOfFirstScore,
-    "bot must find objective progress",
+    "bot must find objective progress"
   ).toBeGreaterThanOrEqual(0);
   expect(report.complete, "bot must complete the playable route").toBe(true);
   expect(report.retryVerified, "restart must restore playable state").toBe(
-    true,
+    true
   );
 });
