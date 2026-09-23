@@ -258,3 +258,11 @@ like Omega, iteration one is meant to read like a bash script. No Blender, no gl
 - `intro-strands-shader.html` is an independent Three.js shader comparison using the same runtime question and ghostwriting frames. It presents the Dreamweavers' own questions; integration into `/intro.html` still needs the active question and writing state passed in and the selected owner/message returned.
 - Basic checks: TypeScript typecheck passed; live Archive, Tide, Threshold, and shader pages opened; Archive reported its Blender layers loaded. Full intro gameplay and production evidence are still pending integration.
 - Q1 Archive now writes the three Dreamweaver questions in order after Omega finishes. Shader-drawn glyph ribbons float above the paths with controlled Light, Shadow, and Ambition motion; the floor and Blender strands reveal after Ambition. TypeScript typecheck passed, and the live browser showed the three-path state. The Blender MCP showed `intro-layer-study.blend` with its void floor, fine strands, and doorway reference; the exported door remains a separate final-scene integration task.
+
+## Canonical intro playable checkpoint — 2026-09-23
+
+- `/intro.html` now makes approaching a strand the choice itself. Number keys and visible choice buttons guide the character to a strand before committing; the between-question route moves automatically with the camera.
+- The intro uses a receding transparent substrate, restrained first-question darkness, smaller Dreamweaver marks, and the Blender fragment door at the threshold. Chapter Two receives the last chosen thread.
+- The three supplied reference images and the design brief, core loop contract, and level plan are saved in `assets/references/` and `artifacts/intro-direction/` for the next art conversation.
+- `artifacts/final-evidence.md` records the production build, skill-defined real-input bot, desktop/mobile captures, door capture, video, and current manifest check. No unit tests were run.
+- Remaining art review: physical Omega terminal, faceless character growth, door material/assembly, and how much of Chapter Two is visible through the portal.
