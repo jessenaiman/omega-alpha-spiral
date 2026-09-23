@@ -1,5 +1,18 @@
 # Chronicle Intro — active visual/gameplay iteration
 
+## Session rule — 2026-09-22
+
+**Read every instruction file in full before acting.** This session an agent
+skipped one line of the 86-line `threejs-game-director/SKILL.md` (the
+credential-probe requirement) and repeated a **deleted** skill's asset claim
+as fact. Lesson: after a governing doc is deleted or superseded, re-derive
+its rulings from the live instructions — never cite the ghost.
+
+Asset verdict, confirmed by real probe output (`probe_asset_credentials.sh`):
+TRIPO/GEMINI/ELEVENLABS keys all MISSING — but these are **not blockers**:
+keyless Pollinations for images, VoiceStudio for voice, procedural WebAudio
+for SFX, Blender + procedural Three.js for 3D. No high-res custom art needed.
+
 ## Current intent
 
 - Player promise: steer an unfinished self through existential questions that physically author it.
@@ -10,40 +23,40 @@
 ## Layered display chronology checkpoint — September 21, 2026
 
 - [x] Replaced single-era font swapping with a six-generation display composite:
-  Atari 2600, IBM PC/CGA, Commodore 64, Macintosh, Amiga, then Nintendo.
+      Atari 2600, IBM PC/CGA, Commodore 64, Macintosh, Amiga, then Nintendo.
 - [x] Each generation supplies its own raster density, palette, bit depth,
-  scanline strength, buried-layer persistence, and native signal damage.
+      scanline strength, buried-layer persistence, and native signal damage.
 - [x] Recovered generations remain faintly visible beneath the current one;
-  newer technology accumulates instead of erasing the older display.
+      newer technology accumulates instead of erasing the older display.
 - [x] Scrambling is now a downstream signal-damage pass over the composited
-  historical output, not the source of the typography.
+      historical output, not the source of the typography.
 - [x] Dreamweaver breach beats are separated in time. Earlier arrivals dim into
-  witnesses while the newest strand and silhouette command attention.
+      witnesses while the newest strand and silhouette command attention.
 - [x] Superseded the full-screen lemniscate with a neutral celestial depth field;
-  Dreamweaver colors now belong to their calls and paths rather than the backdrop.
+      Dreamweaver colors now belong to their calls and paths rather than the backdrop.
 - [x] Added a procedural, slowly drifting nebula plane behind the 3D star volume;
-  its shader deliberately clears the central reading corridor.
+      its shader deliberately clears the central reading corridor.
 - [x] Scene One now owns this celestial world. Logo/title-introduction design is
-  explicitly deferred instead of being implied by the first playable scene.
+      explicitly deferred instead of being implied by the first playable scene.
 - [ ] Basic build and live-page check require owner approval under repository
-  testing rules; this checkpoint is not yet claimed verified at runtime.
+      testing rules; this checkpoint is not yet claimed verified at runtime.
 - [ ] Next creative loop: author Light's straight cut, Shadow's segmented route,
-  and Ambition's yellow/violet counter-curve as distinct calling paths.
+      and Ambition's yellow/violet counter-curve as distinct calling paths.
 
 ## Superseded procedural lemniscate checkpoint — September 21, 2026
 
 - [x] Removed the three optical reference plates from the intro runtime.
 - [x] Replaced them with one Bernoulli lemniscate rendered as moving GPU pixels
-  plus three progressively drawn lines.
+      plus three progressively drawn lines.
 - [x] Gave the strands distinct construction grammar: Light is polygonal and
-  exact, Shadow introduces angular kinks, Ambition stays continuously curved.
+      exact, Shadow introduces angular kinks, Ambition stays continuously curved.
 - [x] Darkness remains the initial frame; stars begin after the player wakes the
-  script, while colored strands wait for Omega's question-writing breach.
+      script, while colored strands wait for Omega's question-writing breach.
 - [x] Responsive scaling keeps the equation visible on narrow viewports without
-  introducing a second background implementation.
+      introducing a second background implementation.
 - [x] Live desktop inspection confirms the equation and pixel circulation render.
 - [x] Owner review rejected the equation as the first-scene background. It remains
-  historical comparison evidence only and is removed from the runtime.
+      historical comparison evidence only and is removed from the runtime.
 - [ ] Recompose boot/question text around a protected central reading corridor.
 - [ ] Convert the three visual strands into the authored 3D travel paths.
 - [x] Add controller-first forward/back movement and diegetic control discovery.
@@ -54,81 +67,81 @@
 
 - [x] Removed the rejected lemniscate particles and line meshes from runtime.
 - [x] Added a procedural celestial volume: neutral temperature-varied stars,
-  depth-banded reveal, slow parallax orbit, and a low-opacity nebula shader.
+      depth-banded reveal, slow parallax orbit, and a low-opacity nebula shader.
 - [x] Preserved the center as negative space for questions; the final black
-  particle threshold no longer forms behind ordinary question states.
+      particle threshold no longer forms behind ordinary question states.
 - [x] Reused the shared input-intent controller for left-stick movement and
-  controller action edges instead of adding intro-only gamepad polling.
+      controller action edges instead of adding intro-only gamepad polling.
 - [x] Removed the travel-only forward clamp; backward movement now reaches the
-  same deterministic physics step as forward movement.
+      same deterministic physics step as forward movement.
 - [x] Removed always-visible control instructions. The input hint appears only
-  after the player first uses keyboard, touch, or controller input.
+      after the player first uses keyboard, touch, or controller input.
 - [ ] Runtime build and live visual/controller checks remain owner-gated.
 
 ## Authored 3D calling paths checkpoint — September 21, 2026
 
 - [x] Replaced the shared flat guide with three separately batched 3D routes.
 - [x] Light uses an exact straight rail; Shadow uses discrete hard bends with a
-  black echo; Ambition uses a cubic yellow arc with a violet counter-route.
+      black echo; Ambition uses a cubic yellow arc with a violet counter-route.
 - [x] During a breach, only the arriving Dreamweaver's route draws toward the
-  player and carries a moving practical light.
+      player and carries a moving practical light.
 - [x] During questions, horizontal movement selects a route and forward/back
-  motion advances or retreats along it; lane pull increases with progress.
+      motion advances or retreats along it; lane pull increases with progress.
 - [x] Between questions, the player is constrained to the committed route while
-  retaining signed forward/back movement.
+      retaining signed forward/back movement.
 - [x] Answer words are spatially anchored on their routes, and question states
-  pull the camera back to the center before movement resumes.
+      pull the camera back to the center before movement resumes.
 - [ ] Runtime build, visible-page, and controller checks remain owner-gated.
 
 ## Dialogue and audio dramaturgy checkpoint — September 21, 2026
 
 - [x] Replaced uniform response typing with owner-specific line beats: measured
-  Light pauses, longer Shadow silence, and faster forward-pulling Ambition cadence.
+      Light pauses, longer Shadow silence, and faster forward-pulling Ambition cadence.
 - [x] Limited machine audit lines to the first and final thresholds instead of
-  appending the same status rhythm after every answer.
+      appending the same status rhythm after every answer.
 - [x] Added selective second-observer interjections only after questions one and
-  three; they evaluate without claiming that the player chose a Dreamweaver.
+      three; they evaluate without claiming that the player chose a Dreamweaver.
 - [x] Added distinct interjection gestures and spatial left/center/right panning
-  while preserving procedural, portable Web Audio synthesis.
+      while preserving procedural, portable Web Audio synthesis.
 - [x] Separated narrative status from discovered control hints; keyboard or
-  controller actions appear only after that modality has actually been used.
+      controller actions appear only after that modality has actually been used.
 - [ ] Runtime audio unlock, mix, timing, and visible-page checks remain owner-gated.
 
 ## Embodied threshold checkpoint — September 21, 2026
 
 - [x] Replaced the instant cut into Chapter Two with a 2.8-second authored
-  crossing beat; the next scene now starts only after the crossing completes.
+      crossing beat; the next scene now starts only after the crossing completes.
 - [x] Kept the neutral player visible at the open threshold and moved its fully
-  accumulated form through the particle surface.
+      accumulated form through the particle surface.
 - [x] Extended all three procedural path grammars from their Dreamweaver marks
-  to the moving player so Light, Shadow, and Ambition visibly follow together.
+      to the moving player so Light, Shadow, and Ambition visibly follow together.
 - [x] Moved the black-surface disintegration onto the actual crossing instead
-  of spending the effect while the final text is still being written.
+      of spending the effect while the final text is still being written.
 - [x] Accumulated answer colors in the player's neutral core and let prior
-  answers strengthen later route echoes without implying allegiance.
+      answers strengthen later route echoes without implying allegiance.
 - [ ] Runtime timing, occlusion, final-camera, and Chapter Two handoff remain
-  owner-gated and unverified in this checkpoint.
+      owner-gated and unverified in this checkpoint.
 
 ## Controller-first tutorial acts checkpoint — September 22, 2026
 
 - [x] Kept the first question as pure embodied discovery: walk into the answer.
 - [x] Starting with question two, arriving at a word stages it and waits for a
-  deliberate action press before recording the answer.
+      deliberate action press before recording the answer.
 - [x] A staged answer gains the tiny blinking era cursor and a stronger player
-  pulse, so the world signals readiness without opening a control panel.
+      pulse, so the world signals readiness without opening a control panel.
 - [x] Kept action labels hidden until the player has actually pressed an action;
-  movement labels likewise remain a consequence of discovered input modality.
+      movement labels likewise remain a consequence of discovered input modality.
 - [x] Made the controller's south-face action advance dialogue and answer staged
-  words, matching the diegetic `A` label instead of listening only to the west
-  face button.
+      words, matching the diegetic `A` label instead of listening only to the west
+      face button.
 - [x] Preserved DOM, pointer, and number-key commitment as accessibility mirrors;
-  controller and keyboard play retain the authored embodied route.
+      controller and keyboard play retain the authored embodied route.
 - [x] Question three unlocks accumulated route resonance: the echo layers now
-  reveal the prior two answers while a second observer can enter the exchange.
+      reveal the prior two answers while a second observer can enter the exchange.
 - [x] Exposed the current `movement`, `action`, or `resonance` act through the
-  existing diagnostics and root dataset for bots and visual review.
+      existing diagnostics and root dataset for bots and visual review.
 - [ ] Runtime controller feel, target hold, and discovery clarity remain
-  owner-gated and unverified in this checkpoint.
+      owner-gated and unverified in this checkpoint.
 
 ## Active checklist
 
@@ -141,9 +154,9 @@
 - [x] Player-controlled passages and changing Dreamweaver layouts between questions.
 - [x] Final three-strand threshold preserved.
 - [x] Release evidence: build, 18 unit checks, 9 browser checks, real-input bot,
-  production desktop/mobile/final captures, renderer and Rapier diagnostics.
+      production desktop/mobile/final captures, renderer and Rapier diagnostics.
 - [ ] Owner visual/audio approval remains subjective and is intentionally not
-  replaced by automation.
+      replaced by automation.
 
 ## Implementation boundary
 
