@@ -656,6 +656,9 @@ let arrived = false;
 let form = isFinal ? 4 : variant === "archive" ? 0 : variant === "tide" ? 1 : 2;
 let tapSeconds = 0;
 let choicesRevealed = false;
+let choicesWriting = false;
+let choicesWritingAt = 0;
+let activeWriter = -1;
 let writingOrigin = performance.now();
 let blenderLayers: BlenderIntroLayers | null = null;
 let blenderLayerError = false;
@@ -678,17 +681,11 @@ const syncArchiveVisuals = (): void => {
 const revealButton =
   document.querySelector<HTMLButtonElement>("#reveal-choices");
 const revealChoices = (): void => {
-  if (isFinal || !writingDone || choicesRevealed) return;
-  choicesRevealed = true;
+  if (isFinal || !writingDone || choicesWriting || choicesRevealed) return;
+  choicesWriting = true;
+  choicesWritingAt = performance.now();
+  activeWriter = 0;
   if (revealButton) revealButton.hidden = true;
-  routes.forEach((route) => {
-    route.line.visible = true;
-    route.mark.visible = true;
-    route.words.forEach((word) => {
-      word.visible = true;
-    });
-  });
-  syncArchiveVisuals();
   updateStatus();
 };
 const updateStatus = (): void => {
@@ -702,9 +699,11 @@ const updateStatus = (): void => {
     status.textContent = `${["LIGHT", "SHADOW", "AMBITION"][selected]} · the Dreamweaver is centered.\n${question.choices[selected].response.split("\n\n")[0]}\nR replays this same question.`;
   } else if (selected >= 0) {
     status.textContent = `Following ${["Light", "Shadow", "Ambition"][selected]} · keep walking. Your single filament records this run.`;
+  } else if (choicesWriting) {
+    status.textContent = `${["Light", "Shadow", "Ambition"][activeWriter]} is writing an answer into the dark.`;
   } else if (!choicesRevealed) {
     status.textContent = writingDone
-      ? "Omega has finished the question. Reveal the Dreamweavers to see their answer paths."
+      ? "Omega has finished the question. Let the Dreamweavers write their answers."
       : "Omega is ghostwriting the question. Watch the old terminal correct itself.";
   } else {
     status.textContent =
@@ -725,6 +724,9 @@ const reset = (): void => {
   doorAssembly = 0;
   doorwayWords.material.opacity = 0;
   choicesRevealed = false;
+  choicesWriting = false;
+  choicesWritingAt = 0;
+  activeWriter = -1;
   writingDone = isFinal;
   writingIndex = 0;
   writingOrigin = performance.now();
@@ -852,6 +854,38 @@ const frame = (at: number): void => {
       updateStatus();
     }
   }
+  if (choicesWriting && !choicesRevealed) {
+    const secondsPerAnswer = 1.45;
+    const elapsed = (at - choicesWritingAt) / 1000;
+    const writer = Math.min(2, Math.floor(elapsed / secondsPerAnswer));
+    if (writer !== activeWriter) {
+      activeWriter = writer;
+      updateStatus();
+    }
+    routes.forEach((route, index) => {
+      const local = Math.max(0, elapsed - index * secondsPerAnswer);
+      const visibleWords = Math.min(
+        route.words.length,
+        Math.ceil((local / secondsPerAnswer) * route.words.length)
+      );
+      route.words.forEach((word, wordIndex) => {
+        word.visible = wordIndex < visibleWords;
+      });
+    });
+    if (elapsed >= routes.length * secondsPerAnswer) {
+      choicesWriting = false;
+      choicesRevealed = true;
+      routes.forEach((route) => {
+        route.line.visible = true;
+        route.mark.visible = true;
+        route.words.forEach((word) => {
+          word.visible = true;
+        });
+      });
+      syncArchiveVisuals();
+      updateStatus();
+    }
+  }
   const forward = keys.has("w") || keys.has("arrowup") || tapSeconds > 0;
   tapSeconds = Math.max(0, tapSeconds - dt);
   if (isFinal) {
@@ -956,6 +990,8 @@ const frame = (at: number): void => {
       variant,
       phase: isFinal ? "final" : "question",
       choicesRevealed,
+      choicesWriting,
+      activeWriter,
       selectedChoice: selected,
       nameEntered,
       arrived,
