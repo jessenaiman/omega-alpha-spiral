@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#030507" />
+    <link rel="icon" href="data:," />
+    <title>Omega Dialogue Studio</title>
+  </head>
+  <body>
+    <canvas
+      id="ghost-stage"
+      aria-label="Floating ghost writing in three dimensions"
+    ></canvas>
+    <header class="masthead">
+      <div>
+        <span class="eyebrow">OMEGA SPIRAL / WORDS BEFORE FACES</span>
+        <h1>Omega Dialogue Studio</h1>
+      </div>
+      <button id="tune" aria-expanded="false" aria-controls="settings">
+        Tune voice
+      </button>
+    </header>
+    <section class="scene-typography" aria-label="Scene typography">
+      <label>Scene owner<select id="scene-owner"></select></label>
+      <label>Shared text era<select id="era"></select></label>
+    </section>
+    <nav id="speakers" aria-label="Select a voice"></nav>
+    <aside id="settings" hidden>
+      <h2>Writing behavior</h2>
+      <p id="voice-note"></p>
+      <div id="sliders"></div>
+      <label class="check"
+        ><input id="common" type="checkbox" /> Same sample for every
+        voice</label
+      >
+      <label class="check"
+        ><input id="motion" type="checkbox" /> Reduce motion</label
+      >
+      <button id="reset">Reset this voice</button>
+    </aside>
+    <section class="caption">
+      <span id="voice-label" class="eyebrow">OMEGA</span>
+      <p id="description"></p>
+      <div class="actions">
+        <button id="replay">Replay writing</button
+        ><button id="pause" aria-pressed="false">Pause</button
+        ><button id="answer" disabled>Answer, then watch</button>
+      </div>
+      <p id="status" role="status">Loading the study…</p>
+      <p id="answer-record"></p>
+    </section>
+    <div class="prototype-switcher" aria-label="Studio layout">
+      <button id="previous" aria-label="Previous layout">←</button>
+      <span
+        ><small id="variant-number"></small><strong id="variant-name"></strong
+      ></span>
+      <button id="next" aria-label="Next layout">→</button>
+    </div>
+    <p class="study-label">STUDIO · SAMPLE COPY, NOT GAME DIALOGUE</p>
+    <p id="accessible-line" class="sr-only" aria-live="polite"></p>
+    <script type="module" src="./src/intro/ghost-type-study/main.ts"></script>
+  </body>
+</html>

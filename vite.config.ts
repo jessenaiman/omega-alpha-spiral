@@ -22,6 +22,12 @@ export default defineConfig({
         floorOne: fileURLToPath(new URL("./floor-one.html", import.meta.url)),
         rogue: fileURLToPath(new URL("./rogue.html", import.meta.url)),
         intro: fileURLToPath(new URL("./intro.html", import.meta.url)),
+        dialogueStudio: fileURLToPath(
+          new URL("./omega-dialogue-studio.html", import.meta.url)
+        ),
+        legacyTypeStudy: fileURLToPath(
+          new URL("./intro-type-prototype.html", import.meta.url)
+        ),
       },
     },
   },

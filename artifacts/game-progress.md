@@ -283,3 +283,11 @@ like Omega, iteration one is meant to read like a bash script. No Blender, no gl
 - Owner correction: no extra unit tests. Normal commit hook passed TypeScript and 22/23 existing tests; existing finale wording assertion blocked commit. Owner approved a single documented hook skip.
 - Preview: http://127.0.0.1:5191/intro-type-prototype.html . Human visual choice remains open. See `artifacts/ghost-type-study/README.md` and `project-management/Handoffs/54.md`.
 
+
+## Omega Dialogue Studio checkpoint — September 23, 2026
+
+- Canonical route: `/omega-dialogue-studio.html`; legacy study URL redirects with parameters preserved. Scene owner and shared eras are reusable configuration; actual game integration is pending.
+- TypeScript/Vite production build passed. Requested QA skill captured desktop 1280×720 and mobile 390×664 on the hardware NVIDIA GPU. Both final reports have no console or page errors. Initial favicon 404 was fixed and its failed evidence retained.
+- Three declared artifacts passed the evidence coverage checker. Real controls and Omega's post-answer revision were exercised; a short typing/revision recording is saved. No frame-time or complete gameplay claim.
+- [Studio release notes and captures](omega-dialogue-studio/README.md), [manifest](omega-dialogue-studio/evidence.json). No additional unit tests. Next: commit/push, then design the gameplay integration before more studio features.
+

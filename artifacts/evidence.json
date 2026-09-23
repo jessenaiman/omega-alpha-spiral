@@ -76,6 +76,13 @@
         "mobile-fragments"
       ],
       "status": "partial-browser-observation"
+    },
+    {
+      "runId": "omega-dialogue-studio-20260923-b",
+      "report": "artifacts/omega-dialogue-studio/README.md",
+      "manifest": "artifacts/omega-dialogue-studio/evidence.json",
+      "status": "focused-production-qa-passed",
+      "note": "Desktop/mobile passage checks; actual game integration pending."
     }
   ]
 }

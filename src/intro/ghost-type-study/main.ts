@@ -1,4 +1,4 @@
-// Throwaway visual prototype: manuscript / fragments / passage. No game progression.
+// Omega Dialogue Studio: manuscript / fragments / passage. No game progression.
 import {
   BufferGeometry,
   Color,
@@ -16,7 +16,13 @@ import {
   Vector3,
   WebGLRenderer,
 } from "three";
-import { GhostLetters, type Era, type Layout } from "./GhostLetters";
+import { GhostLetters, type Layout } from "./GhostLetters";
+import {
+  ERAS,
+  SCENES,
+  type Era,
+  type TypographyScene,
+} from "../../core/sceneTypography";
 import { WritingPlayback } from "./WritingPlayback";
 import {
   PROFILES,
@@ -44,7 +50,15 @@ let layout: Layout =
   layouts.find((x) => x === params.get("variant")) ?? "manuscript";
 let selected: SpeakerId =
   SPEAKERS.find((x) => x === params.get("speaker")) ?? "omega";
-let era: Era = "phosphor";
+const sceneProfiles = structuredClone(SCENES);
+let sceneId: TypographyScene =
+  (Object.keys(SCENES) as TypographyScene[]).find(
+    (id) => id === params.get("scene")
+  ) ?? "opening";
+let era: Era =
+  (Object.keys(ERAS) as Era[]).find((id) => id === params.get("era")) ??
+  sceneProfiles[sceneId].era;
+sceneProfiles[sceneId].era = era;
 let paused = false,
   common = false,
   reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -144,6 +158,8 @@ function updateUrl() {
   const p = new URLSearchParams(location.search);
   p.set("variant", layout);
   p.set("speaker", selected);
+  p.set("scene", sceneId);
+  p.set("era", era);
   history.replaceState(null, "", `${location.pathname}?${p}`);
 }
 function restart() {
@@ -206,7 +222,6 @@ function compose() {
     `${layouts.indexOf(layout) + 1} / 3 · LAYOUT`;
   el("variant-name").textContent = layoutNames[layouts.indexOf(layout)];
   el("voice-note").textContent = settings[selected].note;
-  el<HTMLSelectElement>("era").disabled = selected !== "omega";
   el("answer").hidden = selected !== "omega" || common;
   for (const b of el("speakers").querySelectorAll("button"))
     b.setAttribute("aria-pressed", String(b.dataset.speaker === selected));
@@ -239,7 +254,7 @@ const controls: [NumericKey, string, number, number, number][] = [
   ["jitter", "Timing variation", 0, 1, 0.05],
   ["mistakeFrequency", "Mistake frequency", 0, 0.35, 0.01],
   ["correctionDelayMs", "Correction delay", 50, 1500, 50],
-  ["revisionDelayMs", "Late revision delay", 0, 3000, 100],
+  ["revisionDelayMs", "Late revision delay", 0, 3000, 50],
 ];
 function makeSliders() {
   el("sliders").replaceChildren();
@@ -294,12 +309,46 @@ el("reset").onclick = () => {
   makeSliders();
   restart();
 };
+for (const [id, profile] of Object.entries(SCENES)) {
+  const option = document.createElement("option");
+  option.value = id;
+  option.textContent = `${profile.label} · ${PROFILES[profile.owner].label}`;
+  el("scene-owner").append(option);
+}
+for (const [id, profile] of Object.entries(ERAS)) {
+  const option = document.createElement("option");
+  option.value = id;
+  option.textContent = profile.label;
+  el("era").append(option);
+}
+function applySceneTypography() {
+  for (const id of SPEAKERS) {
+    letters[id].setEra(era);
+    ghosts[id].setEra(era);
+  }
+  glassMaterial.opacity =
+    era === "gui" ? 0.18 : era === "smooth" ? 0.03 : 0.075;
+  sceneProfiles[sceneId].era = era;
+  el<HTMLSelectElement>("scene-owner").value = sceneId;
+  el<HTMLSelectElement>("era").value = era;
+  document.documentElement.dataset.sceneOwner = sceneProfiles[sceneId].owner;
+  document.documentElement.dataset.textEra = era;
+  updateUrl();
+  window.dispatchEvent(
+    new CustomEvent("ghost-study:scene-typography-changed", {
+      detail: { scene: sceneId, owner: sceneProfiles[sceneId].owner, era },
+    })
+  );
+}
 el<HTMLSelectElement>("era").onchange = (e) => {
   era = (e.target as HTMLSelectElement).value as Era;
-  letters.omega.setEra(era);
-  ghosts.omega.setEra(era);
-  glassMaterial.opacity = era === "gui" ? 0.18 : 0.075;
-  restart();
+  applySceneTypography();
+};
+el<HTMLSelectElement>("scene-owner").onchange = (e) => {
+  sceneId = (e.target as HTMLSelectElement).value as TypographyScene;
+  era = sceneProfiles[sceneId].era;
+  applySceneTypography();
+  choose(sceneProfiles[sceneId].owner);
 };
 el<HTMLInputElement>("motion").checked = reduced;
 el<HTMLInputElement>("motion").onchange = (e) => {
@@ -363,7 +412,7 @@ function render(now: number) {
     letters[id].update(age / 1000, layout, reduced);
     ghosts[id].update(age / 1000, layout, true);
     if (id === selected) {
-      const state = `${paused ? "Paused · " : ""}${frame.phase} · ${era} · ${layout} · ${settings[id].intervalMs} ms`;
+      const state = `${paused ? "Paused · " : ""}${frame.phase} · ${SCENES[sceneId].label} / ${PROFILES[SCENES[sceneId].owner].label} · ${era} · ${settings[id].intervalMs} ms`;
       if (el("status").textContent !== state) el("status").textContent = state;
       el<HTMLButtonElement>("answer").disabled = !(
         id === "omega" &&
@@ -389,9 +438,10 @@ function render(now: number) {
 }
 el("status").textContent = "Ready";
 makeSliders();
+applySceneTypography();
 compose();
 restart();
-if (!import.meta.env.DEV) el("previous").parentElement!.hidden = true;
+// These controls are the studio's authoring UI, including in its standalone build.
 renderer.setAnimationLoop(render);
 function dispose() {
   renderer.setAnimationLoop(null);

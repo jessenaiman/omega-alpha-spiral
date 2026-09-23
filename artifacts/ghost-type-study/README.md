@@ -1,5 +1,7 @@
 # Ghost typing visual prototype
 
+Promoted to [Omega Dialogue Studio](../omega-dialogue-studio/README.md). Use `/omega-dialogue-studio.html`; the former URL redirects. Notes below preserve the original study context.
+
 ## Destination and current decision
 
 [Wayfinder map](https://github.com/jessenaiman/omega-alpha-spiral/issues/55) → [active visual decision](https://github.com/jessenaiman/omega-alpha-spiral/issues/56) → [approved implementation brief](https://github.com/jessenaiman/omega-alpha-spiral/issues/54).
@@ -16,13 +18,17 @@ The owner approved building. Choosing or combining the three treatments still re
 - Select a voice, replay/pause, or open **Tune voice**. Left/right arrows change layout except inside editable controls.
 - **Same sample** compares rhythm/geometry without semantic revisions.
 - **Answer, then watch** records Omega's original displayed sample and schedules its authored revision. It has no game consequence.
-- Era changes only affect Omega's system presentation. Reduced motion removes spatial drift.
+- **Scene owner** selects Opening/Omega, Floor 1/Light, Floor 2/Shadow, or Floor 3/Ambition. **Shared text era** changes every voice's lettering immediately; it never changes their individual typing rhythm or geometric rules. Reduced motion removes spatial drift.
 
 Sample text is noncanonical. This is a disposable study beside the intro, not a replacement for it. No original narrative file is imported.
 
 ## Config and integration boundary
 
 Speaker data is in `profiles.ts`: interval, offset, jitter, mistake frequency, correction/revision delay, sample and authored replacement pair. UI edits stay in memory. Replaying uses a fixed seed for comparisons.
+
+Shared era presets and scene ownership live in `src/core/sceneTypography.ts`, independent of the study renderer. The current scene and era are encoded in the URL; edits for other scenes remain in memory during the session. All scenes initially use phosphor until an era is chosen: specific floor-era assignments have not been approved. These are period-inspired art presets, not historical hardware/font emulations.
+
+Every speaker and its revision traces receive the same scene era. Speaker selection does not change scene ownership. `ghost-study:scene-typography-changed` reports scene, owner, and era for the future dialogue/scene adapter. Game-wide adoption beyond this prototype is pending integration.
 
 `WritingPlayback` only sequences fixed sample text and edits. `GhostLetters` renders an instanced readable canvas glyph atlas through a shader; it does not branch dialogue. The study dispatches `ghost-study:line-complete` with speaker, text and completion phase. The owner of [the dialogue runner](https://github.com/jessenaiman/omega-alpha-spiral/issues/53) must agree the final adapter and scene acknowledgement contract before live integration.
 

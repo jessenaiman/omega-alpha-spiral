@@ -3,64 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#030507" />
-    <title>Omega Spiral · Ghost typing prototype</title>
+    <title>Omega Dialogue Studio — moved</title>
   </head>
   <body>
-    <canvas
-      id="ghost-stage"
-      aria-label="Floating ghost writing in three dimensions"
-    ></canvas>
-    <header class="masthead">
-      <div>
-        <span class="eyebrow">OMEGA SPIRAL / TYPE STUDY 01</span>
-        <h1>Words before faces.</h1>
-      </div>
-      <button id="tune" aria-expanded="false" aria-controls="settings">
-        Tune voice
-      </button>
-    </header>
-    <nav id="speakers" aria-label="Select a voice"></nav>
-    <aside id="settings" hidden>
-      <h2>Writing behavior</h2>
-      <p id="voice-note"></p>
-      <div id="sliders"></div>
-      <label
-        >System era<select id="era">
-          <option value="phosphor">Phosphor terminal</option>
-          <option value="dos">DOS text mode</option>
-          <option value="gui">Early graphical terminal</option>
-        </select></label
-      >
-      <label class="check"
-        ><input id="common" type="checkbox" /> Same sample for every
-        voice</label
-      >
-      <label class="check"
-        ><input id="motion" type="checkbox" /> Reduce motion</label
-      >
-      <button id="reset">Reset this voice</button>
-    </aside>
-    <section class="caption">
-      <span id="voice-label" class="eyebrow">OMEGA</span>
-      <p id="description"></p>
-      <div class="actions">
-        <button id="replay">Replay writing</button
-        ><button id="pause" aria-pressed="false">Pause</button
-        ><button id="answer" disabled>Answer, then watch</button>
-      </div>
-      <p id="status" role="status">Loading the study…</p>
-      <p id="answer-record"></p>
-    </section>
-    <div class="prototype-switcher" aria-label="Prototype layout">
-      <button id="previous" aria-label="Previous layout">←</button>
-      <span
-        ><small id="variant-number"></small><strong id="variant-name"></strong
-      ></span>
-      <button id="next" aria-label="Next layout">→</button>
-    </div>
-    <p class="study-label">PROTOTYPE · SAMPLE COPY, NOT GAME DIALOGUE</p>
-    <p id="accessible-line" class="sr-only" aria-live="polite"></p>
-    <script type="module" src="/src/intro/ghost-type-study/main.ts"></script>
+    <p><a href="./omega-dialogue-studio.html">Open Omega Dialogue Studio</a></p>
+    <script>
+      location.replace(
+        "./omega-dialogue-studio.html" + location.search + location.hash
+      );
+    </script>
   </body>
 </html>

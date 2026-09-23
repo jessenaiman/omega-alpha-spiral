@@ -1,4 +1,5 @@
-export type SpeakerId = "omega" | "light" | "shadow" | "ambition";
+export type { TypographyOwner as SpeakerId } from "../../core/sceneTypography";
+import type { TypographyOwner as SpeakerId } from "../../core/sceneTypography";
 
 export interface SpeakerProfile {
   id: SpeakerId;

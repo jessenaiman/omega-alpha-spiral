@@ -53,3 +53,14 @@ The sections above are historical intro evidence. The new study is separate: [cu
 - TypeScript passed in the normal commit hook; 22/23 existing unit tests passed. The old intro finale assertion failed. Owner explicitly approved one commit skipping hooks with that failure documented. No additional tests were added.
 - Visual review found fragment clipping and competing old-text traces; local adjustments move Light inward and fade traces. Phone controls were observed at a 390×844 override, then viewport restored. Motion captures, persistent screenshots, a complete mobile readability review and final human visual preference remain pending.
 - Native OpenAI concept was delegated to Luna. Generated sheet is reference-only; it omitted Omega. Runtime lettering uses a deterministic canvas atlas with an instanced glyph shader.
+
+### Shared scene era follow-up
+
+Live browser showed Floor 1 owned by Light while Shadow spoke in DOS glyphs; switching to the smooth era visibly changed the same words and preserved Shadow's angled layout. No tests rerun. Shared configuration is reusable but actual floor integration remains pending; no new commit claimed.
+
+## Omega Dialogue Studio checkpoint — September 23, 2026
+
+- Canonical route: `/omega-dialogue-studio.html`; legacy study URL redirects with parameters preserved. Scene owner and shared eras are reusable configuration; actual game integration is pending.
+- TypeScript/Vite production build passed. Requested QA skill captured desktop 1280×720 and mobile 390×664 on the hardware NVIDIA GPU. Both final reports have no console or page errors. Initial favicon 404 was fixed and its failed evidence retained.
+- Three declared artifacts passed the evidence coverage checker. Real controls and Omega's post-answer revision were exercised; a short typing/revision recording is saved. No frame-time or complete gameplay claim.
+- [Studio release notes and captures](omega-dialogue-studio/README.md), [manifest](omega-dialogue-studio/evidence.json). No additional unit tests. Next: commit/push, then design the gameplay integration before more studio features.

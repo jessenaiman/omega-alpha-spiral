@@ -88,11 +88,30 @@ h1 {
 }
 #speakers {
   position: fixed;
-  top: 124px;
+  top: 183px;
   left: 4vw;
   display: flex;
   gap: 5px;
   flex-wrap: wrap;
+}
+.scene-typography {
+  position: fixed;
+  top: 92px;
+  left: 4vw;
+  display: flex;
+  gap: 16px;
+  width: min(520px, 92vw);
+}
+.scene-typography label {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  color: #91a2ac;
+}
+.scene-typography select {
+  font-size: 11px;
+  min-height: 40px;
+  color: #d7e2e9;
 }
 #speakers button {
   border-color: transparent;
@@ -256,7 +275,7 @@ select {
     bottom: 102px;
   }
   #speakers {
-    top: 115px;
+    top: 183px;
     right: 4vw;
   }
   #speakers button {
@@ -286,7 +305,10 @@ select {
     top: 14px;
   }
   #speakers {
-    top: 82px;
+    top: 149px;
+  }
+  .scene-typography {
+    top: 72px;
   }
   .caption {
     bottom: 83px;

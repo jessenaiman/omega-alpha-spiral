@@ -7,35 +7,43 @@ import {
   InstancedBufferAttribute,
   InstancedMesh,
   LinearFilter,
+  NearestFilter,
   Object3D,
   PlaneGeometry,
   ShaderMaterial,
 } from "three";
 import type { SpeakerId } from "./profiles";
+import { ERAS, type Era } from "../../core/sceneTypography";
 
 export type Layout = "manuscript" | "fragments" | "passage";
-export type Era = "phosphor" | "dos" | "gui";
 const CAPACITY = 256;
 
 // Exact readable glyphs are generated locally; image concepts never supply alphabet pixels.
 function makeAtlas(era: Era): CanvasTexture {
+  const style = ERAS[era];
   const canvas = document.createElement("canvas");
-  canvas.width = 1024;
-  canvas.height = 768;
+  canvas.width = style.cellWidth * 16;
+  canvas.height = style.cellHeight * 6;
   const ctx = canvas.getContext("2d")!;
   ctx.fillStyle = "white";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.font = `${era === "dos" ? "bold " : ""}72px ${era === "gui" ? "Consolas" : "Courier New"}, monospace`;
+  ctx.font = style.font;
   for (let i = 0; i < 96; i++)
     ctx.fillText(
       String.fromCharCode(i + 32),
-      (i % 16) * 64 + 32,
-      Math.floor(i / 16) * 128 + 65
+      ((i % 16) + 0.5) * style.cellWidth,
+      (Math.floor(i / 16) + 0.5) * style.cellHeight
     );
+  if (era !== "smooth") {
+    const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    for (let i = 3; i < pixels.data.length; i += 4)
+      pixels.data[i] = pixels.data[i] > 90 ? 255 : 0;
+    ctx.putImageData(pixels, 0, 0);
+  }
   const tex = new CanvasTexture(canvas);
-  tex.minFilter = LinearFilter;
-  tex.magFilter = LinearFilter;
+  tex.minFilter = era === "smooth" ? LinearFilter : NearestFilter;
+  tex.magFilter = tex.minFilter;
   tex.generateMipmaps = false;
   return tex;
 }
@@ -67,17 +75,22 @@ export class GhostLetters {
         uColor: { value: new Color(color) },
         uTime: { value: 0 },
         uOpacity: { value: 1 },
-        uScan: { value: speaker === "omega" ? 0.2 : 0.025 },
+        uScan: { value: ERAS.phosphor.scan },
+        uDots: { value: ERAS.phosphor.dots },
+        uHalo: { value: ERAS.phosphor.halo },
+        uCell: { value: [ERAS.phosphor.cellWidth, ERAS.phosphor.cellHeight] },
       },
       vertexShader: `attribute float aGlyph; varying vec2 vUv; varying float vGlyph;
         void main(){vUv=uv; vGlyph=aGlyph; gl_Position=projectionMatrix*modelViewMatrix*instanceMatrix*vec4(position,1.0);}`,
-      fragmentShader: `uniform sampler2D uAtlas; uniform vec3 uColor; uniform float uTime,uOpacity,uScan; varying vec2 vUv; varying float vGlyph;
+      fragmentShader: `uniform sampler2D uAtlas; uniform vec3 uColor; uniform vec2 uCell; uniform float uTime,uOpacity,uScan,uDots,uHalo; varying vec2 vUv; varying float vGlyph;
         void main(){
           vec2 cell=vec2(mod(vGlyph,16.0),5.0-floor(vGlyph/16.0));
           vec2 p=(cell+vUv)/vec2(16.0,6.0);
           float a=texture2D(uAtlas,p).a;
-          vec2 d=vec2(1.0/1024.0,1.0/768.0);
-          float halo=(texture2D(uAtlas,p+d).a+texture2D(uAtlas,p-d).a+texture2D(uAtlas,p+vec2(d.x,-d.y)).a+texture2D(uAtlas,p+vec2(-d.x,d.y)).a)*.035;
+          vec2 d=vec2(1.0)/(uCell*vec2(16.0,6.0));
+          float halo=(texture2D(uAtlas,p+d).a+texture2D(uAtlas,p-d).a+texture2D(uAtlas,p+vec2(d.x,-d.y)).a+texture2D(uAtlas,p+vec2(-d.x,d.y)).a)*uHalo;
+          vec2 dotPosition=fract(vUv*uCell)-.5;
+          a*=mix(1.0,1.0-smoothstep(.32,.52,length(dotPosition)),uDots);
           float scan=1.0-uScan*(.5+.5*sin(vUv.y*170.0-uTime*.4));
           float alpha=(a+halo)*uOpacity*scan;
           if(alpha<.008) discard;
@@ -93,16 +106,16 @@ export class GhostLetters {
   }
 
   setEra(era: Era) {
-    if (this.speaker !== "omega" || this.era === era) return;
+    if (this.era === era) return;
     this.era = era;
     this.atlas.dispose();
     this.atlas = makeAtlas(era);
     this.material.uniforms.uAtlas.value = this.atlas;
-    this.material.uniforms.uScan.value =
-      era === "phosphor" ? 0.2 : era === "dos" ? 0.05 : 0;
-    this.material.uniforms.uColor.value.set(
-      era === "phosphor" ? "#9ec9b2" : "#d5e8f2"
-    );
+    const style = ERAS[era];
+    this.material.uniforms.uScan.value = style.scan;
+    this.material.uniforms.uDots.value = style.dots;
+    this.material.uniforms.uHalo.value = style.halo;
+    this.material.uniforms.uCell.value = [style.cellWidth, style.cellHeight];
   }
 
   setText(text: string) {
@@ -120,7 +133,7 @@ export class GhostLetters {
     let row = 0,
       col = 0,
       word = 0;
-    const step = 0.32;
+    const step = ERAS[this.era].tracking;
     for (let i = 0; i < this.text.length; i++) {
       const ch = this.text[i];
       if (ch === "\n") {
