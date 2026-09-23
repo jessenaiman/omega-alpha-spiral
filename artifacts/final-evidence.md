@@ -1,39 +1,46 @@
-# Chronicle Intro — playable flow evidence
+# Chronicle intro — playable visual handoff
 
-Run: `intro-playable-20260923` · Source: `intro.html` · Seed: `472`
+Run: `intro-flow-20260923-c` · Page: `http://127.0.0.1:5188/intro.html` · Bot seed: `472`
 
-## Result
+## What plays
 
-The opening now plays from the authored boot through all four Omega questions, spatial Dreamweaver choices, automatic camera travel between questions, the visible Blender fragment doorway, and Chapter Two. The [authored opening dialogue](<../project-management/official game docs (read-only)/chapter-zero-stages/stage_1_opening/ghost.json>) remains in [chronicle.ts](../src/intro/chronicle.ts); the added text only explains controls. No unit tests were written or run.
+The authored boot and four Omega path questions lead to three fine Dreamweaver routes at each question. Contact with a route commits the choice and presents that Dreamweaver's authored response. The avatar then continues from the reached strand into the next constructed station while the camera follows in depth; there is no second required walk. Prelude and response writing advance after a reading hold, and Enter can advance them sooner. Omega's fifth question asks for a typed name. W/up walks through the suspended words in the Blender doorway and starts Chapter Two.
 
-The art is an interactive staging pass. The first question is darker and the floor/path recedes in 3D. The Dreamweaver marks are smaller and the finale shows a portal outline and the assembled Blender GLB. The door's structural material remains intentionally dark behind the brighter outline; its final color, fragment timing, and view into the next level need the owner's art review.
+The four path questions, their choices, Dreamweaver responses, and boot come from [ghost.json](<../project-management/official game docs (read-only)/chapter-zero-stages/stage_1_opening/ghost.json>) through [chronicle.ts](../src/intro/chronicle.ts). The final name question and doorway phrase follow the owner's later direction. No unit tests were written or run.
 
-## Controls and progression
+## Controls
 
-- WASD/arrows: approach one of three strands. Arrival commits the answer.
-- 1/2/3 or a visible choice button: send the character toward that strand; the answer commits on arrival.
-- Enter or Continue: leave a completed Dreamweaver response or Omega prelude.
-- The selected strand carries the player and camera to the next question without an extra mandatory walk.
-- Enter or Step through: cross the final doorway into Chapter Two. The last selected thread is passed to that stage.
+- WASD/arrows: move toward a strand; contact commits it.
+- 1/2/3 or the visible path buttons: guide the avatar to that strand, then commit on arrival.
+- Enter: advance completed writing early. A reading hold advances it without a click.
+- Type a name and press Enter at question five.
+- W/up: walk through the doorway words. Enter can guide the avatar through.
+- Replay opening resets the run.
+
+## Visual and Blender layers
+
+[Art staging with all three supplied reference images and current captures](intro-direction/next-conversation.md) is the starting point for the next creative review. The first question stays dark with a small character and thin shader paths. Technology-era linework grows across questions two through four. A faceless figure grows from the original pixel. The distant lemniscate, portal, floor glyph, and fragment door arrive at the finale. [Blender source/export map](intro-direction/blender-runtime-map.md) identifies the five runtime GLBs separately from editable Blender studies.
 
 ## Captures and motion
 
-| State | Capture | Observation |
-| --- | --- | --- |
-| Desktop question 1 | [PNG](intro-playable-20260923/desktop-question-1.png) | Authored question, thin 3D routes, small marks, avatar and readable choices. |
-| Mobile question 1 | [PNG](intro-playable-20260923/mobile-question-1.png) | Question wraps at words; route buttons and movement controls fit without covering the avatar. |
-| Desktop final door | [PNG](intro-playable-20260923/desktop-final-door.png) | Blender geometry and luminous portal outline appear at the threshold. |
+| Moment                | Desktop                                             | Mobile                                             |
+| --------------------- | --------------------------------------------------- | -------------------------------------------------- |
+| First question        | [PNG](intro-flow-20260923-c/desktop-question-1.png) | [PNG](intro-flow-20260923-c/mobile-question-1.png) |
+| Question 2            | [PNG](intro-flow-20260923-c/desktop-question-2.png) | —                                                  |
+| Question 3            | [PNG](intro-flow-20260923-c/desktop-question-3.png) | —                                                  |
+| Question 4            | [PNG](intro-flow-20260923-c/desktop-question-4.png) | —                                                  |
+| Omega asks for a name | [PNG](intro-flow-20260923-c/desktop-final-name.png) | [PNG](intro-flow-20260923-c/mobile-final-name.png) |
+| Doorway crossing      | [PNG](intro-flow-20260923-c/desktop-final-door.png) | [PNG](intro-flow-20260923-c/mobile-final-door.png) |
 
-[Full bot playthrough with locomotion, scene transitions, door and Chapter Two](intro-playable-20260923/bot-playthrough.webm) · [Bot metrics JSON](intro-bot-playtest-report.json) · [Declared capture set](evidence.json)
+Real-input motion: [full bot playthrough](intro-flow-20260923-c/bot-playthrough.webm), plus stills of [Light](intro-flow-20260923-c/intro-travel-1.png), [Shadow](intro-flow-20260923-c/intro-travel-2.png), and [Ambition](intro-flow-20260923-c/intro-travel-3.png) travel. The video includes locomotion, strand contact, station transitions, doorway crossing, Chapter Two play, and retry. The three travel stills were inspected; the character advances along the chosen filament as the camera moves into depth. The bot also asserts that contact-to-travel and travel-to-next-station position changes stay below 1.25 world units per sampled transition.
 
-The three named canvas captures had no console or page errors, used the hardware NVIDIA GTX 1660 D3D11 renderer, and were within the skill's starting draw budgets. Draw calls: 90 for the first question and 177 for the door. The manifest checker passed all three viewport/state pairs and required artifacts. Its pass establishes coverage, not aesthetic approval.
+## Checks
 
-## Skill-defined QA bot
+- `npm.cmd run build`: TypeScript and Vite production build passed.
+- `npm.cmd run test:bot`: one Chromium worker, one existing skill-style bot, passed. [Metrics](intro-bot-playtest-report.json): 1,347 frames; 83.69 units travelled; 7 objective steps; 0 softlock windows; 3 Chapter Two choices; retry verified; no console, page, or network errors. The intro has no fail state by design.
+- The nine declared desktop/mobile canvas captures acknowledged their named states and were nonblank without console or page errors. The renderer was the hardware NVIDIA GTX 1660 D3D11, not a software fallback. [Manifest](evidence.json) checker passed all 30 declared/report artifacts.
+- Desktop final doorway: 250 calls, 10,399 triangles, 240 geometries, 9 textures, within the desktop starting budget. Mobile final doorway: 250 calls and 240 geometries, above its 150-call/200-geometry starting budget because the fragment door remains individually animatable.
 
-`npm.cmd run test:bot` used Playwright Chromium with one worker, seeded the game, then drove a numeric guided choice, later physical walking choices, the four responses, the automatic travels, doorway entry, all three Chapter Two rooms and retry. Report: 7 objective steps, 1,322 frames, 73.81 units travelled, 0 softlock windows, 3 Chapter Two choices, retry verified, and 0 console/page/network errors. The intro has no fail state by design; Chapter Two owns risk. `npm.cmd run build` passed TypeScript and the Vite production build.
+## Remaining visual decisions
 
-## Creative handoff
-
-[Art direction and reference images](intro-direction/design-brief.md) · [Core loop contract](intro-direction/core-loop-contract.md) · [Level and camera plan](intro-direction/level-plan.md)
-
-Compare the saved first-question, strand-detail, and door-finale reference images with these captures in the next art conversation. The remaining visual decisions are Omega's evolving terminal form, the character's body growth, and how much of Chapter Two becomes visible inside the portal.
+The route camera now moves between questions, but the four station silhouettes still resemble one another. The faceless avatar grows but remains blocky. The portal interior is dark; the actual first playable stage is not yet legible through it. The next art pass should decide each station's constructed landmark, refine the figure and terminal materials, and make the level reveal readable without turning the early intro into a galaxy backdrop. The mobile door needs a static merged variant or another draw-call reduction before claiming the starting mobile budget. The typed name is stored by the intro; Chapter Two currently receives the last chosen thread.

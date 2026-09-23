@@ -266,3 +266,11 @@ like Omega, iteration one is meant to read like a bash script. No Blender, no gl
 - The three supplied reference images and the design brief, core loop contract, and level plan are saved in `assets/references/` and `artifacts/intro-direction/` for the next art conversation.
 - `artifacts/final-evidence.md` records the production build, skill-defined real-input bot, desktop/mobile captures, door capture, video, and current manifest check. No unit tests were run.
 - Remaining art review: physical Omega terminal, faceless character growth, door material/assembly, and how much of Chapter Two is visible through the portal.
+
+## Intro flow and visual staging checkpoint — 2026-09-23
+
+- The canonical `/intro.html` is the only target for this pass. The older layer-study notes above describe historical experiments; `ghost.json` and the latest playable scene govern the current opening.
+- The player now continues from the contacted Dreamweaver into a depth-travel path. The camera follows and the next station is rebased around the arrival point. There is no reset to the bottom of the same frame and no second required walk after choosing. Completed writing advances after a reading hold; Enter remains optional.
+- Four authored path questions lead to Omega's typed fifth name question. The name opens the Blender fragment door; walking through suspended Omega words enters playable Chapter Two. Blender runtime now loads void, strands, fragments, portal, and floor glyph as separate GLBs.
+- [Next-conversation staging](intro-direction/next-conversation.md) pairs all three owner images with current captures, the present visual grammar, and remaining decisions. [Final evidence](final-evidence.md) records nine named desktop/mobile captures, the real-input bot/video, build, budget, and limitations. No unit tests were written or run.
+- Remaining: make the first stage legible through the portal; differentiate station silhouettes more; refine the blocky faceless avatar; reduce mobile final-door draw calls if the mobile target requires the starting budget. Preserve unrelated Floor One and source-study work already in the tree.

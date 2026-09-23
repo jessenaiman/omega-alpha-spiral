@@ -1,29 +1,66 @@
 {
-  "runId": "intro-playable-20260923",
   "version": 1,
+  "runId": "intro-flow-20260923-c",
   "artifacts": [
     "assets/references/intro-first-question.png",
     "assets/references/intro-door-finale.png",
     "assets/references/intro-strand-detail.png",
+    "public/assets/intro/void-background.glb",
+    "public/assets/intro/dreamweaver-strands.glb",
     "public/assets/intro/intro-door-assemble.glb",
+    "public/assets/intro/intro-portal.glb",
+    "public/assets/intro/intro-floor-glyph.glb",
     "artifacts/intro-bot-playtest-report.json",
-    "artifacts/intro-playable-20260923/bot-playthrough.webm"
+    "artifacts/intro-flow-20260923-c/bot-playthrough.webm",
+    "artifacts/intro-flow-20260923-c/intro-travel-1.png",
+    "artifacts/intro-flow-20260923-c/intro-travel-2.png",
+    "artifacts/intro-flow-20260923-c/intro-travel-3.png"
   ],
   "captures": [
     {
-      "report": "artifacts/intro-playable-20260923/desktop-question-1.json",
+      "report": "artifacts/intro-flow-20260923-c/desktop-question-1.json",
       "mode": "desktop",
       "state": "question-1"
     },
     {
-      "report": "artifacts/intro-playable-20260923/mobile-question-1.json",
+      "report": "artifacts/intro-flow-20260923-c/mobile-question-1.json",
       "mode": "mobile",
       "state": "question-1"
     },
     {
       "mode": "desktop",
+      "state": "question-2",
+      "report": "artifacts/intro-flow-20260923-c/desktop-question-2.json"
+    },
+    {
+      "mode": "desktop",
+      "state": "question-3",
+      "report": "artifacts/intro-flow-20260923-c/desktop-question-3.json"
+    },
+    {
+      "mode": "desktop",
+      "state": "question-4",
+      "report": "artifacts/intro-flow-20260923-c/desktop-question-4.json"
+    },
+    {
+      "mode": "desktop",
+      "state": "final-name",
+      "report": "artifacts/intro-flow-20260923-c/desktop-final-name.json"
+    },
+    {
+      "mode": "mobile",
+      "state": "final-name",
+      "report": "artifacts/intro-flow-20260923-c/mobile-final-name.json"
+    },
+    {
+      "mode": "desktop",
       "state": "final-door",
-      "report": "artifacts/intro-playable-20260923/desktop-final-door.json"
+      "report": "artifacts/intro-flow-20260923-c/desktop-final-door.json"
+    },
+    {
+      "mode": "mobile",
+      "state": "final-door",
+      "report": "artifacts/intro-flow-20260923-c/mobile-final-door.json"
     }
   ]
 }
