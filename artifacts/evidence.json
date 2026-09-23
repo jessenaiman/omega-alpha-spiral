@@ -1,5 +1,5 @@
 {
-  "runId": "intro-baseline-1",
+  "runId": "team-foundation-20260922",
   "version": 1,
   "artifacts": [],
   "captures": [
@@ -12,6 +12,21 @@
       "report": "artifacts/intro-baseline-1/mobile.json",
       "mode": "mobile",
       "state": null
+    },
+    {
+      "mode": "desktop",
+      "state": "question-4",
+      "report": "artifacts/team-foundation-20260922/desktop-question-4.json"
+    },
+    {
+      "mode": "mobile",
+      "state": "question-2",
+      "report": "artifacts/team-foundation-20260922/mobile-question-2.json"
+    },
+    {
+      "mode": "desktop",
+      "state": "complete",
+      "report": "artifacts/team-foundation-20260922/desktop-complete.json"
     }
   ]
 }

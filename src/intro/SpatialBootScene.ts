@@ -844,7 +844,7 @@ export class SpatialBootScene {
         y: this._player.position.y,
         z: this._player.position.z,
       },
-      { x: 0, y: 2.5, z: 0.26 }
+      { x: this._player.position.x, y: 2.5, z: 0.26 }
     );
   }
 

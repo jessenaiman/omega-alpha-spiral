@@ -1,9 +1,11 @@
-START: Read `project-management/STATUS.md` and `BOARD.md`.
-IDENTIFY: Match the current branch/worktree to its task and `Handoffs/<task-id>.md`.
+START: Read `project-management/STATUS.md` and `project-management/BOARD.md`.
+IDENTIFY: Match the current branch/worktree to its GitHub issue and `project-management/Handoffs/<issue-id>.md`.
 PAUSE: Do not search, grep, inspect code, or edit before confirming the handoff.
 CONFIRM: Report task, branch, last result, and next step; ask the user if current.
 LEARN: Relevant skills read/write their existing `learnings.md`; update the task handoff.
 [DO NOT EDIT LINE 1-5]
+
+DIRECT: Substantial Three.js work reads `.agents/skills/threejs-game-director/SKILL.md` and maintains its required `artifacts/game-progress.md`, `artifacts/evidence.json`, and `artifacts/final-evidence.md` files.
 
 ## Replacement Tools:
 

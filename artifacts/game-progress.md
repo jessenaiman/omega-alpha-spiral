@@ -1,4 +1,6 @@
-# Chronicle Intro — active visual/gameplay iteration
+# Omega Spiral — Game Director Progress
+
+Updated: 2026-09-22
 
 ## Session rule — 2026-09-22
 
@@ -13,12 +15,52 @@ TRIPO/GEMINI/ELEVENLABS keys all MISSING — but these are **not blockers**:
 keyless Pollinations for images, VoiceStudio for voice, procedural WebAudio
 for SFX, Blender + procedural Three.js for 3D. No high-res custom art needed.
 
-## Current intent
+## Current intent and constraints
 
-- Player promise: steer an unfinished self through existential questions that physically author it.
-- Core loop: move the forming pixel toward one of three in-world Dreamweaver answers, receive that voice's response, then walk the transformed route to the next question.
-- Preserve the approved four-question chronicle, chronological typing eras, audible ghostwriting, three followers, and final threshold.
-- This pass implements decisions already made. New interlude prose and further concept brainstorming remain deferred.
+- Current milestone: standalone Floor One modern NetHack/Rogue demo, as defined in `project-management/STATUS.md`.
+- Last integrated playable entry: the four-question Chronicle Intro leading into Chapter Two.
+- Each agent task uses one GitHub issue, one branch/worktree, one issue handoff, and one pull request.
+- Visual evidence is declared before capture in `artifacts/evidence.json` and checked with `npm run verify:visual`.
+
+## Decisions
+
+- GitHub issues own executable scope and acceptance criteria.
+- `project-management/BOARD.md` owns ideas and shaping.
+- `project-management/Handoffs/<issue-id>.md` owns the current task checkpoint.
+- This file owns cross-task Game Director continuity; it does not accumulate completed design history.
+
+## Completed work
+
+- Official real-input release bot: issue 39, PR 40.
+- Pre-commit formatting, typecheck, and unit gate: issue 41, PR 42.
+- Generic browser assertions removed; release bot isolated: issue 43, PR 44.
+- Playwright discovery locked to the skill-defined bot: issue 45, PR 46.
+- Director handoff and verified named-state capture set established: issue 47 (see `project-management/Handoffs/47.md`).
+- Chronicle branch (this merge): Spiral Breaker archived to `experiments/`, intro ink order corrected to logo canon, session rule recorded, branch pushed at `6062a27`.
+
+## Pending jobs
+
+- Issue 47 is ready for review.
+- Handoff: `project-management/Handoffs/47.md`.
+- Verified capture directory: `artifacts/team-foundation-20260922/`.
+- Controller feel / target hold / discovery clarity / audio mix / Chapter Two handoff remain owner-gated chronicle checks.
+
+## Remaining defects
+
+- Floor One does not yet have its own declared visual capture set.
+- Owner visual and audio approval remains a human review step.
+
+## Next actions
+
+1. Merge issue 47 work (this conflict resolution is part of that).
+2. At the next substantial Floor One task, replace the manifest with that task's declared states before capturing.
+
+---
+
+# Checkpoint archive (pre-handoff chronicle history)
+
+Preserved from the pre-handoff continuity file. Ownership of current scope
+lives in the sections above; this archive is history, not a work list.
 
 ## Layered display chronology checkpoint — September 21, 2026
 
@@ -38,10 +80,6 @@ for SFX, Blender + procedural Three.js for 3D. No high-res custom art needed.
       its shader deliberately clears the central reading corridor.
 - [x] Scene One now owns this celestial world. Logo/title-introduction design is
       explicitly deferred instead of being implied by the first playable scene.
-- [ ] Basic build and live-page check require owner approval under repository
-      testing rules; this checkpoint is not yet claimed verified at runtime.
-- [ ] Next creative loop: author Light's straight cut, Shadow's segmented route,
-      and Ambition's yellow/violet counter-curve as distinct calling paths.
 
 ## Superseded procedural lemniscate checkpoint — September 21, 2026
 
@@ -57,10 +95,7 @@ for SFX, Blender + procedural Three.js for 3D. No high-res custom art needed.
 - [x] Live desktop inspection confirms the equation and pixel circulation render.
 - [x] Owner review rejected the equation as the first-scene background. It remains
       historical comparison evidence only and is removed from the runtime.
-- [ ] Recompose boot/question text around a protected central reading corridor.
-- [ ] Convert the three visual strands into the authored 3D travel paths.
 - [x] Add controller-first forward/back movement and diegetic control discovery.
-- [ ] Make each Dreamweaver call illuminate its path toward the player.
 - [x] Make each Dreamweaver call illuminate its path toward the player.
 
 ## Scene One celestial/controller checkpoint — September 21, 2026
@@ -76,7 +111,6 @@ for SFX, Blender + procedural Three.js for 3D. No high-res custom art needed.
       same deterministic physics step as forward movement.
 - [x] Removed always-visible control instructions. The input hint appears only
       after the player first uses keyboard, touch, or controller input.
-- [ ] Runtime build and live visual/controller checks remain owner-gated.
 
 ## Authored 3D calling paths checkpoint — September 21, 2026
 
@@ -91,7 +125,6 @@ for SFX, Blender + procedural Three.js for 3D. No high-res custom art needed.
       retaining signed forward/back movement.
 - [x] Answer words are spatially anchored on their routes, and question states
       pull the camera back to the center before movement resumes.
-- [ ] Runtime build, visible-page, and controller checks remain owner-gated.
 
 ## Dialogue and audio dramaturgy checkpoint — September 21, 2026
 
@@ -105,7 +138,6 @@ for SFX, Blender + procedural Three.js for 3D. No high-res custom art needed.
       while preserving procedural, portable Web Audio synthesis.
 - [x] Separated narrative status from discovered control hints; keyboard or
       controller actions appear only after that modality has actually been used.
-- [ ] Runtime audio unlock, mix, timing, and visible-page checks remain owner-gated.
 
 ## Embodied threshold checkpoint — September 21, 2026
 
@@ -119,8 +151,6 @@ for SFX, Blender + procedural Three.js for 3D. No high-res custom art needed.
       of spending the effect while the final text is still being written.
 - [x] Accumulated answer colors in the player's neutral core and let prior
       answers strengthen later route echoes without implying allegiance.
-- [ ] Runtime timing, occlusion, final-camera, and Chapter Two handoff remain
-      owner-gated and unverified in this checkpoint.
 
 ## Controller-first tutorial acts checkpoint — September 22, 2026
 
@@ -140,8 +170,6 @@ for SFX, Blender + procedural Three.js for 3D. No high-res custom art needed.
       reveal the prior two answers while a second observer can enter the exchange.
 - [x] Exposed the current `movement`, `action`, or `resonance` act through the
       existing diagnostics and root dataset for bots and visual review.
-- [ ] Runtime controller feel, target hold, and discovery clarity remain
-      owner-gated and unverified in this checkpoint.
 
 ## Active checklist
 
@@ -153,27 +181,16 @@ for SFX, Blender + procedural Three.js for 3D. No high-res custom art needed.
 - [x] First-question stall that becomes the visible Dreamweaver breach.
 - [x] Player-controlled passages and changing Dreamweaver layouts between questions.
 - [x] Final three-strand threshold preserved.
-- [x] Release evidence: build, 18 unit checks, 9 browser checks, real-input bot,
-      production desktop/mobile/final captures, renderer and Rapier diagnostics.
-- [ ] Owner visual/audio approval remains subjective and is intentionally not
-      replaced by automation.
+- [x] Release evidence: build, unit checks, browser checks, real-input bot,
+      production captures, renderer and Rapier diagnostics.
 
 ## Implementation boundary
 
 - Procedural Three.js only for this iteration; no external generation job.
 - Rapier owns deterministic 1/60-second kinematic movement and four sensor lanes;
   the authored visual player remains independent of its collision proxy.
-- Existing accessible DOM mirror and click/number shortcuts remain available while arrow/WASD becomes the default spatial interaction.
-
-## Release checkpoint — September 21, 2026
-
-- Creative comparison: `artifacts/intro-creative-comparison.md`.
-- Release evidence: `artifacts/final-evidence.md`.
-- Current branch checkpoints: preservation `93ec56b`, gameplay `855177f`,
-  UI `180fd57`, graphics `25fe3db`.
-- Final release commit is pending immediately after this documentation update.
-- Known release risks: 3.12 MB intro chunk, deliberate low-luminance scorecard,
-  non-fatal Chromium shader precision warnings, subjective audio mix unapproved.
+- Existing accessible DOM mirror and click/number shortcuts remain available while
+  arrow/WASD becomes the default spatial interaction.
 
 ---
 
