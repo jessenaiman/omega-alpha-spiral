@@ -31,3 +31,9 @@ Evidence check passed: 3 artifact(s) confirmed.
 ## Limits
 
 This evidence proves declared capture coverage, nonblank rendering, matching states, error-free capture, and render-budget compliance. It does not replace real-input bot verification, subjective visual approval, audio review, or Floor One evidence.
+
+## Intro layer studies — live check (2026-09-22)
+
+The separate study at `/intro-try3.html?variant=archive` opened on the running local server. Its first frame showed darkness, a pixel player, and Omega ghostwriting on the terminal. After Reveal, the three fine paths, answer words, floor, and receding terminal appeared; the page reported `data-blender-layers="loaded"`. Tide and Threshold opened with their assigned plates. `/intro-strands-shader.html` opened and revealed its independent path study. `npm.cmd run typecheck` passed.
+
+These are basic live page checks for the isolated studies. The existing `artifacts/evidence.json` still describes the earlier `team-foundation-20260922` capture run; it does not claim production coverage for these new studies.

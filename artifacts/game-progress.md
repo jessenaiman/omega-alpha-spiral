@@ -247,3 +247,13 @@ like Omega, iteration one is meant to read like a bash script. No Blender, no gl
   Floor 2's effect choice is still open (candidate: 3D extrusion/depth, line-of-sight fog, terminal flicker).
 - Later: asset-swap-to-floating-code glitch reveal; Blender-authored sprites (outer loop, `rogue-progress.md`).
 - README prune (ponytail + caveman).
+
+---
+
+# Intro layer studies — progress (2026-09-22)
+
+- Q1 Archive now begins in darkness with Omega ghostwriting on a world-space terminal. Revealing answers loads the Blender void floor and three fine Dreamweaver strands; each answer's words follow its strand.
+- Blender source files are separate and editable: `artifacts/intro-threshold/door.blend`, `dreamweaver-strands.blend`, `background-void.blend`; `intro-layer-study.blend` previews their layering. The exported strand and background GLBs live in `public/assets/intro/`.
+- Q2 Tide uses the celestial image plate; the final name question uses the threshold image plate and a fragment assembly study. The original `/intro.html` remains the current game opening.
+- `intro-strands-shader.html` is an independent Three.js shader comparison using the same runtime question and ghostwriting frames. It has its own choice response handoff; integration into `/intro.html` still needs the active question and writing state passed in and the selected owner/response returned.
+- Basic checks: TypeScript typecheck passed; live Archive, Tide, Threshold, and shader pages opened; Archive reported its Blender layers loaded. Full intro gameplay and production evidence are still pending integration.
