@@ -252,9 +252,9 @@ like Omega, iteration one is meant to read like a bash script. No Blender, no gl
 
 # Intro layer studies — progress (2026-09-22)
 
-- Q1 Archive now begins in darkness with Omega ghostwriting on a world-space terminal. Revealing answers loads the Blender void floor and three fine Dreamweaver strands; each answer's words follow its strand.
+- Q1 Archive begins in darkness with Omega ghostwriting on a world-space terminal. Revealing the Dreamweavers' own questions loads the Blender void floor and three fine strands; their question words follow each strand.
 - Blender source files are separate and editable: `artifacts/intro-threshold/door.blend`, `dreamweaver-strands.blend`, `background-void.blend`; `intro-layer-study.blend` previews their layering. The exported strand and background GLBs live in `public/assets/intro/`.
 - Q2 Tide uses the celestial image plate; the final name question uses the threshold image plate and a fragment assembly study. The original `/intro.html` remains the current game opening.
-- `intro-strands-shader.html` is an independent Three.js shader comparison using the same runtime question and ghostwriting frames. It has its own choice response handoff; integration into `/intro.html` still needs the active question and writing state passed in and the selected owner/response returned.
+- `intro-strands-shader.html` is an independent Three.js shader comparison using the same runtime question and ghostwriting frames. It presents the Dreamweavers' own questions; integration into `/intro.html` still needs the active question and writing state passed in and the selected owner/message returned.
 - Basic checks: TypeScript typecheck passed; live Archive, Tide, Threshold, and shader pages opened; Archive reported its Blender layers loaded. Full intro gameplay and production evidence are still pending integration.
 - Q1 Archive now writes the three Dreamweaver questions in order after Omega finishes. Shader-drawn glyph ribbons float above the paths with controlled Light, Shadow, and Ambition motion; the floor and Blender strands reveal after Ambition. TypeScript typecheck passed, and the live browser showed the three-path state. The Blender MCP showed `intro-layer-study.blend` with its void floor, fine strands, and doorway reference; the exported door remains a separate final-scene integration task.
