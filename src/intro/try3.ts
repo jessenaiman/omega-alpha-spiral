@@ -40,6 +40,7 @@ import { createChronicleQuestions } from "./chronicle";
 import { createBootFrames } from "./ghostwriting";
 import { getIntroEra } from "./IntroEraDesign";
 import { createAtlas, GlyphRibbon } from "./SpatialBootScene";
+import { StrandSigils } from "./StrandSigils";
 import {
   loadBlenderIntroLayers,
   type BlenderIntroLayers,
@@ -50,6 +51,7 @@ type Route = {
   curve: Curve<Vector3>;
   line: Mesh<TubeGeometry, MeshBasicMaterial>;
   words: GlyphRibbon[];
+  sigils: StrandSigils;
   mark: Group;
 };
 
@@ -397,6 +399,14 @@ for (let i = 0; i < 3; i++) {
   );
   scene.add(line);
   const words: GlyphRibbon[] = [];
+  const sigils = new StrandSigils(
+    curve,
+    i,
+    palette[i],
+    glyphAtlases,
+    terminalEra.id
+  );
+  scene.add(sigils.root);
   const tokens = dreamweaverQuestions[i]
     .replace(/[—.,!]/g, " ")
     .split(/\s+/)
@@ -408,7 +418,7 @@ for (let i = 0; i < 3; i++) {
     glyph.init();
     glyph.setText(phrase, terminalEra.id, phrase.length, palette[i], i);
     glyph.root.scale.setScalar(0.31);
-    const t = 0.12 + (groupIndex / Math.max(1, phraseCount - 1)) * 0.5;
+    const t = 0.12 + (groupIndex / Math.max(1, phraseCount - 1)) * 0.66;
     const point = curve.getPoint(t);
     glyph.root.position.set(
       point.x - phrase.length * 0.64 * 0.155 + [-0.65, 0, 0.65][i],
@@ -428,7 +438,7 @@ for (let i = 0; i < 3; i++) {
     )
   );
   scene.add(mark);
-  routes.push({ curve, line, words, mark });
+  routes.push({ curve, line, words, sigils, mark });
 }
 
 const player = new Group();
@@ -630,6 +640,7 @@ if (isFinal) {
   scene.add(doorwayWords);
   routes.forEach((route) => {
     route.line.visible = false;
+    route.sigils.root.visible = false;
     route.words.forEach((word) => {
       word.root.visible = false;
     });
@@ -684,6 +695,7 @@ let choicesRevealed = false;
 let choicesWriting = false;
 let choicesWritingAt = 0;
 let activeWriter = -1;
+let previewOwner = 1;
 let writingOrigin = performance.now();
 let blenderLayers: BlenderIntroLayers | null = null;
 let blenderLayerError = false;
@@ -714,6 +726,15 @@ const revealChoices = (): void => {
   updateStatus();
 };
 const updateStatus = (): void => {
+  status.classList.toggle(
+    "question-focus",
+    !isFinal && (choicesWriting || choicesRevealed) && !arrived
+  );
+  const focused = selected >= 0 ? selected : choicesWriting ? activeWriter : previewOwner;
+  status.style.setProperty(
+    "--question-color",
+    `#${palette[Math.max(0, focused)].toString(16).padStart(6, "0")}`
+  );
   if (isFinal) {
     status.textContent = arrived
       ? `${givenName} · the threshold remembers your crossing.`
@@ -723,16 +744,15 @@ const updateStatus = (): void => {
   } else if (arrived && selected >= 0) {
     status.textContent = `${["LIGHT", "SHADOW", "AMBITION"][selected]} · the Dreamweaver is centered.\n${dreamweaverMessages[selected]}\nR replays this same question.`;
   } else if (selected >= 0) {
-    status.textContent = `Following ${["Light", "Shadow", "Ambition"][selected]} · keep walking. Your single filament records this run.`;
+    status.textContent = `${["LIGHT", "SHADOW", "AMBITION"][selected]} ASKS\n${dreamweaverQuestions[selected]}\nWalk the strand to hear them.`;
   } else if (choicesWriting) {
-    status.textContent = `${["Light", "Shadow", "Ambition"][activeWriter]} is writing a question into the dark.`;
+    status.textContent = `${["LIGHT", "SHADOW", "AMBITION"][activeWriter]} ASKS\n${dreamweaverQuestions[activeWriter]}`;
   } else if (!choicesRevealed) {
     status.textContent = writingDone
       ? "Omega has finished the question. Let the Dreamweavers ask theirs."
       : "Omega is ghostwriting the question. Watch the old terminal correct itself.";
   } else {
-    status.textContent =
-      "Choose the Dreamweaver question you will face, then walk its path.";
+    status.textContent = `${["LIGHT", "SHADOW", "AMBITION"][previewOwner]} ASKS\n${dreamweaverQuestions[previewOwner]}\nA / D previews a strand · W follows it.`;
   }
 };
 const reset = (): void => {
@@ -752,6 +772,7 @@ const reset = (): void => {
   choicesWriting = false;
   choicesWritingAt = 0;
   activeWriter = -1;
+  previewOwner = 1;
   writingDone = isFinal;
   writingIndex = 0;
   writingOrigin = performance.now();
@@ -767,6 +788,7 @@ const reset = (): void => {
   routes.forEach((route) => {
     route.line.material.opacity = [0.24, 0.21, 0.31][mode];
     route.line.visible = false;
+    route.sigils.root.visible = false;
     route.mark.visible = false;
     route.words.forEach((word) => {
       word.root.scale.setScalar(0.31);
@@ -894,7 +916,7 @@ const frame = (at: number): void => {
         Math.ceil((local / secondsPerQuestion) * route.words.length)
       );
       route.words.forEach((word, wordIndex) => {
-        word.root.visible = wordIndex < visibleWords;
+        word.root.visible = index === writer && wordIndex < visibleWords;
       });
     });
     if (elapsed >= routes.length * secondsPerQuestion) {
@@ -903,8 +925,9 @@ const frame = (at: number): void => {
       routes.forEach((route) => {
         route.line.visible = true;
         route.mark.visible = true;
+        route.sigils.root.visible = true;
         route.words.forEach((word) => {
-          word.root.visible = true;
+          word.root.visible = false;
         });
       });
       syncArchiveVisuals();
@@ -939,6 +962,11 @@ const frame = (at: number): void => {
         -3.5,
         Math.min(3.5, player.position.x + lateral * dt * 3.1)
       );
+      const nextPreview = player.position.x < -1.2 ? 0 : player.position.x > 1.2 ? 2 : 1;
+      if (nextPreview !== previewOwner) {
+        previewOwner = nextPreview;
+        updateStatus();
+      }
       if (forward)
         player.position.z = Math.max(1.45, player.position.z - dt * 3.1);
       if (forward && player.position.z <= 1.45) {
@@ -1004,6 +1032,7 @@ const frame = (at: number): void => {
   camera.position.lerp(cameraPosition, 1 - Math.exp(-dt * 3.6));
   camera.lookAt(cameraTarget);
   routes.forEach((route, owner) => {
+    route.sigils.update(at * 0.001, camera.quaternion);
     route.words.forEach((word, wordIndex) => {
       word.update(at * 0.001, [0, 0.25, 0.16][owner]);
       word.root.position.y =
@@ -1011,6 +1040,11 @@ const frame = (at: number): void => {
         Math.sin(at * 0.00075 + wordIndex * 1.23 + owner * 0.8) *
           [0.08, 0.14, 0.2][owner];
       word.root.quaternion.copy(camera.quaternion);
+      if (choicesRevealed && !arrived) {
+        const wordT = 0.12 + (wordIndex / Math.max(1, route.words.length - 1)) * 0.66;
+        word.root.visible =
+          owner === selected && wordT >= progress - 0.08 && wordT <= progress + 0.32;
+      }
     });
   });
   renderer.render(scene, camera);

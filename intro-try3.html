@@ -157,6 +157,14 @@
         line-height: 1.5;
         white-space: pre-line;
       }
+      .status.question-focus {
+        max-width: min(700px, 68vw);
+        border-left: 2px solid var(--question-color, #dcefff);
+        color: #f4f7f8;
+        font-size: clamp(15px, 1.25vw, 18px);
+        line-height: 1.42;
+        text-shadow: 0 0 12px #c6dbee42;
+      }
       .controls {
         max-width: 310px;
         color: #aebbc7;
@@ -218,6 +226,10 @@
           font-size: 11px;
           max-width: calc(100vw - 28px);
         }
+        .status.question-focus {
+          max-width: calc(100vw - 28px);
+          font-size: 15px;
+        }
       }
     </style>
   </head>
@@ -261,7 +273,7 @@
     <div class="bottom">
       <div class="status" id="status" role="status" aria-live="polite"></div>
       <div class="controls">
-        A / D · choose a word path<br />W or ↑ · walk toward its Dreamweaver<br />R
+        A / D · preview a strand<br />W or ↑ · walk toward its Dreamweaver<br />R
         · replay this question<br /><a href="/intro.html"
           >Return to the current intro</a
         >
