@@ -32,8 +32,14 @@
         <button type="button" data-os-move="down" aria-label="Move backward">↓</button>
         <button type="button" data-os-move="right" aria-label="Move right">→</button>
       </nav>
+      <aside id="os-route-guide-ts" class="os-route-guide" aria-label="Choose a Dreamweaver path" hidden>
+        <p class="os-route-guide-title">CHOOSE A STRAND</p>
+        <button type="button" data-os-route="0"></button>
+        <button type="button" data-os-route="1"></button>
+        <button type="button" data-os-route="2"></button>
+      </aside>
       <p id="os-error-ts" class="os-error" role="alert"></p>
-      <footer class="os-footer"><span id="os-hint-ts">WASD / arrows · choose a path · 1 2 3 / click</span><button id="os-enter-ts" class="os-replay os-enter" type="button" hidden disabled>step through</button><button id="os-replay-ts" class="os-replay" type="button">replay opening ↺</button></footer>
+      <footer class="os-footer"><span class="os-status"><strong id="os-progress-ts"></strong><span id="os-hint-ts">WASD / arrows · choose a path · 1 2 3 / click</span></span><button id="os-enter-ts" class="os-replay os-enter" type="button" hidden disabled>continue ↵</button><button id="os-replay-ts" class="os-replay" type="button">replay opening ↺</button></footer>
     </main>
     <noscript>This opening needs JavaScript enabled.</noscript>
     <script type="module" src="/src/intro/main.ts"></script>

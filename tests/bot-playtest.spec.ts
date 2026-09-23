@@ -5,6 +5,7 @@
  * .agents/skills/threejs-debug-profiler/SKILL.md
  */
 import { expect, test, type Page, type TestInfo } from "@playwright/test";
+import { writeFile } from "node:fs/promises";
 
 type IntroState = {
   frame: number;
@@ -42,7 +43,7 @@ type BotStep =
   | { kind: "chapter-room"; targetX: number };
 
 // One deterministic route through the opening and the three playable rooms.
-// Hooks establish only the reproducible boot state; every step uses player input.
+// Hooks establish only the reproducible boot state; route selection uses real input.
 const INPUT_SCRIPT: BotStep[] = [
   { kind: "intro-choice", choice: 0 },
   { kind: "intro-choice", choice: 1 },
@@ -161,28 +162,23 @@ async function steerTravel(
 ): Promise<void> {
   let previous = await readIntro(page);
   let stationarySamples = 0;
-  await page.keyboard.down("ArrowUp");
-  try {
-    for (let index = 0; index < 220; index += 1) {
-      const state = await readIntro(page);
-      if (state.storyMode !== "travel") return;
-      const moved = Math.hypot(
-        state.playerPosition.x - previous.playerPosition.x,
-        state.playerPosition.y - previous.playerPosition.y,
-        state.playerPosition.z - previous.playerPosition.z
-      );
-      metrics.distance += moved;
-      if (state.frame > previous.frame && moved < 0.001) stationarySamples += 1;
-      else stationarySamples = 0;
-      if (stationarySamples >= 10) {
-        metrics.softlocks += 1;
-        stationarySamples = 0;
-      }
-      previous = state;
-      await page.waitForTimeout(45);
+  for (let index = 0; index < 220; index += 1) {
+    const state = await readIntro(page);
+    if (state.storyMode !== "travel") return;
+    const moved = Math.hypot(
+      state.playerPosition.x - previous.playerPosition.x,
+      state.playerPosition.y - previous.playerPosition.y,
+      state.playerPosition.z - previous.playerPosition.z
+    );
+    metrics.distance += moved;
+    if (state.frame > previous.frame && moved < 0.001) stationarySamples += 1;
+    else stationarySamples = 0;
+    if (stationarySamples >= 10) {
+      metrics.softlocks += 1;
+      stationarySamples = 0;
     }
-  } finally {
-    await page.keyboard.up("ArrowUp");
+    previous = state;
+    await page.waitForTimeout(45);
   }
   throw new Error("Bot failed to reach the next intro question");
 }
@@ -330,7 +326,20 @@ test("bot playtest: scripted real input completes and retries the playable route
       step.kind === "intro-choice"
   );
   for (const [index, step] of introSteps.entries()) {
-    await steerIntro(page, step.choice, routeMetrics);
+    if (index === 0) {
+      const beforeGuide = await readIntro(page);
+      await page.keyboard.press("1");
+      await expect
+        .poll(async (): Promise<string> => (await readIntro(page)).storyMode, { timeout: 15_000 })
+        .toBe("response");
+      const afterGuide = await readIntro(page);
+      routeMetrics.distance += Math.hypot(
+        afterGuide.playerPosition.x - beforeGuide.playerPosition.x,
+        afterGuide.playerPosition.y - beforeGuide.playerPosition.y,
+        afterGuide.playerPosition.z - beforeGuide.playerPosition.z
+      );
+      expect(routeMetrics.distance, "number key should send the player toward a path").toBeGreaterThan(0.5);
+    } else await steerIntro(page, step.choice, routeMetrics);
     const reached = await readIntro(page);
     if (
       reached.storyMode === "waiting" &&
@@ -459,6 +468,7 @@ test("bot playtest: scripted real input completes and retries the playable route
     body: JSON.stringify(report, null, 2),
     contentType: "application/json",
   });
+  await writeFile("artifacts/intro-bot-playtest-report.json", JSON.stringify(report, null, 2));
   console.log(`bot playtest: ${JSON.stringify(report)}`);
 
   expect(pageErrors, "page errors during bot play").toEqual([]);

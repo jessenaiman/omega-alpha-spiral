@@ -116,7 +116,7 @@
 .os-footer {
   align-items: center;
   bottom: var(--os-space-default);
-  color: var(--os-dim);
+  color: #c7d8dc;
   display: flex;
   flex-wrap: wrap;
   font-size: var(--os-font-xs);
@@ -126,6 +126,64 @@
   position: absolute;
   right: var(--os-space-lg);
   visibility: hidden;
+  z-index: 2;
+}
+.os-status {
+  align-items: flex-start;
+  background: #020607c9;
+  border-left: 1px solid #7d9ca4;
+  display: flex;
+  flex: 1 1 18rem;
+  flex-direction: column;
+  gap: 0.2rem;
+  max-width: 32rem;
+  padding: 0.4rem 0.65rem;
+}
+.os-status strong {
+  color: #e4f2f3;
+  font-size: 0.68rem;
+  font-weight: 400;
+  letter-spacing: 0.18em;
+}
+.os-route-guide {
+  background: #020608dc;
+  border: 1px solid #576a715c;
+  bottom: 4.8rem;
+  box-sizing: border-box;
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.5rem;
+  position: absolute;
+  right: var(--os-space-lg);
+  width: min(22rem, 42vw);
+  z-index: 2;
+}
+.os-route-guide[hidden] { display: none; }
+.os-route-guide-title {
+  color: #aabfc5;
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  margin: 0 0 0.1rem;
+}
+.os-route-guide button {
+  background: #0610168c;
+  border: 0;
+  border-left: 2px solid #dcefff;
+  color: #e6f0f2;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.75rem;
+  line-height: 1.3;
+  min-height: 2.5rem;
+  padding: 0.35rem 0.5rem;
+  text-align: left;
+}
+.os-route-guide button:nth-of-type(2) { border-left-color: #e7b45a; }
+.os-route-guide button:nth-of-type(3) { border-left-color: #ff6478; }
+.os-route-guide button:hover,
+.os-route-guide button:focus-visible {
+  background: #16303a;
+  outline: 1px solid #a5c6ce;
 }
 .os-boot[data-os-phase-ts='waiting'] .os-footer,
 .os-boot[data-os-phase-ts='prelude'] .os-footer,
@@ -146,6 +204,7 @@
 }
 .os-replay:focus-visible { outline: 2px solid var(--os-white); }
 .os-replay:hover { background: var(--os-surface); }
+.os-enter { border-color: #b4d9e2; color: #e8fbff; }
 .os-sound {
   background: #02060799;
   border: 1px solid var(--os-hairline);
@@ -216,11 +275,17 @@
   .os-terminal { padding: var(--os-space-md) var(--os-space-default); }
   .os-footer { left: var(--os-space-default); right: var(--os-space-default); }
   .os-choice { background: var(--os-surface); }
+  .os-route-guide { bottom: 8.5rem; right: var(--os-space-default); width: min(12rem, 54vw); }
+  .os-route-guide button { font-size: 0.65rem; line-height: 1.2; min-height: 2.1rem; }
+  .os-footer { top: 3.8rem; bottom: auto; }
+  .os-status { flex-basis: 100%; max-width: none; }
+  .os-replay:not(.os-enter) { position: fixed; top: 0.5rem; left: 0.5rem; }
+  .os-enter { position: fixed; right: 0.5rem; bottom: 0.5rem; }
+  .os-touch { bottom: 1rem; }
 }
 @media (pointer: coarse), (width < 760px) {
   .os-boot[data-os-phase-ts='waiting'] .os-touch,
   .os-boot[data-os-phase-ts='travel'] .os-touch { display: grid; }
-  .os-footer > span { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   .os-cursor { animation: none; }

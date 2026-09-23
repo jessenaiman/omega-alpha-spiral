@@ -1,32 +1,29 @@
 {
-  "runId": "team-foundation-20260922",
+  "runId": "intro-playable-20260923",
   "version": 1,
-  "artifacts": [],
+  "artifacts": [
+    "assets/references/intro-first-question.png",
+    "assets/references/intro-door-finale.png",
+    "assets/references/intro-strand-detail.png",
+    "public/assets/intro/intro-door-assemble.glb",
+    "artifacts/intro-bot-playtest-report.json",
+    "artifacts/intro-playable-20260923/bot-playthrough.webm"
+  ],
   "captures": [
     {
-      "report": "artifacts/intro-baseline-1/desktop.json",
+      "report": "artifacts/intro-playable-20260923/desktop-question-1.json",
       "mode": "desktop",
-      "state": null
+      "state": "question-1"
     },
     {
-      "report": "artifacts/intro-baseline-1/mobile.json",
+      "report": "artifacts/intro-playable-20260923/mobile-question-1.json",
       "mode": "mobile",
-      "state": null
+      "state": "question-1"
     },
     {
       "mode": "desktop",
-      "state": "question-4",
-      "report": "artifacts/team-foundation-20260922/desktop-question-4.json"
-    },
-    {
-      "mode": "mobile",
-      "state": "question-2",
-      "report": "artifacts/team-foundation-20260922/mobile-question-2.json"
-    },
-    {
-      "mode": "desktop",
-      "state": "complete",
-      "report": "artifacts/team-foundation-20260922/desktop-complete.json"
+      "state": "final-door",
+      "report": "artifacts/intro-playable-20260923/desktop-final-door.json"
     }
   ]
 }

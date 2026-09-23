@@ -76,6 +76,21 @@ const ASIDE_HOLD_MS: number = 4300;
 const VOICE_COOLDOWN_MS: number = 2500;
 const PATH_VERTEX_CAPACITY: number = 96;
 
+function wrapAtWords(text: string, columns: number): string {
+  return text.split("\n").map((sourceLine: string): string => {
+    let line = sourceLine;
+    const wrapped: string[] = [];
+    while (line.length > columns) {
+      const space = line.lastIndexOf(" ", columns);
+      const end = space > 0 ? space : columns;
+      wrapped.push(line.slice(0, end));
+      line = line.slice(end + (space > 0 ? 1 : 0));
+    }
+    wrapped.push(line);
+    return wrapped.join("\n");
+  }).join("\n");
+}
+
 const GLYPH_VERTEX: string = `
   varying vec2 vUv;
   void main() {
@@ -566,6 +581,8 @@ export class GlyphRibbon {
 export class SpatialBootScene {
   private _root: Group = new Group();
   private _door: Group | null = null;
+  private _doorFragments: Array<{ node: Object3D; home: Vector3; offset: Vector3 }> = [];
+  private _doorRailMaterials: MeshBasicMaterial[] = [];
   private _blenderLayers: BlenderIntroLayers | null = null;
   private _blenderStars: Object3D | null = null;
   private _destroyed: boolean = false;
@@ -575,6 +592,7 @@ export class SpatialBootScene {
   private _particles: IntroParticleField = new IntroParticleField();
   private _physics: IntroPhysics = new IntroPhysics();
   private _voices: Group[] = [];
+  private _walkPlane: Group = new Group();
   private _voiceMaterials: VoiceMaterial[][] = [];
   private _trails: Line<BufferGeometry, LineBasicMaterial>[] = [];
   private _voiceAppearedAt: number[] = [-1, -1, -1];
@@ -600,6 +618,8 @@ export class SpatialBootScene {
   private _pathPrevious: Vector3 = new Vector3();
   private _pathCurrent: Vector3 = new Vector3();
   private _movement: Vector2 = new Vector2();
+  private _guidedChoice: number = -1;
+  private _physicsX: number = 0;
   private _lastUpdateMs: number = 0;
   private _questionRecede: number = 0;
   private _lastPhase: BootFrame["phase"] | "" = "";
@@ -705,6 +725,7 @@ export class SpatialBootScene {
     }
     this._createPlayer();
     this._createPath();
+    this._createWalkPlane();
     const ambient: AmbientLight = new AmbientLight(0x7893a3, 0.62);
     const key: DirectionalLight = new DirectionalLight(0xe7f5ff, 2.4);
     key.position.set(-3.5, 4.5, 5.5);
@@ -712,7 +733,7 @@ export class SpatialBootScene {
     rim.position.set(2.8, -1.4, 2.5);
     this._root.add(ambient, key, rim);
     scene.add(this._root);
-    void loadBlenderIntroLayers(this._root, "game")
+    const layersReady = loadBlenderIntroLayers(this._root, "game")
       .then((layers) => {
         if (this._destroyed) return;
         this._blenderLayers = layers;
@@ -721,18 +742,73 @@ export class SpatialBootScene {
       .catch((error: unknown) => {
         console.warn("Unable to load Blender intro layers", error);
       });
-    void new GLTFLoader()
+    const doorReady = new GLTFLoader()
       .loadAsync("/assets/intro/intro-door-assemble.glb")
       .then(({ scene: door }: { scene: Group }): void => {
         if (this._destroyed) return;
         door.visible = false;
+        door.position.set(0, -1.82, 0);
+        door.scale.setScalar(0.88);
+        door.rotation.y = -0.08;
+        const doorColors: Record<string, number> = {
+          Intro_Copper: 0x9f704b,
+          Intro_Cyan: 0x8ce9ff,
+          Intro_Basalt: 0x344b58,
+          Intro_Amber: 0xf1ac62,
+          Intro_Iron: 0x829ca8,
+          Intro_Obsidian: 0x1c313e,
+          Intro_Void: 0x02060c,
+        };
+        const doorMaterials = new Map<string, MeshBasicMaterial>();
+        let fragmentIndex = 0;
+        door.traverse((node: Object3D): void => {
+          if (node instanceof Mesh) {
+            const originals = Array.isArray(node.material) ? node.material : [node.material];
+            const replacements = originals.map((material): MeshBasicMaterial => {
+              const name = material.name;
+              let replacement = doorMaterials.get(name);
+              if (!replacement) {
+                replacement = new MeshBasicMaterial({ color: doorColors[name] ?? 0x526776, toneMapped: false });
+                doorMaterials.set(name, replacement);
+              }
+              return replacement;
+            });
+            node.material = Array.isArray(node.material) ? replacements : replacements[0];
+          }
+          if (node.name === "Art_VoidBacking") node.visible = false;
+          if (!node.name.startsWith("DoorFragment_")) return;
+          node.position.x += node.name.includes("_L_") ? -0.55 : 0.55;
+          const angle = fragmentIndex * 2.39996;
+          this._doorFragments.push({
+            node,
+            home: node.position.clone(),
+            offset: new Vector3(Math.cos(angle) * 1.7, Math.sin(angle) * 1.25, -0.8 - fragmentIndex % 5 * 0.17),
+          });
+          fragmentIndex += 1;
+        });
+        const addRail = (width: number, height: number, x: number, y: number, color: number): void => {
+          const material = new MeshBasicMaterial({
+            color, transparent: true, opacity: 0, depthTest: false,
+            depthWrite: false, blending: AdditiveBlending, toneMapped: false,
+          });
+          const rail = new Mesh(new BoxGeometry(width, height, 0.035), material);
+          rail.position.set(x, y, 0.9);
+          rail.renderOrder = 8;
+          this._doorRailMaterials.push(material);
+          door.add(rail);
+        };
+        addRail(0.024, 3.18, -1.16, 1.77, 0x83dbea);
+        addRail(0.024, 3.18, 1.16, 1.77, 0x83dbea);
+        addRail(2.34, 0.024, 0, 3.35, 0x83dbea);
+        addRail(0.018, 3.34, -1.58, 1.78, 0xc08351);
+        addRail(0.018, 3.34, 1.58, 1.78, 0xc08351);
         this._door = door;
         this._root.add(door);
       })
       .catch((error: unknown): void => {
         console.warn("Unable to load intro door asset", error);
       });
-    return this._physics.init();
+    return Promise.all([this._physics.init(), layersReady, doorReady]).then((): void => undefined);
   }
 
   private _createPlayer(): void {
@@ -948,10 +1024,10 @@ export class SpatialBootScene {
     const responseColor: number =
       speakingOwner >= 0 ? INK[speakingOwner] : INK[0];
     const questionColumns: number =
-      frame.phase === "response" ? (this._isNarrow ? 20 : 27) : columns;
+      frame.phase === "response" ? (this._isNarrow ? 20 : 27) : this._isNarrow ? 21 : columns;
     const responseOwner: number = speakingOwner;
     this._ribbons[5].setText(
-      frame.question,
+      wrapAtWords(frame.question, questionColumns),
       responseOwner >= 0 ? responseOwner + 1 : frame.format,
       questionColumns,
       responseColor,
@@ -1035,6 +1111,15 @@ export class SpatialBootScene {
     this._particles.pulse(this._awaitingAction);
   }
 
+  public guideToChoice(index: number): void {
+    this._guidedChoice = index >= 0 && index < 3 ? index : -1;
+    if (this._guidedChoice >= 0) {
+      this._selected = this._guidedChoice;
+      this._hovered = this._guidedChoice;
+      this._particles.pulse(this._guidedChoice);
+    }
+  }
+
   public getParticleDiagnostics(): {
     lightParticles: number;
     darkParticles: number;
@@ -1103,6 +1188,8 @@ export class SpatialBootScene {
     this._journeyActive = false;
     this._journeyComplete = false;
     this._choiceArmed = false;
+    this._guidedChoice = -1;
+    this._physicsX = 0;
     this._player.position.set(0, -2.55, 0.52);
     this.setPlayerStage(0);
     this._retunePlayer();
@@ -1141,6 +1228,7 @@ export class SpatialBootScene {
     }
     this._retunePlayer();
     this._choiceArmed = false;
+    this._guidedChoice = -1;
     this._physics.deactivate();
   }
 
@@ -1272,6 +1360,38 @@ export class SpatialBootScene {
     );
   }
 
+  private _createWalkPlane(): void {
+    // The transparent substrate recedes in real depth under the traversed strands.
+    const nearY = -2.72;
+    const farY = 2.72;
+    const depth = (y: number): number => 0.03 - (y - nearY) * 0.62;
+    const floor = new BufferGeometry();
+    floor.setAttribute("position", new BufferAttribute(new Float32Array([
+      -4, nearY, depth(nearY), 4, nearY, depth(nearY), -4, farY, depth(farY),
+      4, nearY, depth(nearY), 4, farY, depth(farY), -4, farY, depth(farY),
+    ]), 3));
+    this._walkPlane.add(new Mesh(floor, new MeshBasicMaterial({
+      color: 0x12212a, transparent: true, opacity: 0.09,
+      side: DoubleSide, depthWrite: false,
+    })));
+    const lines: number[] = [];
+    for (let index = -6; index <= 6; index += 1) {
+      const x = index * 0.56;
+      lines.push(x, nearY, depth(nearY) + 0.015, x, farY, depth(farY) + 0.015);
+    }
+    for (let index = 0; index <= 11; index += 1) {
+      const y = nearY + (farY - nearY) * index / 11;
+      lines.push(-3.65, y, depth(y) + 0.015, 3.65, y, depth(y) + 0.015);
+    }
+    const grid = new BufferGeometry();
+    grid.setAttribute("position", new BufferAttribute(new Float32Array(lines), 3));
+    this._walkPlane.add(new LineSegments(grid, new LineBasicMaterial({
+      color: 0x7a9cab, transparent: true, opacity: 0.07,
+      blending: AdditiveBlending, depthWrite: false, toneMapped: false,
+    })));
+    this._root.add(this._walkPlane);
+  }
+
   private _updatePath(
     isWaiting: boolean,
     isTravel: boolean,
@@ -1309,14 +1429,14 @@ export class SpatialBootScene {
         this._pathFrom.set(
           activeTravel ? (owner - 1) * this._width * 0.16 : 0,
           activeTravel ? -2.45 : -2.62,
-          activeTravel ? 0.4 : 0.14
+          activeTravel ? 0.46 : 0.42
         );
       }
-      if (activeTravel) this._pathGoal.set(0, 2.62, -0.72);
+      if (activeTravel) this._pathGoal.set(0, 2.62, -2.4);
       else {
         if (!isThreshold) {
           const target: Vector3 = this._targets[owner].position;
-          this._pathGoal.set(target.x, target.y - 0.48, target.z - 0.58);
+          this._pathGoal.set(target.x, target.y - 0.48, -2.1);
         }
       }
       if (!isThreshold)
@@ -1450,8 +1570,8 @@ export class SpatialBootScene {
     if (!frame || !this._cursor) return -1;
     if (this._blenderLayers) {
       const showBackground = this._choiceHistory.length > 0 || frame.phase === "waiting";
-      this._blenderLayers.background.visible = showBackground;
-      this._blenderLayers.strands.visible = frame.phase === "waiting" || frame.phase === "travel";
+      this._blenderLayers.background.visible = showBackground && this._choiceHistory.length > 0;
+      this._blenderLayers.strands.visible = frame.phase === "travel" || (frame.phase === "waiting" && this._choiceHistory.length > 0);
       if (this._blenderStars) this._blenderStars.visible = this._choiceHistory.length > 0;
     }
     if (this._sigilEra !== frame.format) {
@@ -1478,6 +1598,18 @@ export class SpatialBootScene {
       frame.phase === "doorway" ||
       frame.phase === "complete";
     const isCrossing: boolean = frame.phase === "complete";
+    this._walkPlane.visible = isWaiting || isTravel;
+    if (this._door) {
+      this._door.visible = isThreshold;
+      const rawAssembly = frame.phase === "final" ? Math.min(1, Math.max(0, (frame.phaseElapsedMs ?? 0) / 9200)) : 1;
+      const assembly = rawAssembly * rawAssembly * (3 - 2 * rawAssembly);
+      this._doorRailMaterials.forEach((material, index): void => {
+        material.opacity = (index < 3 ? 0.8 : 0.36) * assembly;
+      });
+      this._doorFragments.forEach(({ node, home, offset }): void => {
+        node.position.copy(home).addScaledVector(offset, 1 - assembly);
+      });
+    }
     const crossingProgress: number = isCrossing
       ? Math.min(1, Math.max(0, (frame.phaseElapsedMs ?? 0) / 2800))
       : 0;
@@ -1490,6 +1622,8 @@ export class SpatialBootScene {
       if (isWaiting) {
         this._player.position.set(0, -2.55, 0.52);
         this._choiceArmed = true;
+        this._guidedChoice = -1;
+        this._physicsX = 0;
         this._journeyActive = false;
         this._selected = -1;
         this._awaitingAction = -1;
@@ -1676,10 +1810,10 @@ export class SpatialBootScene {
         : 1 + Math.sin(seconds * 5.4) * 0.1;
       voice.scale.setScalar(
         isSpeaking
-          ? 1.45 * speakingPulse
+          ? 0.9 * speakingPulse
           : isNewestArrival
-            ? 1.12 * speakingPulse
-            : 1
+            ? 0.72 * speakingPulse
+            : 0.58
       );
       if (isThreshold) voice.scale.multiplyScalar(1 - finalProgress * 0.74);
       const observerFade: number =
@@ -1751,7 +1885,7 @@ export class SpatialBootScene {
         ? scale * (this._isNarrow ? 0.62 : 0.68)
         : responseAnchor
           ? scale * 0.52
-          : scale * (1.48 - this._questionRecede * 0.48)
+          : scale * (this._isNarrow ? 0.92 : 1.48 - this._questionRecede * 0.48)
     );
     if (responseOwner === 0) question.rotation.set(0, 0, 0);
     if (responseOwner === 1) question.rotation.set(-0.08, -0.14, 0.025);
@@ -1799,11 +1933,11 @@ export class SpatialBootScene {
       target.position.set(voicePosition.x, voicePosition.y - 1.22, 0.18);
       target.scale.set(this._width * 0.29, 1.12, 1);
       target.material.opacity = 0;
-      this._pathFrom.set(0, -2.62, 0.14);
+      this._pathFrom.set(0, -2.62, 0.42);
       this._pathGoal.set(
         target.position.x,
         target.position.y - 0.48,
-        target.position.z - 0.58
+        -2.1
       );
       this._samplePath(
         index,
@@ -1895,10 +2029,11 @@ export class SpatialBootScene {
       }
       if (isWaiting) {
         const speed: number = 1.75 + this._playerStage * 0.12;
+        const guideX: number = this._guidedChoice >= 0 ? this._targets[this._guidedChoice].position.x - this._physicsX : 0;
         const physicsStep: IntroPhysicsStep = this._physics.step(
           delta,
-          this._movement.x,
-          this._movement.y,
+          this._guidedChoice >= 0 ? (Math.abs(guideX) < 0.07 ? 0 : Math.sign(guideX)) : this._movement.x,
+          this._guidedChoice >= 0 ? 1 : this._movement.y,
           speed,
           {
             minX: -this._width * 0.43,
@@ -1907,6 +2042,7 @@ export class SpatialBootScene {
             maxY: 1.62,
           }
         );
+        this._physicsX = physicsStep.position.x;
         let nearest: number = 0;
         let nearestDistance: number = Number.POSITIVE_INFINITY;
         for (let index: number = 0; index < 3; index += 1) {
@@ -1918,6 +2054,7 @@ export class SpatialBootScene {
             nearestDistance = dx;
           }
         }
+        if (this._guidedChoice >= 0) nearest = this._guidedChoice;
         this._hovered = nearest;
         const target: Vector3 = this._targets[nearest].position;
         const progress: number = Math.min(
@@ -1929,8 +2066,8 @@ export class SpatialBootScene {
           Math.max(0, (progress - 0.08) / 0.42)
         );
         const laneLock: number = lockRaw * lockRaw * (3 - 2 * lockRaw);
-        this._pathFrom.set(0, -2.65, 0.34);
-        this._pathGoal.set(target.x, target.y - 0.48, target.z - 0.58);
+        this._pathFrom.set(0, -2.65, 0.42);
+        this._pathGoal.set(target.x, target.y - 0.48, -2.1);
         this._samplePath(
           nearest,
           progress,
@@ -1959,7 +2096,7 @@ export class SpatialBootScene {
         const physicsStep: IntroPhysicsStep = this._physics.step(
           delta,
           0,
-          this._movement.y,
+          1,
           travelSpeed,
           {
             minX: -this._width * 0.28,
@@ -1975,9 +2112,9 @@ export class SpatialBootScene {
         this._pathFrom.set(
           (this._selected - 1) * this._width * 0.16,
           -2.45,
-          0.4
+          0.46
         );
-        this._pathGoal.set(0, 2.62, -0.72);
+        this._pathGoal.set(0, 2.62, -2.4);
         this._samplePath(
           Math.max(0, this._selected),
           progress,
@@ -2082,6 +2219,18 @@ export class SpatialBootScene {
   public destroy(): void {
     this._destroyed = true;
     this._root.removeFromParent();
+    this._door?.traverse((child): void => {
+      if (!(child instanceof Mesh)) return;
+      child.geometry.dispose();
+      if (Array.isArray(child.material)) child.material.forEach((material): void => material.dispose());
+      else child.material.dispose();
+    });
+    this._walkPlane.traverse((child): void => {
+      if (!(child instanceof Mesh) && !(child instanceof LineSegments)) return;
+      child.geometry.dispose();
+      if (Array.isArray(child.material)) child.material.forEach((material): void => material.dispose());
+      else child.material.dispose();
+    });
     this._ribbons.forEach((ribbon: GlyphRibbon): void => ribbon.destroy());
     this._sigils.forEach((sigils) => sigils.destroy());
     this._atlases.forEach((texture: CanvasTexture): void => texture.dispose());
