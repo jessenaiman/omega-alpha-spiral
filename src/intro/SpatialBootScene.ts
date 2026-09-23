@@ -25,6 +25,7 @@ import {
   Vector2,
   Vector3,
 } from "three";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 import { BOOT_OPTIONS, BOOT_SYMBOLS, type BootFrame } from "./ghostwriting";
 import { getIntroEra, INTRO_ERAS, type IntroEraDesign } from "./IntroEraDesign";
@@ -299,7 +300,7 @@ function createDreamweaverMark(owner: number): DreamweaverMark {
 }
 
 /** One reusable glyph atlas per historical font, never a texture per letter. */
-function createAtlas(format: number): CanvasTexture {
+export function createAtlas(format: number): CanvasTexture {
   const era: IntroEraDesign = getIntroEra(format);
   const cell: number = Math.max(
     10,
@@ -332,7 +333,7 @@ function createAtlas(format: number): CanvasTexture {
 }
 
 /** Batched physical glyph quads; letters have independent XYZ and skew. */
-class GlyphRibbon {
+export class GlyphRibbon {
   public readonly root: Group = new Group();
   private _geometry: BufferGeometry = new BufferGeometry();
   private _positions: Float32Array = new Float32Array(GLYPH_CAPACITY * 12);
@@ -561,6 +562,8 @@ class GlyphRibbon {
 
 export class SpatialBootScene {
   private _root: Group = new Group();
+  private _door: Group | null = null;
+  private _destroyed: boolean = false;
   private _atlases: CanvasTexture[] = [];
   private _ribbons: GlyphRibbon[] = [];
   private _cursor: Mesh<BoxGeometry, MeshBasicMaterial> | null = null;
@@ -702,6 +705,17 @@ export class SpatialBootScene {
     rim.position.set(2.8, -1.4, 2.5);
     this._root.add(ambient, key, rim);
     scene.add(this._root);
+    void new GLTFLoader()
+      .loadAsync("/assets/intro/intro-door-assemble.glb")
+      .then(({ scene: door }: { scene: Group }): void => {
+        if (this._destroyed) return;
+        door.visible = false;
+        this._door = door;
+        this._root.add(door);
+      })
+      .catch((error: unknown): void => {
+        console.warn("Unable to load intro door asset", error);
+      });
     return this._physics.init();
   }
 
@@ -2028,6 +2042,7 @@ export class SpatialBootScene {
   }
 
   public destroy(): void {
+    this._destroyed = true;
     this._root.removeFromParent();
     this._ribbons.forEach((ribbon: GlyphRibbon): void => ribbon.destroy());
     this._atlases.forEach((texture: CanvasTexture): void => texture.dispose());

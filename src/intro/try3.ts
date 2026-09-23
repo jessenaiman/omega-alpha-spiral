@@ -39,6 +39,7 @@ import {
 import { createChronicleQuestions } from "./chronicle";
 import { createBootFrames } from "./ghostwriting";
 import { getIntroEra } from "./IntroEraDesign";
+import { createAtlas, GlyphRibbon } from "./SpatialBootScene";
 import {
   loadBlenderIntroLayers,
   type BlenderIntroLayers,
@@ -48,7 +49,7 @@ type Variant = "tide" | "archive" | "current";
 type Route = {
   curve: Curve<Vector3>;
   line: Mesh<TubeGeometry, MeshBasicMaterial>;
-  words: Sprite[];
+  words: GlyphRibbon[];
   mark: Group;
 };
 
@@ -68,6 +69,17 @@ const question =
   createChronicleQuestions(472)[
     variant === "archive" ? 0 : variant === "tide" ? 1 : 2
   ];
+const dreamweaverQuestions = question.choices.map((choice) => {
+  const line = choice.response
+    .split("\n")
+    .reverse()
+    .find((part) => part.trim().endsWith("?"));
+  if (!line) throw new Error(`${choice.owner} needs a question`);
+  return line.trim();
+});
+const dreamweaverMessages = question.choices.map((choice) =>
+  choice.response.split("\n\n")[0].split("\n").slice(1).join("\n")
+);
 const canvas = document.querySelector<HTMLCanvasElement>("#stage");
 const titleElement = document.querySelector<HTMLElement>("#label");
 const questionElement = document.querySelector<HTMLElement>("#question");
@@ -299,6 +311,9 @@ const grid = new LineSegments(
   })
 );
 scene.add(grid);
+const glyphAtlases = Array.from({ length: 6 }, (_, format) =>
+  createAtlas(format)
+);
 
 const drawWord = (text: string, color: number): Sprite => {
   const image = document.createElement("canvas");
@@ -357,6 +372,16 @@ const pathCurve = (index: number): Curve<Vector3> => {
   );
 };
 
+const floatingHeight = (
+  owner: number,
+  index: number,
+  count: number
+): number => {
+  if (owner === 0) return 1.78 + index * 0.1;
+  if (owner === 1) return 2.72 + (index % 2) * 0.26;
+  return 2.12 + Math.sin((index / Math.max(1, count - 1)) * Math.PI) * 0.42;
+};
+
 const routes: Route[] = [];
 for (let i = 0; i < 3; i++) {
   const curve = pathCurve(i);
@@ -371,27 +396,27 @@ for (let i = 0; i < 3; i++) {
     })
   );
   scene.add(line);
-  const words: Sprite[] = [];
-  const tokens = question.choices[i].text
-    .replace(/[—.,!?]/g, " ")
+  const words: GlyphRibbon[] = [];
+  const tokens = dreamweaverQuestions[i]
+    .replace(/[—.,!]/g, " ")
     .split(/\s+/)
     .filter(Boolean);
-  for (let j = 0; j < tokens.length; j += 2) {
-    const sprite = drawWord(tokens.slice(j, j + 2).join(" "), palette[i]);
-    const t = 0.12 + (j / Math.max(1, tokens.length - 1)) * 0.76;
+  const phraseCount = Math.ceil(tokens.length / 3);
+  for (let groupIndex = 0; groupIndex < phraseCount; groupIndex++) {
+    const phrase = tokens.slice(groupIndex * 3, groupIndex * 3 + 3).join(" ");
+    const glyph = new GlyphRibbon(glyphAtlases);
+    glyph.init();
+    glyph.setText(phrase, terminalEra.id, phrase.length, palette[i], i);
+    glyph.root.scale.setScalar(0.31);
+    const t = 0.12 + (groupIndex / Math.max(1, phraseCount - 1)) * 0.5;
     const point = curve.getPoint(t);
-    sprite.position.set(
-      point.x,
-      0.18 +
-        (variant === "current"
-          ? Math.sin(t * Math.PI * 3) * 0.13
-          : variant === "archive"
-            ? Math.floor(t * 5) * 0.06
-            : 0),
+    glyph.root.position.set(
+      point.x - phrase.length * 0.64 * 0.155 + [-0.65, 0, 0.65][i],
+      floatingHeight(i, groupIndex, phraseCount),
       point.z
     );
-    words.push(sprite);
-    scene.add(sprite);
+    words.push(glyph);
+    scene.add(glyph.root);
   }
   const mark = new Group();
   const endpoint = curve.getPoint(1);
@@ -606,7 +631,7 @@ if (isFinal) {
   routes.forEach((route) => {
     route.line.visible = false;
     route.words.forEach((word) => {
-      word.visible = false;
+      word.root.visible = false;
     });
     route.mark.visible = false;
   });
@@ -696,18 +721,18 @@ const updateStatus = (): void => {
         ? `The door is assembling for ${givenName}. Walk forward through the words.`
         : "Omega asks for a name. The final answer assembles a threshold instead of offering three paths.";
   } else if (arrived && selected >= 0) {
-    status.textContent = `${["LIGHT", "SHADOW", "AMBITION"][selected]} · the Dreamweaver is centered.\n${question.choices[selected].response.split("\n\n")[0]}\nR replays this same question.`;
+    status.textContent = `${["LIGHT", "SHADOW", "AMBITION"][selected]} · the Dreamweaver is centered.\n${dreamweaverMessages[selected]}\nR replays this same question.`;
   } else if (selected >= 0) {
     status.textContent = `Following ${["Light", "Shadow", "Ambition"][selected]} · keep walking. Your single filament records this run.`;
   } else if (choicesWriting) {
-    status.textContent = `${["Light", "Shadow", "Ambition"][activeWriter]} is writing an answer into the dark.`;
+    status.textContent = `${["Light", "Shadow", "Ambition"][activeWriter]} is writing a question into the dark.`;
   } else if (!choicesRevealed) {
     status.textContent = writingDone
-      ? "Omega has finished the question. Let the Dreamweavers write their answers."
+      ? "Omega has finished the question. Let the Dreamweavers ask theirs."
       : "Omega is ghostwriting the question. Watch the old terminal correct itself.";
   } else {
     status.textContent =
-      "Choose a trail of answer words, then walk toward its Dreamweaver.";
+      "Choose the Dreamweaver question you will face, then walk its path.";
   }
 };
 const reset = (): void => {
@@ -744,8 +769,8 @@ const reset = (): void => {
     route.line.visible = false;
     route.mark.visible = false;
     route.words.forEach((word) => {
-      word.material.opacity = 0.94;
-      word.visible = false;
+      word.root.scale.setScalar(0.31);
+      word.root.visible = false;
     });
   });
   syncArchiveVisuals();
@@ -855,31 +880,31 @@ const frame = (at: number): void => {
     }
   }
   if (choicesWriting && !choicesRevealed) {
-    const secondsPerAnswer = 1.45;
+    const secondsPerQuestion = 1.45;
     const elapsed = (at - choicesWritingAt) / 1000;
-    const writer = Math.min(2, Math.floor(elapsed / secondsPerAnswer));
+    const writer = Math.min(2, Math.floor(elapsed / secondsPerQuestion));
     if (writer !== activeWriter) {
       activeWriter = writer;
       updateStatus();
     }
     routes.forEach((route, index) => {
-      const local = Math.max(0, elapsed - index * secondsPerAnswer);
+      const local = Math.max(0, elapsed - index * secondsPerQuestion);
       const visibleWords = Math.min(
         route.words.length,
-        Math.ceil((local / secondsPerAnswer) * route.words.length)
+        Math.ceil((local / secondsPerQuestion) * route.words.length)
       );
       route.words.forEach((word, wordIndex) => {
-        word.visible = wordIndex < visibleWords;
+        word.root.visible = wordIndex < visibleWords;
       });
     });
-    if (elapsed >= routes.length * secondsPerAnswer) {
+    if (elapsed >= routes.length * secondsPerQuestion) {
       choicesWriting = false;
       choicesRevealed = true;
       routes.forEach((route) => {
         route.line.visible = true;
         route.mark.visible = true;
         route.words.forEach((word) => {
-          word.visible = true;
+          word.root.visible = true;
         });
       });
       syncArchiveVisuals();
@@ -922,7 +947,7 @@ const frame = (at: number): void => {
         routes.forEach((route, i) => {
           route.line.material.opacity = i === selected ? 0.65 : 0.05;
           route.words.forEach((word) => {
-            word.material.opacity = i === selected ? 0.94 : 0.15;
+            word.root.scale.setScalar(i === selected ? 0.34 : 0.26);
           });
         });
         filamentMaterial.color
@@ -978,6 +1003,16 @@ const frame = (at: number): void => {
   }
   camera.position.lerp(cameraPosition, 1 - Math.exp(-dt * 3.6));
   camera.lookAt(cameraTarget);
+  routes.forEach((route, owner) => {
+    route.words.forEach((word, wordIndex) => {
+      word.update(at * 0.001, [0, 0.25, 0.16][owner]);
+      word.root.position.y =
+        floatingHeight(owner, wordIndex, route.words.length) +
+        Math.sin(at * 0.00075 + wordIndex * 1.23 + owner * 0.8) *
+          [0.08, 0.14, 0.2][owner];
+      word.root.quaternion.copy(camera.quaternion);
+    });
+  });
   renderer.render(scene, camera);
   Reflect.set(window, "__THREE_GAME_DIAGNOSTICS__", {
     renderer: {

@@ -1,7 +1,16 @@
 import {
-  AdditiveBlending, BufferAttribute, BufferGeometry, Group, Mesh, NormalBlending,
-  PlaneGeometry, Points, ShaderMaterial,
-} from 'three';
+  AdditiveBlending,
+  BufferAttribute,
+  BufferGeometry,
+  Group,
+  Mesh,
+  NormalBlending,
+  PlaneGeometry,
+  Points,
+  ShaderMaterial,
+  Texture,
+  TextureLoader,
+} from "three";
 
 const TAU: number = Math.PI * 2;
 const DESKTOP_LIGHT_PARTICLES: number = 11000;
@@ -18,6 +27,8 @@ const NEBULA_VERTEX: string = `
 `;
 
 const NEBULA_FRAGMENT: string = `
+  uniform sampler2D uDensity;
+  uniform float uMapReady;
   uniform float uTime;
   uniform float uReveal;
   uniform float uEra;
@@ -55,11 +66,15 @@ const NEBULA_FRAGMENT: string = `
     vec2 drift = vec2(time * 0.006, -time * 0.004);
     float broad = fbm(p * 1.18 + drift);
     float thread = fbm(p * 2.7 - drift * 1.6 + broad * 0.42);
-    float cloud = smoothstep(0.48, 0.82, broad * 0.66 + thread * 0.56);
+    float procedural = smoothstep(0.48, 0.82, broad * 0.66 + thread * 0.56);
+    vec2 mapUv = clamp(vUv + vec2(broad - 0.5, thread - 0.5) * 0.026 + drift * 0.12,
+      vec2(0.001), vec2(0.999));
+    float authored = texture2D(uDensity, mapUv).r;
+    float cloud = mix(procedural, smoothstep(0.16, 0.78, authored), uMapReady * 0.72);
     float readingCorridor = smoothstep(0.12, 0.72, length(p * vec2(0.72, 1.18)));
     float vignette = 1.0 - smoothstep(0.82, 1.9, length(p));
     float capability = 0.64 + min(uEra, 5.0) * 0.055;
-    float alpha = cloud * mix(0.22, 1.0, readingCorridor) * vignette * uReveal * capability * 0.2;
+    float alpha = cloud * mix(0.18, 1.0, readingCorridor) * vignette * uReveal * capability * 0.27;
     vec3 cold = vec3(0.055, 0.11, 0.23);
     vec3 warm = vec3(0.22, 0.11, 0.075);
     vec3 color = mix(cold, warm, smoothstep(0.54, 0.78, thread));
@@ -267,6 +282,7 @@ export class IntroParticleField {
   private _veilGeometry: PlaneGeometry | null = null;
   private _lightMaterial: ShaderMaterial | null = null;
   private _nebulaMaterial: ShaderMaterial | null = null;
+  private _densityTexture: Texture | null = null;
   private _darkMaterial: ShaderMaterial | null = null;
   private _veilMaterial: ShaderMaterial | null = null;
   private _lightCount: number = 0;
@@ -278,7 +294,9 @@ export class IntroParticleField {
 
   public init(parent: Group): void {
     const isMobile: boolean = window.innerWidth < 760;
-    this._lightCount = isMobile ? MOBILE_LIGHT_PARTICLES : DESKTOP_LIGHT_PARTICLES;
+    this._lightCount = isMobile
+      ? MOBILE_LIGHT_PARTICLES
+      : DESKTOP_LIGHT_PARTICLES;
     this._darkCount = isMobile ? MOBILE_DARK_PARTICLES : DESKTOP_DARK_PARTICLES;
     this._createNebula();
     this._createLightField(this._lightCount);
@@ -292,7 +310,16 @@ export class IntroParticleField {
     this._fieldRoot.scale.x = Math.max(0.48, Math.min(1, width / 8));
   }
 
-  public setPanelTransform(x: number, y: number, z: number, width: number, height: number, rx: number, ry: number, rz: number): void {
+  public setPanelTransform(
+    x: number,
+    y: number,
+    z: number,
+    width: number,
+    height: number,
+    rx: number,
+    ry: number,
+    rz: number
+  ): void {
     this._panelRoot.position.set(x, y, z);
     this._panelRoot.scale.set(width, height, 1);
     this._panelRoot.rotation.set(rx, ry, rz);
@@ -310,28 +337,44 @@ export class IntroParticleField {
   }
 
   public update(elapsedMs: number, state: ParticleFieldState): void {
-    if (!this._lightMaterial || !this._darkMaterial || !this._veilMaterial) return;
+    if (!this._lightMaterial || !this._darkMaterial || !this._veilMaterial)
+      return;
     const seconds: number = elapsedMs / 1000;
-    const delta: number = this._lastSeconds === 0 ? 0 : Math.min(0.1, Math.max(0, seconds - this._lastSeconds));
+    const delta: number =
+      this._lastSeconds === 0
+        ? 0
+        : Math.min(0.1, Math.max(0, seconds - this._lastSeconds));
     this._lastSeconds = seconds;
     this._pulse = Math.max(0, this._pulse - delta * 0.72);
-    const disintegrate: number = state.reduced ? 0 : Math.max(0, Math.min(1, state.disintegrate));
+    const disintegrate: number = state.reduced
+      ? 0
+      : Math.max(0, Math.min(1, state.disintegrate));
     const formation: number = Math.max(0, Math.min(1, state.formation));
     const starReveal: number = Math.max(0, Math.min(1, state.starReveal));
     this._formation = formation;
-    for (const material of [this._lightMaterial, this._darkMaterial, this._veilMaterial]) {
+    for (const material of [
+      this._lightMaterial,
+      this._darkMaterial,
+      this._veilMaterial,
+    ]) {
       material.uniforms.uTime.value = seconds;
       material.uniforms.uPulse.value = this._pulse;
       material.uniforms.uReduced.value = state.reduced ? 1 : 0;
       material.uniforms.uDisintegrate.value = disintegrate;
     }
-    this._lightMaterial.uniforms.uEra.value = Math.max(0, Math.min(5, state.era));
+    this._lightMaterial.uniforms.uEra.value = Math.max(
+      0,
+      Math.min(5, state.era)
+    );
     this._lightMaterial.uniforms.uOwner.value = this._owner;
     this._lightMaterial.uniforms.uStarReveal.value = starReveal;
     if (this._nebulaMaterial) {
       this._nebulaMaterial.uniforms.uTime.value = seconds;
       this._nebulaMaterial.uniforms.uReveal.value = starReveal;
-      this._nebulaMaterial.uniforms.uEra.value = Math.max(0, Math.min(5, state.era));
+      this._nebulaMaterial.uniforms.uEra.value = Math.max(
+        0,
+        Math.min(5, state.era)
+      );
       this._nebulaMaterial.uniforms.uReduced.value = state.reduced ? 1 : 0;
     }
     this._darkMaterial.uniforms.uFormation.value = formation;
@@ -341,8 +384,18 @@ export class IntroParticleField {
     this._panelRoot.visible = formation > 0.002 || disintegrate > 0;
   }
 
-  public getDiagnostics(): { lightParticles: number; darkParticles: number; drawCalls: number; surfaceFormation: number } {
-    return { lightParticles: this._lightCount, darkParticles: this._darkCount, drawCalls: 2 + (this._formation > 0.002 ? 2 : 0), surfaceFormation: this._formation };
+  public getDiagnostics(): {
+    lightParticles: number;
+    darkParticles: number;
+    drawCalls: number;
+    surfaceFormation: number;
+  } {
+    return {
+      lightParticles: this._lightCount,
+      darkParticles: this._darkCount,
+      drawCalls: 2 + (this._formation > 0.002 ? 2 : 0),
+      surfaceFormation: this._formation,
+    };
   }
 
   public destroy(): void {
@@ -353,15 +406,28 @@ export class IntroParticleField {
     this._veilGeometry?.dispose();
     this._lightMaterial?.dispose();
     this._nebulaMaterial?.dispose();
+    this._densityTexture?.dispose();
     this._darkMaterial?.dispose();
     this._veilMaterial?.dispose();
   }
 
   private _createNebula(): void {
     this._nebulaGeometry = new PlaneGeometry(24, 15);
+    this._densityTexture = new TextureLoader().load(
+      "/assets/intro/nebula-density.png",
+      (): void => {
+        if (this._nebulaMaterial)
+          this._nebulaMaterial.uniforms.uMapReady.value = 1;
+      }
+    );
     this._nebulaMaterial = new ShaderMaterial({
       uniforms: {
-        uTime: { value: 0 }, uReveal: { value: 0 }, uEra: { value: 0 }, uReduced: { value: 0 },
+        uDensity: { value: this._densityTexture },
+        uMapReady: { value: 0 },
+        uTime: { value: 0 },
+        uReveal: { value: 0 },
+        uEra: { value: 0 },
+        uReduced: { value: 0 },
       },
       vertexShader: NEBULA_VERTEX,
       fragmentShader: NEBULA_FRAGMENT,
@@ -371,7 +437,10 @@ export class IntroParticleField {
       blending: AdditiveBlending,
       toneMapped: false,
     });
-    const nebula: Mesh<PlaneGeometry, ShaderMaterial> = new Mesh(this._nebulaGeometry, this._nebulaMaterial);
+    const nebula: Mesh<PlaneGeometry, ShaderMaterial> = new Mesh(
+      this._nebulaGeometry,
+      this._nebulaMaterial
+    );
     nebula.position.z = -4.6;
     nebula.renderOrder = -40;
     this._fieldRoot.add(nebula);
@@ -389,25 +458,43 @@ export class IntroParticleField {
       const seed: number = random();
       const angle: number = random() * TAU;
       const radius: number = 3.1 + Math.pow(random(), 0.68) * 13.8;
-      positions[index * 3] = Math.cos(angle) * radius * (1.04 + random() * 0.42);
-      positions[index * 3 + 1] = Math.sin(angle) * radius * (0.52 + random() * 0.2);
+      positions[index * 3] =
+        Math.cos(angle) * radius * (1.04 + random() * 0.42);
+      positions[index * 3 + 1] =
+        Math.sin(angle) * radius * (0.52 + random() * 0.2);
       positions[index * 3 + 2] = -3.8 + random() * 10.4;
-      progresses[index] = Math.min(1, Math.max(0, (positions[index * 3 + 2] + 3.8) / 10.4 * 0.65 + random() * 0.35));
+      progresses[index] = Math.min(
+        1,
+        Math.max(
+          0,
+          ((positions[index * 3 + 2] + 3.8) / 10.4) * 0.65 + random() * 0.35
+        )
+      );
       seeds[index] = seed;
       kinds[index] = kind;
       sizes[index] = 0.45 + random() * (kind === 2 ? 1.1 : 1.8);
     }
     this._lightGeometry = new BufferGeometry();
-    this._lightGeometry.setAttribute('position', new BufferAttribute(positions, 3));
-    this._lightGeometry.setAttribute('aSeed', new BufferAttribute(seeds, 1));
-    this._lightGeometry.setAttribute('aKind', new BufferAttribute(kinds, 1));
-    this._lightGeometry.setAttribute('aProgress', new BufferAttribute(progresses, 1));
-    this._lightGeometry.setAttribute('aSize', new BufferAttribute(sizes, 1));
+    this._lightGeometry.setAttribute(
+      "position",
+      new BufferAttribute(positions, 3)
+    );
+    this._lightGeometry.setAttribute("aSeed", new BufferAttribute(seeds, 1));
+    this._lightGeometry.setAttribute("aKind", new BufferAttribute(kinds, 1));
+    this._lightGeometry.setAttribute(
+      "aProgress",
+      new BufferAttribute(progresses, 1)
+    );
+    this._lightGeometry.setAttribute("aSize", new BufferAttribute(sizes, 1));
     this._lightMaterial = new ShaderMaterial({
       uniforms: {
-        uTime: { value: 0 }, uEra: { value: 0 }, uPulse: { value: 0 },
-        uOwner: { value: 1 }, uStarReveal: { value: 0 },
-        uDisintegrate: { value: 0 }, uReduced: { value: 0 },
+        uTime: { value: 0 },
+        uEra: { value: 0 },
+        uPulse: { value: 0 },
+        uOwner: { value: 1 },
+        uStarReveal: { value: 0 },
+        uDisintegrate: { value: 0 },
+        uReduced: { value: 0 },
       },
       vertexShader: LIGHT_VERTEX,
       fragmentShader: LIGHT_FRAGMENT,
@@ -417,7 +504,10 @@ export class IntroParticleField {
       blending: AdditiveBlending,
       toneMapped: false,
     });
-    const points: Points<BufferGeometry, ShaderMaterial> = new Points(this._lightGeometry, this._lightMaterial);
+    const points: Points<BufferGeometry, ShaderMaterial> = new Points(
+      this._lightGeometry,
+      this._lightMaterial
+    );
     points.frustumCulled = false;
     points.renderOrder = -30;
     this._fieldRoot.add(points);
@@ -445,14 +535,21 @@ export class IntroParticleField {
       sizes[index] = 0.8 + random() * 2.4;
     }
     this._darkGeometry = new BufferGeometry();
-    this._darkGeometry.setAttribute('position', new BufferAttribute(positions, 3));
-    this._darkGeometry.setAttribute('aTarget', new BufferAttribute(targets, 3));
-    this._darkGeometry.setAttribute('aSeed', new BufferAttribute(seeds, 1));
-    this._darkGeometry.setAttribute('aSize', new BufferAttribute(sizes, 1));
+    this._darkGeometry.setAttribute(
+      "position",
+      new BufferAttribute(positions, 3)
+    );
+    this._darkGeometry.setAttribute("aTarget", new BufferAttribute(targets, 3));
+    this._darkGeometry.setAttribute("aSeed", new BufferAttribute(seeds, 1));
+    this._darkGeometry.setAttribute("aSize", new BufferAttribute(sizes, 1));
     this._darkMaterial = new ShaderMaterial({
       uniforms: {
-        uTime: { value: 0 }, uFormation: { value: 0 }, uDisintegrate: { value: 0 },
-        uPulse: { value: 0 }, uOwner: { value: 1 }, uReduced: { value: 0 },
+        uTime: { value: 0 },
+        uFormation: { value: 0 },
+        uDisintegrate: { value: 0 },
+        uPulse: { value: 0 },
+        uOwner: { value: 1 },
+        uReduced: { value: 0 },
       },
       vertexShader: DARK_VERTEX,
       fragmentShader: DARK_FRAGMENT,
@@ -462,7 +559,10 @@ export class IntroParticleField {
       blending: NormalBlending,
       toneMapped: false,
     });
-    const points: Points<BufferGeometry, ShaderMaterial> = new Points(this._darkGeometry, this._darkMaterial);
+    const points: Points<BufferGeometry, ShaderMaterial> = new Points(
+      this._darkGeometry,
+      this._darkMaterial
+    );
     points.frustumCulled = false;
     points.renderOrder = -20;
     this._panelRoot.add(points);
@@ -472,8 +572,12 @@ export class IntroParticleField {
     this._veilGeometry = new PlaneGeometry(2, 2);
     this._veilMaterial = new ShaderMaterial({
       uniforms: {
-        uTime: { value: 0 }, uFormation: { value: 0 }, uDisintegrate: { value: 0 },
-        uRipple: { value: 0 }, uPulse: { value: 0 }, uReduced: { value: 0 },
+        uTime: { value: 0 },
+        uFormation: { value: 0 },
+        uDisintegrate: { value: 0 },
+        uRipple: { value: 0 },
+        uPulse: { value: 0 },
+        uReduced: { value: 0 },
       },
       vertexShader: VEIL_VERTEX,
       fragmentShader: VEIL_FRAGMENT,
@@ -483,7 +587,10 @@ export class IntroParticleField {
       blending: NormalBlending,
       toneMapped: false,
     });
-    const veil: Mesh<PlaneGeometry, ShaderMaterial> = new Mesh(this._veilGeometry, this._veilMaterial);
+    const veil: Mesh<PlaneGeometry, ShaderMaterial> = new Mesh(
+      this._veilGeometry,
+      this._veilMaterial
+    );
     veil.position.z = -0.035;
     veil.renderOrder = -10;
     this._panelRoot.add(veil);

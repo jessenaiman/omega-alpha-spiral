@@ -37,3 +37,7 @@ This evidence proves declared capture coverage, nonblank rendering, matching sta
 The separate study at `/intro-try3.html?variant=archive` opened on the running local server. Its first frame showed darkness, a pixel player, and Omega ghostwriting on the terminal. After Reveal, the three fine paths, answer words, floor, and receding terminal appeared; the page reported `data-blender-layers="loaded"`. Tide and Threshold opened with their assigned plates. `/intro-strands-shader.html` opened and revealed its independent path study. `npm.cmd run typecheck` passed.
 
 These are basic live page checks for the isolated studies. The existing `artifacts/evidence.json` still describes the earlier `team-foundation-20260922` capture run; it does not claim production coverage for these new studies.
+
+## Intro lettering correction — live check (2026-09-23)
+
+The Archive study at `http://127.0.0.1:5188/intro-try3.html?variant=archive` opened, showed Omega's ghostwritten question, and revealed three shader-drawn Dreamweaver questions hovering over the fine Blender strands. The Blender MCP showed `intro-layer-study.blend` with the void floor, fine strands, and doorway reference. `npm.cmd run typecheck` passed. No unit tests were run. This is a visual study check, not a full gameplay or release pass.

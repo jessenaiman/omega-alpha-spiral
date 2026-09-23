@@ -233,8 +233,12 @@ const strands: Strand[] = question.choices.map((choice, index) => {
     pointAt = (t) => curve.getPoint(t);
   }
   pieces.forEach((piece) => scene.add(piece));
+  const questionLine = choice.response
+    .split("\n")
+    .find((line) => line.trim().endsWith("?"));
+  if (!questionLine) throw new Error(`${choice.owner} needs a question`);
   const label = makeLabel(
-    `${choice.owner.toUpperCase()}  /  ${choice.text}`,
+    `${choice.owner.toUpperCase()}  /  ${questionLine.trim()}`,
     palette[index]
   );
   label.position.set(end.x, 0.62, end.z - 1.3);
@@ -415,7 +419,7 @@ const frame = (now: number): void => {
       writingDone = true;
       revealButton.hidden = false;
       status.textContent =
-        "The first question is complete. Reveal the three answer paths.";
+        "Omega has finished the question. Reveal the Dreamweaver questions.";
     }
   }
   const lateral =
@@ -430,7 +434,7 @@ const frame = (now: number): void => {
     if (keys.has("w") || keys.has("arrowup")) {
       committed = true;
       progress = 0;
-      status.textContent = `Following ${strands[selected].label ? question.choices[selected].owner : "answer"} toward the threshold.`;
+      status.textContent = `Following ${question.choices[selected].owner}'s question toward the threshold.`;
     }
   }
   if (committed && !arrived && (keys.has("w") || keys.has("arrowup"))) {
@@ -439,7 +443,11 @@ const frame = (now: number): void => {
     if (progress >= 1) {
       arrived = true;
       responseShown = true;
-      status.textContent = question.choices[selected].response;
+      status.textContent = question.choices[selected].response
+        .split("\n\n")[0]
+        .split("\n")
+        .slice(1)
+        .join("\n");
     }
   }
   const terminalTarget = revealed
