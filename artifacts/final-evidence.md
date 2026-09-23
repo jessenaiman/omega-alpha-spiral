@@ -40,4 +40,4 @@ These are basic live page checks for the isolated studies. The existing `artifac
 
 ## Intro lettering correction — live check (2026-09-23)
 
-The Archive study at `http://127.0.0.1:5188/intro-try3.html?variant=archive` opened, showed Omega's ghostwritten question, and revealed three shader-drawn Dreamweaver questions hovering over the fine Blender strands. The Blender MCP showed `intro-layer-study.blend` with the void floor, fine strands, and doorway reference. `npm.cmd run typecheck` passed. No unit tests were run. This is a visual study check, not a full gameplay or release pass.
+The Archive study at `http://127.0.0.1:5188/intro-try3.html?variant=archive` opened, showed Omega's ghostwritten question, and revealed three shader-drawn Dreamweaver questions hovering over the fine Blender strands. The Blender MCP showed `intro-layer-study.blend` with the void floor, fine strands, and doorway reference. `npm.cmd run typecheck` passed. No unit tests were run for this visual check; the subsequent Git commit hook ran 23 unit tests, and all passed. This is a visual study check, not a full gameplay or release pass.
