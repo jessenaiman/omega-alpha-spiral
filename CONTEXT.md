@@ -121,3 +121,9 @@ Code id: `ambition`
 **Identity colour**:
 A Dreamweaver's canonical colour, taken from the logo's palette. Only these three carry identity. Any other colour is illumination or glow at low opacity, never identity.
 _Avoid_: accent colour, theme colour, thread colour
+
+**Ghost typing**:
+Visible arrival, hesitation, correction, and revision of a speaker's words. Its rhythm and spatial arrangement convey the speaker before a face is shown.
+
+**Authored revision**:
+A deliberate replacement or retraction of words, distinct from an accidental character typo. A displayed revision does not itself establish that Omega is present or aware.

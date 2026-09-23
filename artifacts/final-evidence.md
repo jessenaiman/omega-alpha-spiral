@@ -44,3 +44,12 @@ Real-input motion: [full bot playthrough](intro-flow-20260923-c/bot-playthrough.
 ## Remaining visual decisions
 
 The route camera now moves between questions, but the four station silhouettes still resemble one another. The faceless avatar grows but remains blocky. The portal interior is dark; the actual first playable stage is not yet legible through it. The next art pass should decide each station's constructed landmark, refine the figure and terminal materials, and make the level reveal readable without turning the early intro into a galaxy backdrop. The mobile door needs a static merged variant or another draw-call reduction before claiming the starting mobile budget. The typed name is stored by the intro; Chapter Two currently receives the last chosen thread.
+
+## Active isolated ghost typing study — September 23, 2026
+
+The sections above are historical intro evidence. The new study is separate: [current handoff](ghost-type-study/README.md), [Wayfinder map](https://github.com/jessenaiman/omega-alpha-spiral/issues/55).
+
+- Starts at http://127.0.0.1:5191/intro-type-prototype.html with manuscript, fragments and passage layouts. Browser observations confirm readable world-space terminal text, selector/layout navigation, and the answer/reconsidering state. No full gameplay claim.
+- TypeScript passed in the normal commit hook; 22/23 existing unit tests passed. The old intro finale assertion failed. Owner explicitly approved one commit skipping hooks with that failure documented. No additional tests were added.
+- Visual review found fragment clipping and competing old-text traces; local adjustments move Light inward and fade traces. Phone controls were observed at a 390×844 override, then viewport restored. Motion captures, persistent screenshots, a complete mobile readability review and final human visual preference remain pending.
+- Native OpenAI concept was delegated to Luna. Generated sheet is reference-only; it omitted Omega. Runtime lettering uses a deterministic canvas atlas with an instanced glyph shader.

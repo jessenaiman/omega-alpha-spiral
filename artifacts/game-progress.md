@@ -274,3 +274,12 @@ like Omega, iteration one is meant to read like a bash script. No Blender, no gl
 - Four authored path questions lead to Omega's typed fifth name question. The name opens the Blender fragment door; walking through suspended Omega words enters playable Chapter Two. Blender runtime now loads void, strands, fragments, portal, and floor glyph as separate GLBs.
 - [Next-conversation staging](intro-direction/next-conversation.md) pairs all three owner images with current captures, the present visual grammar, and remaining decisions. [Final evidence](final-evidence.md) records nine named desktop/mobile captures, the real-input bot/video, build, budget, and limitations. No unit tests were written; the pre-commit hook unexpectedly ran the existing suite once and found a stale authored-text assertion.
 - Remaining: make the first stage legible through the portal; differentiate station silhouettes more; refine the blocky faceless avatar; reduce mobile final-door draw calls if the mobile target requires the starting budget. Preserve unrelated Floor One and source-study work already in the tree.
+
+## Ghost typing visual study — September 23, 2026
+
+- Active: [Distinctive ghost typing](https://github.com/jessenaiman/omega-alpha-spiral/issues/54); [Wayfinder map](https://github.com/jessenaiman/omega-alpha-spiral/issues/55) and its claimed visual-decision child keep orientation.
+- Prototype: `intro-type-prototype.html`, manuscript/fragments/passage variants; per-speaker timing, mistakes and authored revisions. Original intro remains separate.
+- Two Luna drafts delivered (profiles and OpenAI contact sheet). The contact sheet contains Dreamweavers plus comparison, not Omega; reference-only.
+- Owner correction: no extra unit tests. Normal commit hook passed TypeScript and 22/23 existing tests; existing finale wording assertion blocked commit. Owner approved a single documented hook skip.
+- Preview: http://127.0.0.1:5191/intro-type-prototype.html . Human visual choice remains open. See `artifacts/ghost-type-study/README.md` and `project-management/Handoffs/54.md`.
+

@@ -62,5 +62,20 @@
       "state": "final-door",
       "report": "artifacts/intro-flow-20260923-c/mobile-final-door.json"
     }
+  ],
+  "supplementalStudies": [
+    {
+      "missingEvidence": ["persistent viewport captures", "motion capture"],
+      "note": "Historical intro captures above do not verify this isolated study.",
+      "report": "artifacts/ghost-type-study/README.md",
+      "runId": "ghost-type-study-20260923",
+      "expectedViewportStates": [
+        "desktop-manuscript",
+        "desktop-fragments",
+        "desktop-passage",
+        "mobile-fragments"
+      ],
+      "status": "partial-browser-observation"
+    }
   ]
 }
