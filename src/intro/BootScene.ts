@@ -4,7 +4,7 @@ import { ACESFilmicToneMapping, PerspectiveCamera, PMREMGenerator, Scene, SRGBCo
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 import { createInputController, type InputController, type Intents } from '../core/input';
-import { CHRONICLE_FINAL, CHRONICLE_FINAL_DRAFT, createChronicleQuestions, getChronicleInterlude, type ChronicleInterlude, type ChronicleQuestion } from './chronicle';
+import { CHRONICLE_FINAL, createChronicleQuestions, getChronicleInterlude, type ChronicleInterlude, type ChronicleQuestion } from './chronicle';
 import { createBootFrames, type BootFrame } from './ghostwriting';
 import { getIntroEra } from './IntroEraDesign';
 import { IntroAudio } from './IntroAudio';
@@ -102,6 +102,7 @@ export class BootScene {
   private _storyStartedAt: number = 0;
   private _canContinue: boolean = false;
   private _selectedChoice: number = -1;
+  private _lastThreadName: string = 'Light';
   private _lastAudioText: string = '';
   private _lastAudioFormat: number = 0;
   private _lastAudioPhase: BootFrame['phase'] = 'cursor';
@@ -138,7 +139,8 @@ export class BootScene {
     this._isDebug = new URLSearchParams(location.search).has('debug');
     this._chapterTwo.init(this._root, this._isDebug);
     document.querySelectorAll<HTMLElement>('.os-choice-copy').forEach((element: HTMLElement, index: number): void => {
-      element.textContent = this._questions[0].choices[index]?.text ?? '';
+      const choice = this._questions[0].choices[index];
+      element.textContent = choice?.text ?? '';
     });
     const canvas: HTMLCanvasElement = getElement('#os-canvas-ts', HTMLCanvasElement);
     const motion: MediaQueryList = matchMedia('(prefers-reduced-motion: reduce)');
@@ -268,6 +270,7 @@ export class BootScene {
     this._storyStartedAt = 0;
     this._canContinue = false;
     this._selectedChoice = -1;
+    this._lastThreadName = 'Light';
     this._lastAudioText = '';
     this._lastAudioFormat = 0;
     this._lastAudioPhase = 'cursor';
@@ -432,6 +435,7 @@ export class BootScene {
     this._pendingChoice = -1;
     this._answersCommitted += 1;
     const question: ChronicleQuestion = this._questions[this._questionIndex];
+    this._lastThreadName = ['Light', 'Shadow', 'Ambition'][index] ?? 'Light';
     this._spatial.commitChoice(index);
     this._spatial.setPlayerStage(this._answersCommitted);
     this._spatial.archive(question.choices[index].text, question.era, index);
@@ -531,7 +535,7 @@ export class BootScene {
     this._chapterTwoStarted = false;
     this._canContinue = false;
     this._clearMovement();
-    this._applyFrame(this._storyFrame(CHRONICLE_FINAL, 'complete', 4, 'ALL THREE FOLLOWED', 0));
+    this._applyFrame(this._storyFrame(this._finalScript(), 'complete', 4, 'Enter', 0));
   }
 
   private _updateStory(now: number): void {
@@ -541,7 +545,7 @@ export class BootScene {
       const text: string = this._typed(question.prelude, elapsedMs, 44);
       const complete: boolean = text.length >= question.prelude.length;
       this._canContinue = complete;
-      this._applyFrame(this._storyFrame(text, 'prelude', question.era, complete ? 'THE QUESTION IS READY' : undefined, elapsedMs));
+      this._applyFrame(this._storyFrame(text, 'prelude', question.era, complete ? 'Continue' : undefined, elapsedMs));
       return;
     }
     if (this._storyMode === 'question') {
@@ -565,7 +569,7 @@ export class BootScene {
       const display: string = this._dreamweaverWriting(beat.text, elapsedMs, this._selectedChoice, beat.complete);
       const complete: boolean = beat.complete;
       this._canContinue = complete;
-      this._applyFrame(this._storyFrame(display, 'response', question.era, complete ? (this._questionIndex < this._questions.length - 1 ? 'THE PATH IS OPEN' : 'THE THRESHOLD IS OPEN') : undefined, elapsedMs, false, this._selectedChoice));
+      this._applyFrame(this._storyFrame(display, 'response', question.era, complete ? 'Continue' : undefined, elapsedMs, false, this._selectedChoice));
       return;
     }
     if (this._storyMode === 'commentary' && this._interlude) {
@@ -575,19 +579,19 @@ export class BootScene {
       const typed: string = this._typed(this._interlude.text, writingMs, speedMs[this._interlude.ownerIndex]);
       const complete: boolean = typed.length >= this._interlude.text.length;
       this._canContinue = complete;
-      this._applyFrame(this._storyFrame(typed, 'response', question.era, complete ? 'THE PATH IS OPEN' : undefined, elapsedMs, false, this._interlude.ownerIndex));
+      this._applyFrame(this._storyFrame(typed, 'response', question.era, complete ? 'Continue' : undefined, elapsedMs, false, this._interlude.ownerIndex));
       return;
     }
     if (this._storyMode === 'final') {
       const text: string = this._finalText(elapsedMs);
-      const complete: boolean = text.length >= CHRONICLE_FINAL.length;
+      const complete: boolean = text.length >= this._finalScript().length;
       if (complete) this._storyMode = 'doorway';
-      this._applyFrame(this._storyFrame(text, complete ? 'doorway' : 'final', 4, complete ? 'ALL THREE FOLLOWED' : undefined, elapsedMs));
+      this._applyFrame(this._storyFrame(text, complete ? 'doorway' : 'final', 4, complete ? 'Enter' : undefined, elapsedMs));
       return;
     }
     if (this._storyMode === 'complete') {
       const crossingMs: number = this._isReduced ? 0 : 2800;
-      this._applyFrame(this._storyFrame(CHRONICLE_FINAL, 'complete', 4, 'ALL THREE FOLLOWED', elapsedMs));
+      this._applyFrame(this._storyFrame(this._finalScript(), 'complete', 4, 'Enter', elapsedMs));
       if (!this._chapterTwoStarted && elapsedMs >= crossingMs) {
         this._chapterTwoStarted = true;
         this._chapterTwo.start('All Three');
@@ -602,7 +606,7 @@ export class BootScene {
       prelude: phase === 'question' || phase === 'waiting' ? question.prelude : phase === 'final' || phase === 'complete' ? question.prelude : '',
       question: text,
       transcript: this._frames.at(-1)?.transcript ?? '',
-      choices: question.choices.map((choice): string => choice.text),
+      choices: question.choices.map((choice) => choice.text),
       isCorrupt,
       phase,
       format,
@@ -619,34 +623,11 @@ export class BootScene {
 
   private _responseBeat(response: string, elapsedMs: number, owner: number): { text: string; complete: boolean } {
     if (this._isReduced) return { text: response, complete: true };
-    const parts: string[] = response.split('\n\n');
-    const body: string = parts[0] ?? response;
-    const audit: string = parts.slice(1).join('\n\n');
-    const lines: string[] = body.split('\n').filter(Boolean);
     const speeds: number[] = [42, 48, 34];
-    const gaps: number[] = [620, 1120, 420];
     const openingSilence: number[] = [280, 920, 480];
-    let cursor: number = openingSilence[owner];
-    let visible: string = '';
-    for (let index: number = 0; index < lines.length; index += 1) {
-      const line: string = lines[index];
-      const available: number = Math.max(0, elapsedMs - cursor);
-      const count: number = Math.min(line.length, Math.floor(available / speeds[owner]));
-      visible += line.slice(0, count);
-      if (count < line.length) return { text: visible, complete: false };
-      if (index < lines.length - 1) visible += '\n';
-      cursor += line.length * speeds[owner] + gaps[owner];
-    }
-    const showAudit: boolean = this._questionIndex === 0 || this._questionIndex === this._questions.length - 1;
-    if (showAudit && audit) {
-      cursor += 760;
-      const available: number = Math.max(0, elapsedMs - cursor);
-      const count: number = Math.min(audit.length, Math.floor(available / 28));
-      visible += `\n\n${audit.slice(0, count)}`;
-      if (count < audit.length) return { text: visible, complete: false };
-      cursor += audit.length * 28;
-    }
-    return { text: visible, complete: elapsedMs >= cursor + 520 };
+    const writingMs: number = Math.max(0, elapsedMs - openingSilence[owner]);
+    const visible: string = this._typed(response, writingMs, speeds[owner]);
+    return { text: visible, complete: visible.length === response.length && writingMs >= response.length * speeds[owner] + 520 };
   }
 
   private _dreamweaverWriting(text: string, elapsedMs: number, owner: number, complete: boolean): string {
@@ -657,15 +638,12 @@ export class BootScene {
     return text;
   }
 
+  private _finalScript(): string {
+    return CHRONICLE_FINAL.replace('{{THREAD_NAME}}', this._lastThreadName);
+  }
+
   private _finalText(elapsedMs: number): string {
-    if (this._isReduced) return CHRONICLE_FINAL;
-    if (elapsedMs < 3200) return CHRONICLE_FINAL_DRAFT.slice(0, Math.floor(elapsedMs / 55));
-    if (elapsedMs < 4400) return CHRONICLE_FINAL_DRAFT;
-    if (elapsedMs < 4800) return '[SYSTEM: Dreamweaver thread sele_ted - {{THREAD_NAME}}]';
-    if (elapsedMs < 5200) return '[SYSTEM: Dreamweaver thread ________ - {{THREAD_NAME}}]';
-    if (elapsedMs < 5800) return '[SYSTEM: Dreamweaver threads following - 03]';
-    const firstLine: string = '[SYSTEM: Dreamweaver threads following - 03]';
-    return firstLine + CHRONICLE_FINAL.slice(firstLine.length, firstLine.length + Math.floor((elapsedMs - 5800) / 34));
+    return this._typed(this._finalScript(), elapsedMs, 34);
   }
 
   private _setChoicesEnabled(enabled: boolean): void {
@@ -759,7 +737,7 @@ export class BootScene {
     if (this._storyMode !== 'waiting' && this._storyMode !== 'travel') return '';
     if (this._pendingChoice >= 0) {
       if (!this._actionDiscovered) return '';
-      return this._lastInputMode === 'controller' ? 'A · answer' : 'Enter · answer';
+      return this._lastInputMode === 'controller' ? 'A · choose path' : 'Enter · choose path';
     }
     if (this._lastInputMode === 'controller') return 'left stick · move';
     if (this._lastInputMode === 'touch') return 'move';
@@ -1005,13 +983,13 @@ export class BootScene {
     this._storyStartedAt = performance.now();
     if (name === 'final-door') {
       this._storyMode = 'doorway';
-      this._applyFrame(this._storyFrame(CHRONICLE_FINAL, 'doorway', 4, 'ALL THREE FOLLOWED', 12000));
+      this._applyFrame(this._storyFrame(this._finalScript(), 'doorway', 4, 'Enter', 12000));
       this._spatial.settleForTestState(this._motionMs);
       this._refreshStaticFrame();
       return;
     }
     this._storyMode = 'complete';
-    this._applyFrame(this._storyFrame(CHRONICLE_FINAL, 'complete', 4, 'ALL THREE FOLLOWED', 12000));
+    this._applyFrame(this._storyFrame(this._finalScript(), 'complete', 4, 'Enter', 12000));
     this._spatial.settleForTestState(this._motionMs);
     this._refreshStaticFrame();
   }

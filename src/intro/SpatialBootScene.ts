@@ -16,6 +16,7 @@ import {
   MeshBasicMaterial,
   MeshStandardMaterial,
   NearestFilter,
+  Object3D,
   PerspectiveCamera,
   PointLight,
   Raycaster,
@@ -30,6 +31,8 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { BOOT_OPTIONS, BOOT_SYMBOLS, type BootFrame } from "./ghostwriting";
 import { getIntroEra, INTRO_ERAS, type IntroEraDesign } from "./IntroEraDesign";
 import { IntroParticleField } from "./IntroParticleField";
+import { StrandSigils } from "./StrandSigils";
+import { loadBlenderIntroLayers, type BlenderIntroLayers } from "./BlenderIntroLayers";
 import {
   INTRO_JOURNEY_SENSOR_INDEX,
   IntroPhysics,
@@ -56,7 +59,7 @@ const GLYPH_CAPACITY: number = 256;
 // Palette is lore, taken from the logo (official game docs index.md:12 —
 // "Hero (light blue), Ambition (red), Shadow (yellow)"): Light is blue-white,
 // Shadow is gold-amber, Ambition is crimson. The last two were swapped here.
-const INK: number[] = [0xdcefff, 0xe7b45a, 0xd44854];
+const INK: number[] = [0xdcefff, 0xe7b45a, 0xff6478];
 const BACK_INK: number[] = [0x395057, 0x4a3510, 0x050103];
 const VOICE_NAMES: string[] = [
   "LIGHT // WITNESS",
@@ -563,6 +566,8 @@ export class GlyphRibbon {
 export class SpatialBootScene {
   private _root: Group = new Group();
   private _door: Group | null = null;
+  private _blenderLayers: BlenderIntroLayers | null = null;
+  private _blenderStars: Object3D | null = null;
   private _destroyed: boolean = false;
   private _atlases: CanvasTexture[] = [];
   private _ribbons: GlyphRibbon[] = [];
@@ -584,6 +589,8 @@ export class SpatialBootScene {
   private _playerStage: number = 0;
   private _choiceHistory: number[] = [];
   private _paths: Array<LineSegments<BufferGeometry, LineBasicMaterial>> = [];
+  private _sigils: StrandSigils[] = [];
+  private _sigilEra: number = -1;
   private _pathEchoes: Array<LineSegments<BufferGeometry, LineBasicMaterial>> =
     [];
   private _pathPositions: Float32Array[] = [];
@@ -594,8 +601,8 @@ export class SpatialBootScene {
   private _pathCurrent: Vector3 = new Vector3();
   private _movement: Vector2 = new Vector2();
   private _lastUpdateMs: number = 0;
+  private _questionRecede: number = 0;
   private _lastPhase: BootFrame["phase"] | "" = "";
-  private _backgroundStartedAt: number = -1;
   private _journeyActive: boolean = false;
   private _journeyComplete: boolean = false;
   private _choiceArmed: boolean = false;
@@ -705,6 +712,15 @@ export class SpatialBootScene {
     rim.position.set(2.8, -1.4, 2.5);
     this._root.add(ambient, key, rim);
     scene.add(this._root);
+    void loadBlenderIntroLayers(this._root, "game")
+      .then((layers) => {
+        if (this._destroyed) return;
+        this._blenderLayers = layers;
+        this._blenderStars = layers.background.getObjectByName("VoidStars_MESH") ?? null;
+      })
+      .catch((error: unknown) => {
+        console.warn("Unable to load Blender intro layers", error);
+      });
     void new GLTFLoader()
       .loadAsync("/assets/intro/intro-door-assemble.glb")
       .then(({ scene: door }: { scene: Group }): void => {
@@ -832,7 +848,10 @@ export class SpatialBootScene {
       this._paths.push(line);
       this._pathEchoes.push(echo);
       this._pathLights.push(light);
-      this._root.add(echo, line, light);
+      const sigils = new StrandSigils(null, owner, INK[owner], this._atlases, 1);
+      sigils.setSize(0.56);
+      this._sigils.push(sigils);
+      this._root.add(echo, line, light, sigils.root);
     }
   }
 
@@ -953,7 +972,7 @@ export class SpatialBootScene {
       this._ribbons[8 + index].setText(
         `${index + 1}  ${frame.choices[index] ?? BOOT_OPTIONS[index]}`,
         index + 1,
-        this._isNarrow ? 14 : 18,
+        this._isNarrow ? 22 : 27,
         INK[index],
         index
       );
@@ -1079,8 +1098,8 @@ export class SpatialBootScene {
     this._choiceHistory = [];
     this._movement.set(0, 0);
     this._lastUpdateMs = 0;
+    this._questionRecede = 0;
     this._lastPhase = "";
-    this._backgroundStartedAt = -1;
     this._journeyActive = false;
     this._journeyComplete = false;
     this._choiceArmed = false;
@@ -1273,6 +1292,7 @@ export class SpatialBootScene {
         activeCall || isWaiting || activeTravel || isThreshold;
       path.visible = visible;
       echo.visible = visible;
+      this._sigils[owner].root.visible = (isWaiting || activeTravel) && !isThreshold;
       this._pathLights[owner].visible = visible;
       if (!visible) {
         this._pathLights[owner].intensity = 0;
@@ -1299,6 +1319,15 @@ export class SpatialBootScene {
           this._pathGoal.set(target.x, target.y - 0.48, target.z - 0.58);
         }
       }
+      if (!isThreshold)
+        this._sigils[owner].placeAlong(
+          (t, out) => {
+            this._samplePath(owner, t, this._pathFrom, this._pathGoal, seconds, out);
+          },
+          0.18,
+          0.055,
+          0.15
+        );
       const samples: number = owner === 0 ? 16 : owner === 1 ? 15 : 26;
       let vertex: number = 0;
       this._samplePath(
@@ -1419,6 +1448,16 @@ export class SpatialBootScene {
   public update(elapsedMs: number, isReduced: boolean): number {
     const frame: BootFrame | null = this._frame;
     if (!frame || !this._cursor) return -1;
+    if (this._blenderLayers) {
+      const showBackground = this._choiceHistory.length > 0 || frame.phase === "waiting";
+      this._blenderLayers.background.visible = showBackground;
+      this._blenderLayers.strands.visible = frame.phase === "waiting" || frame.phase === "travel";
+      if (this._blenderStars) this._blenderStars.visible = this._choiceHistory.length > 0;
+    }
+    if (this._sigilEra !== frame.format) {
+      this._sigilEra = frame.format;
+      this._sigils.forEach((sigils) => sigils.setEra(frame.format));
+    }
     const seconds: number = elapsedMs / 1000;
     const delta: number =
       this._lastUpdateMs === 0
@@ -1443,10 +1482,11 @@ export class SpatialBootScene {
       ? Math.min(1, Math.max(0, (frame.phaseElapsedMs ?? 0) / 2800))
       : 0;
     const isSettled: boolean = isWaiting || isThreshold;
+    this._questionRecede +=
+      (Number(isWaiting) - this._questionRecede) *
+      (isReduced ? 1 : 1 - Math.exp(-delta * 2.2));
     const phaseChanged: boolean = frame.phase !== this._lastPhase;
     if (phaseChanged) {
-      if (frame.phase === "command" && this._backgroundStartedAt < 0)
-        this._backgroundStartedAt = elapsedMs;
       if (isWaiting) {
         this._player.position.set(0, -2.55, 0.52);
         this._choiceArmed = true;
@@ -1487,22 +1527,18 @@ export class SpatialBootScene {
       panelRy,
       panelRz
     );
-    // Ordinary questions live directly in the celestial volume. The black
-    // particle surface belongs only to the final threshold payoff.
+    // The void gains stars with each question; the full volume belongs to the door.
     const formation: number = isThreshold ? 1 : 0;
     const disintegrate: number = isCrossing
       ? crossingProgress
       : frame.phase === "doorway"
         ? 0.06
         : 0;
-    const starReveal: number =
-      isStory || isWaiting
-        ? 1
-        : this._backgroundStartedAt < 0
-          ? 0
-          : isReduced
-            ? 1
-            : Math.min(1, (elapsedMs - this._backgroundStartedAt) / 5200);
+    const starReveal: number = isThreshold
+      ? 1
+      : isWaiting || this._choiceHistory.length > 0
+        ? Math.min(0.76, 0.14 + this._choiceHistory.length * 0.18)
+        : 0.025;
     this._particles.update(elapsedMs, {
       formation,
       disintegrate,
@@ -1518,7 +1554,7 @@ export class SpatialBootScene {
       ribbon.root.position.set(left, 1.8 - index * 0.4, 0.15);
       ribbon.update(
         seconds,
-        index === 5 || index === 0 ? disorder : disorder * 0.25
+        index === 5 || index === 0 ? disorder : index >= 8 && index <= 10 ? 0 : disorder * 0.25
       );
     }
     const command: Group = this._ribbons[0].root;
@@ -1700,22 +1736,22 @@ export class SpatialBootScene {
     question.position.set(
       responseAnchor
         ? responseAnchor.x - this._width * (this._isNarrow ? 0.16 : 0.19)
-        : left,
+        : left + this._width * 0.14 * this._questionRecede,
       isThreshold
         ? 2.55
         : responseAnchor
           ? responseAnchor.y - 0.96
           : isWaiting
-            ? 0.68
+            ? 0.28 + this._questionRecede * 0.35
             : -0.8 + Math.min(Math.max((seconds - 13) / 16, 0), 1) * 1.45,
-      responseAnchor ? responseAnchor.z + 0.14 : 0.25
+      responseAnchor ? responseAnchor.z + 0.14 : 0.25 - this._questionRecede * 1.2
     );
     question.scale.setScalar(
       isThreshold
         ? scale * (this._isNarrow ? 0.62 : 0.68)
         : responseAnchor
           ? scale * 0.52
-          : scale
+          : scale * (1.48 - this._questionRecede * 0.48)
     );
     if (responseOwner === 0) question.rotation.set(0, 0, 0);
     if (responseOwner === 1) question.rotation.set(-0.08, -0.14, 0.025);
@@ -1747,15 +1783,16 @@ export class SpatialBootScene {
     aside.rotation.z = isReduced ? 0 : (this._voice - 1) * 0.025;
     for (let index: number = 0; index < 3; index += 1) {
       const choice: Group = this._ribbons[index + 8].root;
-      choice.visible = isWaiting;
+      const focused = this._awaitingAction >= 0 ? this._awaitingAction : this._hovered >= 0 ? this._hovered : 1;
+      choice.visible = isWaiting && focused === index;
       const voicePosition: Vector3 = this._voices[index].position;
-      choice.scale.setScalar(scale * (this._isNarrow ? 0.37 : 0.39));
+      choice.scale.setScalar(scale * (this._isNarrow ? 0.5 : 0.58));
       if (index === 0) choice.rotation.set(0, 0, 0);
       else
         choice.rotation.set(
-          index === 1 ? -0.18 : -0.28,
-          (index - 1) * 0.16,
-          (index - 1) * 0.018
+          index === 1 ? -0.025 : -0.04,
+          (index - 1) * 0.035,
+          (index - 1) * 0.012
         );
       const target: Mesh<BoxGeometry, MeshBasicMaterial> = this._targets[index];
       target.visible = isWaiting;
@@ -1777,9 +1814,9 @@ export class SpatialBootScene {
         this._pathCurrent
       );
       choice.position.set(
-        this._pathCurrent.x - this._width * (this._isNarrow ? 0.1 : 0.13),
-        this._pathCurrent.y + 0.12,
-        this._pathCurrent.z + 0.22
+        left + this._width * 0.14,
+        -1.12,
+        0.9
       );
       if (this._hovered === index) choice.position.y += scale * 0.12;
       const speaker: Group = this._ribbons[14 + index].root;
@@ -1845,6 +1882,7 @@ export class SpatialBootScene {
       seconds,
       frame.phase === "loading" ? newestVoice : -1
     );
+    this._sigils.forEach((sigils) => sigils.update(seconds));
     this._player.visible = isStory && frame.phase !== "final";
     let spatialEvent: number = -1;
     if (this._player.visible) {
@@ -2045,6 +2083,7 @@ export class SpatialBootScene {
     this._destroyed = true;
     this._root.removeFromParent();
     this._ribbons.forEach((ribbon: GlyphRibbon): void => ribbon.destroy());
+    this._sigils.forEach((sigils) => sigils.destroy());
     this._atlases.forEach((texture: CanvasTexture): void => texture.dispose());
     this._particles.destroy();
     this._physics.destroy();

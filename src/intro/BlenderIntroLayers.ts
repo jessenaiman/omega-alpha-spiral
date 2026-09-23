@@ -1,4 +1,4 @@
-import { Group, Scene } from "three";
+import { Group, Object3D } from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 export interface BlenderIntroLayers {
@@ -8,7 +8,8 @@ export interface BlenderIntroLayers {
 
 /** Both Blender files use the same meter scale and doorway origin. */
 export async function loadBlenderIntroLayers(
-  scene: Scene
+  parent: Object3D,
+  placement: "study" | "game" = "study"
 ): Promise<BlenderIntroLayers> {
   const loader = new GLTFLoader();
   const [voidLayer, strandLayer] = await Promise.all([
@@ -17,11 +18,16 @@ export async function loadBlenderIntroLayers(
   ]);
   const place = (source: Group): Group => {
     const layer = new Group();
-    layer.position.z = -18.53;
-    layer.scale.z = 1.67;
+    if (placement === "game") {
+      layer.position.set(0, -2.62, -3);
+      layer.scale.setScalar(0.6);
+    } else {
+      layer.position.z = -18.53;
+      layer.scale.z = 1.67;
+    }
     layer.add(source);
     layer.visible = false;
-    scene.add(layer);
+    parent.add(layer);
     return layer;
   };
   return {
