@@ -24,6 +24,8 @@ import {
   type TypographyScene,
 } from "../../core/sceneTypography";
 import { WritingPlayback } from "./WritingPlayback";
+import { createDialogueEditor } from "./DialogueEditor";
+import type { DialoguePresentation, WritingSettings } from "./DialogueTimeline";
 import {
   PROFILES,
   SPEAKERS,
@@ -74,6 +76,9 @@ const cleanSamples = Object.fromEntries(
   SPEAKERS.map((id) => [id, settings[id].sample])
 ) as Record<SpeakerId, string>;
 const commonSample = "The signal is still here.\nFollow the words.";
+let scriptMode = false;
+let scriptText = "";
+let restoringPresentation = false;
 const scene = new Scene();
 scene.background = new Color("#030507");
 const camera = new PerspectiveCamera(42, 1, 0.1, 120);
@@ -152,7 +157,24 @@ target.position.set(3.3, -0.6, 3.2);
 world.add(target);
 
 function textFor(id: SpeakerId) {
+  if (scriptMode && id === selected) return scriptText;
   return common ? commonSample : settings[id].sample;
+}
+// Wrap only the displayed text; the authored file retains its original line breaks.
+function displayedText(text: string) {
+  return text
+    .split("\n")
+    .flatMap((line) => {
+      const rows: string[] = [];
+      while (line.length > 27) {
+        const space = line.lastIndexOf(" ", 27);
+        const cut = space > 0 ? space : 27;
+        rows.push(line.slice(0, cut));
+        line = line.slice(cut + (space > 0 ? 1 : 0));
+      }
+      return [...rows, line];
+    })
+    .join("\n");
 }
 function updateUrl() {
   const p = new URLSearchParams(location.search);
@@ -164,7 +186,10 @@ function updateUrl() {
 }
 function restart() {
   for (const id of SPEAKERS) {
-    playbacks[id].restart(settings[id], textFor(id));
+    playbacks[id].restart(
+      settings[id],
+      scriptMode ? displayedText(textFor(id)) : textFor(id)
+    );
     letters[id].setText("");
     ghosts[id].setText("");
     ghosts[id].opacity = 0.14;
@@ -190,10 +215,10 @@ function compose() {
     const l = letters[id],
       g = ghosts[id];
     const active = id === selected;
-    l.root.visible = layout === "fragments" || active;
+    l.root.visible = scriptMode ? active : layout === "fragments" || active;
     g.root.visible = l.root.visible;
     l.opacity = active ? 1 : 0.55;
-    if (layout === "fragments") {
+    if (layout === "fragments" && !scriptMode) {
       l.root.position.set(...positions[id]);
       l.root.scale.setScalar(active ? 0.68 : 0.58);
     } else {
@@ -217,18 +242,27 @@ function compose() {
     settings[selected].color
   );
   el("voice-label").textContent = PROFILES[selected].label.toUpperCase();
-  el("description").textContent = layoutDescriptions[layouts.indexOf(layout)];
+  el("description").textContent = scriptMode
+    ? "Recorded opening · authored text from your Godot dialogue"
+    : layoutDescriptions[layouts.indexOf(layout)];
   el("variant-number").textContent =
     `${layouts.indexOf(layout) + 1} / 3 · LAYOUT`;
   el("variant-name").textContent = layoutNames[layouts.indexOf(layout)];
   el("voice-note").textContent = settings[selected].note;
-  el("answer").hidden = selected !== "omega" || common;
+  el("answer").hidden = scriptMode || selected !== "omega" || common;
+  document.body.classList.toggle("script-mode", scriptMode);
+  el("replay").textContent = scriptMode ? "Replay opening" : "Replay writing";
+  document.querySelector(".study-label")!.textContent = scriptMode
+    ? "OPENING BLOCK · GODOT ADAPTATION"
+    : "STUDIO · SAMPLE COPY, NOT GAME DIALOGUE";
   for (const b of el("speakers").querySelectorAll("button"))
     b.setAttribute("aria-pressed", String(b.dataset.speaker === selected));
   updateUrl();
   resize();
 }
 function choose(id: SpeakerId) {
+  scriptMode = false;
+  dialogue.deactivate();
   selected = id;
   compose();
   makeSliders();
@@ -279,7 +313,10 @@ function makeSliders() {
       settings[selected][key] = Number(input.value);
       out.textContent = valueLabel();
     };
-    input.onchange = restart;
+    input.onchange = () => {
+      savePresentation();
+      restart();
+    };
   }
 }
 function changeLayout(delta: number) {
@@ -288,6 +325,7 @@ function changeLayout(delta: number) {
       (layouts.indexOf(layout) + delta + layouts.length) % layouts.length
     ];
   compose();
+  savePresentation();
   restart();
 }
 el("previous").onclick = () => changeLayout(-1);
@@ -297,7 +335,7 @@ el("tune").onclick = () => {
   panel.hidden = !panel.hidden;
   el("tune").setAttribute("aria-expanded", String(!panel.hidden));
 };
-el("replay").onclick = restart;
+el("replay").onclick = () => (scriptMode ? dialogue.start() : restart());
 el("pause").onclick = () => {
   paused = !paused;
   el("pause").textContent = paused ? "Resume" : "Pause";
@@ -306,6 +344,7 @@ el("pause").onclick = () => {
 el("reset").onclick = () => {
   settings[selected] = structuredClone(PROFILES[selected]);
   settings[selected].sample = cleanSamples[selected];
+  savePresentation();
   makeSliders();
   restart();
 };
@@ -319,6 +358,7 @@ for (const [id, profile] of Object.entries(ERAS)) {
   const option = document.createElement("option");
   option.value = id;
   option.textContent = profile.label;
+  option.title = profile.description;
   el("era").append(option);
 }
 function applySceneTypography() {
@@ -331,6 +371,8 @@ function applySceneTypography() {
   sceneProfiles[sceneId].era = era;
   el<HTMLSelectElement>("scene-owner").value = sceneId;
   el<HTMLSelectElement>("era").value = era;
+  el("era-description").textContent = ERAS[era].description;
+  el("era").title = ERAS[era].description;
   document.documentElement.dataset.sceneOwner = sceneProfiles[sceneId].owner;
   document.documentElement.dataset.textEra = era;
   updateUrl();
@@ -343,12 +385,14 @@ function applySceneTypography() {
 el<HTMLSelectElement>("era").onchange = (e) => {
   era = (e.target as HTMLSelectElement).value as Era;
   applySceneTypography();
+  savePresentation();
 };
 el<HTMLSelectElement>("scene-owner").onchange = (e) => {
   sceneId = (e.target as HTMLSelectElement).value as TypographyScene;
   era = sceneProfiles[sceneId].era;
   applySceneTypography();
-  choose(sceneProfiles[sceneId].owner);
+  savePresentation();
+  if (!scriptMode) choose(sceneProfiles[sceneId].owner);
 };
 el<HTMLInputElement>("motion").checked = reduced;
 el<HTMLInputElement>("motion").onchange = (e) => {
@@ -382,7 +426,9 @@ function keydown(e: KeyboardEvent) {
 document.addEventListener("keydown", keydown);
 function resize() {
   renderer.setSize(innerWidth, innerHeight);
-  camera.aspect = innerWidth / innerHeight;
+  const inset = scriptMode && innerWidth >= 1000 ? 340 : 0;
+  renderer.setViewport(inset, 0, innerWidth - inset, innerHeight);
+  camera.aspect = (innerWidth - inset) / innerHeight;
   camera.position.z = innerWidth < 720 ? 29 : 17;
   camera.fov = innerWidth < 720 ? 48 : 42;
   camera.updateProjectionMatrix();
@@ -400,8 +446,9 @@ function render(now: number) {
   last = now;
   if (!paused) age += dt;
   for (const id of SPEAKERS) {
+    if (scriptMode && id !== selected) continue;
     const frame = playbacks[id].advance(paused ? 0 : dt);
-    if (id !== "omega" && frame.phase === "Complete" && !common)
+    if (!scriptMode && id !== "omega" && frame.phase === "Complete" && !common)
       playbacks[id].revise(settings[id]);
     letters[id].setText(
       frame.text + (frame.done || Math.floor(age / 500) % 2 ? "" : "_")
@@ -430,6 +477,8 @@ function render(now: number) {
       }
     }
   }
+  if (scriptMode && !paused)
+    dialogue.tick(dt, playbacks[selected].advance(0).done);
   camera.position.x += ((reduced ? 0 : pointerX) - camera.position.x) * 0.04;
   camera.position.y +=
     ((reduced ? 1 : 1 + pointerY) - camera.position.y) * 0.04;
@@ -437,13 +486,79 @@ function render(now: number) {
   renderer.render(scene, camera);
 }
 el("status").textContent = "Ready";
+function presentation(): DialoguePresentation {
+  const voices: DialoguePresentation["voices"] = {};
+  for (const id of SPEAKERS) {
+    const voice = {} as WritingSettings;
+    for (const [key] of controls) voice[key] = settings[id][key];
+    voices[id] = voice;
+  }
+  return { scene: sceneId, era, layout, voices };
+}
+function savePresentation() {
+  if (scriptMode && !restoringPresentation)
+    dialogue.setPresentation(presentation());
+}
+const dialogue = createDialogueEditor({
+  presentation,
+  restore(value) {
+    restoringPresentation = true;
+    sceneId = value.scene;
+    era = value.era;
+    layout = value.layout;
+    for (const id of SPEAKERS)
+      for (const [key] of controls)
+        settings[id][key] = value.voices[id]?.[key] ?? PROFILES[id][key];
+    applySceneTypography();
+    compose();
+    makeSliders();
+    restoringPresentation = false;
+  },
+  supports: (speaker) => SPEAKERS.includes(speaker as SpeakerId),
+  line(speaker, text) {
+    scriptMode = true;
+    selected = speaker as SpeakerId;
+    scriptText = text;
+    common = false;
+    el<HTMLInputElement>("common").checked = false;
+    compose();
+    makeSliders();
+    restart();
+  },
+  samples() {
+    choose(selected);
+  },
+  resume() {
+    scriptMode = true;
+    paused = false;
+    el("pause").textContent = "Pause";
+    el("pause").setAttribute("aria-pressed", "false");
+    compose();
+  },
+  pause() {
+    paused = true;
+    el("pause").textContent = "Resume";
+    el("pause").setAttribute("aria-pressed", "true");
+  },
+});
+const openingButton = document.createElement("button");
+openingButton.textContent = "Opening script";
+openingButton.onclick = () => dialogue.start();
+el("speakers").append(openingButton);
 makeSliders();
 applySceneTypography();
 compose();
 restart();
+if (params.get("mode") !== "samples") {
+  era = params.get("scene") === "opening" ? era : "dos";
+  sceneId = "opening";
+  applySceneTypography();
+  dialogue.start();
+} else dialogue.deactivate();
 // These controls are the studio's authoring UI, including in its standalone build.
 renderer.setAnimationLoop(render);
 function dispose() {
+  dialogue.dispose();
   renderer.setAnimationLoop(null);
   removeEventListener("resize", resize);
   removeEventListener("pointermove", pointer);

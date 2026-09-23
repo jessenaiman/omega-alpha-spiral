@@ -8,6 +8,7 @@ export const ERAS: Record<
   Era,
   {
     label: string;
+    description: string;
     font: string;
     cellWidth: number;
     cellHeight: number;
@@ -19,6 +20,8 @@ export const ERAS: Record<
 > = {
   phosphor: {
     label: "1970s · phosphor dots",
+    description:
+      "A luminous 9 × 16 cell with visible dots, scan modulation and a soft halo. An art preset suggesting a phosphor terminal, not a specific historical machine.",
     font: "bold 12px 'Courier New', monospace",
     cellWidth: 9,
     cellHeight: 16,
@@ -29,6 +32,8 @@ export const ERAS: Record<
   },
   dos: {
     label: "1980s · DOS blocks",
+    description:
+      "A crisp 9 × 16 monochrome cell with hard pixel edges and almost no glow. A DOS-inspired art preset; its glyphs use the available system font.",
     font: "bold 14px Consolas, monospace",
     cellWidth: 9,
     cellHeight: 16,
@@ -39,6 +44,8 @@ export const ERAS: Record<
   },
   gui: {
     label: "1990s · desktop bitmap",
+    description:
+      "A finer 14 × 22 cell using Tahoma-shaped lettering and a stronger glass panel. A desktop-inspired sketch, not an authentic OS/2 or Windows font reproduction.",
     font: "15px Tahoma, sans-serif",
     cellWidth: 14,
     cellHeight: 22,
@@ -49,6 +56,8 @@ export const ERAS: Record<
   },
   smooth: {
     label: "2000s · smooth screen",
+    description:
+      "A high-resolution 64 × 128 cell with filtered edges and Arial-shaped lettering. A smooth-screen art preset that keeps each character's spatial writing behavior.",
     font: "72px Arial, sans-serif",
     cellWidth: 64,
     cellHeight: 128,

@@ -8,7 +8,7 @@ export type WritingFrame = {
 };
 type Step = { at: number; text: string; phase: string };
 
-// Fixed sample presentation only: no branches, story state, or second dialogue engine.
+// Glyph reveal/revision performance only. DialogueTimeline owns script progression.
 export class WritingPlayback {
   private steps: Step[] = [];
   private cursor = 0;

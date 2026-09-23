@@ -193,7 +193,8 @@ export class GhostLetters {
       this.dummy.position.set(x, y, z);
       this.dummy.rotation.set(0, ry, rz);
       const visible = ch !== "\n" && ch !== " ";
-      this.dummy.scale.set(visible ? 0.46 : 0, visible ? 0.68 : 0, 1);
+      // Keep glyph quads inside their advance so DOS blocks do not overlap.
+      this.dummy.scale.set(visible ? step * 0.98 : 0, visible ? 0.68 : 0, 1);
       this.dummy.updateMatrix();
       this.mesh.setMatrixAt(i, this.dummy.matrix);
       if (ch !== "\n") col++;

@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@dimforge/rapier3d-compat": "^0.20.0",
+    "ajv": "^8.20.0",
     "lil-gui": "0.21.0",
     "nixie-fx": "^0.1.7",
     "three": "0.185.1"
