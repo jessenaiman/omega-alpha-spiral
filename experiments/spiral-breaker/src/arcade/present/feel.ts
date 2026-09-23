@@ -9,7 +9,7 @@
  * function of rule events, so it stays testable without a host.
  */
 
-import type { ArcadeEvent } from '../game';
+import type { ArcadeEvent } from "../game";
 
 export const HITSTOP_SCALE = 0.05;
 export const HITSTOP_DUCK = 0.6;
@@ -23,18 +23,27 @@ export interface HitstopSpec {
 /** Which contact events freeze the world, and for how long. */
 export function hitstopFor(event: ArcadeEvent): HitstopSpec | null {
   switch (event.type) {
-    case 'shard.destroy':
+    case "shard.destroy":
       return {
-        durationMs: event.kind === 'shielded' ? 55 : event.kind === 'splitter' ? 45 : event.kind === 'mini' ? 30 : event.kind === 'heart' ? 20 : 35,
+        durationMs:
+          event.kind === "shielded"
+            ? 55
+            : event.kind === "splitter"
+              ? 45
+              : event.kind === "mini"
+                ? 30
+                : event.kind === "heart"
+                  ? 20
+                  : 35,
         scale: HITSTOP_SCALE,
       };
-    case 'shard.blocked':
+    case "shard.blocked":
       return { durationMs: 45, scale: HITSTOP_SCALE };
-    case 'core.heal':
+    case "core.heal":
       return { durationMs: 20, scale: HITSTOP_SCALE };
-    case 'player.knockback':
+    case "player.knockback":
       return { durationMs: 60, scale: HITSTOP_SCALE };
-    case 'core.breach':
+    case "core.breach":
       return { durationMs: 90, scale: HITSTOP_SCALE };
     default:
       return null;
@@ -69,7 +78,10 @@ export function createFeel(): Feel {
       for (const event of events) {
         const spec = hitstopFor(event);
         if (!spec) continue;
-        const next = Math.min(HITSTOP_MAX_MS, Math.max(remainingMs, spec.durationMs));
+        const next = Math.min(
+          HITSTOP_MAX_MS,
+          Math.max(remainingMs, spec.durationMs)
+        );
         if (next > remainingMs) {
           remainingMs = next;
           scale = spec.scale;

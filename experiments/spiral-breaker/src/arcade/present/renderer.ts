@@ -6,13 +6,13 @@
  * they never construct a second renderer.
  */
 
-import * as THREE from 'three';
-import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
-import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
-import { Pass } from 'three/addons/postprocessing/Pass.js';
-import type { DiagnosticsPatch } from '../../core';
+import * as THREE from "three";
+import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
+import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
+import { Pass } from "three/addons/postprocessing/Pass.js";
+import type { DiagnosticsPatch } from "../../../../src/core";
 
 /**
  * Snaps renderer.info.render at the moment the RenderPass has just drawn the
@@ -43,16 +43,18 @@ export interface ArcadeRenderContext {
   readonly bloom: UnrealBloomPass;
   resize(): void;
   render(): void;
-  metrics(): NonNullable<DiagnosticsPatch['renderer']>;
-  canvasSize(): NonNullable<DiagnosticsPatch['canvas']>;
+  metrics(): NonNullable<DiagnosticsPatch["renderer"]>;
+  canvasSize(): NonNullable<DiagnosticsPatch["canvas"]>;
   dispose(): void;
 }
 
-export function createArcadeRenderContext(canvas: HTMLCanvasElement): ArcadeRenderContext {
+export function createArcadeRenderContext(
+  canvas: HTMLCanvasElement
+): ArcadeRenderContext {
   const renderer = new THREE.WebGLRenderer({
     canvas,
     antialias: true,
-    powerPreference: 'high-performance',
+    powerPreference: "high-performance",
   });
   renderer.setPixelRatio(Math.min(globalThis.devicePixelRatio || 1, 2));
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -123,7 +125,7 @@ export function createArcadeRenderContext(canvas: HTMLCanvasElement): ArcadeRend
     render(): void {
       composer.render();
     },
-    metrics(): NonNullable<DiagnosticsPatch['renderer']> {
+    metrics(): NonNullable<DiagnosticsPatch["renderer"]> {
       const info = renderer.info;
       return {
         calls: probe.snapshot.calls,
@@ -132,7 +134,7 @@ export function createArcadeRenderContext(canvas: HTMLCanvasElement): ArcadeRend
         textures: info.memory.textures,
       };
     },
-    canvasSize(): NonNullable<DiagnosticsPatch['canvas']> {
+    canvasSize(): NonNullable<DiagnosticsPatch["canvas"]> {
       return {
         width: renderer.domElement.width,
         height: renderer.domElement.height,

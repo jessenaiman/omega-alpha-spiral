@@ -31,13 +31,18 @@
  * reacts; it never decides score, health, or collision.
  */
 
-import type { Intents } from '../../core/input';
-import { createRng, normalizeSeed, type SeededRng } from '../../core/random';
-import { TUNING, distanceSq, type Vec2 } from './tuning';
+import type { Intents } from "../../../../src/core/input";
+import {
+  createRng,
+  normalizeSeed,
+  type SeededRng,
+} from "../../../../src/core/random";
+import { TUNING, distanceSq, type Vec2 } from "./tuning";
 
-export type Phase = 'menu' | 'play' | 'game-over' | 'victory';
+export type Phase = "menu" | "play" | "game-over" | "victory";
 
-export type ShardKind = 'standard' | 'splitter' | 'mini' | 'heart' | 'shielded' | 'pulsar';
+export type ShardKind =
+  "standard" | "splitter" | "mini" | "heart" | "shielded" | "pulsar";
 
 export interface Shard {
   readonly id: number;
@@ -74,10 +79,14 @@ export interface PlayerState {
 }
 
 export type ArcadeEvent =
-  | { readonly type: 'run.begin'; readonly seed: string; readonly runNumber: number }
-  | { readonly type: 'wave.start'; readonly wave: number }
   | {
-      readonly type: 'shard.spawn';
+      readonly type: "run.begin";
+      readonly seed: string;
+      readonly runNumber: number;
+    }
+  | { readonly type: "wave.start"; readonly wave: number }
+  | {
+      readonly type: "shard.spawn";
       readonly id: number;
       readonly x: number;
       readonly y: number;
@@ -86,25 +95,60 @@ export type ArcadeEvent =
       readonly drifter: boolean;
       readonly kind: ShardKind;
     }
-  | { readonly type: 'shard.destroy'; readonly id: number; readonly x: number; readonly y: number; readonly kind: ShardKind }
-  | { readonly type: 'shard.blocked'; readonly id: number; readonly x: number; readonly y: number }
-  | { readonly type: 'pulsar.pulse'; readonly id: number; readonly x: number; readonly y: number }
-  | { readonly type: 'core.heal'; readonly integrity: number; readonly x: number; readonly y: number }
-  | { readonly type: 'score.change'; readonly score: number; readonly gained: number; readonly chain: number }
-  | { readonly type: 'chain.reset' }
-  | { readonly type: 'dash.start'; readonly x: number; readonly y: number }
-  | { readonly type: 'player.knockback'; readonly x: number; readonly y: number }
-  | { readonly type: 'core.breach'; readonly integrity: number; readonly x: number; readonly y: number }
   | {
-      readonly type: 'game.over';
+      readonly type: "shard.destroy";
+      readonly id: number;
+      readonly x: number;
+      readonly y: number;
+      readonly kind: ShardKind;
+    }
+  | {
+      readonly type: "shard.blocked";
+      readonly id: number;
+      readonly x: number;
+      readonly y: number;
+    }
+  | {
+      readonly type: "pulsar.pulse";
+      readonly id: number;
+      readonly x: number;
+      readonly y: number;
+    }
+  | {
+      readonly type: "core.heal";
+      readonly integrity: number;
+      readonly x: number;
+      readonly y: number;
+    }
+  | {
+      readonly type: "score.change";
+      readonly score: number;
+      readonly gained: number;
+      readonly chain: number;
+    }
+  | { readonly type: "chain.reset" }
+  | { readonly type: "dash.start"; readonly x: number; readonly y: number }
+  | {
+      readonly type: "player.knockback";
+      readonly x: number;
+      readonly y: number;
+    }
+  | {
+      readonly type: "core.breach";
+      readonly integrity: number;
+      readonly x: number;
+      readonly y: number;
+    }
+  | {
+      readonly type: "game.over";
       readonly victory: boolean;
       readonly score: number;
       readonly bonus: number;
       readonly wave: number;
       readonly best: number;
     }
-  | { readonly type: 'ghost.takeover' }
-  | { readonly type: 'ghost.release' };
+  | { readonly type: "ghost.takeover" }
+  | { readonly type: "ghost.release" };
 
 export interface Commands {
   readonly intents: Intents;
@@ -159,11 +203,15 @@ export function createPlayer(): PlayerState {
 }
 
 /** A fresh world; `menu` phase with the ghost already driving, so it is watchable immediately. */
-export function createWorld(seed: string | number, best = 0, runNumber = 0): WorldState {
+export function createWorld(
+  seed: string | number,
+  best = 0,
+  runNumber = 0
+): WorldState {
   return {
     seed: normalizeSeed(seed),
     runNumber,
-    phase: 'menu',
+    phase: "menu",
     time: 0,
     wave: 1,
     waveTime: 0,
@@ -177,13 +225,18 @@ export function createWorld(seed: string | number, best = 0, runNumber = 0): Wor
     ghostDriving: true,
     idleTime: TUNING.ghostIdleTriggerSec,
     nextSpawnIn: 0.2,
-    rng: createRng(normalizeSeed(seed)).fork('arcade'),
+    rng: createRng(normalizeSeed(seed)).fork("arcade"),
     steps: 0,
   };
 }
 
 /** Replace `target`'s contents with a fresh world built from `seed`. */
-function resetWorldInto(target: WorldState, seed: string | number, best: number, runNumber: number): void {
+function resetWorldInto(
+  target: WorldState,
+  seed: string | number,
+  best: number,
+  runNumber: number
+): void {
   const fresh = createWorld(seed, best, runNumber);
   target.seed = fresh.seed;
   target.runNumber = fresh.runNumber;
@@ -210,15 +263,18 @@ function resetWorldInto(target: WorldState, seed: string | number, best: number,
  * returns the opening events. Preserves `best` across runs; increments the run
  * number. Reusing the same seed keeps a re-run byte-identical.
  */
-export function resetForRun(world: WorldState, seed: string | number = world.seed): ArcadeEvent[] {
+export function resetForRun(
+  world: WorldState,
+  seed: string | number = world.seed
+): ArcadeEvent[] {
   const best = world.best;
   resetWorldInto(world, seed, best, world.runNumber + 1);
-  world.phase = 'play';
+  world.phase = "play";
   world.ghostDriving = false;
   world.idleTime = 0;
   return [
-    { type: 'run.begin', seed: world.seed, runNumber: world.runNumber },
-    { type: 'wave.start', wave: world.wave },
+    { type: "run.begin", seed: world.seed, runNumber: world.runNumber },
+    { type: "wave.start", wave: world.wave },
   ];
 }
 
@@ -226,16 +282,20 @@ export function resetForRun(world: WorldState, seed: string | number = world.see
  * Advance the world by one fixed step. `dt` is the fixed step in seconds.
  * Returns the events the step produced; presentation consumes, never mutates.
  */
-export function step(world: WorldState, dt: number, commands: Commands): ArcadeEvent[] {
+export function step(
+  world: WorldState,
+  dt: number,
+  commands: Commands
+): ArcadeEvent[] {
   const events: ArcadeEvent[] = [];
   world.steps += 1;
 
-  if (world.phase === 'menu') {
+  if (world.phase === "menu") {
     if (commands.start) return resetForRun(world);
     return events;
   }
 
-  if (world.phase === 'game-over' || world.phase === 'victory') {
+  if (world.phase === "game-over" || world.phase === "victory") {
     if (commands.start) return resetForRun(world);
     return events;
   }
@@ -244,7 +304,7 @@ export function step(world: WorldState, dt: number, commands: Commands): ArcadeE
   if (!commands.fromAutopilot && commands.humanActive && world.ghostDriving) {
     world.ghostDriving = false;
     world.idleTime = 0;
-    events.push({ type: 'ghost.release' });
+    events.push({ type: "ghost.release" });
   } else if (!commands.fromAutopilot) {
     world.idleTime = 0;
   } else if (world.ghostDriving) {
@@ -254,7 +314,7 @@ export function step(world: WorldState, dt: number, commands: Commands): ArcadeE
     if (world.idleTime >= TUNING.ghostIdleTriggerSec) {
       world.ghostDriving = true;
       world.idleTime = TUNING.ghostIdleTriggerSec;
-      events.push({ type: 'ghost.takeover' });
+      events.push({ type: "ghost.takeover" });
     }
   }
 
@@ -275,12 +335,12 @@ export function step(world: WorldState, dt: number, commands: Commands): ArcadeE
   updateWave(world, events);
   updateSpawning(world, dt, events);
 
-  if (world.integrity <= 0 && world.phase === 'play') {
-    world.phase = 'game-over';
+  if (world.integrity <= 0 && world.phase === "play") {
+    world.phase = "game-over";
     world.ghostDriving = false;
     if (world.score > world.best) world.best = world.score;
     events.push({
-      type: 'game.over',
+      type: "game.over",
       victory: false,
       score: world.score,
       bonus: 0,
@@ -292,7 +352,12 @@ export function step(world: WorldState, dt: number, commands: Commands): ArcadeE
   return events;
 }
 
-function updatePlayer(world: WorldState, dt: number, commands: Commands, events: ArcadeEvent[]): void {
+function updatePlayer(
+  world: WorldState,
+  dt: number,
+  commands: Commands,
+  events: ArcadeEvent[]
+): void {
   const player = world.player;
 
   if (player.stun > 0) {
@@ -310,7 +375,8 @@ function updatePlayer(world: WorldState, dt: number, commands: Commands, events:
     clampToArena(player);
     return;
   }
-  if (player.dashCooldown > 0) player.dashCooldown = Math.max(0, player.dashCooldown - dt);
+  if (player.dashCooldown > 0)
+    player.dashCooldown = Math.max(0, player.dashCooldown - dt);
 
   const { moveX, moveY } = commands.intents;
   if (moveX !== 0 || moveY !== 0) {
@@ -352,7 +418,7 @@ function updatePlayer(world: WorldState, dt: number, commands: Commands, events:
       player.dashDir.x = player.facing.x;
       player.dashDir.y = player.facing.y;
     }
-    events.push({ type: 'dash.start', x: player.pos.x, y: player.pos.y });
+    events.push({ type: "dash.start", x: player.pos.x, y: player.pos.y });
   }
 }
 
@@ -363,7 +429,8 @@ function clampToArena(player: PlayerState): void {
     const scale = maxR / r;
     player.pos.x *= scale;
     player.pos.y *= scale;
-    const radial = (player.vel.x * player.pos.x + player.vel.y * player.pos.y) / maxR;
+    const radial =
+      (player.vel.x * player.pos.x + player.vel.y * player.pos.y) / maxR;
     if (radial > 0) {
       player.vel.x -= (player.pos.x / maxR) * radial;
       player.vel.y -= (player.pos.y / maxR) * radial;
@@ -376,7 +443,7 @@ function updateShards(world: WorldState, dt: number): number[] {
   const pulsed: number[] = [];
   for (const shard of world.shards) {
     if (!shard.alive) continue;
-    if (shard.kind === 'pulsar') {
+    if (shard.kind === "pulsar") {
       if (shard.pulseTimer > 0) shard.pulseTimer -= dt;
       // A non-positive timer discharges the very next step — a pulsar placed
       // exactly at zero must not spin forever on an off-by-one.
@@ -392,7 +459,10 @@ function updateShards(world: WorldState, dt: number): number[] {
     let vx = bx * speed;
     let vy = by * speed;
     if (shard.drifter) {
-      const wobble = Math.cos(shard.driftPhase + time * TUNING.driftFrequency) * TUNING.driftAmplitude * TUNING.driftFrequency;
+      const wobble =
+        Math.cos(shard.driftPhase + time * TUNING.driftFrequency) *
+        TUNING.driftAmplitude *
+        TUNING.driftFrequency;
       vx += -by * wobble;
       vy += bx * wobble;
     }
@@ -408,15 +478,29 @@ function updateShards(world: WorldState, dt: number): number[] {
  * never fires. A ring that reaches the player knocks back (a shove, never
  * integrity loss) unless a recent bite is still protecting them.
  */
-function firePulses(world: WorldState, pulsedIds: readonly number[], events: ArcadeEvent[]): void {
+function firePulses(
+  world: WorldState,
+  pulsedIds: readonly number[],
+  events: ArcadeEvent[]
+): void {
   const player = world.player;
   const reach = TUNING.pulseMaxRadius;
   for (const id of pulsedIds) {
-    const shard = world.shards.find((candidate) => candidate.alive && candidate.id === id);
+    const shard = world.shards.find(
+      (candidate) => candidate.alive && candidate.id === id
+    );
     if (!shard) continue;
-    events.push({ type: 'pulsar.pulse', id: shard.id, x: shard.pos.x, y: shard.pos.y });
+    events.push({
+      type: "pulsar.pulse",
+      id: shard.id,
+      x: shard.pos.x,
+      y: shard.pos.y,
+    });
     if (player.stun > 0 || player.invuln > 0) continue;
-    const d = Math.hypot(shard.pos.x - player.pos.x, shard.pos.y - player.pos.y);
+    const d = Math.hypot(
+      shard.pos.x - player.pos.x,
+      shard.pos.y - player.pos.y
+    );
     if (d > reach) continue;
     const dx = player.pos.x - shard.pos.x;
     const dy = player.pos.y - shard.pos.y;
@@ -428,7 +512,7 @@ function firePulses(world: WorldState, pulsedIds: readonly number[], events: Arc
     clampToArena(player);
     player.stun = Math.max(player.stun, TUNING.pulseStunSec);
     player.invuln = Math.max(player.invuln, TUNING.pulseGraceSec);
-    events.push({ type: 'player.knockback', x: player.pos.x, y: player.pos.y });
+    events.push({ type: "player.knockback", x: player.pos.x, y: player.pos.y });
   }
 }
 
@@ -436,14 +520,23 @@ function firePulses(world: WorldState, pulsedIds: readonly number[], events: Arc
  * True when `pos` sits inside the shield cone of a shielded shard — the cone
  * faces the core, so a player must contact a shielded shard from the flank.
  */
-export function inShieldCone(shard: Pick<Shard, 'pos'>, pos: Pick<Vec2, 'x' | 'y'>): boolean {
+export function inShieldCone(
+  shard: Pick<Shard, "pos">,
+  pos: Pick<Vec2, "x" | "y">
+): boolean {
   const toCoreX = -shard.pos.x;
   const toCoreY = -shard.pos.y;
   const coreLen = Math.max(1e-6, Math.hypot(toCoreX, toCoreY));
   const px = pos.x - shard.pos.x;
   const py = pos.y - shard.pos.y;
   const pLen = Math.max(1e-6, Math.hypot(px, py));
-  const cosine = Math.min(1, Math.max(-1, (toCoreX / coreLen) * (px / pLen) + (toCoreY / coreLen) * (py / pLen)));
+  const cosine = Math.min(
+    1,
+    Math.max(
+      -1,
+      (toCoreX / coreLen) * (px / pLen) + (toCoreY / coreLen) * (py / pLen)
+    )
+  );
   return Math.acos(cosine) < TUNING.shieldHalfAngle;
 }
 
@@ -452,7 +545,12 @@ function speedFactorAt(pos: Vec2): number {
   return r < TUNING.slowZoneRadius ? TUNING.slowZoneFactor : 1;
 }
 
-function resolveContacts(world: WorldState, dt: number, events: ArcadeEvent[], approach: Vec2): void {
+function resolveContacts(
+  world: WorldState,
+  dt: number,
+  events: ArcadeEvent[],
+  approach: Vec2
+): void {
   const player = world.player;
   const dashing = player.dashTime > 0;
   const dashR = TUNING.dashRadius * TUNING.dashRadius;
@@ -462,12 +560,21 @@ function resolveContacts(world: WorldState, dt: number, events: ArcadeEvent[], a
     if (!shard.alive) continue;
     if (Math.hypot(shard.pos.x, shard.pos.y) < TUNING.coreRadius) {
       shard.alive = false;
-      if (shard.kind === 'heart') {
-        resolveHeartReach(world, { kind: shard.kind, x: shard.pos.x, y: shard.pos.y }, events);
+      if (shard.kind === "heart") {
+        resolveHeartReach(
+          world,
+          { kind: shard.kind, x: shard.pos.x, y: shard.pos.y },
+          events
+        );
         continue;
       }
       world.integrity -= 1;
-      events.push({ type: 'core.breach', integrity: world.integrity, x: shard.pos.x, y: shard.pos.y });
+      events.push({
+        type: "core.breach",
+        integrity: world.integrity,
+        x: shard.pos.x,
+        y: shard.pos.y,
+      });
       continue;
     }
     // A freshly cracked mini is spared from instantly clipping the player who
@@ -476,12 +583,22 @@ function resolveContacts(world: WorldState, dt: number, events: ArcadeEvent[], a
 
     const dSq = distanceSq(shard.pos, player.pos);
     if (dashing && dSq <= dashR) {
-      if (shard.kind === 'shielded' && inShieldCone(shard, approach)) {
-        events.push({ type: 'shard.blocked', id: shard.id, x: shard.pos.x, y: shard.pos.y });
+      if (shard.kind === "shielded" && inShieldCone(shard, approach)) {
+        events.push({
+          type: "shard.blocked",
+          id: shard.id,
+          x: shard.pos.x,
+          y: shard.pos.y,
+        });
         continue;
       }
       destroyShard(world, shard, events);
-    } else if (!dashing && player.invuln <= 0 && player.stun <= 0 && dSq <= hitR) {
+    } else if (
+      !dashing &&
+      player.invuln <= 0 &&
+      player.stun <= 0 &&
+      dSq <= hitR
+    ) {
       player.stun = TUNING.stunSec;
       player.invuln = TUNING.invulnSec;
       const dx = player.pos.x - shard.pos.x;
@@ -492,7 +609,11 @@ function resolveContacts(world: WorldState, dt: number, events: ArcadeEvent[], a
       player.pos.x += player.vel.x * TUNING.stunSec;
       player.pos.y += player.vel.y * TUNING.stunSec;
       clampToArena(player);
-      events.push({ type: 'player.knockback', x: player.pos.x, y: player.pos.y });
+      events.push({
+        type: "player.knockback",
+        x: player.pos.x,
+        y: player.pos.y,
+      });
     }
   }
 
@@ -501,59 +622,104 @@ function resolveContacts(world: WorldState, dt: number, events: ArcadeEvent[], a
     world.chainWindow = Math.max(0, world.chainWindow - dt);
     if (world.chainWindow <= 0) {
       world.chain = 0;
-      events.push({ type: 'chain.reset' });
+      events.push({ type: "chain.reset" });
     }
   }
 }
 
 function pointsFor(kind: ShardKind): number {
-  if (kind === 'mini') return TUNING.miniPoints;
-  if (kind === 'shielded') return TUNING.shieldedPoints;
+  if (kind === "mini") return TUNING.miniPoints;
+  if (kind === "shielded") return TUNING.shieldedPoints;
   return TUNING.pointsPerShard;
 }
 
-function destroyShard(world: WorldState, shard: Shard, events: ArcadeEvent[]): void {
+function destroyShard(
+  world: WorldState,
+  shard: Shard,
+  events: ArcadeEvent[]
+): void {
   shard.alive = false;
-  if (shard.kind === 'heart') {
-    resolveHeartReach(world, { kind: shard.kind, x: shard.pos.x, y: shard.pos.y }, events);
+  if (shard.kind === "heart") {
+    resolveHeartReach(
+      world,
+      { kind: shard.kind, x: shard.pos.x, y: shard.pos.y },
+      events
+    );
     return;
   }
   world.chain += 1;
   world.chainWindow = TUNING.chainWindowSec;
-  const gained = pointsFor(shard.kind) + (world.chain - 1) * TUNING.chainPointsPerLevel;
+  const gained =
+    pointsFor(shard.kind) + (world.chain - 1) * TUNING.chainPointsPerLevel;
   world.score += gained;
-  events.push({ type: 'shard.destroy', id: shard.id, x: shard.pos.x, y: shard.pos.y, kind: shard.kind });
-  events.push({ type: 'score.change', score: world.score, gained, chain: world.chain });
-  if (shard.kind === 'splitter') crackSplitter(world, shard, events);
+  events.push({
+    type: "shard.destroy",
+    id: shard.id,
+    x: shard.pos.x,
+    y: shard.pos.y,
+    kind: shard.kind,
+  });
+  events.push({
+    type: "score.change",
+    score: world.score,
+    gained,
+    chain: world.chain,
+  });
+  if (shard.kind === "splitter") crackSplitter(world, shard, events);
 }
 
 function resolveHeartReach(
   world: WorldState,
   shard: { readonly kind: ShardKind; x: number; y: number },
-  events: ArcadeEvent[],
+  events: ArcadeEvent[]
 ): void {
   if (world.integrity < TUNING.maxIntegrity) {
     world.integrity += 1;
   } else {
     world.score += TUNING.healBonusPoints;
-    events.push({ type: 'score.change', score: world.score, gained: TUNING.healBonusPoints, chain: world.chain });
+    events.push({
+      type: "score.change",
+      score: world.score,
+      gained: TUNING.healBonusPoints,
+      chain: world.chain,
+    });
   }
-  events.push({ type: 'core.heal', integrity: world.integrity, x: shard.x, y: shard.y });
+  events.push({
+    type: "core.heal",
+    integrity: world.integrity,
+    x: shard.x,
+    y: shard.y,
+  });
 }
 
-function crackSplitter(world: WorldState, shard: Shard, events: ArcadeEvent[]): void {
-  const alive = world.shards.reduce((count, other) => count + (other.alive ? 1 : 0), 0);
+function crackSplitter(
+  world: WorldState,
+  shard: Shard,
+  events: ArcadeEvent[]
+): void {
+  const alive = world.shards.reduce(
+    (count, other) => count + (other.alive ? 1 : 0),
+    0
+  );
   const room = TUNING.maxShardsOnScreen - alive;
-  for (let index = 0; index < TUNING.splitMiniCount && index < room; index += 1) {
+  for (
+    let index = 0;
+    index < TUNING.splitMiniCount && index < room;
+    index += 1
+  ) {
     const speed = Math.min(
       TUNING.shardSpeedMax * TUNING.splitMiniSpeedCapFactor,
-      shard.speed * TUNING.splitMiniSpeedFactor,
+      shard.speed * TUNING.splitMiniSpeedFactor
     );
     // The two minis erupt side-by-side from where their parent popped, both
     // still aimed at the core. The arena is tiny and the core smaller still —
     // a rotated bearing would graze past the ring forever instead of pressing
     // the player, so the scatter lives in the spawn offset, not the aim.
-    const spawnBearing = shard.bearing + (index === 0 ? -TUNING.splitMiniAngleOffset : TUNING.splitMiniAngleOffset);
+    const spawnBearing =
+      shard.bearing +
+      (index === 0
+        ? -TUNING.splitMiniAngleOffset
+        : TUNING.splitMiniAngleOffset);
     const pos = {
       x: shard.pos.x + Math.cos(spawnBearing) * TUNING.splitMiniOffset,
       y: shard.pos.y + Math.sin(spawnBearing) * TUNING.splitMiniOffset,
@@ -567,27 +733,27 @@ function crackSplitter(world: WorldState, shard: Shard, events: ArcadeEvent[]): 
       drifter: false,
       driftPhase: 0,
       variant: 0,
-      kind: 'mini',
+      kind: "mini",
       grace: TUNING.miniGraceSec,
       pulseTimer: 0,
       alive: true,
     };
     world.shards.push(mini);
     events.push({
-      type: 'shard.spawn',
+      type: "shard.spawn",
       id: mini.id,
       x: mini.pos.x,
       y: mini.pos.y,
       bearing: mini.bearing,
       variant: 0,
       drifter: false,
-      kind: 'mini',
+      kind: "mini",
     });
   }
 }
 
 function updateWave(world: WorldState, events: ArcadeEvent[]): void {
-  if (world.phase !== 'play') return;
+  if (world.phase !== "play") return;
   if (world.waveTime < TUNING.waveLengthSec) return;
 
   if (world.wave >= TUNING.gauntletWaves) {
@@ -603,7 +769,7 @@ function updateWave(world: WorldState, events: ArcadeEvent[]): void {
 
   world.wave += 1;
   world.waveTime = 0;
-  events.push({ type: 'wave.start', wave: world.wave });
+  events.push({ type: "wave.start", wave: world.wave });
 }
 
 function finishVictory(world: WorldState, events: ArcadeEvent[]): void {
@@ -611,36 +777,62 @@ function finishVictory(world: WorldState, events: ArcadeEvent[]): void {
   const final = world.score + bonus;
   world.score = final;
   if (final > world.best) world.best = final;
-  world.phase = 'victory';
+  world.phase = "victory";
   world.ghostDriving = false;
-  events.push({ type: 'game.over', victory: true, score: final, bonus, wave: world.wave, best: world.best });
+  events.push({
+    type: "game.over",
+    victory: true,
+    score: final,
+    bonus,
+    wave: world.wave,
+    best: world.best,
+  });
 }
 
 function pickSpawnKind(world: WorldState): ShardKind {
-  if (world.wave >= TUNING.heartStartWave && world.rng.next() < TUNING.heartChanceBase + (world.wave - TUNING.heartStartWave) * TUNING.heartChancePerWave) {
-    return 'heart';
+  if (
+    world.wave >= TUNING.heartStartWave &&
+    world.rng.next() <
+      TUNING.heartChanceBase +
+        (world.wave - TUNING.heartStartWave) * TUNING.heartChancePerWave
+  ) {
+    return "heart";
   }
-  if (world.wave >= TUNING.splitterStartWave && world.rng.next() < TUNING.splitterChance) {
-    return 'splitter';
+  if (
+    world.wave >= TUNING.splitterStartWave &&
+    world.rng.next() < TUNING.splitterChance
+  ) {
+    return "splitter";
   }
-  const pulsarsOnScreen = world.shards.reduce((count, shard) => count + (shard.alive && shard.kind === 'pulsar' ? 1 : 0), 0);
+  const pulsarsOnScreen = world.shards.reduce(
+    (count, shard) => count + (shard.alive && shard.kind === "pulsar" ? 1 : 0),
+    0
+  );
   if (
     world.wave >= TUNING.pulsarStartWave &&
     pulsarsOnScreen < TUNING.maxPulsarsOnScreen &&
-    world.rng.next() < TUNING.pulsarChanceBase + (world.wave - TUNING.pulsarStartWave) * TUNING.pulsarChancePerWave
+    world.rng.next() <
+      TUNING.pulsarChanceBase +
+        (world.wave - TUNING.pulsarStartWave) * TUNING.pulsarChancePerWave
   ) {
-    return 'pulsar';
+    return "pulsar";
   }
   if (
     world.wave >= TUNING.shieldStartWave &&
-    world.rng.next() < TUNING.shieldChanceBase + (world.wave - TUNING.shieldStartWave) * TUNING.shieldChancePerWave
+    world.rng.next() <
+      TUNING.shieldChanceBase +
+        (world.wave - TUNING.shieldStartWave) * TUNING.shieldChancePerWave
   ) {
-    return 'shielded';
+    return "shielded";
   }
-  return 'standard';
+  return "standard";
 }
 
-function updateSpawning(world: WorldState, dt: number, events: ArcadeEvent[]): void {
+function updateSpawning(
+  world: WorldState,
+  dt: number,
+  events: ArcadeEvent[]
+): void {
   world.nextSpawnIn -= dt;
   if (world.nextSpawnIn > 0) return;
   // The final gauntlet stops raining shards: it clears the field already on
@@ -649,7 +841,10 @@ function updateSpawning(world: WorldState, dt: number, events: ArcadeEvent[]): v
     world.nextSpawnIn = TUNING.waveLengthSec;
     return;
   }
-  if (world.shards.filter((shard) => shard.alive).length >= TUNING.maxShardsOnScreen) {
+  if (
+    world.shards.filter((shard) => shard.alive).length >=
+    TUNING.maxShardsOnScreen
+  ) {
     world.nextSpawnIn = 0.1;
     return;
   }
@@ -658,17 +853,24 @@ function updateSpawning(world: WorldState, dt: number, events: ArcadeEvent[]): v
   const variant = world.rng.int(3);
   const kind = pickSpawnKind(world);
   const isDrifter =
-    kind !== 'heart' &&
-    kind !== 'splitter' &&
-    kind !== 'pulsar' &&
+    kind !== "heart" &&
+    kind !== "splitter" &&
+    kind !== "pulsar" &&
     world.wave >= TUNING.drifterStartWave &&
-    world.rng.next() < TUNING.drifterChanceBase + world.wave * TUNING.drifterChancePerWave;
+    world.rng.next() <
+      TUNING.drifterChanceBase + world.wave * TUNING.drifterChancePerWave;
 
   world.shards.push({
     id: world.steps,
-    pos: { x: Math.cos(angle) * (TUNING.arenaRadius - 0.02), y: Math.sin(angle) * (TUNING.arenaRadius - 0.02) },
+    pos: {
+      x: Math.cos(angle) * (TUNING.arenaRadius - 0.02),
+      y: Math.sin(angle) * (TUNING.arenaRadius - 0.02),
+    },
     bearing: Math.atan2(-Math.sin(angle), -Math.cos(angle)),
-    speed: Math.min(TUNING.shardSpeedMax, TUNING.shardBaseSpeed + (world.wave - 1) * TUNING.shardSpeedPerWave),
+    speed: Math.min(
+      TUNING.shardSpeedMax,
+      TUNING.shardBaseSpeed + (world.wave - 1) * TUNING.shardSpeedPerWave
+    ),
     drifter: isDrifter,
     driftPhase: world.rng.next() * Math.PI * 2,
     variant,
@@ -676,13 +878,15 @@ function updateSpawning(world: WorldState, dt: number, events: ArcadeEvent[]): v
     grace: 0,
     // A staggered first ring so hazards never pulse in lockstep.
     pulseTimer:
-      kind === 'pulsar' ? TUNING.pulseCooldownSec * (0.6 + world.rng.next() * 0.4) : 0,
+      kind === "pulsar"
+        ? TUNING.pulseCooldownSec * (0.6 + world.rng.next() * 0.4)
+        : 0,
     alive: true,
   });
 
   const spawnPoint = world.shards[world.shards.length - 1] as Shard;
   events.push({
-    type: 'shard.spawn',
+    type: "shard.spawn",
     id: spawnPoint.id,
     x: spawnPoint.pos.x,
     y: spawnPoint.pos.y,
@@ -694,11 +898,17 @@ function updateSpawning(world: WorldState, dt: number, events: ArcadeEvent[]): v
 
   world.nextSpawnIn = Math.max(
     TUNING.shardIntervalMinSec,
-    TUNING.shardIntervalBaseSec - (world.wave - 1) * TUNING.shardIntervalPerWave,
+    TUNING.shardIntervalBaseSec - (world.wave - 1) * TUNING.shardIntervalPerWave
   );
 }
 
 /** The autopilot decides whether a human is effectively idle right now. */
 export function anyHumanActive(intents: Intents): boolean {
-  return intents.moveX !== 0 || intents.moveY !== 0 || intents.dash || intents.act || intents.pause;
+  return (
+    intents.moveX !== 0 ||
+    intents.moveY !== 0 ||
+    intents.dash ||
+    intents.act ||
+    intents.pause
+  );
 }

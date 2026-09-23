@@ -6,8 +6,8 @@
  * the rules stay testable and the visuals stay swappable.
  */
 
-export { TUNING, vec, distanceSq } from './tuning';
-export type { Vec2 } from './tuning';
+export { TUNING, vec, distanceSq } from "./tuning";
+export type { Vec2 } from "./tuning";
 export {
   createWorld,
   createPlayer,
@@ -16,7 +16,7 @@ export {
   anyHumanActive,
   inShieldCone,
   IDLE_COMMANDS,
-} from './rules';
+} from "./rules";
 export type {
   Phase,
   Shard,
@@ -25,5 +25,5 @@ export type {
   ArcadeEvent,
   Commands,
   WorldState,
-} from './rules';
-export { autopilot, pickTarget, pickThreat } from './autopilot';
+} from "./rules";
+export { autopilot, pickTarget, pickThreat } from "./autopilot";

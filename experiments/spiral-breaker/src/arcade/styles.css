@@ -11,7 +11,9 @@
   min-height: 100vh;
   background: #04060b;
   color: #d6f4ff;
-  font-family: 'SFMono-Regular', 'Cascadia Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
+  font-family:
+    "SFMono-Regular", "Cascadia Mono", "JetBrains Mono", Menlo, Consolas,
+    monospace;
   overflow: hidden;
 }
 
@@ -43,8 +45,12 @@ canvas[data-game-canvas] {
   text-transform: uppercase;
 }
 
-.hud-top { top: 0; }
-.hud-upper { top: 4.4rem; }
+.hud-top {
+  top: 0;
+}
+.hud-upper {
+  top: 4.4rem;
+}
 .hud-bottom {
   bottom: 0;
   align-items: flex-end;
@@ -56,7 +62,10 @@ canvas[data-game-canvas] {
   gap: 0.15rem;
 }
 
-.hud-align-end { align-items: flex-end; text-align: right; }
+.hud-align-end {
+  align-items: flex-end;
+  text-align: right;
+}
 
 .hud-label {
   font-size: 0.62rem;
@@ -72,7 +81,10 @@ canvas[data-game-canvas] {
   text-shadow: 0 0 18px rgba(124, 240, 255, 0.45);
 }
 
-.hud-integrity { display: flex; gap: 0.4rem; }
+.hud-integrity {
+  display: flex;
+  gap: 0.4rem;
+}
 
 .integrity-pip {
   width: 1rem;
@@ -82,17 +94,21 @@ canvas[data-game-canvas] {
   background: rgba(124, 240, 255, 0.07);
   box-shadow: inset 0 0 6px rgba(124, 240, 255, 0.1);
 }
-.integrity-pip[data-filled='true'] {
+.integrity-pip[data-filled="true"] {
   border-color: #9ff4ff;
   background: linear-gradient(135deg, #aef4ff, #6ce6ff);
-  box-shadow: 0 0 10px rgba(124, 240, 255, 0.65), inset 0 0 3px rgba(255, 255, 255, 0.6);
+  box-shadow:
+    0 0 10px rgba(124, 240, 255, 0.65),
+    inset 0 0 3px rgba(255, 255, 255, 0.6);
 }
-.hud-integrity[data-low='true'] .integrity-pip[data-filled='true'] {
+.hud-integrity[data-low="true"] .integrity-pip[data-filled="true"] {
   border-color: #ffb0a6;
   background: linear-gradient(135deg, #ff8a7a, #ff5a46);
-  box-shadow: 0 0 12px rgba(255, 90, 70, 0.65), inset 0 0 3px rgba(255, 255, 255, 0.5);
+  box-shadow:
+    0 0 12px rgba(255, 90, 70, 0.65),
+    inset 0 0 3px rgba(255, 255, 255, 0.5);
 }
-.hud-integrity[data-low='true'] .integrity-pip[data-filled='false'] {
+.hud-integrity[data-low="true"] .integrity-pip[data-filled="false"] {
   border-color: rgba(255, 90, 70, 0.35);
 }
 
@@ -101,7 +117,9 @@ canvas[data-game-canvas] {
   gap: 0.32rem;
   margin-top: 0.3rem;
 }
-.hud-align-end .hud-wave-dots { justify-content: flex-end; }
+.hud-align-end .hud-wave-dots {
+  justify-content: flex-end;
+}
 
 .wave-dot {
   width: 0.55rem;
@@ -110,7 +128,7 @@ canvas[data-game-canvas] {
   border: 1px solid rgba(124, 240, 255, 0.4);
   background: rgba(124, 240, 255, 0.05);
 }
-.wave-dot[data-active='true'] {
+.wave-dot[data-active="true"] {
   border-color: #7cf0ff;
   background: #7cf0ff;
   box-shadow: 0 0 8px rgba(124, 240, 255, 0.75);
@@ -141,7 +159,7 @@ canvas[data-game-canvas] {
   box-shadow: 0 0 8px rgba(124, 240, 255, 0.6);
   transition: transform 80ms linear;
 }
-.hud-dash[data-ready='true'] .hud-dash-fill {
+.hud-dash[data-ready="true"] .hud-dash-fill {
   background: linear-gradient(90deg, #7cff9b, #c4ffd6);
   box-shadow: 0 0 10px rgba(124, 255, 155, 0.7);
 }
@@ -181,12 +199,20 @@ canvas[data-game-canvas] {
   gap: 0.6rem;
   padding: 2rem;
   pointer-events: none;
-  background: radial-gradient(ellipse at center, rgba(4, 8, 16, 0.28), rgba(4, 6, 11, 0.82));
+  background: radial-gradient(
+    ellipse at center,
+    rgba(4, 8, 16, 0.28),
+    rgba(4, 6, 11, 0.82)
+  );
   animation: overlay-rise 220ms ease-out both;
 }
 @keyframes overlay-rise {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .overlay-title {
@@ -233,13 +259,22 @@ canvas[data-game-canvas] {
   font-size: 0.66rem;
   letter-spacing: 0.24em;
   cursor: pointer;
-  transition: border-color 0.2s ease, color 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    color 0.2s ease;
 }
 
-.hud-mute:hover { border-color: rgba(124, 240, 255, 0.9); color: #ffffff; }
-.hud-mute[data-muted='false'] { border-color: rgba(124, 240, 255, 0.7); }
+.hud-mute:hover {
+  border-color: rgba(124, 240, 255, 0.9);
+  color: #ffffff;
+}
+.hud-mute[data-muted="false"] {
+  border-color: rgba(124, 240, 255, 0.7);
+}
 
-[data-debug-hidden='true'] .hud-status { visibility: hidden; }
+[data-debug-hidden="true"] .hud-status {
+  visibility: hidden;
+}
 
 .hud-feed {
   position: absolute;
@@ -259,10 +294,22 @@ canvas[data-game-canvas] {
   pointer-events: none;
   white-space: nowrap;
 }
-.hud-feed[data-kind='wave'] { color: #aef4ff; border-color: rgba(124, 240, 255, 0.6); }
-.hud-feed[data-kind='blocked'] { color: #ffd166; border-color: rgba(255, 209, 102, 0.6); }
-.hud-feed[data-kind='breach'] { color: #ff7d70; border-color: rgba(255, 90, 70, 0.6); }
-.hud-feed[data-kind='heal'] { color: #7cff9b; border-color: rgba(124, 255, 155, 0.6); }
+.hud-feed[data-kind="wave"] {
+  color: #aef4ff;
+  border-color: rgba(124, 240, 255, 0.6);
+}
+.hud-feed[data-kind="blocked"] {
+  color: #ffd166;
+  border-color: rgba(255, 209, 102, 0.6);
+}
+.hud-feed[data-kind="breach"] {
+  color: #ff7d70;
+  border-color: rgba(255, 90, 70, 0.6);
+}
+.hud-feed[data-kind="heal"] {
+  color: #7cff9b;
+  border-color: rgba(124, 255, 155, 0.6);
+}
 
 .game-flash {
   position: absolute;
@@ -271,14 +318,28 @@ canvas[data-game-canvas] {
   opacity: 0;
   mix-blend-mode: screen;
 }
-.game-flash[data-flash='breach'] {
-  background: radial-gradient(ellipse at center, rgba(255, 60, 40, 0.55), rgba(255, 60, 40, 0.05) 72%, transparent 92%);
+.game-flash[data-flash="breach"] {
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 60, 40, 0.55),
+    rgba(255, 60, 40, 0.05) 72%,
+    transparent 92%
+  );
 }
-.game-flash[data-flash='destruct'] {
-  background: radial-gradient(ellipse at center, rgba(255, 220, 180, 0.35), transparent 70%);
+.game-flash[data-flash="destruct"] {
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 220, 180, 0.35),
+    transparent 70%
+  );
 }
-.game-flash[data-flash='victory'] {
-  background: radial-gradient(ellipse at center, rgba(255, 224, 102, 0.6), rgba(255, 224, 102, 0.1) 75%, transparent 95%);
+.game-flash[data-flash="victory"] {
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 224, 102, 0.6),
+    rgba(255, 224, 102, 0.1) 75%,
+    transparent 95%
+  );
 }
 
 .game-error {
@@ -297,7 +358,14 @@ canvas[data-game-canvas] {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hud-value, .overlay-title { text-shadow: none; }
-  .overlay { animation: none; }
-  .hud-dash-fill { transition: none; }
+  .hud-value,
+  .overlay-title {
+    text-shadow: none;
+  }
+  .overlay {
+    animation: none;
+  }
+  .hud-dash-fill {
+    transition: none;
+  }
 }

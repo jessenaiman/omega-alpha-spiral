@@ -16,6 +16,7 @@ Fixed top-down perspective (fov ~50, height ~8.5, ~14° pitch), critically dampe
 ## Player start, first decision, first threat
 
 Player spawns at radius ~0.55, angle 0, at rest.
+
 - **First decision (≤2s):** a single shard spawns inbound; the player decides steer-then-dash versus body-block-to-learn-the-sting.
 - **First threat (≤3s):** the shard crosses the intercept band; dashboard HUD shows dash cooldown is ready.
 - **First reward:** the first shatter pops a spark burst, chain×1, +10, a ~40ms hitstop and a small shake — the juice pipeline is introduced all at once at the lowest cost.
@@ -28,14 +29,14 @@ Player spawns at radius ~0.55, angle 0, at rest.
 
 ## Escalation (per wave, every ~15s or when the pool empties)
 
-| Wave | New thing | Concept introduced |
-| --- | --- | --- |
-| 1 | Straight shards | Dash-through contract + chain |
-| 2 | Splitters (teal, crack into 2 fast minis on a dash kill) | Where to break it; minis spawn only with cap headroom |
-| 3 | Drifters (sine wobble along their arm) | Late commitment can whiff |
-| 4 | Hearts (coral; destroy OR arrival heals +1 integrity, full-core pays bonus) | Recovery decision + never a breach |
-| 5 | Shielded (amber, frontal core-facing cone bounces a front dash) | Flank the hit — the one "no" in the game |
-| 6 | Final push: all kinds, faster cadence, and the wave **only clears when the field is empty at the clock** | Clean up to win; integrity banks as bonus |
+| Wave | New thing                                                                                                | Concept introduced                                    |
+| ---- | -------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| 1    | Straight shards                                                                                          | Dash-through contract + chain                         |
+| 2    | Splitters (teal, crack into 2 fast minis on a dash kill)                                                 | Where to break it; minis spawn only with cap headroom |
+| 3    | Drifters (sine wobble along their arm)                                                                   | Late commitment can whiff                             |
+| 4    | Hearts (coral; destroy OR arrival heals +1 integrity, full-core pays bonus)                              | Recovery decision + never a breach                    |
+| 5    | Shielded (amber, frontal core-facing cone bounces a front dash)                                          | Flank the hit — the one "no" in the game              |
+| 6    | Final push: all kinds, faster cadence, and the wave **only clears when the field is empty at the clock** | Clean up to win; integrity banks as bonus             |
 
 Every wave raises inbound speed (capped) and tightens the rhythm, with the same max on-screen cap so it never reads as noise. One new concept at a time per `genre-design.md`.
 
@@ -48,7 +49,7 @@ Every wave raises inbound speed (capped) and tightens the rhythm, with the same 
 
 ## Recovery beats
 
-Wave-clear banner (no spawning during the banner) is the breathing room between pressure spikes; hearts are the mid-wave recovery beat (a lane you *want* to intercept). Chain window (2.5s) is a soft momentum beat. Full pause via Escape.
+Wave-clear banner (no spawning during the banner) is the breathing room between pressure spikes; hearts are the mid-wave recovery beat (a lane you _want_ to intercept). Chain window (2.5s) is a soft momentum beat. Full pause via Escape.
 
 ## Telegraphs
 

@@ -12,13 +12,20 @@
  * frontal cone — first it steers out to the flank, then it strikes.
  */
 
-import type { Intents } from '../../core/input';
-import { TUNING } from './tuning';
-import { inShieldCone, type Shard, type WorldState } from './rules';
+import type { Intents } from "../../../../src/core/input";
+import { TUNING } from "./tuning";
+import { inShieldCone, type Shard, type WorldState } from "./rules";
 
-const ZERO: Intents = { moveX: 0, moveY: 0, dash: false, act: false, pause: false };
+const ZERO: Intents = {
+  moveX: 0,
+  moveY: 0,
+  dash: false,
+  act: false,
+  pause: false,
+};
 /** The dash carries the player this far; commit once the target is in range. */
-const DASH_REACH = TUNING.dashRadius + TUNING.dashSpeed * TUNING.dashDurationSec * 0.9;
+const DASH_REACH =
+  TUNING.dashRadius + TUNING.dashSpeed * TUNING.dashDurationSec * 0.9;
 const SWAY = 0.28;
 /** A pulsar this close to firing cannot be safely approached on foot. */
 const PULSAR_AVOID = TUNING.dashDurationSec + 0.3;
@@ -31,13 +38,18 @@ export function autopilot(world: WorldState): Intents {
     // Nothing inbound: orbit the core at a lazy radius so the ship stays alive.
     const angle = world.time * 1.6;
     const radius = 0.42;
-    return steerTo(player.pos, { x: Math.cos(angle) * radius, y: Math.sin(angle) * radius }, 0, world.time);
+    return steerTo(
+      player.pos,
+      { x: Math.cos(angle) * radius, y: Math.sin(angle) * radius },
+      0,
+      world.time
+    );
   }
 
   const d = dist(player.pos, target.pos);
 
   // A shielded shard must be struck from the flank, not the frontal cone.
-  if (target.kind === 'shielded') {
+  if (target.kind === "shielded") {
     if (inShieldCone(target, player.pos)) {
       return steerTo(player.pos, flankPoint(target), d, world.time);
     }
@@ -45,12 +57,17 @@ export function autopilot(world: WorldState): Intents {
     const strike = leadPoint(target);
     const sd = dist(player.pos, strike);
     const ready = player.dashCooldown <= 0 && player.dashTime <= 0;
-    return { ...steerTo(player.pos, strike, sd, world.time), dash: ready && sd <= DASH_REACH };
+    return {
+      ...steerTo(player.pos, strike, sd, world.time),
+      dash: ready && sd <= DASH_REACH,
+    };
   }
 
   const base = steerTo(player.pos, target.pos, d, world.time);
   const aligned =
-    (target.pos.x - player.pos.x) * player.facing.x + (target.pos.y - player.pos.y) * player.facing.y > 0;
+    (target.pos.x - player.pos.x) * player.facing.x +
+      (target.pos.y - player.pos.y) * player.facing.y >
+    0;
   const killReady =
     aligned &&
     d <= DASH_REACH &&
@@ -59,8 +76,17 @@ export function autopilot(world: WorldState): Intents {
 
   // A charging pulsar is killed before its ring fires only when the strike is
   // already lined up; otherwise back off outside its reach and wait it out.
-  if (target.kind === 'pulsar' && target.pulseTimer <= PULSAR_AVOID && !killReady) {
-    return steerTo(player.pos, standoffPoint(target, player.pos), d, world.time);
+  if (
+    target.kind === "pulsar" &&
+    target.pulseTimer <= PULSAR_AVOID &&
+    !killReady
+  ) {
+    return steerTo(
+      player.pos,
+      standoffPoint(target, player.pos),
+      d,
+      world.time
+    );
   }
 
   if (killReady) {
@@ -81,7 +107,7 @@ export function pickTarget(world: WorldState): Shard | undefined {
   let urgent: Shard | undefined;
   let urgentR = Infinity;
   for (const shard of world.shards) {
-    if (!shard.alive || shard.kind === 'heart') continue;
+    if (!shard.alive || shard.kind === "heart") continue;
     const radius = Math.hypot(shard.pos.x, shard.pos.y);
     if (radius < TUNING.dashChargeFromRadius && radius < urgentR) {
       urgent = shard;
@@ -95,7 +121,7 @@ export function pickTarget(world: WorldState): Shard | undefined {
     let heart: Shard | undefined;
     let heartR = Infinity;
     for (const shard of world.shards) {
-      if (!shard.alive || shard.kind !== 'heart') continue;
+      if (!shard.alive || shard.kind !== "heart") continue;
       const radius = Math.hypot(shard.pos.x, shard.pos.y);
       if (radius < heartR) {
         heart = shard;
@@ -110,7 +136,7 @@ export function pickTarget(world: WorldState): Shard | undefined {
   let splitter: Shard | undefined;
   let splitterR = Infinity;
   for (const shard of world.shards) {
-    if (!shard.alive || shard.kind !== 'splitter') continue;
+    if (!shard.alive || shard.kind !== "splitter") continue;
     const radius = Math.hypot(shard.pos.x, shard.pos.y);
     if (radius < splitterR) {
       splitter = shard;
@@ -179,7 +205,10 @@ function flankPoint(shard: Shard): { x: number; y: number } {
  * A point just outside a charging pulsar's ring reach, on the player's side,
  * so the ghost can wait out the pulse without eating it.
  */
-function standoffPoint(shard: Shard, playerPos: { x: number; y: number }): { x: number; y: number } {
+function standoffPoint(
+  shard: Shard,
+  playerPos: { x: number; y: number }
+): { x: number; y: number } {
   const dx = playerPos.x - shard.pos.x;
   const dy = playerPos.y - shard.pos.y;
   const length = Math.max(1e-6, Math.hypot(dx, dy));
@@ -198,14 +227,17 @@ function standoffPoint(shard: Shard, playerPos: { x: number; y: number }): { x: 
  */
 function leadPoint(shard: Shard): { x: number; y: number } {
   const lead = shard.speed * 0.22;
-  return { x: shard.pos.x + Math.cos(shard.bearing) * lead, y: shard.pos.y + Math.sin(shard.bearing) * lead };
+  return {
+    x: shard.pos.x + Math.cos(shard.bearing) * lead,
+    y: shard.pos.y + Math.sin(shard.bearing) * lead,
+  };
 }
 
 function steerTo(
   from: { x: number; y: number },
   to: { x: number; y: number },
   distance: number,
-  time: number,
+  time: number
 ): Intents {
   const dx = to.x - from.x;
   const dy = to.y - from.y;
@@ -215,9 +247,18 @@ function steerTo(
   // Sway only while the target is far; go straight in for the kill.
   const swayScale = Math.min(1, Math.max(0, (distance - DASH_REACH) / 0.6));
   const angle = Math.atan2(dy, dx) + Math.cos(time * 3.1) * SWAY * swayScale;
-  return { moveX: Math.cos(angle), moveY: Math.sin(angle), dash: false, act: false, pause: false };
+  return {
+    moveX: Math.cos(angle),
+    moveY: Math.sin(angle),
+    dash: false,
+    act: false,
+    pause: false,
+  };
 }
 
-function dist(a: { x: number; y: number }, b: { x: number; y: number }): number {
+function dist(
+  a: { x: number; y: number },
+  b: { x: number; y: number }
+): number {
   return Math.hypot(a.x - b.x, a.y - b.y);
 }

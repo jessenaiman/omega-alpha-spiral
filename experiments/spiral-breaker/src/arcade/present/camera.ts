@@ -6,9 +6,9 @@
  * removes both, and the lean snaps instead of easing.
  */
 
-import * as THREE from 'three';
-import type { WorldState } from '../game';
-import { sceneX, sceneZ } from './scale';
+import * as THREE from "three";
+import type { WorldState } from "../game";
+import { sceneX, sceneZ } from "./scale";
 
 export interface ArenaCamera {
   update(
@@ -16,7 +16,7 @@ export interface ArenaCamera {
     dtSec: number,
     trauma: number,
     fovPunch: number,
-    reducedMotion: boolean,
+    reducedMotion: boolean
   ): void;
   dispose(): void;
 }
@@ -26,7 +26,9 @@ const BASE_Z = 2.3;
 const BASE_FOV = 46;
 const LEAN = 0.32;
 
-export function createArenaCamera(camera: THREE.PerspectiveCamera): ArenaCamera {
+export function createArenaCamera(
+  camera: THREE.PerspectiveCamera
+): ArenaCamera {
   camera.position.set(0, BASE_HEIGHT, BASE_Z);
   camera.lookAt(0, 0, 0);
   let shakeTime = 0;

@@ -6,27 +6,28 @@
  * the Ghost Terminal scene, so neither boot path can break the other.
  */
 
-import './styles.css';
-import { createArcadeHost } from './host';
-import { createArenaCamera } from './present/camera';
-import { createActors } from './present/actors';
-import { createArena } from './present/arena';
-import { createFeel } from './present/feel';
-import { createArcadeRenderContext } from './present/renderer';
-import { createVfx } from './present/vfx';
-import { createHud } from './ui/hud';
-import { createSfx } from './audio/sfx';
+import "./styles.css";
+import { createArcadeHost } from "./host";
+import { createArenaCamera } from "./present/camera";
+import { createActors } from "./present/actors";
+import { createArena } from "./present/arena";
+import { createFeel } from "./present/feel";
+import { createArcadeRenderContext } from "./present/renderer";
+import { createVfx } from "./present/vfx";
+import { createHud } from "./ui/hud";
+import { createSfx } from "./audio/sfx";
 
-const canvas = document.querySelector<HTMLCanvasElement>('[data-game-canvas]');
-const hudRoot = document.querySelector<HTMLElement>('[data-arcade-hud]');
-const errorBox = document.querySelector<HTMLElement>('[data-game-error]');
-const muteButton = document.querySelector<HTMLElement>('[data-hud-mute]');
+const canvas = document.querySelector<HTMLCanvasElement>("[data-game-canvas]");
+const hudRoot = document.querySelector<HTMLElement>("[data-arcade-hud]");
+const errorBox = document.querySelector<HTMLElement>("[data-game-error]");
+const muteButton = document.querySelector<HTMLElement>("[data-hud-mute]");
 
 try {
-  if (!canvas || !hudRoot) throw new Error('Spiral Breaker shell is incomplete.');
+  if (!canvas || !hudRoot)
+    throw new Error("Spiral Breaker shell is incomplete.");
 
-  const seedParam = new URLSearchParams(globalThis.location.search).get('seed');
-  const seed = seedParam ?? 'spiral-42';
+  const seedParam = new URLSearchParams(globalThis.location.search).get("seed");
+  const seed = seedParam ?? "spiral-42";
 
   const render = createArcadeRenderContext(canvas);
   const arena = createArena();
@@ -72,12 +73,21 @@ try {
         healFlash: vfx.healFlash,
         chain: host.world.chain,
       });
-      cameraRig.update(host.world, dtSec, vfx.trauma, vfx.fovPunch, reducedMotion);
+      cameraRig.update(
+        host.world,
+        dtSec,
+        vfx.trauma,
+        vfx.fovPunch,
+        reducedMotion
+      );
       render.render();
 
       frame += 1;
       if (frame % 12 === 0) {
-        host.reportRender({ canvas: render.canvasSize(), renderer: render.metrics() });
+        host.reportRender({
+          canvas: render.canvasSize(),
+          renderer: render.metrics(),
+        });
       }
     },
   });
@@ -91,23 +101,27 @@ try {
   const unlockAudio = (): void => {
     sfx.unlock();
   };
-  globalThis.addEventListener('pointerdown', unlockAudio, { once: true });
-  globalThis.addEventListener('keydown', unlockAudio, { once: true });
+  globalThis.addEventListener("pointerdown", unlockAudio, { once: true });
+  globalThis.addEventListener("keydown", unlockAudio, { once: true });
 
   if (muteButton) {
-    muteButton.addEventListener('click', () => {
+    muteButton.addEventListener("click", () => {
       sfx.unlock();
       hud.setMuted(sfx.setMuted(!sfx.muted));
     });
     hud.setMuted(sfx.muted);
   }
 
-  globalThis.addEventListener('resize', () => render.resize());
+  globalThis.addEventListener("resize", () => render.resize());
 
-  host.installAcceptanceSurfaces(globalThis as unknown as Parameters<typeof host.installAcceptanceSurfaces>[0]);
+  host.installAcceptanceSurfaces(
+    globalThis as unknown as Parameters<
+      typeof host.installAcceptanceSurfaces
+    >[0]
+  );
 
   render.resize();
-  const flash = document.querySelector<HTMLElement>('[data-game-flash]');
+  const flash = document.querySelector<HTMLElement>("[data-game-flash]");
   let last = performance.now();
   const tick = (now: number): void => {
     const delta = now - last;
@@ -118,8 +132,8 @@ try {
     host.update(delta * feel.timeScale);
     if (flash && !host.settings.value.reducedMotion) {
       const kind = vfx.flashKind;
-      flash.dataset.flash = kind ?? '';
-      flash.style.opacity = kind ? String(vfx.flash) : '0';
+      flash.dataset.flash = kind ?? "";
+      flash.style.opacity = kind ? String(vfx.flash) : "0";
     }
     requestAnimationFrame(tick);
   };
@@ -127,7 +141,10 @@ try {
 } catch (error) {
   if (errorBox) {
     errorBox.hidden = false;
-    errorBox.textContent = error instanceof Error ? error.message : 'Spiral Breaker could not start.';
+    errorBox.textContent =
+      error instanceof Error
+        ? error.message
+        : "Spiral Breaker could not start.";
   }
   throw error;
 }

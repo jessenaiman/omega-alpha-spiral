@@ -7,9 +7,9 @@
  * motion; nothing else about the arena moves.
  */
 
-import * as THREE from 'three';
-import { TUNING } from '../game';
-import { WORLD_SCALE } from './scale';
+import * as THREE from "three";
+import { TUNING } from "../game";
+import { WORLD_SCALE } from "./scale";
 
 export interface ArenaUpdate {
   readonly timeSec: number;
@@ -90,12 +90,19 @@ export function createArena(): Arena {
   group.add(floor);
 
   const rimGeometry = new THREE.TorusGeometry(RADIUS, 0.04, 10, 128);
-  const rimMaterial = new THREE.MeshBasicMaterial({ color: 0x36c6ff, toneMapped: false });
+  const rimMaterial = new THREE.MeshBasicMaterial({
+    color: 0x36c6ff,
+    toneMapped: false,
+  });
   const rim = new THREE.Mesh(rimGeometry, rimMaterial);
   rim.rotation.x = -Math.PI / 2;
   group.add(rim);
 
-  const slowGeometry = new THREE.RingGeometry(SLOW_RADIUS - 0.012, SLOW_RADIUS + 0.012, 96);
+  const slowGeometry = new THREE.RingGeometry(
+    SLOW_RADIUS - 0.012,
+    SLOW_RADIUS + 0.012,
+    96
+  );
   const slowMaterial = new THREE.MeshBasicMaterial({
     color: 0x1d6ea8,
     transparent: true,
@@ -107,14 +114,27 @@ export function createArena(): Arena {
   group.add(slowRing);
 
   const coreGeometry = new THREE.CircleGeometry(CORE_RADIUS, 48);
-  const coreMaterial = new THREE.MeshBasicMaterial({ color: 0x9ff4ff, toneMapped: false });
+  const coreMaterial = new THREE.MeshBasicMaterial({
+    color: 0x9ff4ff,
+    toneMapped: false,
+  });
   const core = new THREE.Mesh(coreGeometry, coreMaterial);
   core.rotation.x = -Math.PI / 2;
   core.position.y = 0.01;
   group.add(core);
 
-  const haloGeometry = new THREE.TorusGeometry(CORE_RADIUS + 0.05, 0.028, 10, 64);
-  const haloMaterial = new THREE.MeshBasicMaterial({ color: 0x6fe6ff, toneMapped: false, transparent: true, opacity: 0.9 });
+  const haloGeometry = new THREE.TorusGeometry(
+    CORE_RADIUS + 0.05,
+    0.028,
+    10,
+    64
+  );
+  const haloMaterial = new THREE.MeshBasicMaterial({
+    color: 0x6fe6ff,
+    toneMapped: false,
+    transparent: true,
+    opacity: 0.9,
+  });
   const halo = new THREE.Mesh(haloGeometry, haloMaterial);
   halo.rotation.x = -Math.PI / 2;
   halo.position.y = 0.02;
@@ -134,13 +154,16 @@ export function createArena(): Arena {
   });
   let backdropTexture: THREE.Texture | null = null;
   const backdroploader = new THREE.TextureLoader();
-  backdroploader.load('assets/textures/spiral-breaker-vortex-background.jpg', (texture) => {
-    texture.colorSpace = THREE.SRGBColorSpace;
-    texture.anisotropy = 4;
-    backdropTexture = texture;
-    backdropMaterial.map = texture;
-    backdropMaterial.needsUpdate = true;
-  });
+  backdroploader.load(
+    "assets/textures/spiral-breaker-vortex-background.jpg",
+    (texture) => {
+      texture.colorSpace = THREE.SRGBColorSpace;
+      texture.anisotropy = 4;
+      backdropTexture = texture;
+      backdropMaterial.map = texture;
+      backdropMaterial.needsUpdate = true;
+    }
+  );
   const backdrop = new THREE.Mesh(backdropGeometry, backdropMaterial);
   backdrop.rotation.y = Math.PI;
   group.add(backdrop);
@@ -153,28 +176,46 @@ export function createArena(): Arena {
   return {
     group,
     update(state: ArenaUpdate): void {
-      const health = state.maxIntegrity > 0 ? state.integrity / state.maxIntegrity : 0;
+      const health =
+        state.maxIntegrity > 0 ? state.integrity / state.maxIntegrity : 0;
       floorMaterial.uniforms.uTime.value = state.timeSec;
       floorMaterial.uniforms.uReduced.value = state.reducedMotion ? 1 : 0;
       floorMaterial.uniforms.uChain.value = state.chain;
       floorMaterial.uniforms.uFlash.value = state.breachFlash;
 
       workingColor.copy(coreHurt).lerp(coreHealthy, health);
-      if (state.healFlash > 0) workingColor.lerp(coreHeal, Math.min(1, state.healFlash * 1.2));
+      if (state.healFlash > 0)
+        workingColor.lerp(coreHeal, Math.min(1, state.healFlash * 1.2));
       coreMaterial.color.copy(workingColor);
       haloMaterial.color.copy(workingColor);
 
-      const pulse = state.reducedMotion ? 1 : 1 + Math.sin(state.timeSec * 2.6) * 0.06;
+      const pulse = state.reducedMotion
+        ? 1
+        : 1 + Math.sin(state.timeSec * 2.6) * 0.06;
       const healPulse = 1 + state.healFlash * 0.18;
       halo.scale.setScalar(pulse * healPulse);
       core.scale.setScalar(pulse * healPulse);
       rimMaterial.color.setHex(state.breachFlash > 0.2 ? 0xff8f6a : 0x36c6ff);
     },
     dispose(): void {
-      for (const geometry of [floorGeometry, rimGeometry, slowGeometry, coreGeometry, haloGeometry, backdropGeometry]) {
+      for (const geometry of [
+        floorGeometry,
+        rimGeometry,
+        slowGeometry,
+        coreGeometry,
+        haloGeometry,
+        backdropGeometry,
+      ]) {
         geometry.dispose();
       }
-      for (const material of [floorMaterial, rimMaterial, slowMaterial, coreMaterial, haloMaterial, backdropMaterial]) {
+      for (const material of [
+        floorMaterial,
+        rimMaterial,
+        slowMaterial,
+        coreMaterial,
+        haloMaterial,
+        backdropMaterial,
+      ]) {
         material.dispose();
       }
       backdropTexture?.dispose();

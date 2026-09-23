@@ -1,44 +1,17 @@
 {
+  "runId": "intro-baseline-1",
   "version": 1,
-  "runId": "pass-3",
+  "artifacts": [],
   "captures": [
     {
+      "report": "artifacts/intro-baseline-1/desktop.json",
       "mode": "desktop",
-      "state": "active-play",
-      "report": "artifacts/pass-3/desktop-active-play.json"
+      "state": null
     },
     {
+      "report": "artifacts/intro-baseline-1/mobile.json",
       "mode": "mobile",
-      "state": "active-play",
-      "report": "artifacts/pass-3/mobile-active-play.json"
-    },
-    {
-      "mode": "desktop",
-      "state": "game-over",
-      "report": "artifacts/pass-3/desktop-game-over.json"
-    },
-    {
-      "mode": "desktop",
-      "state": "menu",
-      "report": "artifacts/pass-3/desktop-menu.json"
-    },
-    {
-      "mode": "desktop",
-      "state": "victory",
-      "report": "artifacts/pass-3/desktop-victory.json"
+      "state": null
     }
-  ],
-  "artifacts": [
-    "spiral-breaker.html",
-    "src/arcade/game/rules.ts",
-    "src/arcade/game/autopilot.ts",
-    "src/arcade/game/tuning.ts",
-    "src/arcade/host.ts",
-    "src/arcade/present/renderer.ts",
-    "src/arcade/present/actors.ts",
-    "src/arcade/present/vfx.ts",
-    "src/arcade/audio/sfx.ts",
-    "src/arcade/ui/hud.ts",
-    "artifacts/qa/bot-playtest.json"
   ]
 }

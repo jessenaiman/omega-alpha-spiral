@@ -1,0 +1,49 @@
+{
+  "url": "http://127.0.0.1:5199/intro.html",
+  "mode": "desktop",
+  "state": null,
+  "requestedState": null,
+  "appliedState": null,
+  "runId": "intro-baseline-1",
+  "seed": null,
+  "screenshotPath": "artifacts\\intro-baseline-1\\desktop.png",
+  "gpu": {
+    "renderer": "ANGLE (NVIDIA, NVIDIA GeForce GTX 1660 (0x00002184) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+    "vendor": "Google Inc. (NVIDIA)",
+    "softwareRendered": false
+  },
+  "result": {
+    "ok": true,
+    "reason": "nonblank",
+    "rect": {
+      "x": 0,
+      "y": 0,
+      "width": 1280,
+      "height": 720
+    },
+    "drawingBuffer": {
+      "width": 1280,
+      "height": 720
+    },
+    "alphaPixels": 4096,
+    "variance": 215,
+    "colorBuckets": 3,
+    "metrics": {
+      "colorBuckets": 5,
+      "colorEntropyBits": 0.02,
+      "edgeDensity": 0.004,
+      "luminance": {
+        "mean": 0.3,
+        "p5": 0,
+        "p95": 1,
+        "contrast": 1
+      },
+      "dominantColorShare": 0.998,
+      "nonBackgroundShare": 0.002
+    },
+    "renderBudget": null,
+    "diagnostics": null
+  },
+  "consoleErrors": [],
+  "pageErrors": []
+}

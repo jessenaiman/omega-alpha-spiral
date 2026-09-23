@@ -4,15 +4,15 @@
 
 ## Clause-by-clause proof
 
-| Clause | Proof in code |
-| --- | --- |
-| The verb is mapped to real input | `dash` intent (Space / south button) is already the fixed contract in `src/core/input.ts`; `moveX/moveY` steer. The sign map is caught for parity with the existing loop contract. |
-| The objective is visible | Core sits at arena center with integrity pips in HUD; the spiral arms define the field; the HUD reads **wave N/6** so the win state is always on screen. |
-| Pressure exists in the first playable minute | First shard spawns within ~2 seconds of `play`; dash cooldown blocks panic-cancel; splitters arrive at wave 2. |
-| Reward changes state, not only visuals | Score + chain multiplier live in run state; hearts heal integrity; clearing wave 6 banks an integrity bonus into the final score; wave clears change the world (new kinds + speed). |
-| Failure teaches what happened | Breach emits `core.breach` with a the-cause message ("THE CORE WEAKENS"); a graze emits `player.knockback` with a stun readout; a front-ranged shield dash emits `shard.blocked` ("BLOCKED"), so the flank lesson is explicit. |
-| Restart is fast enough | One button (Enter/click/R on results) re-seeds and re-enters `play` with the same seed unless a new one is chosen. |
-| Winning is a bounded goal | The gauntlet is exactly `TUNING.gauntletWaves` (6) waves; the final wave ends in `victory` when the field is empty at the wave clock, banking `100 × integrity` bonus. |
+| Clause                                       | Proof in code                                                                                                                                                                                                                  |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| The verb is mapped to real input             | `dash` intent (Space / south button) is already the fixed contract in `src/core/input.ts`; `moveX/moveY` steer. The sign map is caught for parity with the existing loop contract.                                             |
+| The objective is visible                     | Core sits at arena center with integrity pips in HUD; the spiral arms define the field; the HUD reads **wave N/6** so the win state is always on screen.                                                                       |
+| Pressure exists in the first playable minute | First shard spawns within ~2 seconds of `play`; dash cooldown blocks panic-cancel; splitters arrive at wave 2.                                                                                                                 |
+| Reward changes state, not only visuals       | Score + chain multiplier live in run state; hearts heal integrity; clearing wave 6 banks an integrity bonus into the final score; wave clears change the world (new kinds + speed).                                            |
+| Failure teaches what happened                | Breach emits `core.breach` with a the-cause message ("THE CORE WEAKENS"); a graze emits `player.knockback` with a stun readout; a front-ranged shield dash emits `shard.blocked` ("BLOCKED"), so the flank lesson is explicit. |
+| Restart is fast enough                       | One button (Enter/click/R on results) re-seeds and re-enters `play` with the same seed unless a new one is chosen.                                                                                                             |
+| Winning is a bounded goal                    | The gauntlet is exactly `TUNING.gauntletWaves` (6) waves; the final wave ends in `victory` when the field is empty at the wave clock, banking `100 × integrity` bonus.                                                         |
 
 ## Fixed update order (host step, one per 16.6ms step)
 

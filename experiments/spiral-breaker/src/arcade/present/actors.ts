@@ -14,15 +14,25 @@
  * rules — the visual group only ever reports the state the rules compute.
  */
 
-import * as THREE from 'three';
-import { easeOutBack, easeOutCubic, createTweenManager } from './tween';
-import { TUNING, type ShardKind, type WorldState, type ArcadeEvent } from '../game';
-import { sceneX, sceneZ } from './scale';
+import * as THREE from "three";
+import { easeOutBack, easeOutCubic, createTweenManager } from "./tween";
+import {
+  TUNING,
+  type ShardKind,
+  type WorldState,
+  type ArcadeEvent,
+} from "../game";
+import { sceneX, sceneZ } from "./scale";
 
 export interface Actors {
   readonly group: THREE.Group;
   handle(events: readonly ArcadeEvent[]): void;
-  update(world: WorldState, timeSec: number, dtSec: number, reducedMotion: boolean): void;
+  update(
+    world: WorldState,
+    timeSec: number,
+    dtSec: number,
+    reducedMotion: boolean
+  ): void;
   dispose(): void;
 }
 
@@ -37,13 +47,13 @@ export interface PlayerKit {
 
 /** The authored hero parts, named so state cues and tests can reach them. */
 export const PLAYER_KIT_CHILD_NAMES = [
-  'hull',
-  'wingLeft',
-  'wingRight',
-  'cockpitGlass',
-  'engineLeft',
-  'engineRight',
-  'trim',
+  "hull",
+  "wingLeft",
+  "wingRight",
+  "cockpitGlass",
+  "engineLeft",
+  "engineRight",
+  "trim",
 ] as const;
 
 const SHARD_POOL = 20;
@@ -95,7 +105,11 @@ export function createHeartGeometry(): THREE.ExtrudeGeometry {
   // top-down camera and reads as a heart silhouette in motion.
   geometry.rotateX(-Math.PI / 2);
   const span = 110;
-  geometry.scale((SHARD_RADIUS * 1.9) / span, (SHARD_RADIUS * 1.9) / span, (SHARD_RADIUS * 1.9) / span);
+  geometry.scale(
+    (SHARD_RADIUS * 1.9) / span,
+    (SHARD_RADIUS * 1.9) / span,
+    (SHARD_RADIUS * 1.9) / span
+  );
   geometry.computeVertexNormals();
   return geometry;
 }
@@ -115,7 +129,10 @@ export function buildPlayerKit(): PlayerKit {
     emissive: PLAYER_COLOR,
     emissiveIntensity: 0.32,
   });
-  const trimMaterial = new THREE.MeshBasicMaterial({ color: PLAYER_COLOR, toneMapped: false });
+  const trimMaterial = new THREE.MeshBasicMaterial({
+    color: PLAYER_COLOR,
+    toneMapped: false,
+  });
   const glassMaterial = new THREE.MeshStandardMaterial({
     color: 0xc8f2ff,
     roughness: 0.12,
@@ -135,7 +152,7 @@ export function buildPlayerKit(): PlayerKit {
   const hullGeometry = new THREE.ConeGeometry(0.13, 0.56, 4);
   hullGeometry.rotateZ(-Math.PI / 2);
   const hull = new THREE.Mesh(hullGeometry, bodyPrimary);
-  hull.name = 'hull';
+  hull.name = "hull";
   group.add(hull);
 
   // Swept wings — two flat triangles in the ground plane, symmetric about the
@@ -152,7 +169,7 @@ export function buildPlayerKit(): PlayerKit {
     wingGeometries.push(geometry);
     const wing = new THREE.Mesh(geometry, bodyPrimary);
     wing.position.set(0.02, 0.02, 0);
-    wing.name = side === 1 ? 'wingLeft' : 'wingRight';
+    wing.name = side === 1 ? "wingLeft" : "wingRight";
     return wing;
   };
   const wingLeft = makeWing(1);
@@ -163,7 +180,7 @@ export function buildPlayerKit(): PlayerKit {
   const cockpitGeometry = new THREE.SphereGeometry(0.055, 12, 8);
   const cockpit = new THREE.Mesh(cockpitGeometry, glassMaterial);
   cockpit.position.set(0.16, 0.1, 0);
-  cockpit.name = 'cockpitGlass';
+  cockpit.name = "cockpitGlass";
   group.add(cockpit);
 
   // Twin engine pods — nozzles at the tail, emissive glow ramps on dash.
@@ -171,17 +188,17 @@ export function buildPlayerKit(): PlayerKit {
   engineGeometry.rotateZ(Math.PI / 2);
   const engineLeft = new THREE.Mesh(engineGeometry, engineMaterial);
   engineLeft.position.set(-0.2, 0.06, 0.12);
-  engineLeft.name = 'engineLeft';
+  engineLeft.name = "engineLeft";
   const engineRight = new THREE.Mesh(engineGeometry, engineMaterial);
   engineRight.position.set(-0.2, 0.06, -0.12);
-  engineRight.name = 'engineRight';
+  engineRight.name = "engineRight";
   group.add(engineLeft, engineRight);
 
   // Emissive trim — a thin spine so the hero keeps its neon identity in bloom.
   const trimGeometry = new THREE.BoxGeometry(0.4, 0.03, 0.03);
   const trim = new THREE.Mesh(trimGeometry, trimMaterial);
   trim.position.set(-0.02, 0.09, 0);
-  trim.name = 'trim';
+  trim.name = "trim";
   group.add(trim);
 
   return {
@@ -232,7 +249,10 @@ export function createActors(): Actors {
     pulsar: new THREE.IcosahedronGeometry(SHARD_RADIUS * 1.05, 0),
   };
   /** Per-kind finish: roughness/metalness for the crystalline shards. */
-  const KIND_FINISH: Record<ShardKind, { roughness: number; metalness: number; emissiveIntensity: number }> = {
+  const KIND_FINISH: Record<
+    ShardKind,
+    { roughness: number; metalness: number; emissiveIntensity: number }
+  > = {
     standard: { roughness: 0.32, metalness: 0.6, emissiveIntensity: 0.22 },
     splitter: { roughness: 0.28, metalness: 0.68, emissiveIntensity: 0.2 },
     mini: { roughness: 0.3, metalness: 0.62, emissiveIntensity: 0.26 },
@@ -240,7 +260,9 @@ export function createActors(): Actors {
     shielded: { roughness: 0.3, metalness: 0.7, emissiveIntensity: 0.18 },
     pulsar: { roughness: 0.34, metalness: 0.58, emissiveIntensity: 0.24 },
   };
-  const makeShardMaterial = (color: THREE.ColorRepresentation): THREE.MeshStandardMaterial => {
+  const makeShardMaterial = (
+    color: THREE.ColorRepresentation
+  ): THREE.MeshStandardMaterial => {
     const material = new THREE.MeshStandardMaterial({
       color,
       roughness: 0.32,
@@ -250,7 +272,9 @@ export function createActors(): Actors {
     });
     return material;
   };
-  const standardMaterials = STANDARD_VARIANTS.map((color) => makeShardMaterial(color));
+  const standardMaterials = STANDARD_VARIANTS.map((color) =>
+    makeShardMaterial(color)
+  );
   const kindMaterials = Object.fromEntries(
     (Object.keys(SHARD_KIND_COLORS) as ShardKind[]).map((kind) => {
       const finish = KIND_FINISH[kind];
@@ -260,21 +284,31 @@ export function createActors(): Actors {
         metalness: finish.metalness,
         emissive: SHARD_KIND_COLORS[kind],
         emissiveIntensity: finish.emissiveIntensity,
-        transparent: kind === 'heart',
-        opacity: kind === 'heart' ? 0.9 : 1,
+        transparent: kind === "heart",
+        opacity: kind === "heart" ? 0.9 : 1,
         // The heart token is flat and face-up; seen from above it must read
         // from either lobe orientation as it spins.
-        side: kind === 'heart' ? THREE.DoubleSide : THREE.FrontSide,
+        side: kind === "heart" ? THREE.DoubleSide : THREE.FrontSide,
       });
       return [kind, material];
-    }),
+    })
   ) as Record<ShardKind, THREE.MeshStandardMaterial>;
-  const materialFor = (kind: ShardKind, variant: number): THREE.MeshStandardMaterial =>
-    kind === 'standard' ? (standardMaterials[variant % standardMaterials.length] as THREE.MeshStandardMaterial) : kindMaterials[kind];
+  const materialFor = (
+    kind: ShardKind,
+    variant: number
+  ): THREE.MeshStandardMaterial =>
+    kind === "standard"
+      ? (standardMaterials[
+          variant % standardMaterials.length
+        ] as THREE.MeshStandardMaterial)
+      : kindMaterials[kind];
 
   const shards: THREE.Mesh[] = [];
   for (let index = 0; index < SHARD_POOL; index += 1) {
-    const mesh = new THREE.Mesh(shardGeometries.standard, kindMaterials.standard);
+    const mesh = new THREE.Mesh(
+      shardGeometries.standard,
+      kindMaterials.standard
+    );
     mesh.visible = false;
     mesh.position.y = 0.22;
     shards.push(mesh);
@@ -317,11 +351,11 @@ export function createActors(): Actors {
     group,
     handle(events: readonly ArcadeEvent[]): void {
       for (const event of events) {
-        if (event.type === 'dash.start') {
-          tweens.cancel('squash');
-          tweens.cancel('squash-settle');
+        if (event.type === "dash.start") {
+          tweens.cancel("squash");
+          tweens.cancel("squash-settle");
           tweens.tween(
-            'stretch',
+            "stretch",
             0.07,
             (value) => {
               feelScale.value = 1 + 0.4 * value;
@@ -329,29 +363,29 @@ export function createActors(): Actors {
             easeOutCubic,
             () => {
               tweens.tween(
-                'stretch-settle',
+                "stretch-settle",
                 0.16,
                 (value) => {
                   feelScale.value = 1 + 0.4 * (1 - value);
                 },
-                easeOutBack,
+                easeOutBack
               );
-            },
+            }
           );
-        } else if (event.type === 'player.knockback') {
-          tweens.cancel('stretch');
-          tweens.cancel('stretch-settle');
+        } else if (event.type === "player.knockback") {
+          tweens.cancel("stretch");
+          tweens.cancel("stretch-settle");
           knockFlash.value = 1;
           tweens.tween(
-            'knock-flash',
+            "knock-flash",
             0.24,
             (value) => {
               knockFlash.value = 1 - value;
             },
-            easeOutCubic,
+            easeOutCubic
           );
           tweens.tween(
-            'squash',
+            "squash",
             0.06,
             (value) => {
               feelScale.value = 1 - 0.14 * value;
@@ -359,19 +393,24 @@ export function createActors(): Actors {
             easeOutCubic,
             () => {
               tweens.tween(
-                'squash-settle',
+                "squash-settle",
                 0.16,
                 (value) => {
                   feelScale.value = 1 - 0.14 * (1 - value);
                 },
-                easeOutBack,
+                easeOutBack
               );
-            },
+            }
           );
         }
       }
     },
-    update(world: WorldState, timeSec: number, dtSec: number, reducedMotion: boolean): void {
+    update(
+      world: WorldState,
+      timeSec: number,
+      dtSec: number,
+      reducedMotion: boolean
+    ): void {
       tweens.update(dtSec);
       const { player: state } = world;
       player.position.set(sceneX(state.pos.x), 0.28, sceneZ(state.pos.y));
@@ -387,13 +426,18 @@ export function createActors(): Actors {
       for (const material of kit.bodyMaterials) {
         material.color.copy(baseColor);
         if (dashing) material.color.lerp(dashColor, 0.7);
-        if (knockFlash.value > 0 && !reducedMotion) material.color.lerp(knockColor, knockFlash.value);
+        if (knockFlash.value > 0 && !reducedMotion)
+          material.color.lerp(knockColor, knockFlash.value);
       }
       playerRingMaterial.color.copy(baseColor);
 
       // The thruster cue: engines bloom on dash and cool while stunned or
       // drifting; knockback also forces the glow hot, never off.
-      const engineHeat = dashing ? 1.9 : knocked || knockFlash.value > 0 ? 1.15 : 0.7;
+      const engineHeat = dashing
+        ? 1.9
+        : knocked || knockFlash.value > 0
+          ? 1.15
+          : 0.7;
       for (const material of kit.engineMaterials) {
         material.emissiveIntensity = engineHeat;
         if (dashing) material.color.lerp(dashColor, 0.5);
@@ -427,10 +471,10 @@ export function createActors(): Actors {
         mesh.position.set(sceneX(shard.pos.x), 0.22, sceneZ(shard.pos.y));
         // The heart token spins flat on its face so the reward silhouette
         // stays readable; the threat polyhedra tumble in place.
-        if (shard.kind === 'heart' && !reducedMotion) {
+        if (shard.kind === "heart" && !reducedMotion) {
           mesh.rotation.x = 0;
           mesh.rotation.y = timeSec * 1.3;
-        } else if (shard.kind === 'heart') {
+        } else if (shard.kind === "heart") {
           mesh.rotation.x = 0.25;
           mesh.rotation.y = 0.3;
         } else {
@@ -438,14 +482,14 @@ export function createActors(): Actors {
           mesh.rotation.y = reducedMotion ? 0.2 : timeSec * 1.7 + index * 0.5;
         }
         const scale =
-          shard.kind === 'mini'
+          shard.kind === "mini"
             ? MINI_SCALE
-            : shard.kind === 'heart'
+            : shard.kind === "heart"
               ? HEART_PULSE +
                 (reducedMotion ? 0 : Math.sin(timeSec * 5 + index * 0.8) * 0.08)
-              : shard.kind === 'shielded'
+              : shard.kind === "shielded"
                 ? 1.12
-                : shard.kind === 'pulsar'
+                : shard.kind === "pulsar"
                   ? PULSAR_SCALE
                   : shard.drifter
                     ? 1.15
@@ -453,15 +497,19 @@ export function createActors(): Actors {
         mesh.scale.setScalar(scale);
 
         const ring = pulseRings[index] as THREE.Mesh;
-        if (ring && shard.kind === 'pulsar') {
+        if (ring && shard.kind === "pulsar") {
           ring.visible = true;
           ring.position.set(sceneX(shard.pos.x), 0.3, sceneZ(shard.pos.y));
           const rawTelegraph = 1 - shard.pulseTimer / TUNING.pulseCooldownSec;
-          const telegraph = reducedMotion ? 0.5 : Math.max(0, Math.min(1, rawTelegraph));
+          const telegraph = reducedMotion
+            ? 0.5
+            : Math.max(0, Math.min(1, rawTelegraph));
           ring.scale.setScalar(1 + telegraph * 0.55);
           const ringMaterial = ring.material as THREE.MeshBasicMaterial;
           ringMaterial.opacity = 0.12 + telegraph * 0.5;
-          ringMaterial.color.setHex(SHARD_KIND_COLORS.pulsar).lerp(PULSAR_HOT, telegraph);
+          ringMaterial.color
+            .setHex(SHARD_KIND_COLORS.pulsar)
+            .lerp(PULSAR_HOT, telegraph);
           const hot = 1 + telegraph * 0.1;
           mesh.scale.setScalar(PULSAR_SCALE * hot);
           (mesh.material as THREE.MeshBasicMaterial).color
@@ -477,7 +525,8 @@ export function createActors(): Actors {
       playerRingGeometry.dispose();
       playerRingMaterial.dispose();
       pulseRingGeometry.dispose();
-      for (const ring of pulseRings) (ring.material as THREE.Material).dispose();
+      for (const ring of pulseRings)
+        (ring.material as THREE.Material).dispose();
       for (const geometry of Object.values(shardGeometries)) geometry.dispose();
       for (const material of standardMaterials) material.dispose();
       for (const material of Object.values(kindMaterials)) material.dispose();

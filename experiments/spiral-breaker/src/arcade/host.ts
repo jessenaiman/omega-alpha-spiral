@@ -22,7 +22,7 @@ import {
   type GamepadLike,
   type InputController,
   type SettingsStore,
-} from '../core';
+} from "../../../src/core";
 import {
   anyHumanActive,
   autopilot,
@@ -34,7 +34,7 @@ import {
   type ArcadeEvent,
   type Commands,
   type WorldState,
-} from './game';
+} from "./game";
 
 export interface ArcadeFrame {
   readonly alpha: number;
@@ -92,17 +92,22 @@ const ACTIVE_PLAY_WARMUP_STEPS = 120;
 const ACTIVE_PLAY_FILL_STEPS = 240;
 
 export function createArcadeHost(options: ArcadeHostOptions = {}): ArcadeHost {
-  const seed = normalizeSeed(options.seed ?? 'spiral');
+  const seed = normalizeSeed(options.seed ?? "spiral");
   let world = createWorld(seed);
-  const settings = createSettings({ reducedMotion: options.reducedMotion ?? false });
+  const settings = createSettings({
+    reducedMotion: options.reducedMotion ?? false,
+  });
   const diagnostics = createDiagnostics({
     runId: seed,
-    phase: 'menu',
-    objective: 'Protect the core',
-    targetVerb: 'Dash',
-    playerState: 'menu',
+    phase: "menu",
+    objective: "Protect the core",
+    targetVerb: "Dash",
+    playerState: "menu",
   });
-  const input = createInputController({ target: options.inputTarget, gamepad: options.gamepad });
+  const input = createInputController({
+    target: options.inputTarget,
+    gamepad: options.gamepad,
+  });
   let paused = false;
   let disposed = false;
   const namedStates = new Map<string, () => { state: string }>();
@@ -113,7 +118,7 @@ export function createArcadeHost(options: ArcadeHostOptions = {}): ArcadeHost {
     const apply = namedStates.get(name);
     if (!apply) {
       throw new Error(
-        `unknown capture state "${name}"; this game declares: ${[...namedStates.keys()].sort().join(', ')}`,
+        `unknown capture state "${name}"; this game declares: ${[...namedStates.keys()].sort().join(", ")}`
       );
     }
     return apply();
@@ -126,16 +131,16 @@ export function createArcadeHost(options: ArcadeHostOptions = {}): ArcadeHost {
       loop: loop.steps,
       phase: world.phase,
       objective:
-        world.phase === 'game-over'
-          ? 'Press dash to run again'
-          : world.phase === 'menu'
-            ? 'Watch, or dash to take the wheel'
-            : world.phase === 'victory'
-              ? 'Gauntlet cleared — dash to run again'
+        world.phase === "game-over"
+          ? "Press dash to run again"
+          : world.phase === "menu"
+            ? "Watch, or dash to take the wheel"
+            : world.phase === "victory"
+              ? "Gauntlet cleared — dash to run again"
               : threat
-                ? 'Break the shards'
-                : 'Hold the ring',
-      targetVerb: 'Dash',
+                ? "Break the shards"
+                : "Hold the ring",
+      targetVerb: "Dash",
       playerState: describePlayer(world),
       party: [],
       paused,
@@ -147,7 +152,9 @@ export function createArcadeHost(options: ArcadeHostOptions = {}): ArcadeHost {
   const buildCommands = (): Commands => {
     const human = input.readIntents();
     const humanActive = anyHumanActive(human);
-    const start = (world.phase === 'menu' || world.phase === 'game-over') && (human.dash || human.act);
+    const start =
+      (world.phase === "menu" || world.phase === "game-over") &&
+      (human.dash || human.act);
     // With no human input the ghost always steers: that is what lets the idle
     // clock run and the takeover fire, and it keeps a watched run alive.
     const useGhost = !humanActive;
@@ -174,7 +181,8 @@ export function createArcadeHost(options: ArcadeHostOptions = {}): ArcadeHost {
     fixedStepMs: TUNING.fixedStepMs,
     maxStepsPerFrame: 5,
     update: () => advanceOne(),
-    render: (alpha) => options.onFrame?.({ alpha, paused, dtMs: TUNING.fixedStepMs }),
+    render: (alpha) =>
+      options.onFrame?.({ alpha, paused, dtMs: TUNING.fixedStepMs }),
     schedule: options.schedule,
     cancel: options.cancel,
     now: options.now,
@@ -192,7 +200,7 @@ export function createArcadeHost(options: ArcadeHostOptions = {}): ArcadeHost {
   const resetToMenu = (): { state: string } => {
     world = createWorld(seed, world.best, world.runNumber);
     syncDiagnostics();
-    return { state: 'menu' };
+    return { state: "menu" };
   };
 
   const startActivePlay = (): { state: string } => {
@@ -204,16 +212,21 @@ export function createArcadeHost(options: ArcadeHostOptions = {}): ArcadeHost {
       start: false,
       humanActive: false,
     });
-    for (let index = 0; index < ACTIVE_PLAY_WARMUP_STEPS; index += 1) runStep(ghost());
+    for (let index = 0; index < ACTIVE_PLAY_WARMUP_STEPS; index += 1)
+      runStep(ghost());
     // A capture should never frame an empty arena: keep the real spawn clock
     // running until a shard is actually inbound.
-    for (let index = 0; index < ACTIVE_PLAY_FILL_STEPS && world.shards.length === 0; index += 1) {
+    for (
+      let index = 0;
+      index < ACTIVE_PLAY_FILL_STEPS && world.shards.length === 0;
+      index += 1
+    ) {
       runStep(ghost());
     }
     world.idleTime = 0;
     world.ghostDriving = false;
     syncDiagnostics();
-    return { state: 'active-play' };
+    return { state: "active-play" };
   };
 
   const presentGameOver = (): { state: string } => {
@@ -222,9 +235,14 @@ export function createArcadeHost(options: ArcadeHostOptions = {}): ArcadeHost {
     world.score = 480;
     world.wave = 6;
     world.integrity = 0;
-    runStep({ intents: autopilot(world), fromAutopilot: true, start: false, humanActive: false });
+    runStep({
+      intents: autopilot(world),
+      fromAutopilot: true,
+      start: false,
+      humanActive: false,
+    });
     syncDiagnostics();
-    return { state: 'game-over' };
+    return { state: "game-over" };
   };
 
   const presentVictory = (): { state: string } => {
@@ -241,24 +259,28 @@ export function createArcadeHost(options: ArcadeHostOptions = {}): ArcadeHost {
     // Reach the win honestly: let the ghost play out the final wave until the
     // field is empty at the wave clock. Bound the simulation so a capture can
     // never hang, whatever the seed.
-    const clockCap = Math.ceil(TUNING.waveLengthSec / (TUNING.fixedStepMs / 1000)) + 60;
+    const clockCap =
+      Math.ceil(TUNING.waveLengthSec / (TUNING.fixedStepMs / 1000)) + 60;
     const overrunCap = 2400;
     const stepUntilVictory = (steps: number): void => {
-      for (let index = 0; index < steps && world.phase === 'play'; index += 1) runStep(ghost());
+      for (let index = 0; index < steps && world.phase === "play"; index += 1)
+        runStep(ghost());
     };
     stepUntilVictory(clockCap);
     stepUntilVictory(overrunCap);
-    if (world.phase !== 'victory') {
-      throw new Error(`the ghost could not clear the final wave for seed ${JSON.stringify(seed)}`);
+    if (world.phase !== "victory") {
+      throw new Error(
+        `the ghost could not clear the final wave for seed ${JSON.stringify(seed)}`
+      );
     }
     syncDiagnostics();
-    return { state: 'victory' };
+    return { state: "victory" };
   };
 
-  namedStates.set('menu', resetToMenu);
-  namedStates.set('active-play', startActivePlay);
-  namedStates.set('game-over', presentGameOver);
-  namedStates.set('victory', presentVictory);
+  namedStates.set("menu", resetToMenu);
+  namedStates.set("active-play", startActivePlay);
+  namedStates.set("game-over", presentGameOver);
+  namedStates.set("victory", presentVictory);
 
   const setSeed = (value: string | number): string => {
     // A seed can only change between runs; starting one here keeps it honest.
@@ -336,12 +358,12 @@ export function createArcadeHost(options: ArcadeHostOptions = {}): ArcadeHost {
   };
 
   function describePlayer(state: WorldState): string {
-    if (state.phase === 'menu') return 'menu';
-    if (state.phase === 'game-over') return 'game-over';
-    if (state.phase === 'victory') return 'victory';
-    if (state.ghostDriving) return 'ghost';
-    if (state.player.stun > 0) return 'knocked-back';
-    if (state.player.dashTime > 0) return 'dashing';
-    return 'manual';
+    if (state.phase === "menu") return "menu";
+    if (state.phase === "game-over") return "game-over";
+    if (state.phase === "victory") return "victory";
+    if (state.ghostDriving) return "ghost";
+    if (state.player.stun > 0) return "knocked-back";
+    if (state.player.dashTime > 0) return "dashing";
+    return "manual";
   }
 }

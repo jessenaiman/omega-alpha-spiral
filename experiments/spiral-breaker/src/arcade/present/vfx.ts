@@ -7,10 +7,10 @@
  * so reduced motion has one place to switch them off.
  */
 
-import * as THREE from 'three';
-import { createRng } from '../../core';
-import type { ArcadeEvent, WorldState } from '../game';
-import { sceneX, sceneZ } from './scale';
+import * as THREE from "three";
+import { createRng } from "../../../../src/core";
+import type { ArcadeEvent, WorldState } from "../game";
+import { sceneX, sceneZ } from "./scale";
 
 export interface Vfx {
   readonly group: THREE.Group;
@@ -24,7 +24,7 @@ export interface Vfx {
   readonly healFlash: number;
   /** 0..1 full-screen flash; kind says what to paint it. */
   readonly flash: number;
-  readonly flashKind: 'breach' | 'destruct' | 'victory' | null;
+  readonly flashKind: "breach" | "destruct" | "victory" | null;
   handle(events: readonly ArcadeEvent[], world: WorldState): void;
   update(dtSec: number, reducedMotion: boolean): void;
   reset(): void;
@@ -78,7 +78,7 @@ const particleFragment = /* glsl */ `
 
 export function createVfx(): Vfx {
   const group = new THREE.Group();
-  const rng = createRng('spiral-breaker-vfx');
+  const rng = createRng("spiral-breaker-vfx");
 
   // --- sparks ---------------------------------------------------------------
   const positions = new Float32Array(PARTICLE_COUNT * 3);
@@ -92,10 +92,13 @@ export function createVfx(): Vfx {
   const scratch = new THREE.Color();
 
   const particleGeometry = new THREE.BufferGeometry();
-  particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-  particleGeometry.setAttribute('aColor', new THREE.BufferAttribute(colors, 3));
-  particleGeometry.setAttribute('aAlpha', new THREE.BufferAttribute(alphas, 1));
-  particleGeometry.setAttribute('aSize', new THREE.BufferAttribute(sizes, 1));
+  particleGeometry.setAttribute(
+    "position",
+    new THREE.BufferAttribute(positions, 3)
+  );
+  particleGeometry.setAttribute("aColor", new THREE.BufferAttribute(colors, 3));
+  particleGeometry.setAttribute("aAlpha", new THREE.BufferAttribute(alphas, 1));
+  particleGeometry.setAttribute("aSize", new THREE.BufferAttribute(sizes, 1));
   const particleMaterial = new THREE.ShaderMaterial({
     vertexShader: particleVertex,
     fragmentShader: particleFragment,
@@ -113,7 +116,7 @@ export function createVfx(): Vfx {
     color: THREE.Color,
     speed: number,
     count: number,
-    sparkLife = 0.55,
+    sparkLife = 0.55
   ): void => {
     for (let index = 0; index < count; index += 1) {
       const slot = cursor;
@@ -162,7 +165,13 @@ export function createVfx(): Vfx {
     group.add(mesh);
   }
 
-  const spawnRing = (x: number, y: number, color: THREE.Color, target: number, ringLifeValue: number): void => {
+  const spawnRing = (
+    x: number,
+    y: number,
+    color: THREE.Color,
+    target: number,
+    ringLifeValue: number
+  ): void => {
     const slot = ringCursor;
     ringCursor = (ringCursor + 1) % RING_COUNT;
     const mesh = rings[slot] as THREE.Mesh;
@@ -180,7 +189,7 @@ export function createVfx(): Vfx {
   let breachFlash = 0;
   let healFlash = 0;
   let flash = 0;
-  let flashKind: Vfx['flashKind'] = null;
+  let flashKind: Vfx["flashKind"] = null;
 
   return {
     group,
@@ -199,92 +208,122 @@ export function createVfx(): Vfx {
     get flash(): number {
       return flash;
     },
-    get flashKind(): Vfx['flashKind'] {
+    get flashKind(): Vfx["flashKind"] {
       return flashKind;
     },
     handle(events: readonly ArcadeEvent[], world: WorldState): void {
       for (const event of events) {
         switch (event.type) {
-          case 'dash.start':
+          case "dash.start":
             spawnRing(event.x, event.y, COLORS.cyan, 10.5, 0.34);
             spawnSpark(event.x, event.y, COLORS.cyan, 1.4, 5, 0.3);
             fovPunch = Math.min(1, fovPunch + 0.7);
             trauma = Math.min(1, trauma + 0.12);
             break;
-          case 'shard.destroy':
+          case "shard.destroy":
             {
               const color =
-                event.kind === 'splitter'
+                event.kind === "splitter"
                   ? COLORS.teal
-                  : event.kind === 'heart'
+                  : event.kind === "heart"
                     ? COLORS.coral
-                    : event.kind === 'shielded'
+                    : event.kind === "shielded"
                       ? COLORS.amber
-                      : event.kind === 'pulsar'
+                      : event.kind === "pulsar"
                         ? COLORS.periwinkle
-                        : event.kind === 'mini'
+                        : event.kind === "mini"
                           ? COLORS.magenta
                           : COLORS.magenta;
-              const count = event.kind === 'splitter' ? 16 : event.kind === 'mini' ? 6 : 12;
+              const count =
+                event.kind === "splitter" ? 16 : event.kind === "mini" ? 6 : 12;
               spawnSpark(event.x, event.y, color, 2.6, count);
-              spawnRing(event.x, event.y, color, event.kind === 'splitter' ? 9 : 6.5, 0.3);
-              trauma = Math.min(1, trauma + (event.kind === 'shielded' ? 0.22 : 0.16));
-              if (event.kind === 'shielded') {
+              spawnRing(
+                event.x,
+                event.y,
+                color,
+                event.kind === "splitter" ? 9 : 6.5,
+                0.3
+              );
+              trauma = Math.min(
+                1,
+                trauma + (event.kind === "shielded" ? 0.22 : 0.16)
+              );
+              if (event.kind === "shielded") {
                 flash = 0.3;
-                flashKind = 'destruct';
+                flashKind = "destruct";
               }
             }
             break;
-          case 'shard.blocked':
+          case "shard.blocked":
             spawnSpark(event.x, event.y, COLORS.amber, 2.2, 6, 0.3);
             spawnRing(event.x, event.y, COLORS.amber, 4, 0.2);
             trauma = Math.min(1, trauma + 0.04);
             break;
-          case 'pulsar.pulse':
+          case "pulsar.pulse":
             // The charged ring fires outward to exactly the pulse's reach.
             spawnRing(event.x, event.y, COLORS.periwinkle, 2.2, 0.5);
             break;
-          case 'core.heal':
+          case "core.heal":
             spawnSpark(event.x, event.y, COLORS.green, 2.2, 8, 0.5);
             spawnRing(event.x, event.y, COLORS.green, 6, 0.4);
             healFlash = 1;
             break;
-          case 'score.change':
-            if (event.chain >= 3) spawnRing(world.player.pos.x, world.player.pos.y, COLORS.amber, 8, 0.4);
+          case "score.change":
+            if (event.chain >= 3)
+              spawnRing(
+                world.player.pos.x,
+                world.player.pos.y,
+                COLORS.amber,
+                8,
+                0.4
+              );
             break;
-          case 'player.knockback':
+          case "player.knockback":
             spawnSpark(event.x, event.y, COLORS.amber, 2.2, 10, 0.5);
             trauma = Math.min(1, trauma + 0.35);
             break;
-          case 'core.breach':
+          case "core.breach":
             spawnRing(event.x, event.y, COLORS.red, 18, 0.6);
             spawnSpark(event.x, event.y, COLORS.red, 3.4, 22, 0.8);
             trauma = Math.min(1, trauma + 0.6);
             breachFlash = 1;
             flash = 0.5;
-            flashKind = 'breach';
+            flashKind = "breach";
             break;
-          case 'wave.start':
+          case "wave.start":
             spawnRing(0, 0, COLORS.cyan, 12, 0.7);
             break;
-          case 'ghost.takeover':
-            spawnRing(world.player.pos.x, world.player.pos.y, COLORS.pale, 7, 0.5);
+          case "ghost.takeover":
+            spawnRing(
+              world.player.pos.x,
+              world.player.pos.y,
+              COLORS.pale,
+              7,
+              0.5
+            );
             break;
-          case 'game.over':
+          case "game.over":
             if (event.victory) {
               spawnSpark(0, 0, COLORS.gold, 4.2, 30, 1.1);
               spawnRing(0, 0, COLORS.gold, 22, 0.9);
               spawnRing(0, 0, COLORS.coral, 14, 0.7);
               trauma = Math.min(1, trauma + 0.35);
               flash = 1;
-              flashKind = 'victory';
+              flashKind = "victory";
             } else {
-              spawnSpark(world.player.pos.x, world.player.pos.y, COLORS.red, 4.2, 30, 1.1);
+              spawnSpark(
+                world.player.pos.x,
+                world.player.pos.y,
+                COLORS.red,
+                4.2,
+                30,
+                1.1
+              );
               spawnRing(0, 0, COLORS.red, 24, 0.9);
               trauma = Math.min(1, trauma + 0.8);
               breachFlash = 1;
               flash = 0.6;
-              flashKind = 'breach';
+              flashKind = "breach";
             }
             break;
           default:
@@ -329,8 +368,10 @@ export function createVfx(): Vfx {
         if (ringLife[index] <= 0) mesh.visible = false;
       }
 
-      const decay = (value: number, rate: number): number => Math.max(0, value - dtSec * rate);
-      const decayExp = (value: number, tau: number): number => value * Math.exp(-dtSec / tau);
+      const decay = (value: number, rate: number): number =>
+        Math.max(0, value - dtSec * rate);
+      const decayExp = (value: number, tau: number): number =>
+        value * Math.exp(-dtSec / tau);
       trauma = decay(trauma, 1.8);
       fovPunch = decayExp(fovPunch, 0.38);
       breachFlash = decayExp(breachFlash, 0.32);

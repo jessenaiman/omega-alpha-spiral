@@ -33,7 +33,7 @@ export interface TweenManager {
     durationSec: number,
     onUpdate: (value: number) => void,
     easing?: Easing,
-    onComplete?: () => void,
+    onComplete?: () => void
   ): void;
   /** Replaces a keyed tween immediately, ignoring its current value. */
   cancel(key: string): void;
@@ -54,7 +54,14 @@ export function createTweenManager(): TweenManager {
         active.onComplete = onComplete;
         return;
       }
-      tweens.push({ key, elapsed: 0, duration: durationSec, easing, onUpdate, onComplete });
+      tweens.push({
+        key,
+        elapsed: 0,
+        duration: durationSec,
+        easing,
+        onUpdate,
+        onComplete,
+      });
     },
     cancel(key) {
       for (let index = tweens.length - 1; index >= 0; index -= 1) {
