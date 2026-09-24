@@ -43,7 +43,13 @@ function defaultSchedule(callback: (timestampMs: number) => void): number {
   if (typeof globalThis.requestAnimationFrame === 'function') {
     return globalThis.requestAnimationFrame(callback);
   }
-  return setTimeout(() => callback(Date.now()), DEFAULT_FIXED_STEP_MS) as unknown as number;
+  return setTimeout(() => callback(defaultNow()), DEFAULT_FIXED_STEP_MS) as unknown as number;
+}
+
+function defaultNow(): number {
+  return typeof globalThis.performance?.now === 'function'
+    ? globalThis.performance.now()
+    : Date.now();
 }
 
 function defaultCancel(handle: number): void {
@@ -59,7 +65,7 @@ export function createFixedLoop(options: FixedLoopOptions): FixedLoop {
   const maxStepsPerFrame = Math.max(1, options.maxStepsPerFrame ?? DEFAULT_MAX_STEPS_PER_FRAME);
   const schedule = options.schedule ?? defaultSchedule;
   const cancel = options.cancel ?? defaultCancel;
-  const now = options.now ?? (() => Date.now());
+  const now = options.now ?? defaultNow;
 
   let running = false;
   let handle: number | null = null;
