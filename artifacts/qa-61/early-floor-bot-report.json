@@ -11,7 +11,7 @@
           },
           "chosen": "door",
           "outcome": null,
-          "distance": 19.200000000000042
+          "distance": 18.99960000000004
         },
         {
           "roomIndex": 1,
@@ -21,7 +21,7 @@
           },
           "chosen": "monster",
           "outcome": "fallen",
-          "distance": 25.699199999999966
+          "distance": 25.19999999999991
         },
         {
           "roomIndex": 2,
@@ -31,11 +31,11 @@
           },
           "chosen": "chest",
           "outcome": null,
-          "distance": 27.19739999999978
+          "distance": 27.09719999999991
         }
       ],
-      "frames": 893,
-      "distance": 72.1
+      "frames": 881,
+      "distance": 71.3
     },
     {
       "seed": 42,
@@ -48,7 +48,7 @@
           },
           "chosen": "door",
           "outcome": null,
-          "distance": 11.301000000000027
+          "distance": 11.299200000000031
         },
         {
           "roomIndex": 1,
@@ -58,7 +58,7 @@
           },
           "chosen": "monster",
           "outcome": "fallen",
-          "distance": 44.99879999999996
+          "distance": 44.6987999999999
         },
         {
           "roomIndex": 2,
@@ -68,10 +68,10 @@
           },
           "chosen": "chest",
           "outcome": null,
-          "distance": 25.298399999999845
+          "distance": 25.599599999999825
         }
       ],
-      "frames": 994,
+      "frames": 1033,
       "distance": 81.6
     }
   ],
