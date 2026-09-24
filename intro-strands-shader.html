@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#03050a" />
+    <title>Omega — Strand shader study</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font:
+          12px/1.55 "Courier New",
+          ui-monospace,
+          monospace;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        background: #03050a;
+        color: #e7edf1;
+      }
+      canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+      .top {
+        position: fixed;
+        top: 20px;
+        left: 24px;
+        right: 24px;
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+        pointer-events: none;
+      }
+      .eyebrow {
+        color: #a3adb6;
+        font-size: 10px;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+      }
+      h1 {
+        margin: 2px 0;
+        font-size: 16px;
+        font-weight: 400;
+      }
+      .mapping {
+        color: #aab3bb;
+        text-align: right;
+        pointer-events: auto;
+      }
+      .mapping a {
+        color: #dbe9f0;
+      }
+      .veil {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background: linear-gradient(
+          180deg,
+          #03050a8a,
+          transparent 24%,
+          transparent 72%,
+          #03050aa8
+        );
+      }
+      .bottom {
+        position: fixed;
+        left: 24px;
+        right: 24px;
+        bottom: 20px;
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 20px;
+        pointer-events: none;
+      }
+      .status {
+        max-width: 620px;
+        min-height: 47px;
+        padding: 10px 13px;
+        border-left: 1px solid #afc4d18a;
+        background: #030812ba;
+        white-space: pre-line;
+      }
+      .legend {
+        display: flex;
+        gap: 15px;
+        padding: 9px 12px;
+        background: #030812a8;
+        color: #c4ccd2;
+      }
+      .legend span {
+        white-space: nowrap;
+      }
+      .swatch {
+        display: inline-block;
+        width: 15px;
+        height: 2px;
+        margin: 0 6px 3px 0;
+        vertical-align: middle;
+      }
+      .reveal {
+        position: fixed;
+        left: 50%;
+        bottom: 17%;
+        transform: translateX(-50%);
+        padding: 11px 18px;
+        border: 1px solid #b7c9d7a0;
+        background: #07101be8;
+        color: #eff6fa;
+        font: inherit;
+        letter-spacing: 0.08em;
+        cursor: pointer;
+      }
+      .reveal[hidden] {
+        display: none;
+      }
+      .touch {
+        display: none;
+        position: fixed;
+        right: 14px;
+        bottom: 83px;
+        gap: 5px;
+        pointer-events: auto;
+      }
+      .touch button {
+        width: 48px;
+        height: 48px;
+        border: 1px solid #b7c7d47a;
+        background: #0a1424df;
+        color: white;
+        font: inherit;
+        font-size: 20px;
+        touch-action: none;
+      }
+      @media (max-width: 720px) {
+        .top {
+          top: 12px;
+          left: 14px;
+          right: 14px;
+        }
+        .bottom {
+          left: 14px;
+          right: 14px;
+          bottom: 12px;
+          flex-direction: column;
+          align-items: start;
+        }
+        .legend {
+          gap: 9px;
+          padding: 5px 8px;
+          font-size: 10px;
+        }
+        .status {
+          font-size: 11px;
+        }
+        .mapping {
+          font-size: 10px;
+        }
+        .touch {
+          display: flex;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <canvas
+      id="stage"
+      aria-label="Interactive Three.js study of three shader-authored Dreamweaver paths"
+    ></canvas>
+    <div class="veil" aria-hidden="true"></div>
+    <header class="top">
+      <div>
+        <div class="eyebrow">Question 01 · shader comparison</div>
+        <h1>Three ways toward the unwritten door</h1>
+      </div>
+      <div class="mapping">
+        A / D · select a strand<br />W · walk and commit<br />Enter / click ·
+        reveal paths<br /><a href="/intro-try3.html?variant=archive"
+          >Blender comparison</a
+        >
+      </div>
+    </header>
+    <button class="reveal" id="reveal-choices" type="button" hidden>
+      Reveal the three Dreamweaver questions ↵
+    </button>
+    <footer class="bottom">
+      <div class="status" id="status" role="status" aria-live="polite">
+        Omega is ghostwriting the first question.
+      </div>
+      <div class="legend" aria-label="Dreamweaver path key">
+        <span
+          ><i class="swatch" style="background: #dce5ea"></i>Light ·
+          straight</span
+        ><span
+          ><i class="swatch" style="background: #d79a55"></i>Shadow · hard
+          turns</span
+        ><span
+          ><i class="swatch" style="background: #c94a57"></i>Ambition ·
+          curved</span
+        >
+      </div>
+    </footer>
+    <nav class="touch" aria-label="Movement controls">
+      <button data-key="a" aria-label="Move left">←</button
+      ><button data-key="w" aria-label="Walk forward">↑</button
+      ><button data-key="d" aria-label="Move right">→</button>
+    </nav>
+    <script type="module" src="/src/intro/strandShaderStudy.ts"></script>
+  </body>
+</html>

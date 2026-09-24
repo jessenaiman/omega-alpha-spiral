@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>omega-spiral — three scene studies</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: "Courier New", ui-monospace, monospace;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        background: #02040a;
+        color: #e9edf1;
+      }
+      canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+      .veil {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background: linear-gradient(
+          180deg,
+          #03050b98,
+          transparent 30%,
+          transparent 70%,
+          #03050ba8
+        );
+      }
+      .top {
+        position: fixed;
+        top: 20px;
+        left: 24px;
+        right: 24px;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 20px;
+        pointer-events: none;
+      }
+      .eyebrow {
+        font-size: 10px;
+        letter-spacing: 0.22em;
+        color: #aebcc8;
+        text-transform: uppercase;
+      }
+      h1 {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+      }
+      .variants {
+        display: flex;
+        align-items: start;
+        gap: 5px;
+        pointer-events: auto;
+      }
+      .variants a {
+        display: block;
+        padding: 10px 12px;
+        border: 1px solid #8799aa50;
+        background: #050914bc;
+        color: #c7d6dd;
+        text-decoration: none;
+        font-size: 11px;
+        white-space: nowrap;
+      }
+      .variants a[aria-current="page"] {
+        border-color: #e6efff;
+        color: white;
+        background: #15202d;
+      }
+      .name-entry {
+        display: none;
+        position: fixed;
+        left: 50%;
+        bottom: 25%;
+        transform: translateX(-50%);
+        width: min(370px, calc(100vw - 32px));
+        padding: 15px;
+        border: 1px solid #d5dfe08c;
+        background: #030710d9;
+        box-shadow: 0 0 45px #9cb6ba1c;
+        pointer-events: auto;
+      }
+      .final .name-entry {
+        display: flex;
+        gap: 8px;
+      }
+      .name-entry input {
+        min-width: 0;
+        flex: 1;
+        border: 0;
+        border-bottom: 1px solid #b8c8ca;
+        outline: none;
+        background: transparent;
+        color: #fff;
+        font: inherit;
+        font-size: 16px;
+      }
+      .name-entry button {
+        border: 1px solid #9ab5bb;
+        background: #111d27;
+        color: #fff;
+        font: inherit;
+        padding: 6px 12px;
+        cursor: pointer;
+      }
+      .reveal {
+        position: fixed;
+        left: 50%;
+        bottom: 17%;
+        transform: translateX(-50%);
+        border: 1px solid #c5d7d9aa;
+        background: #061019df;
+        color: #e8f2f4;
+        font: inherit;
+        font-size: 12px;
+        letter-spacing: 0.11em;
+        padding: 12px 20px;
+        cursor: pointer;
+      }
+      .reveal[hidden] {
+        display: none;
+      }
+      .bottom {
+        position: fixed;
+        bottom: 20px;
+        left: 24px;
+        right: 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: end;
+        gap: 24px;
+        pointer-events: none;
+      }
+      .status {
+        max-width: 600px;
+        min-height: 55px;
+        padding: 12px 14px;
+        border-left: 1px solid #b9d4e2a0;
+        background: #030811bd;
+        font-size: 12px;
+        line-height: 1.5;
+        white-space: pre-line;
+      }
+      .status.question-focus {
+        max-width: min(700px, 68vw);
+        border-left: 2px solid var(--question-color, #dcefff);
+        color: #f4f7f8;
+        font-size: clamp(15px, 1.25vw, 18px);
+        line-height: 1.42;
+        text-shadow: 0 0 12px #c6dbee42;
+      }
+      .controls {
+        max-width: 310px;
+        color: #aebbc7;
+        text-align: right;
+        font-size: 11px;
+        line-height: 1.6;
+      }
+      .controls a {
+        pointer-events: auto;
+        color: #d8ebf8;
+      }
+      .touch {
+        display: none;
+        position: fixed;
+        right: 16px;
+        bottom: 105px;
+        gap: 5px;
+        pointer-events: auto;
+      }
+      .touch button {
+        border: 1px solid #b7c7d47a;
+        background: #0a1424df;
+        color: white;
+        font: inherit;
+        font-size: 19px;
+        width: 49px;
+        height: 49px;
+        touch-action: none;
+      }
+      @media (max-width: 720px) {
+        .top {
+          left: 14px;
+          right: 14px;
+          top: 13px;
+          grid-template-columns: 1fr;
+        }
+        h1 {
+          font-size: 18px;
+        }
+        .variants {
+          order: -1;
+        }
+        .variants a {
+          padding: 8px;
+          font-size: 10px;
+        }
+        .bottom {
+          left: 14px;
+          right: 14px;
+          bottom: 13px;
+        }
+        .controls {
+          display: none;
+        }
+        .touch {
+          display: flex;
+        }
+        .status {
+          font-size: 11px;
+          max-width: calc(100vw - 28px);
+        }
+        .status.question-focus {
+          max-width: calc(100vw - 28px);
+          font-size: 15px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <canvas
+      id="stage"
+      aria-label="Interactive three-dimensional intro art-direction study"
+    ></canvas>
+    <div class="veil" aria-hidden="true"></div>
+    <div class="top">
+      <div>
+        <div class="eyebrow" id="label">Intro study</div>
+        <h1 id="question"></h1>
+      </div>
+      <nav class="variants" aria-label="Compare art directions">
+        <a href="?variant=archive" data-variant="archive">1 · Archive</a>
+        <a href="?variant=tide" data-variant="tide">2 · Tide</a>
+        <a href="?variant=current" data-variant="current">3 · Current</a>
+        <a href="?variant=tide&amp;phase=final" id="final-link"
+          >5 · Threshold</a
+        >
+        <a href="/intro-strands-shader.html">Shader study</a>
+      </nav>
+    </div>
+    <button class="reveal" id="reveal-choices" type="button">
+      Let the Dreamweavers ask ↵
+    </button>
+    <form
+      class="name-entry"
+      id="name-entry"
+      aria-label="Answer Omega's final question"
+    >
+      <input
+        name="name"
+        maxlength="32"
+        autocomplete="off"
+        aria-label="Your name"
+        placeholder="Type a name"
+      /><button type="submit">Answer</button>
+    </form>
+    <div class="bottom">
+      <div class="status" id="status" role="status" aria-live="polite"></div>
+      <div class="controls">
+        A / D · preview a strand<br />W or ↑ · walk toward its Dreamweaver<br />R
+        · replay this question<br /><a href="/intro.html"
+          >Return to the current intro</a
+        >
+      </div>
+    </div>
+    <div class="touch" aria-label="Movement controls">
+      <button data-key="a" aria-label="Move left">←</button
+      ><button data-key="w" aria-label="Move forward">↑</button
+      ><button data-key="d" aria-label="Move right">→</button>
+    </div>
+    <script type="module" src="/src/intro/try3.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Omega · Filament motion</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #020407;
+        color: #dce7ed;
+        font:
+          14px/1.5 system-ui,
+          sans-serif;
+      }
+      header {
+        position: absolute;
+        z-index: 1;
+        top: 24px;
+        left: 28px;
+      }
+      h1 {
+        font-size: 19px;
+        font-weight: 400;
+        margin: 0;
+      }
+      p {
+        color: #8896a3;
+        margin: 4px 0;
+      }
+      #field {
+        width: 100%;
+        height: calc(100svh - 158px);
+        min-height: 280px;
+      }
+      canvas {
+        display: block;
+      }
+      footer {
+        padding: 12px 28px 24px;
+        border-top: 1px solid #1b2630;
+        background: #090d12;
+      }
+      nav {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      button,
+      a {
+        font: inherit;
+        color: inherit;
+        background: #101922;
+        border: 1px solid #2c4050;
+        padding: 8px 14px;
+        cursor: pointer;
+        text-decoration: none;
+      }
+      button:focus-visible,
+      a:focus-visible {
+        outline: 2px solid #bbd8ed;
+        outline-offset: 3px;
+      }
+      label {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        margin: 12px 0;
+      }
+      input {
+        flex: 1;
+        accent-color: #accde6;
+      }
+      output {
+        min-width: 155px;
+      }
+      .reference {
+        position: absolute;
+        right: 20px;
+        top: 20px;
+        width: 90px;
+        opacity: 0.75;
+      }
+      .reference img {
+        width: 100%;
+        display: block;
+      }
+      .reference span {
+        font-size: 10px;
+      }
+      @media (max-width: 600px) {
+        header {
+          left: 16px;
+          max-width: 65%;
+        }
+        footer {
+          padding: 12px 16px;
+        }
+        #field {
+          height: 65svh;
+        }
+        .reference {
+          width: 60px;
+        }
+        button,
+        a {
+          padding: 8px 10px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Filament motion study</h1>
+      <p>Light · straight / Shadow · angular / Ambition · reaching</p>
+    </header>
+    <aside class="reference">
+      <img
+        src="assets/references/omega-spiral-logo-reference.png"
+        alt="Approved Omega logo reference"
+      /><span>Identity reference</span>
+    </aside>
+    <main id="field" aria-label="Animated spatial filament study"></main>
+    <footer>
+      <label
+        >Cycle
+        <input
+          id="scrub"
+          type="range"
+          min="0"
+          max="21.99"
+          step="0.01"
+          value="0"
+          aria-label="Animation time"
+        /><output id="phase">Line art</output></label
+      >
+      <nav aria-label="Motion controls">
+        <button id="play">Pause</button><button data-time="0">2D shapes</button
+        ><button data-time="5.9">3D depth</button
+        ><button data-time="10.8">Logo</button
+        ><button data-time="14.5">Into space</button
+        ><button data-time="16.5">Reforming</button
+        ><a href="intro.html">Play opening</a>
+      </nav>
+    </footer>
+    <script type="module" src="/src/intro/filaments/study.ts"></script>
+  </body>
+</html>

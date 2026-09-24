@@ -1,0 +1,31 @@
+# Ambition.omd — Omega Design. Mirrors Dialogic's .dch character resource.
+
+id = ambition
+display_name = Ambition
+nicknames = Changer, Crimson One
+color = #ed4949
+
+[custom]
+thread = ambition
+style = ambition_theme
+personality = Opportunity, potential, possible greed. Smooth, circular paths that turn back on themselves.
+
+[typing]
+interval = 65
+delay = 400
+jitter = 0.3
+mistakes = 0.06
+correction = 400
+revision = 750
+
+[typography]
+tradition = dec-vt100-ascii-terminal
+case = mixed
+
+[replacement]
+from = failed
+to = waited
+
+[spatial]
+motion = circular
+note = Let red text curve toward the player, then retract harsh words.

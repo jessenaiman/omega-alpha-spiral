@@ -1,0 +1,147 @@
+{
+  "url": "http://127.0.0.1:5188/intro.html?debug=1",
+  "mode": "desktop",
+  "state": "final-door",
+  "requestedState": "final-door",
+  "appliedState": "final-door",
+  "runId": "intro-threshold-preview-2",
+  "seed": 472,
+  "screenshotPath": "artifacts\\intro-threshold-preview-2\\desktop-final-door.png",
+  "gpu": {
+    "renderer": "ANGLE (NVIDIA, NVIDIA GeForce GTX 1660 (0x00002184) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+    "vendor": "Google Inc. (NVIDIA)",
+    "softwareRendered": false
+  },
+  "result": {
+    "ok": true,
+    "reason": "nonblank",
+    "rect": {
+      "x": 0,
+      "y": 0,
+      "width": 1280,
+      "height": 720
+    },
+    "drawingBuffer": {
+      "width": 1280,
+      "height": 720
+    },
+    "alphaPixels": 4096,
+    "variance": 255,
+    "colorBuckets": 92,
+    "metrics": {
+      "colorBuckets": 122,
+      "colorEntropyBits": 1.23,
+      "edgeDensity": 0.132,
+      "luminance": {
+        "mean": 10.9,
+        "p5": 0,
+        "p95": 43.6,
+        "contrast": 43.6
+      },
+      "dominantColorShare": 0.853,
+      "nonBackgroundShare": 0.147
+    },
+    "renderBudget": {
+      "tier": "desktop",
+      "note": "starting-point budget; adjust per game and document overrides",
+      "rows": [
+        {
+          "metric": "calls",
+          "actual": 243,
+          "limit": 300,
+          "ok": true
+        },
+        {
+          "metric": "triangles",
+          "actual": 10109,
+          "limit": 750000,
+          "ok": true
+        },
+        {
+          "metric": "geometries",
+          "actual": 248,
+          "limit": 300,
+          "ok": true
+        },
+        {
+          "metric": "textures",
+          "actual": 10,
+          "limit": 60,
+          "ok": true
+        }
+      ],
+      "withinBudget": true
+    },
+    "diagnostics": {
+      "renderer": {
+        "calls": 243,
+        "triangles": 10109,
+        "geometries": 248,
+        "textures": 10
+      },
+      "state": {
+        "frame": 71,
+        "phase": "doorway",
+        "storyMode": "doorway",
+        "questionIndex": 3,
+        "objective": "walk-through-omega-words",
+        "objectiveProgress": 4,
+        "complete": false,
+        "failed": false,
+        "canContinue": false,
+        "selectedChoice": 0,
+        "pendingChoice": -1,
+        "actionDiscovered": false,
+        "tutorialAct": "resonance",
+        "playerPosition": {
+          "x": 0,
+          "y": -2.450000047683716,
+          "z": -19.04
+        },
+        "choiceTargets": [
+          {
+            "x": 0,
+            "y": -1.56,
+            "z": -19.38
+          },
+          {
+            "x": 0,
+            "y": -1.56,
+            "z": -19.38
+          },
+          {
+            "x": 0,
+            "y": -1.56,
+            "z": -19.38
+          }
+        ],
+        "seed": "472",
+        "audio": {
+          "unlocked": false,
+          "muted": false,
+          "cueCount": 0
+        },
+        "physics": {
+          "ready": true,
+          "bodies": 5,
+          "colliders": 5,
+          "sensors": 4,
+          "activeSensors": 1,
+          "ccdBodies": 0,
+          "fixedTimestep": 0.016666666666666666,
+          "steps": 0
+        },
+        "viewport": {
+          "width": 1280,
+          "height": 720,
+          "dpr": 1
+        },
+        "activeLoops": 1,
+        "pausedForScreenshot": true,
+        "debugUiHidden": true
+      }
+    }
+  },
+  "consoleErrors": [],
+  "pageErrors": []
+}

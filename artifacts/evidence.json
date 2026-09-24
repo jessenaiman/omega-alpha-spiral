@@ -1,32 +1,38 @@
 {
-  "runId": "team-foundation-20260922",
   "version": 1,
-  "artifacts": [],
+  "runId": "first-question-review-20260923-a",
+  "status": "real-input-reviewed-visual-defects-canvas-inspection-pending",
+  "url": "http://127.0.0.1:5191/intro.html",
+  "review": "artifacts/intro-direction/first-question-slice.md",
+  "historicalManifest": "artifacts/first-question-review-20260923-a/previous-evidence.json",
+  "currentWorkNote": "Lead executed actual entry through first Light contact/travel to second question and inspected recorded motion. This slice progresses; visual continuity defects remain. Canvas inspector report is still missing; no manifest checker or full-game pass claimed.",
+  "viewport": {
+    "width": 947,
+    "height": 874,
+    "mode": "desktop",
+    "dpr": "record at capture"
+  },
   "captures": [
     {
-      "report": "artifacts/intro-baseline-1/desktop.json",
       "mode": "desktop",
-      "state": null
-    },
-    {
-      "report": "artifacts/intro-baseline-1/mobile.json",
-      "mode": "mobile",
-      "state": null
-    },
-    {
-      "mode": "desktop",
-      "state": "question-4",
-      "report": "artifacts/team-foundation-20260922/desktop-question-4.json"
-    },
-    {
-      "mode": "mobile",
-      "state": "question-2",
-      "report": "artifacts/team-foundation-20260922/mobile-question-2.json"
-    },
-    {
-      "mode": "desktop",
-      "state": "complete",
-      "report": "artifacts/team-foundation-20260922/desktop-complete.json"
+      "state": null,
+      "report": "artifacts/first-question-review-20260923-a/desktop-current-view.json",
+      "observedMoment": "First question: all three Dreamweaver turns finished, reached through actual entry. Null state deliberately claims no named-hook acknowledgement."
     }
+  ],
+  "artifacts": [
+    "artifacts/first-question-review-20260923-a/user-before.png",
+    "artifacts/first-question-review-20260923-a/play/bot-playtest-bot-playtest--0b5ea--retries-the-playable-route/video.webm",
+    "artifacts/first-question-review-20260923-a/play/bot-playtest-bot-playtest--0b5ea--retries-the-playable-route/first-question-review.json",
+    "artifacts/first-question-review-20260923-a/contact-detail.jpg",
+    "artifacts/first-question-review-20260923-a/arrival-detail.jpg"
+  ],
+  "requiredMotionMoments": [
+    "entry and authored boot",
+    "Omega writing and revisions",
+    "Light then Shadow then Ambition reveal",
+    "choice-ready composition",
+    "movement start, steer, stop and resume",
+    "first route contact and selected-speaker response"
   ]
 }

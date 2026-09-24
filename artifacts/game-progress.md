@@ -1,5 +1,17 @@
 # Omega Spiral — Game Director Progress
 
+## Active small increment — 2026-09-23
+
+- Full skill/setup audit: `artifacts/intro-direction/threejs-workflow-audit.md`. All nine skills/agent entries and declared npm packages present; Python helpers launch; Blender MCP live. Playwright Chromium missing; installation blocked by automatic approval review, specific permission requested. Existing bot also needs bounded updates for Begin, physical choices, forward travel and current port before a run.
+- Luna gameplay delivered and lead inspected removal of the explicit avatar teleport in commitChoice. No motion verification yet. Luna graphics delivered source-grounded stationary depth-anchor recommendation; no graphics edits. Both worker tasks complete.
+
+- Workflow correction: use actual packaged starters and specialist agents. Luna `opening_gameplay_piece` and `opening_spatial_review` each read one skill and asked three questions before work. Both are drafting read-only recommendations; parent owns shared integration. Contract: `artifacts/intro-direction/first-question-slice.md`. Starter CameraRig/InputController/Game and both agent entry YAML files inspected. Approved direction corrected for galaxy-first and three concurrent storylines.
+
+- Owner rejected expanding or auditing the unfinished opening before its interaction feels right. Apply gameplay-systems in small pieces; current piece is first-question movement and camera follow only.
+- Read gameplay-systems/SKILL.md and its game-feel reference. Fixed camera ignoring avatar position during path choice and instantaneous gaze changes between phases. Enabled avatar locomotion during choice/door movement as well as travel.
+- Source inspected; current page loads with no captured console errors and Begin was clicked. Motion quality and choice-to-response continuity need owner gameplay review. No new tests or suite execution. Historical bot results do not cover this patch.
+- Next: hold forward/back and steer at the first question, release to stop, observe the camera on contact. Resolve that result before expanding backgrounds, later encounters, or quantum companions.
+
 Updated: 2026-09-22
 
 ## Session rule — 2026-09-22
@@ -40,6 +52,20 @@ for SFX, Blender + procedural Three.js for 3D. No high-res custom art needed.
 
 ## Pending jobs
 
+- **Slice 1 of the Floor One rerun — DONE (2026-09-22):** inspector-compatible
+  hooks + named capture states + diagnostics for Floor One.
+  Files: `src/floor-one/capture-states.ts` (drivers), `src/floor-one/main.ts`
+  (hooks/freeze/diagnostics), probe `scratch/probe-floor-states.ts`.
+  8 named states, each reached through real `stepFloor` rules:
+  entry, pause, guard-intent, pickup-resolved, door-open (seed `door-1`),
+  exit-ready, escaped, defeat. Defeat = the player moves on (retry), never a
+  final ending — fight feedback is placeholder while assets still load.
+  Verified: typecheck clean, 23/23 unit, inspector PASS on
+  entry/pickup-resolved/door-open/exit-ready/escaped/defeat/pause
+  (0 console/page errors, within budget) in
+  `artifacts/floor-one-hooks-20260922/` run `hooks-1`.
+- Next slice candidates: declare `artifacts/evidence.json` capture set for
+  Floor One and run `verify:visual`; or unit tests for the rules (#20).
 - Issue 47 is ready for review.
 - Handoff: `project-management/Handoffs/47.md`.
 - Verified capture directory: `artifacts/team-foundation-20260922/`.
@@ -247,3 +273,75 @@ like Omega, iteration one is meant to read like a bash script. No Blender, no gl
   Floor 2's effect choice is still open (candidate: 3D extrusion/depth, line-of-sight fog, terminal flicker).
 - Later: asset-swap-to-floating-code glitch reveal; Blender-authored sprites (outer loop, `rogue-progress.md`).
 - README prune (ponytail + caveman).
+
+---
+
+# Intro layer studies — progress (2026-09-22)
+
+- Q1 Archive begins in darkness with Omega ghostwriting on a world-space terminal. Revealing the Dreamweavers' own questions loads the Blender void floor and three fine strands; their question words follow each strand.
+- Blender source files are separate and editable: `artifacts/intro-threshold/door.blend`, `dreamweaver-strands.blend`, `background-void.blend`; `intro-layer-study.blend` previews their layering. The exported strand and background GLBs live in `public/assets/intro/`.
+- Q2 Tide uses the celestial image plate; the final name question uses the threshold image plate and a fragment assembly study. The original `/intro.html` remains the current game opening.
+- `intro-strands-shader.html` is an independent Three.js shader comparison using the same runtime question and ghostwriting frames. It presents the Dreamweavers' own questions; integration into `/intro.html` still needs the active question and writing state passed in and the selected owner/message returned.
+- Basic checks: TypeScript typecheck passed; live Archive, Tide, Threshold, and shader pages opened; Archive reported its Blender layers loaded. Full intro gameplay and production evidence are still pending integration.
+- Q1 Archive now writes the three Dreamweaver questions in order after Omega finishes. Shader-drawn glyph ribbons float above the paths with controlled Light, Shadow, and Ambition motion; the floor and Blender strands reveal after Ambition. TypeScript typecheck passed, and the live browser showed the three-path state. The Blender MCP showed `intro-layer-study.blend` with its void floor, fine strands, and doorway reference; the exported door remains a separate final-scene integration task.
+
+## Canonical intro playable checkpoint — 2026-09-23
+
+- `/intro.html` now makes approaching a strand the choice itself. Number keys and visible choice buttons guide the character to a strand before committing; the between-question route moves automatically with the camera.
+- The intro uses a receding transparent substrate, restrained first-question darkness, smaller Dreamweaver marks, and the Blender fragment door at the threshold. Chapter Two receives the last chosen thread.
+- The three supplied reference images and the design brief, core loop contract, and level plan are saved in `assets/references/` and `artifacts/intro-direction/` for the next art conversation.
+- `artifacts/final-evidence.md` records the production build, skill-defined real-input bot, desktop/mobile captures, door capture, video, and current manifest check. No unit tests were written; the pre-commit hook unexpectedly ran the existing suite once and found a stale authored-text assertion.
+- Remaining art review: physical Omega terminal, faceless character growth, door material/assembly, and how much of Chapter Two is visible through the portal.
+
+## Intro flow and visual staging checkpoint — 2026-09-23
+
+- The canonical `/intro.html` is the only target for this pass. The older layer-study notes above describe historical experiments; `ghost.json` and the latest playable scene govern the current opening.
+- The player now continues from the contacted Dreamweaver into a depth-travel path. The camera follows and the next station is rebased around the arrival point. There is no reset to the bottom of the same frame and no second required walk after choosing. Completed writing advances after a reading hold; Enter remains optional.
+- Four authored path questions lead to Omega's typed fifth name question. The name opens the Blender fragment door; walking through suspended Omega words enters playable Chapter Two. Blender runtime now loads void, strands, fragments, portal, and floor glyph as separate GLBs.
+- [Next-conversation staging](intro-direction/next-conversation.md) pairs all three owner images with current captures, the present visual grammar, and remaining decisions. [Final evidence](final-evidence.md) records nine named desktop/mobile captures, the real-input bot/video, build, budget, and limitations. No unit tests were written; the pre-commit hook unexpectedly ran the existing suite once and found a stale authored-text assertion.
+- Remaining: make the first stage legible through the portal; differentiate station silhouettes more; refine the blocky faceless avatar; reduce mobile final-door draw calls if the mobile target requires the starting budget. Preserve unrelated Floor One and source-study work already in the tree.
+
+## Ghost typing visual study — September 23, 2026
+
+- Active: [Distinctive ghost typing](https://github.com/jessenaiman/omega-alpha-spiral/issues/54); [Wayfinder map](https://github.com/jessenaiman/omega-alpha-spiral/issues/55) and its claimed visual-decision child keep orientation.
+- Prototype: `intro-type-prototype.html`, manuscript/fragments/passage variants; per-speaker timing, mistakes and authored revisions. Original intro remains separate.
+- Two Luna drafts delivered (profiles and OpenAI contact sheet). The contact sheet contains Dreamweavers plus comparison, not Omega; reference-only.
+- Owner correction: no extra unit tests. Normal commit hook passed TypeScript and 22/23 existing tests; existing finale wording assertion blocked commit. Owner approved a single documented hook skip.
+- Preview: http://127.0.0.1:5191/intro-type-prototype.html . Human visual choice remains open. See `artifacts/ghost-type-study/README.md` and `project-management/Handoffs/54.md`.
+
+- Ghost typing follow-up: scene-owned universal era added in src/core/sceneTypography.ts. Opening/Omega, Floor 1/Light, Floor 2/Shadow, Floor 3/Ambition. All study voices inherit glyph era while preserving cadence and geometry. Floor-era assignments remain editable; live prototype only, game-scene integration pending. No tests run for this follow-up.
+
+## Omega Dialogue Studio checkpoint — September 23, 2026
+
+- Canonical route: `/omega-dialogue-studio.html`; legacy study URL redirects with parameters preserved. Scene owner and shared eras are reusable configuration; actual game integration is pending.
+- TypeScript/Vite production build passed. Requested QA skill captured desktop 1280×720 and mobile 390×664 on the hardware NVIDIA GPU. Both final reports have no console or page errors. Initial favicon 404 was fixed and its failed evidence retained.
+- Three declared artifacts passed the evidence coverage checker. Real controls and Omega's post-answer revision were exercised; a short typing/revision recording is saved. No frame-time or complete gameplay claim.
+- [Studio release notes and captures](omega-dialogue-studio/README.md), [manifest](omega-dialogue-studio/evidence.json). No additional unit tests. Next: commit/push, then design the gameplay integration before more studio features.
+
+## Studio authoring-model review — September 23, 2026
+
+- Full studio expansion goal remains active; design is under review, not approved. Owner requested detailed Dialogic and existing Godot schema/dialogue review first.
+- Located original schemas, NPC data, Dialogic timelines and character resources. Structural/execution findings and drift: [authoring review](omega-dialogue-studio/godot-authoring-review.md). [Era research prompt](omega-dialogue-studio/era-research-prompt.md) delivered. #53 lead ownership noted on GitHub.
+- VoiceStudio subtask on hold at owner request; do not resume setup or generation until asked. Existing Codex CLI reports not logged in; desktop login status is not inferred. No model downloads, runtime changes or tests this pass.
+
+## Omega Studio opening block
+
+Owner requested adapting the authored Omega opening as the first editor iteration. Added dialogue JSON/schema, minimal sequential runner and edit/preview/import/export UI using existing lettering. Live studio reached before-choices; DOS glyph overlap corrected. No unit tests/build run. Evidence limits: artifacts/omega-dialogue-studio/opening-block.md.
+
+- Studio persistence follow-up: schema validation via Ajv; scene/era/layout/cadence in the document; undo/redo and source view. Four existing era sketches now explain their rendering and historical limits. Owner asked to check export/reopen. No tests/build run. See omega-dialogue-studio/opening-block.md.
+
+## Studio integration check — 2026-09-23
+
+Owner confirmed Apply to game propagates the selected era and Continue reaches paths. Fresh studio/intro loaded without captured errors. Fixed save snapshot bookkeeping and selection restoration after rejected structural edits. Full later gameplay remains unverified. Contract: omega-dialogue-studio/gameplay-contract.md; report: omega-dialogue-studio/integration-check.md. Qwen editor assignment published as #57.
+
+## Playable opening / asset return — 2026-09-23
+
+New explicit Begin menu plus native OpenAI background plate, existing logo, and control instructions. Current authored direction: intro-direction/approved-design.md. Restored Blender floor/strands at first path reveal, and travel now obeys forward/back input. Live MCP asset intake: intro-direction/asset-intake.md. Luna image review: /image-asset-review.html. Bot random/repeat work pending; no full progression claim.
+
+## Filament motion correction
+
+Owner rejected the bot-test rewrite; its two files were restored without execution. Owner also rejected the three background-motion contact sheets. Gallery marks them rejected. Current work is live reusable shader line art, flat-to-spatial shapes, convergence, shatter/reform, with offscreen streams following the reference. Shared by menu and opening presences; review at /filament-study.html. Details and verification limits: intro-direction/filament-motion.md. No automated tests or release claim.
+
+- First-question review baseline corrected: artifacts/intro-direction/first-question-slice.md links QA motion, debug reproduction and director evidence requirements. Current manifest now declares pending entry-to-contact evidence; old run archived without relabeling. Live overlap confirmed; lead demonstration precedes further delegation. Chromium verified installed; build passed; updated existing bot remains unrun.
+
+- Lead demonstrated and reviewed first-question Light route to question two using existing headed bot's bounded review mode. Video, frame sequences and prioritized findings: artifacts/intro-direction/first-question-slice.md. Functional progression passes, visual continuity fails. No scene changes or new unit tests; canvas-inspector report remains pending.

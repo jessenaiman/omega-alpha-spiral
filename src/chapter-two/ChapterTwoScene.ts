@@ -1,4 +1,4 @@
-import { AmbientLight, BoxGeometry, CanvasTexture, Color, DirectionalLight, GridHelper, Group, Mesh, MeshStandardMaterial, OrthographicCamera, Scene, Sprite, SpriteMaterial, SRGBColorSpace, Vector3, WebGLRenderer } from 'three';
+import { AmbientLight, BoxGeometry, CanvasTexture, Color, DirectionalLight, GridHelper, Group, Mesh, MeshStandardMaterial, OrthographicCamera, Scene, Sprite, SpriteMaterial, SRGBColorSpace, Vector3, WebGLRenderer, WebGLRenderTarget } from 'three';
 import { WalkField } from './WalkField';
 import { ECHO_ROOMS } from './rooms';
 import './styles.css';
@@ -26,6 +26,7 @@ export class ChapterTwoScene {
   private _target: Vector3 = new Vector3();
   private _labelPosition: Vector3 = new Vector3();
   private _floorMaterial: MeshStandardMaterial = new MeshStandardMaterial({ color: 0x242a32, roughness: 1 });
+  private _thresholdPreview: WebGLRenderTarget | null = null;
 
   public init(root: HTMLElement, debug: boolean): void {
     this._root = root;
@@ -42,6 +43,7 @@ export class ChapterTwoScene {
     this._box(this._hero, -0.21, 0.2, 0, 0.24, 0.4, 0.3, 0x6b7c91);
     this._box(this._hero, 0.21, 0.2, 0, 0.24, 0.4, 0.3, 0x6b7c91);
     this._scene.add(this._hero);
+    this._hero.position.set(this._world.player.x, 0, this._world.player.z);
     const door: Group = new Group();
     door.position.x = -8;
     this._box(door, -1, 1.8, 0, 0.45, 3.6, 0.6, 0xa7b8c4);
@@ -113,6 +115,36 @@ export class ChapterTwoScene {
     this._keys.clear();
     if (this._hud) this._hud.hidden = true;
     if (this._root) this._root.dataset.chapter = '1';
+  }
+
+  /** A still of the actual first room, seen through the intro's Blender threshold. */
+  public renderThresholdPreview(renderer: WebGLRenderer): WebGLRenderTarget {
+    if (this._thresholdPreview) return this._thresholdPreview;
+    const target = new WebGLRenderTarget(384, 512);
+    const camera = new OrthographicCamera(-10.5, 10.5, 14, -14, 0.1, 120);
+    camera.position.set(0, 16, 20);
+    camera.lookAt(0, 0, 2);
+    camera.updateProjectionMatrix();
+    const previousTarget = renderer.getRenderTarget();
+    const previousMarker = this._marker.visible;
+    const labels: Array<{ sprite: Sprite; visible: boolean }> = [];
+    this._scene.traverse((object): void => {
+      if (object instanceof Sprite) {
+        labels.push({ sprite: object, visible: object.visible });
+        object.visible = false;
+      }
+    });
+    this._marker.visible = false;
+    try {
+      renderer.setRenderTarget(target);
+      renderer.render(this._scene, camera);
+    } finally {
+      renderer.setRenderTarget(previousTarget);
+      this._marker.visible = previousMarker;
+      labels.forEach(({ sprite, visible }): void => { sprite.visible = visible; });
+    }
+    this._thresholdPreview = target;
+    return target;
   }
 
   private _onKey = (event: KeyboardEvent): void => {
@@ -229,6 +261,7 @@ export class ChapterTwoScene {
 
   public destroy(): void {
     this.stop(); this._abort.abort(); this._hud?.remove();
+    this._thresholdPreview?.dispose();
     this._scene.traverse((object): void => {
       if (object instanceof Mesh) { object.geometry.dispose(); for (const material of Array.isArray(object.material) ? object.material : [object.material]) material.dispose(); }
       if (object instanceof Sprite) object.material.dispose();

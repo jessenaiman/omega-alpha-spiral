@@ -1,5 +1,11 @@
-import { createRng } from '../core/random';
-import { CHRONICLE_OPENING_LOG, CHRONICLE_QUESTIONS, CHRONICLE_SYMBOLS, type ChronicleQuestion } from './chronicle';
+import { createRng } from "../core/random";
+import type { SpeakerId } from "./ghost-type-study/profiles";
+import {
+  CHRONICLE_OPENING_LOG,
+  CHRONICLE_QUESTIONS,
+  CHRONICLE_SYMBOLS,
+  type ChronicleQuestion,
+} from "./chronicle";
 
 export interface BootFrame {
   at: number;
@@ -8,12 +14,27 @@ export interface BootFrame {
   transcript: string;
   choices: readonly string[];
   isCorrupt: boolean;
-  phase: 'cursor' | 'command' | 'loading' | 'writing' | 'waiting' | 'prelude' | 'question' | 'response' | 'travel' | 'final' | 'doorway' | 'complete';
+  phase:
+    | "cursor"
+    | "command"
+    | "loading"
+    | "writing"
+    | "waiting"
+    | "prelude"
+    | "question"
+    | "response"
+    | "travel"
+    | "final"
+    | "name"
+    | "doorway"
+    | "complete";
   format: number;
   phaseElapsedMs?: number;
   hint?: string;
   /** Dreamweaver currently authoring response text; independent of the chosen route. */
   speaker?: number;
+  /** Explicit studio actor; independent of player-choice ownership. */
+  studioSpeaker?: SpeakerId;
 }
 
 const FIRST_INK_MS: number = 900;
@@ -21,45 +42,44 @@ const LETTER_MIN_MS: number = 42;
 const LETTER_RANGE_MS: number = 62;
 const ERASURE_MS: number = 38;
 const CORRECTION_PAUSE_MS: number = 520;
-export const BOOT_COMMAND: string = '/run omega.sh';
-export const BOOT_OPTIONS: string[] = CHRONICLE_QUESTIONS[0].choices.map((option): string => option.text);
+export const BOOT_COMMAND: string = "/run omega.sh";
+export const BOOT_OPTIONS: string[] = CHRONICLE_QUESTIONS[0].choices.map(
+  (option): string => option.text
+);
 export const BOOT_SYMBOLS: string = CHRONICLE_SYMBOLS;
-const QUESTION_SOURCE: string = 'If you could [hear|be] only one story..:\n[what|who] would [it|you] be?';
-
-function addQuestionAttempts(question: string): string {
-  if (question === CHRONICLE_QUESTIONS[0].question) return QUESTION_SOURCE;
-  const openingAttempts: Readonly<Record<string, string>> = {
-    If: '[When|If]',
-    When: '[If|When]',
-    Is: '[Does|Is]',
-    What: '[Who|What]',
-  };
-  const firstWord: string = question.split(/\s/, 1)[0] ?? '';
-  let attempted: string = openingAttempts[firstWord]
-    ? `${openingAttempts[firstWord]}${question.slice(firstWord.length)}`
-    : question;
-  if (/\byou\b/i.test(attempted)) attempted = attempted.replace(/\byou\b/i, '[I|you]');
-  if (/\bwhat\b/i.test(attempted)) attempted = attempted.replace(/\bwhat\b/i, '[where|what]');
-  return attempted;
-}
+const QUESTION_SOURCE: string =
+  "If you could [hear|be] only one story..:\n[what|who] would [it|you] be?";
 
 /** Materialize timing once: render rate must not change the spelling or pauses. */
-export function createBootFrames(seed: string, opening: ChronicleQuestion = CHRONICLE_QUESTIONS[0]): BootFrame[] {
-  const random = createRng(seed).fork('ghostwriting');
-  const text: Record<'prelude' | 'question' | 'transcript', string> = { prelude: '', question: '', transcript: '' };
-  let phase: BootFrame['phase'] = 'cursor';
+export function createBootFrames(
+  seed: string,
+  opening: ChronicleQuestion = CHRONICLE_QUESTIONS[0]
+): BootFrame[] {
+  const random = createRng(seed).fork("ghostwriting");
+  const text: Record<"prelude" | "question" | "transcript", string> = {
+    prelude: "",
+    question: "",
+    transcript: "",
+  };
+  let phase: BootFrame["phase"] = "cursor";
   let format: number = 0;
-  const choices: readonly string[] = opening.choices.map((choice): string => choice.text);
-  const frames: BootFrame[] = [{ at: 0, ...text, choices, isCorrupt: false, phase, format }];
+  const choices: readonly string[] = opening.choices.map(
+    (choice) => choice.text
+  );
+  const frames: BootFrame[] = [
+    { at: 0, ...text, choices, isCorrupt: false, phase, format },
+  ];
   let at: number = FIRST_INK_MS;
-  const record = (isCorrupt: boolean = false): void => { frames.push({ at, ...text, choices, isCorrupt, phase, format }); };
+  const record = (isCorrupt: boolean = false): void => {
+    frames.push({ at, ...text, choices, isCorrupt, phase, format });
+  };
   const type = (field: keyof typeof text, value: string): void => {
     for (const letter of value) {
       at += LETTER_MIN_MS + random.int(LETTER_RANGE_MS);
 
       text[field] += letter;
       record();
-      if (letter === '\n') at += CORRECTION_PAUSE_MS / 2;
+      if (letter === "\n") at += CORRECTION_PAUSE_MS / 2;
     }
   };
   const typeTerminal = (value: string): void => {
@@ -67,7 +87,7 @@ export function createBootFrames(seed: string, opening: ChronicleQuestion = CHRO
       at += 18 + random.int(22);
       text.transcript += letter;
       record();
-      if (letter === '\n') at += 180;
+      if (letter === "\n") at += 180;
     }
   };
   const erase = (field: keyof typeof text, value: string): void => {
@@ -77,16 +97,16 @@ export function createBootFrames(seed: string, opening: ChronicleQuestion = CHRO
       record();
     }
   };
-  phase = 'command';
-  typeTerminal('$ ./omega');
+  phase = "command";
+  typeTerminal("$ ./omega");
   at += 360;
   format = 0;
-  typeTerminal('\nbash: ./omega: script unfinished');
+  typeTerminal("\nbash: ./omega: script unfinished");
   at += 620;
   format = 1;
-  typeTerminal('\n$ sh wake-omega');
+  typeTerminal("\n$ sh wake-omega");
   at += 420;
-  typeTerminal('\nwake-omega: line 1: unexpected end');
+  typeTerminal("\nwake-omega: line 1: unexpected end");
   at += 720;
   format = 2;
   typeTerminal(`\n$ ${BOOT_COMMAND}`);
@@ -94,28 +114,29 @@ export function createBootFrames(seed: string, opening: ChronicleQuestion = CHRO
   format = 3;
   text.prelude = CHRONICLE_OPENING_LOG;
   record();
-  phase = 'writing';
+  phase = "writing";
   // Brackets are authored attempts, not punctuation to print or rewrite ourselves.
   const attempts: RegExp = /\[([^|\]]+)\|([^\]]+)\]/g;
   let offset: number = 0;
-  const questionSource: string = addQuestionAttempts(opening.question);
+  const questionSource: string =
+    opening === CHRONICLE_QUESTIONS[0] ? QUESTION_SOURCE : opening.question;
   for (const match of questionSource.matchAll(attempts)) {
-    type('question', questionSource.slice(offset, match.index));
-    type('question', match[1]);
+    type("question", questionSource.slice(offset, match.index));
+    type("question", match[1]);
     at += CORRECTION_PAUSE_MS;
     format = Math.min(5, format + 1);
     record(true);
-    erase('question', match[1]);
+    erase("question", match[1]);
     at += CORRECTION_PAUSE_MS;
-    type('question', match[2]);
+    type("question", match[2]);
     offset = match.index + match[0].length;
   }
-  type('question', questionSource.slice(offset));
+  type("question", questionSource.slice(offset));
   at += 720;
-  text.transcript += '\nquestion ... stalled';
+  text.transcript += "\nquestion ... stalled";
   record(true);
-  phase = 'loading';
-  for (const [index, slot] of ['01', '02', '03'].entries()) {
+  phase = "loading";
+  for (const [index, slot] of ["01", "02", "03"].entries()) {
     // Each breach gets a complete visual beat. Previous arrivals remain as
     // witnesses instead of three simultaneous loading indicators.
     at += index === 0 ? 1250 : 2200;
@@ -123,11 +144,18 @@ export function createBootFrames(seed: string, opening: ChronicleQuestion = CHRO
     text.transcript += `\ndreamweaver[${slot}] ...`;
     record();
     at += 1750;
-    text.transcript += ' present';
+    text.transcript += " present";
     record();
   }
-  text.transcript += '\nquestion ... held open';
+  text.transcript += "\nquestion ... held open";
   at += CORRECTION_PAUSE_MS;
-  frames.push({ at, ...text, choices, isCorrupt: false, phase: 'waiting', format: 5 });
+  frames.push({
+    at,
+    ...text,
+    choices,
+    isCorrupt: false,
+    phase: "waiting",
+    format: 5,
+  });
   return frames;
 }

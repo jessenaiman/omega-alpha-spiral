@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Omega Spiral — Image and Sprite Review</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #090b10;
+        --panel: #11151d;
+        --line: #28313d;
+        --muted: #a0a9b8;
+        --text: #e8edf5;
+        --accent: #f3b86c;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: radial-gradient(
+          ellipse at 50% -20%,
+          #172132 0,
+          var(--bg) 55%
+        );
+        color: var(--text);
+        font:
+          15px/1.55 system-ui,
+          Segoe UI,
+          sans-serif;
+      }
+      main {
+        max-width: 1380px;
+        margin: auto;
+        padding: 38px 28px 72px;
+      }
+      header {
+        padding: 12px 0 28px;
+        border-bottom: 1px solid var(--line);
+        margin-bottom: 28px;
+      }
+      h1 {
+        margin: 0 0 8px;
+        font-size: clamp(28px, 4vw, 42px);
+        letter-spacing: 0.02em;
+      }
+      h2 {
+        margin: 36px 0 14px;
+        font-size: 22px;
+      }
+      p {
+        color: var(--muted);
+        max-width: 850px;
+        margin: 6px 0;
+      }
+      .direction {
+        color: #f0d4ac;
+        border-left: 2px solid var(--accent);
+        padding: 10px 16px;
+        margin: 18px 0 0;
+        background: #ffffff06;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 16px;
+      }
+      article {
+        background: linear-gradient(145deg, #151a23, #0f1219);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        overflow: hidden;
+      }
+      figure {
+        margin: 0;
+        aspect-ratio: 16/9;
+        background: #050608;
+        display: grid;
+        place-items: center;
+        border-bottom: 1px solid var(--line);
+      }
+      figure img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+      .body {
+        padding: 15px 16px 18px;
+      }
+      h3 {
+        font-size: 16px;
+        line-height: 1.3;
+        margin: 0 0 8px;
+      }
+      code {
+        color: #d6c39c;
+        overflow-wrap: anywhere;
+        font-size: 12px;
+      }
+      .tag {
+        display: inline-block;
+        border: 1px solid #55462f;
+        border-radius: 20px;
+        color: #e8c78e;
+        font-size: 11px;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        padding: 2px 8px;
+        margin: 4px 4px 3px 0;
+      }
+      .floor {
+        margin-top: 14px;
+      }
+      footer {
+        margin-top: 34px;
+        border-top: 1px solid var(--line);
+        padding-top: 20px;
+        color: var(--muted);
+      }
+      @media (max-width: 560px) {
+        main {
+          padding: 24px 14px 48px;
+        }
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>Image and Sprite Review</h1>
+        <p>
+          Owner review of the supplied intro and Floor One images. This gallery
+          proposes art boundaries; it does not cut or approve assets.
+        </p>
+        <p class="direction">
+          Direction: darkness first. Use the full-power Omega Spiral logo for
+          the brand moment. Light is fine and straight, Shadow angular, Ambition
+          curved. Keep the player faceless and growing.
+          <a href="filament-study.html" style="color: inherit"
+            >Open the live filament motion study →</a
+          >
+        </p>
+      </header>
+      <h2>Intro and menu references</h2>
+      <section class="grid">
+        <article>
+          <figure>
+            <img
+              src="assets/references/intro-first-question.png"
+              alt="Intro first question composition"
+            />
+          </figure>
+          <div class="body">
+            <h3>First question composition</h3>
+            <code>assets/references/intro-first-question.png</code>
+            <p>
+              Paths, player, glow and spatial depth should be Three.js geometry.
+              Tiny glyphs could become authored UI sprites. Fully opaque RGBA.
+            </p>
+            <span class="tag">3D scene reference</span
+            ><span class="tag">No alpha</span>
+          </div>
+        </article>
+        <article>
+          <figure>
+            <img
+              src="assets/references/intro-door-finale.png"
+              alt="Intro door finale composition"
+            />
+          </figure>
+          <div class="body">
+            <h3>Door finale</h3>
+            <code>assets/references/intro-door-finale.png</code>
+            <p>
+              Keep architecture, player, ribbons and particles in 3D. Any
+              logo/UI needs clean redraw. Flattened opaque image includes a
+              Canva badge.
+            </p>
+            <span class="tag">3D scene reference</span
+            ><span class="tag">No alpha</span>
+          </div>
+        </article>
+        <article>
+          <figure>
+            <img
+              src="assets/references/intro-strand-detail.png"
+              alt="Intro strand detail"
+            />
+          </figure>
+          <div class="body">
+            <h3>Strand detail</h3>
+            <code>assets/references/intro-strand-detail.png</code>
+            <p>
+              Rebuild moving strands as curves. Checker pattern is baked in; the
+              file has fully opaque RGBA.
+            </p>
+            <span class="tag">Geometry reference</span
+            ><span class="tag">No alpha</span>
+          </div>
+        </article>
+        <article>
+          <figure>
+            <img
+              src="assets/references/omega-spiral-logo-reference.png"
+              alt="Omega Spiral logo reference"
+            />
+          </figure>
+          <div class="body">
+            <h3>Omega Spiral logo</h3>
+            <code>assets/references/omega-spiral-logo-reference.png</code>
+            <p>
+              Candidate for a clean transparent logo redraw, reserved for the
+              brand moment. Supplied file is fully opaque RGBA on black.
+            </p>
+            <span class="tag">Redraw as UI</span
+            ><span class="tag">No alpha</span>
+          </div>
+        </article>
+        <article>
+          <figure>
+            <img
+              src="assets/concepts/ghost-type-study/luna-visual-draft.png"
+              alt="Light Shadow Ambition type study"
+            />
+          </figure>
+          <div class="body">
+            <h3>Light / Shadow / Ambition type study</h3>
+            <code>assets/concepts/ghost-type-study/luna-visual-draft.png</code>
+            <p>
+              Four-panel composite with variable alpha. Use as style guidance;
+              rebuild isolated glyphs/traces. Preserve straight, angular and
+              curved signatures.
+            </p>
+            <span class="tag">Composite</span
+            ><span class="tag">Alpha present</span>
+          </div>
+        </article>
+        <article>
+          <figure>
+            <img
+              src="assets/intro/optical-variations/comparison.jpg"
+              alt="Optical variations comparison sheet"
+            />
+          </figure>
+          <div class="body">
+            <h3>Optical variations</h3>
+            <code>assets/intro/optical-variations/comparison.jpg</code>
+            <p>
+              Three labeled flat treatments. Reference only; selected UI marks
+              need transparent redraw, moving strands need geometry.
+            </p>
+            <span class="tag">Contact sheet</span><span class="tag">RGB</span>
+          </div>
+        </article>
+        <article>
+          <figure>
+            <img
+              src="assets/intro/background-motion/style-a-live-plate/contact-sheet.jpg"
+              alt="Rejected live plate contact sheet"
+            />
+          </figure>
+          <div class="body">
+            <h3>Rejected · Style A</h3>
+            <code
+              >assets/intro/background-motion/style-a-live-plate/contact-sheet.jpg</code
+            >
+            <p>
+              Owner rejected: failed to show motion and spiral strands
+              converging. Retained only as failed-work history. Do not extract
+              sprites or use as an approved background.
+            </p>
+            <span class="tag">Rejected</span>
+          </div>
+        </article>
+        <article>
+          <figure>
+            <img
+              src="assets/intro/background-motion/style-b-lowtech-pixel/contact-sheet.jpg"
+              alt="Rejected low tech contact sheet"
+            />
+          </figure>
+          <div class="body">
+            <h3>Rejected · Style B</h3>
+            <code
+              >assets/intro/background-motion/style-b-lowtech-pixel/contact-sheet.jpg</code
+            >
+            <p>
+              Owner rejected: failed to show motion and spiral strands
+              converging. Retained only as failed-work history. Do not extract
+              sprites or use as an approved background.
+            </p>
+            <span class="tag">Rejected</span>
+          </div>
+        </article>
+        <article>
+          <figure>
+            <img
+              src="assets/intro/background-motion/style-c-max-tech/contact-sheet.jpg"
+              alt="Rejected max tech contact sheet"
+            />
+          </figure>
+          <div class="body">
+            <h3>Rejected · Style C</h3>
+            <code
+              >assets/intro/background-motion/style-c-max-tech/contact-sheet.jpg</code
+            >
+            <p>
+              Owner rejected: failed to show motion and spiral strands
+              converging. Retained only as failed-work history. Do not extract
+              sprites or use as an approved background.
+            </p>
+            <span class="tag">Rejected</span>
+          </div>
+        </article>
+      </section>
+      <h2>Floor One references</h2>
+      <section class="grid floor">
+        <article>
+          <figure>
+            <img
+              src="assets/concepts/floor-one-concept.png"
+              alt="Floor One dark chamber concept"
+            />
+          </figure>
+          <div class="body">
+            <h3>Dark chamber</h3>
+            <code>assets/concepts/floor-one-concept.png</code>
+            <p>
+              Build room, arch, doorway, floor, loose object and moving faceless
+              player in Blender/Three.js. A small authored glow decal is a
+              possible 2D accent. RGB whole-scene concept.
+            </p>
+            <span class="tag">3D geometry</span><span class="tag">RGB</span>
+          </div>
+        </article>
+        <article>
+          <figure>
+            <img
+              src="assets/concepts/floor-one-concept-2.png"
+              alt="Floor One isometric blockout concept"
+            />
+          </figure>
+          <div class="body">
+            <h3>Isometric chamber blockout</h3>
+            <code>assets/concepts/floor-one-concept-2.png</code>
+            <p>
+              Use the layered room, steps, central opening and light as
+              geometry/material guidance. No clear sprite candidate. RGB
+              blockout reference.
+            </p>
+            <span class="tag">3D geometry</span><span class="tag">RGB</span>
+          </div>
+        </article>
+      </section>
+      <footer>
+        Review details and proposed extraction order:
+        <code>artifacts/intro-direction/image-sprite-review.md</code>. All
+        recommendations remain proposals pending owner direction.
+      </footer>
+    </main>
+  </body>
+</html>

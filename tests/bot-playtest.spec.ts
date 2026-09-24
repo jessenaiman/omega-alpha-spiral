@@ -5,6 +5,7 @@
  * .agents/skills/threejs-debug-profiler/SKILL.md
  */
 import { expect, test, type Page, type TestInfo } from "@playwright/test";
+import { writeFile } from "node:fs/promises";
 
 type IntroState = {
   frame: number;
@@ -39,15 +40,19 @@ type BotSnapshot = {
 
 type BotStep =
   | { kind: "intro-choice"; choice: number }
+  | { kind: "name-entry"; value: string }
+  | { kind: "doorway-crossing" }
   | { kind: "chapter-room"; targetX: number };
 
 // One deterministic route through the opening and the three playable rooms.
-// Hooks establish only the reproducible boot state; every step uses player input.
+// Hooks establish only the reproducible boot state; route selection uses real input.
 const INPUT_SCRIPT: BotStep[] = [
   { kind: "intro-choice", choice: 0 },
   { kind: "intro-choice", choice: 1 },
   { kind: "intro-choice", choice: 2 },
   { kind: "intro-choice", choice: 0 },
+  { kind: "name-entry", value: "Astra" },
+  { kind: "doorway-crossing" },
   { kind: "chapter-room", targetX: -8 },
   { kind: "chapter-room", targetX: 0 },
   { kind: "chapter-room", targetX: 8 },
@@ -157,20 +162,59 @@ async function steerIntro(
 
 async function steerTravel(
   page: Page,
+  metrics: { distance: number; softlocks: number },
+  capturePath?: string
+): Promise<void> {
+  let previous = await readIntro(page);
+  const startZ = previous.playerPosition.z;
+  let captured = false;
+  let stationarySamples = 0;
+  for (let index = 0; index < 220; index += 1) {
+    const state = await readIntro(page);
+    const moved = Math.hypot(
+      state.playerPosition.x - previous.playerPosition.x,
+      state.playerPosition.y - previous.playerPosition.y,
+      state.playerPosition.z - previous.playerPosition.z
+    );
+    expect(
+      moved,
+      "travel and next-station arrival must stay spatially continuous"
+    ).toBeLessThan(1.25);
+    if (state.storyMode !== "travel") return;
+    metrics.distance += moved;
+    if (!captured && capturePath && state.playerPosition.z < startZ - 1.5) {
+      await page.screenshot({ path: capturePath });
+      captured = true;
+    }
+    if (state.frame > previous.frame && moved < 0.001) stationarySamples += 1;
+    else stationarySamples = 0;
+    if (stationarySamples >= 10) {
+      metrics.softlocks += 1;
+      stationarySamples = 0;
+    }
+    previous = state;
+    await page.waitForTimeout(45);
+  }
+  throw new Error("Bot failed to reach the next intro question");
+}
+
+async function walkThroughDoorway(
+  page: Page,
   metrics: { distance: number; softlocks: number }
 ): Promise<void> {
   let previous = await readIntro(page);
+  let doorwayDistance = 0;
   let stationarySamples = 0;
   await page.keyboard.down("ArrowUp");
   try {
-    for (let index = 0; index < 220; index += 1) {
+    for (let index = 0; index < 440; index += 1) {
       const state = await readIntro(page);
-      if (state.storyMode !== "travel") return;
       const moved = Math.hypot(
         state.playerPosition.x - previous.playerPosition.x,
         state.playerPosition.y - previous.playerPosition.y,
         state.playerPosition.z - previous.playerPosition.z
       );
+      doorwayDistance += moved;
       metrics.distance += moved;
       if (state.frame > previous.frame && moved < 0.001) stationarySamples += 1;
       else stationarySamples = 0;
@@ -178,13 +222,20 @@ async function steerTravel(
         metrics.softlocks += 1;
         stationarySamples = 0;
       }
+      if (state.storyMode === "complete") {
+        expect(
+          doorwayDistance,
+          "held forward input must move the player through the doorway sensor"
+        ).toBeGreaterThan(0.5);
+        return;
+      }
       previous = state;
       await page.waitForTimeout(45);
     }
   } finally {
     await page.keyboard.up("ArrowUp");
   }
-  throw new Error("Bot failed to reach the next intro question");
+  throw new Error("Bot failed to walk through the Omega words");
 }
 
 async function finishResponse(page: Page): Promise<string> {
@@ -195,7 +246,7 @@ async function finishResponse(page: Page): Promise<string> {
       .poll(async (): Promise<string> => (await readIntro(page)).storyMode, {
         timeout: 20_000,
       })
-      .toMatch(/^(commentary|travel|final|doorway)$/);
+      .toMatch(/^(commentary|travel|final|name|doorway)$/);
     const mode = (await readIntro(page)).storyMode;
     if (mode !== "commentary") return mode;
     await waitForContinue(page);
@@ -330,7 +381,25 @@ test("bot playtest: scripted real input completes and retries the playable route
       step.kind === "intro-choice"
   );
   for (const [index, step] of introSteps.entries()) {
-    await steerIntro(page, step.choice, routeMetrics);
+    if (index === 0) {
+      const beforeGuide = await readIntro(page);
+      await page.keyboard.press("1");
+      await expect
+        .poll(async (): Promise<string> => (await readIntro(page)).storyMode, {
+          timeout: 15_000,
+        })
+        .toBe("response");
+      const afterGuide = await readIntro(page);
+      routeMetrics.distance += Math.hypot(
+        afterGuide.playerPosition.x - beforeGuide.playerPosition.x,
+        afterGuide.playerPosition.y - beforeGuide.playerPosition.y,
+        afterGuide.playerPosition.z - beforeGuide.playerPosition.z
+      );
+      expect(
+        routeMetrics.distance,
+        "number key should send the player toward a path"
+      ).toBeGreaterThan(0.5);
+    } else await steerIntro(page, step.choice, routeMetrics);
     const reached = await readIntro(page);
     if (
       reached.storyMode === "waiting" &&
@@ -340,26 +409,36 @@ test("bot playtest: scripted real input completes and retries the playable route
     await expect
       .poll(async (): Promise<string> => (await readIntro(page)).storyMode)
       .toBe("response");
+    const beforeTravel = await readIntro(page);
     const nextMode = await finishResponse(page);
+    const afterResponse = await readIntro(page);
     await recordStep(index);
     if (index === introSteps.length - 1) {
-      if (nextMode !== "doorway") {
-        await expect
-          .poll(
-            async (): Promise<string> => (await readIntro(page)).storyMode,
-            { timeout: 30_000 }
-          )
-          .toBe("doorway");
-      }
+      expect(["final", "name"]).toContain(nextMode);
       break;
     }
     expect(nextMode).toBe("travel");
-    await steerTravel(page, routeMetrics);
+    expect(
+      Math.hypot(
+        afterResponse.playerPosition.x - beforeTravel.playerPosition.x,
+        afterResponse.playerPosition.y - beforeTravel.playerPosition.y,
+        afterResponse.playerPosition.z - beforeTravel.playerPosition.z
+      ),
+      "travel must begin from the contacted strand"
+    ).toBeLessThan(1.25);
+    await steerTravel(
+      page,
+      routeMetrics,
+      testInfo.outputPath(`intro-travel-${index + 1}.png`)
+    );
     await expect
       .poll(async (): Promise<string> => (await readIntro(page)).storyMode)
-      .toBe("prelude");
-    await waitForContinue(page);
-    await page.keyboard.press("Enter");
+      .toMatch(/^(prelude|question|waiting)$/);
+    if ((await readIntro(page)).storyMode === "prelude") {
+      await waitForContinue(page);
+      if ((await readIntro(page)).storyMode === "prelude")
+        await page.keyboard.press("Enter");
+    }
     await expect
       .poll(async (): Promise<string> => (await readIntro(page)).storyMode, {
         timeout: 20_000,
@@ -367,7 +446,29 @@ test("bot playtest: scripted real input completes and retries the playable route
       .toBe("waiting");
   }
 
-  await page.keyboard.press("Enter");
+  await expect
+    .poll(async (): Promise<string> => (await readIntro(page)).storyMode, {
+      timeout: 30_000,
+    })
+    .toBe("name");
+  const nameStep = INPUT_SCRIPT.find(
+    (step): step is Extract<BotStep, { kind: "name-entry" }> =>
+      step.kind === "name-entry"
+  );
+  if (!nameStep) throw new Error("Bot script is missing the name-entry step");
+  const nameForm = page.locator("#os-name-entry-ts");
+  const nameInput = page.locator("#os-name-input-ts");
+  await expect(nameForm).toBeVisible();
+  await expect(nameInput).toBeVisible();
+  await nameInput.pressSequentially(nameStep.value);
+  await nameInput.press("Enter");
+  await expect
+    .poll(async (): Promise<string> => (await readIntro(page)).storyMode)
+    .toBe("doorway");
+
+  if (!INPUT_SCRIPT.some((step) => step.kind === "doorway-crossing"))
+    throw new Error("Bot script is missing the doorway-crossing step");
+  await walkThroughDoorway(page, routeMetrics);
   await expect
     .poll(async (): Promise<boolean> => (await readIntro(page)).complete)
     .toBe(true);
@@ -459,6 +560,10 @@ test("bot playtest: scripted real input completes and retries the playable route
     body: JSON.stringify(report, null, 2),
     contentType: "application/json",
   });
+  await writeFile(
+    "artifacts/intro-bot-playtest-report.json",
+    JSON.stringify(report, null, 2)
+  );
   console.log(`bot playtest: ${JSON.stringify(report)}`);
 
   expect(pageErrors, "page errors during bot play").toEqual([]);

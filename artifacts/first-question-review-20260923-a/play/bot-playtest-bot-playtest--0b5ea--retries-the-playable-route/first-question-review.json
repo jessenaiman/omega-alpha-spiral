@@ -1,0 +1,529 @@
+{
+  "scope": "actual entry through first path to second question; no full-game claim",
+  "viewport": {
+    "width": 947,
+    "height": 874
+  },
+  "setup": "normal menu Begin, no forced state or reduced motion",
+  "motion": [
+    {
+      "moment": "entry",
+      "state": {
+        "frame": 11,
+        "phase": "prelude",
+        "storyMode": "boot",
+        "questionIndex": 0,
+        "objective": "advance-boot",
+        "objectiveProgress": 0,
+        "complete": false,
+        "failed": false,
+        "canContinue": false,
+        "selectedChoice": 0,
+        "pendingChoice": -1,
+        "actionDiscovered": false,
+        "tutorialAct": "movement",
+        "playerPosition": {
+          "x": 0,
+          "y": -2.55,
+          "z": 0.52
+        },
+        "choiceTargets": [
+          {
+            "x": -4.866291825510632,
+            "y": 1.562647504434505,
+            "z": 0.18
+          },
+          {
+            "x": 5.328133581118341,
+            "y": 1.0671202978586398,
+            "z": 0.18
+          },
+          {
+            "x": -5.316363462848864,
+            "y": -4.346997557090754,
+            "z": 0.18
+          }
+        ],
+        "seed": "472",
+        "audio": {
+          "unlocked": true,
+          "muted": false,
+          "cueCount": 3
+        },
+        "physics": {
+          "ready": true,
+          "bodies": 5,
+          "colliders": 5,
+          "sensors": 4,
+          "activeSensors": 0,
+          "ccdBodies": 0,
+          "fixedTimestep": 0.016666666666666666,
+          "steps": 0
+        },
+        "viewport": {
+          "width": 947,
+          "height": 874,
+          "dpr": 1
+        },
+        "activeLoops": 1,
+        "pausedForScreenshot": false,
+        "debugUiHidden": false
+      }
+    },
+    {
+      "moment": "question-1-ready",
+      "state": {
+        "frame": 2788,
+        "phase": "waiting",
+        "storyMode": "waiting",
+        "questionIndex": 0,
+        "objective": "answer-question-1",
+        "objectiveProgress": 0,
+        "complete": false,
+        "failed": false,
+        "canContinue": false,
+        "selectedChoice": 0,
+        "pendingChoice": -1,
+        "actionDiscovered": false,
+        "tutorialAct": "movement",
+        "playerPosition": {
+          "x": 0,
+          "y": -2.549999952316284,
+          "z": 0.5199999809265137
+        },
+        "choiceTargets": [
+          {
+            "x": -1.7878146453089283,
+            "y": 0.26322593834618074,
+            "z": 0.18
+          },
+          {
+            "x": 1.0683565398614215e-30,
+            "y": 0.5372017873265438,
+            "z": 0.18
+          },
+          {
+            "x": 1.7878146453089208,
+            "y": 0.510186622423656,
+            "z": 0.18
+          }
+        ],
+        "seed": "472",
+        "audio": {
+          "unlocked": true,
+          "muted": false,
+          "cueCount": 167
+        },
+        "physics": {
+          "ready": true,
+          "bodies": 5,
+          "colliders": 5,
+          "sensors": 4,
+          "activeSensors": 3,
+          "ccdBodies": 0,
+          "fixedTimestep": 0.016666666666666666,
+          "steps": 7
+        },
+        "viewport": {
+          "width": 947,
+          "height": 874,
+          "dpr": 1
+        },
+        "activeLoops": 1,
+        "pausedForScreenshot": false,
+        "debugUiHidden": false
+      }
+    },
+    {
+      "moment": "movement-released",
+      "state": {
+        "frame": 2835,
+        "phase": "waiting",
+        "storyMode": "waiting",
+        "questionIndex": 0,
+        "objective": "answer-question-1",
+        "objectiveProgress": 0,
+        "complete": false,
+        "failed": false,
+        "canContinue": false,
+        "selectedChoice": 0,
+        "pendingChoice": -1,
+        "actionDiscovered": false,
+        "tutorialAct": "movement",
+        "playerPosition": {
+          "x": -0.1422958800548052,
+          "y": -1.4124987125396729,
+          "z": 0.17779350517847248
+        },
+        "choiceTargets": [
+          {
+            "x": -1.7878146453089283,
+            "y": 0.3840119438024942,
+            "z": 0.18
+          },
+          {
+            "x": 3.383709432997697e-31,
+            "y": 0.47078584652308314,
+            "z": 0.18
+          },
+          {
+            "x": 1.7878146453089208,
+            "y": 0.4622295766913151,
+            "z": 0.18
+          }
+        ],
+        "seed": "472",
+        "audio": {
+          "unlocked": true,
+          "muted": false,
+          "cueCount": 167
+        },
+        "physics": {
+          "ready": true,
+          "bodies": 5,
+          "colliders": 5,
+          "sensors": 4,
+          "activeSensors": 3,
+          "ccdBodies": 0,
+          "fixedTimestep": 0.016666666666666666,
+          "steps": 54
+        },
+        "viewport": {
+          "width": 947,
+          "height": 874,
+          "dpr": 1
+        },
+        "activeLoops": 1,
+        "pausedForScreenshot": false,
+        "debugUiHidden": false
+      }
+    },
+    {
+      "moment": "movement-stopped",
+      "state": {
+        "frame": 2882,
+        "phase": "waiting",
+        "storyMode": "waiting",
+        "questionIndex": 0,
+        "objective": "answer-question-1",
+        "objectiveProgress": 0,
+        "complete": false,
+        "failed": false,
+        "canContinue": false,
+        "selectedChoice": 0,
+        "pendingChoice": -1,
+        "actionDiscovered": false,
+        "tutorialAct": "movement",
+        "playerPosition": {
+          "x": -0.1422958800548052,
+          "y": -1.4124987125396729,
+          "z": 0.17779350517847248
+        },
+        "choiceTargets": [
+          {
+            "x": -1.7878146453089283,
+            "y": 0.4222700411506152,
+            "z": 0.18
+          },
+          {
+            "x": 1.0715326282035849e-31,
+            "y": 0.4497490755898405,
+            "z": 0.18
+          },
+          {
+            "x": 1.7878146453089208,
+            "y": 0.44703952783404216,
+            "z": 0.18
+          }
+        ],
+        "seed": "472",
+        "audio": {
+          "unlocked": true,
+          "muted": false,
+          "cueCount": 167
+        },
+        "physics": {
+          "ready": true,
+          "bodies": 5,
+          "colliders": 5,
+          "sensors": 4,
+          "activeSensors": 3,
+          "ccdBodies": 0,
+          "fixedTimestep": 0.016666666666666666,
+          "steps": 102
+        },
+        "viewport": {
+          "width": 947,
+          "height": 874,
+          "dpr": 1
+        },
+        "activeLoops": 1,
+        "pausedForScreenshot": false,
+        "debugUiHidden": false
+      }
+    },
+    {
+      "moment": "first-contact",
+      "state": {
+        "frame": 2939,
+        "phase": "response",
+        "storyMode": "response",
+        "questionIndex": 0,
+        "objective": "advance-response",
+        "objectiveProgress": 1,
+        "complete": false,
+        "failed": false,
+        "canContinue": false,
+        "selectedChoice": 0,
+        "pendingChoice": -1,
+        "actionDiscovered": false,
+        "tutorialAct": "movement",
+        "playerPosition": {
+          "x": -1.067665022781779,
+          "y": -0.09999871253967285,
+          "z": -0.9049187925995377
+        },
+        "choiceTargets": [
+          {
+            "x": -1.7878146453089279,
+            "y": 0.43614702630282726,
+            "z": 0.18
+          },
+          {
+            "x": 2.3285936911658942e-32,
+            "y": 0.48706813117526576,
+            "z": 0.18
+          },
+          {
+            "x": 1.7878146453089212,
+            "y": 0.4174019176212484,
+            "z": 0.18
+          }
+        ],
+        "seed": "472",
+        "audio": {
+          "unlocked": true,
+          "muted": false,
+          "cueCount": 170
+        },
+        "physics": {
+          "ready": true,
+          "bodies": 5,
+          "colliders": 5,
+          "sensors": 4,
+          "activeSensors": 0,
+          "ccdBodies": 0,
+          "fixedTimestep": 0.016666666666666666,
+          "steps": 155
+        },
+        "viewport": {
+          "width": 947,
+          "height": 874,
+          "dpr": 1
+        },
+        "activeLoops": 1,
+        "pausedForScreenshot": false,
+        "debugUiHidden": false
+      }
+    },
+    {
+      "moment": "travel-start",
+      "state": {
+        "frame": 4286,
+        "phase": "travel",
+        "storyMode": "travel",
+        "questionIndex": 1,
+        "objective": "walk-to-question-2",
+        "objectiveProgress": 1,
+        "complete": false,
+        "failed": false,
+        "canContinue": false,
+        "selectedChoice": 0,
+        "pendingChoice": -1,
+        "actionDiscovered": true,
+        "tutorialAct": "action",
+        "playerPosition": {
+          "x": -1.067665022781779,
+          "y": -0.09999871253967285,
+          "z": -0.9049187925995377
+        },
+        "choiceTargets": [
+          {
+            "x": -1.7878146453089276,
+            "y": 0.40579852016028334,
+            "z": 0.18
+          },
+          {
+            "x": 0.16104971864348203,
+            "y": 0.6058308826756698,
+            "z": 0.18
+          },
+          {
+            "x": 1.6267649266654396,
+            "y": 0.3525332403330614,
+            "z": 0.18
+          }
+        ],
+        "seed": "472",
+        "audio": {
+          "unlocked": true,
+          "muted": false,
+          "cueCount": 329
+        },
+        "physics": {
+          "ready": true,
+          "bodies": 5,
+          "colliders": 5,
+          "sensors": 4,
+          "activeSensors": 1,
+          "ccdBodies": 0,
+          "fixedTimestep": 0.016666666666666666,
+          "steps": 162
+        },
+        "viewport": {
+          "width": 947,
+          "height": 874,
+          "dpr": 1
+        },
+        "activeLoops": 1,
+        "pausedForScreenshot": false,
+        "debugUiHidden": false
+      }
+    },
+    {
+      "moment": "station-2-arrival",
+      "state": {
+        "frame": 4472,
+        "phase": "prelude",
+        "storyMode": "prelude",
+        "questionIndex": 1,
+        "objective": "advance-prelude",
+        "objectiveProgress": 1,
+        "complete": false,
+        "failed": false,
+        "canContinue": false,
+        "selectedChoice": 0,
+        "pendingChoice": -1,
+        "actionDiscovered": true,
+        "tutorialAct": "action",
+        "playerPosition": {
+          "x": 0,
+          "y": -2.55,
+          "z": -6
+        },
+        "choiceTargets": [
+          {
+            "x": -1.7878146453089276,
+            "y": 0.1142838349114223,
+            "z": -6.34
+          },
+          {
+            "x": 1.6514916583849488,
+            "y": 0.5013063463883431,
+            "z": -6.34
+          },
+          {
+            "x": 0.13632298692397526,
+            "y": 0.6223300363896975,
+            "z": -6.34
+          }
+        ],
+        "seed": "472",
+        "audio": {
+          "unlocked": true,
+          "muted": false,
+          "cueCount": 330
+        },
+        "physics": {
+          "ready": true,
+          "bodies": 5,
+          "colliders": 5,
+          "sensors": 4,
+          "activeSensors": 0,
+          "ccdBodies": 0,
+          "fixedTimestep": 0.016666666666666666,
+          "steps": 344
+        },
+        "viewport": {
+          "width": 947,
+          "height": 874,
+          "dpr": 1
+        },
+        "activeLoops": 1,
+        "pausedForScreenshot": false,
+        "debugUiHidden": false
+      }
+    },
+    {
+      "moment": "question-2-ready",
+      "state": {
+        "frame": 6422,
+        "phase": "waiting",
+        "storyMode": "waiting",
+        "questionIndex": 1,
+        "objective": "answer-question-2",
+        "objectiveProgress": 1,
+        "complete": false,
+        "failed": false,
+        "canContinue": false,
+        "selectedChoice": 0,
+        "pendingChoice": -1,
+        "actionDiscovered": true,
+        "tutorialAct": "action",
+        "playerPosition": {
+          "x": 0,
+          "y": -2.549999952316284,
+          "z": -6.000000019073486
+        },
+        "choiceTargets": [
+          {
+            "x": -1.7878146453089276,
+            "y": 0.305585666792838,
+            "z": -6.34
+          },
+          {
+            "x": 1.78781464530892,
+            "y": 0.22002822951898343,
+            "z": -6.34
+          },
+          {
+            "x": 2.612626054909947e-22,
+            "y": 0.9389252645556943,
+            "z": -6.34
+          }
+        ],
+        "seed": "472",
+        "audio": {
+          "unlocked": true,
+          "muted": false,
+          "cueCount": 455
+        },
+        "physics": {
+          "ready": true,
+          "bodies": 5,
+          "colliders": 5,
+          "sensors": 4,
+          "activeSensors": 3,
+          "ccdBodies": 0,
+          "fixedTimestep": 0.016666666666666666,
+          "steps": 384
+        },
+        "viewport": {
+          "width": 947,
+          "height": 874,
+          "dpr": 1
+        },
+        "activeLoops": 1,
+        "pausedForScreenshot": false,
+        "debugUiHidden": false
+      }
+    }
+  ],
+  "routeMetrics": {
+    "distance": 7.741020476641205,
+    "softlocks": 0
+  },
+  "pageErrors": [],
+  "consoleErrors": [],
+  "networkErrors": []
+}

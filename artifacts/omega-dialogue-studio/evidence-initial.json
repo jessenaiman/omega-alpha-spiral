@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "runId": "omega-dialogue-studio-20260923-a",
+  "captures": [
+    {
+      "mode": "desktop",
+      "state": null,
+      "report": "artifacts/omega-dialogue-studio/qa/desktop/desktop.json"
+    },
+    {
+      "mode": "mobile",
+      "state": null,
+      "report": "artifacts/omega-dialogue-studio/qa/mobile/mobile.json"
+    }
+  ],
+  "artifacts": ["omega-dialogue-studio.html"]
+}

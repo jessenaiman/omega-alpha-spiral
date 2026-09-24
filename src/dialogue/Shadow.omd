@@ -1,0 +1,31 @@
+# Shadow.omd — Omega Design. Mirrors Dialogic's .dch character resource.
+
+id = shadow
+display_name = Shadow
+nicknames = Keeper, Violet One
+color = #f2b84b
+
+[custom]
+thread = shadow
+style = shadow_theme
+personality = Neutral and ambivalent. Sharp, angular lines.
+
+[typing]
+interval = 40
+delay = 250
+jitter = 0.55
+mistakes = 0.1
+correction = 220
+revision = 420
+
+[typography]
+tradition = dec-vt100-ascii-terminal
+case = mixed
+
+[replacement]
+from = holds
+to = breaks
+
+[spatial]
+motion = angular
+note = Amber glyphs on an angled straight segment; keep motion readable.
