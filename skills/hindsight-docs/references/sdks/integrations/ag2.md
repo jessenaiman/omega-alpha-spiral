@@ -1,3 +1,4 @@
+
 # AG2
 
 Persistent long-term memory for [AG2](https://ag2.ai) agents (community AutoGen fork). Give your agents retain/recall/reflect tools that persist across conversations.
@@ -56,11 +57,11 @@ That's it. The assistant can now store and retrieve memories across conversation
 
 The integration provides three AG2-compatible tool functions backed by Hindsight's API:
 
-| Tool                        | Hindsight                       | What happens                                                                                                        |
-| --------------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `hindsight_retain(content)` | `retain(bank_id, content, ...)` | Content is stored. Hindsight extracts facts, entities, and relationships from the raw text.                         |
-| `hindsight_recall(query)`   | `recall(bank_id, query, ...)`   | Hindsight runs semantic search, BM25, graph traversal, and reranking. Returns a numbered list of matching memories. |
-| `hindsight_reflect(query)`  | `reflect(bank_id, query, ...)`  | Hindsight synthesizes a reasoned answer from all relevant memories, using the bank's disposition traits.            |
+| Tool | Hindsight | What happens |
+|------|-----------|--------------|
+| `hindsight_retain(content)` | `retain(bank_id, content, ...)` | Content is stored. Hindsight extracts facts, entities, and relationships from the raw text. |
+| `hindsight_recall(query)` | `recall(bank_id, query, ...)` | Hindsight runs semantic search, BM25, graph traversal, and reranking. Returns a numbered list of matching memories. |
+| `hindsight_reflect(query)` | `reflect(bank_id, query, ...)` | Hindsight synthesizes a reasoned answer from all relevant memories, using the bank's disposition traits. |
 
 Tools are plain Python functions with `Annotated` type hints. AG2 uses these hints to generate the tool schema that the LLM sees.
 
@@ -139,37 +140,37 @@ for tool_fn in tools:
 
 ### Configuration
 
-| Function         | Description                                |
-| ---------------- | ------------------------------------------ |
+| Function | Description |
+|----------|-------------|
 | `configure(...)` | Set global connection and default settings |
-| `get_config()`   | Get current configuration                  |
-| `reset_config()` | Reset configuration to None                |
+| `get_config()` | Get current configuration |
+| `reset_config()` | Reset configuration to None |
 
 ### create_hindsight_tools
 
-| Parameter                 | Default             | Description                                           |
-| ------------------------- | ------------------- | ----------------------------------------------------- |
-| `bank_id`                 | required            | Hindsight memory bank ID                              |
-| `client`                  | `None`              | Pre-configured `Hindsight` client                     |
-| `hindsight_api_url`       | from config         | Hindsight API URL                                     |
-| `api_key`                 | from config         | API key                                               |
-| `budget`                  | `"mid"`             | Recall/reflect budget (low/mid/high)                  |
-| `max_tokens`              | `4096`              | Max tokens for recall results                         |
-| `tags`                    | `None`              | Tags applied when storing memories                    |
-| `recall_tags`             | `None`              | Tags to filter when searching                         |
-| `recall_tags_match`       | `"any"`             | Tag matching mode (any/all/any_strict/all_strict)     |
-| `retain_metadata`         | `None`              | Metadata dict for retain operations                   |
-| `retain_document_id`      | `None`              | Document ID for retain (groups/upserts memories)      |
-| `recall_types`            | `None`              | Fact types to filter (world, experience, observation) |
-| `recall_include_entities` | `False`             | Include entity information in recall results          |
-| `reflect_context`         | `None`              | Additional context for reflect operations             |
-| `reflect_max_tokens`      | `max_tokens`        | Max tokens for reflect results                        |
-| `reflect_response_schema` | `None`              | JSON schema to constrain reflect output format        |
-| `reflect_tags`            | `recall_tags`       | Tags to filter memories used in reflect               |
-| `reflect_tags_match`      | `recall_tags_match` | Tag matching for reflect                              |
-| `include_retain`          | `True`              | Include the retain tool                               |
-| `include_recall`          | `True`              | Include the recall tool                               |
-| `include_reflect`         | `True`              | Include the reflect tool                              |
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `bank_id` | required | Hindsight memory bank ID |
+| `client` | `None` | Pre-configured `Hindsight` client |
+| `hindsight_api_url` | from config | Hindsight API URL |
+| `api_key` | from config | API key |
+| `budget` | `"mid"` | Recall/reflect budget (low/mid/high) |
+| `max_tokens` | `4096` | Max tokens for recall results |
+| `tags` | `None` | Tags applied when storing memories |
+| `recall_tags` | `None` | Tags to filter when searching |
+| `recall_tags_match` | `"any"` | Tag matching mode (any/all/any_strict/all_strict) |
+| `retain_metadata` | `None` | Metadata dict for retain operations |
+| `retain_document_id` | `None` | Document ID for retain (groups/upserts memories) |
+| `recall_types` | `None` | Fact types to filter (world, experience, observation) |
+| `recall_include_entities` | `False` | Include entity information in recall results |
+| `reflect_context` | `None` | Additional context for reflect operations |
+| `reflect_max_tokens` | `max_tokens` | Max tokens for reflect results |
+| `reflect_response_schema` | `None` | JSON schema to constrain reflect output format |
+| `reflect_tags` | `recall_tags` | Tags to filter memories used in reflect |
+| `reflect_tags_match` | `recall_tags_match` | Tag matching for reflect |
+| `include_retain` | `True` | Include the retain tool |
+| `include_recall` | `True` | Include the recall tool |
+| `include_reflect` | `True` | Include the reflect tool |
 
 ## Requirements
 

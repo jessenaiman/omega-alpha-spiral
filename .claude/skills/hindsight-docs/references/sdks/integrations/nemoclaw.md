@@ -1,3 +1,4 @@
+
 # NemoClaw
 
 Persistent memory for [NemoClaw](https://nemoclaw.ai) sandboxed agents using [Hindsight](https://hindsight.vectorize.io).
@@ -9,9 +10,8 @@ NemoClaw runs [OpenClaw](https://openclaw.ai) inside an OpenShell sandbox with c
 ## Quick Start
 
 > **💡 Hindsight Cloud (recommended)**
-
+>
 [Sign up free](https://ui.hindsight.vectorize.io/signup) — get an API key instantly, no infrastructure to run.
-
 ```bash
 npx @vectorize-io/hindsight-nemoclaw setup \
   --sandbox my-assistant \
@@ -153,13 +153,13 @@ openclaw gateway restart
 
 ## Configuration Options
 
-| Option              | Type    | Default      | Description                                                         |
-| ------------------- | ------- | ------------ | ------------------------------------------------------------------- |
-| `hindsightApiUrl`   | string  | —            | Hindsight API base URL                                              |
-| `hindsightApiToken` | string  | —            | API token for authentication                                        |
-| `llmProvider`       | string  | auto-detect  | LLM provider for memory extraction                                  |
-| `dynamicBankId`     | boolean | `false`      | Isolate memory per user (`true`) or share across sessions (`false`) |
-| `bankIdPrefix`      | string  | `"nemoclaw"` | Prefix for the memory bank name                                     |
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `hindsightApiUrl` | string | — | Hindsight API base URL |
+| `hindsightApiToken` | string | — | API token for authentication |
+| `llmProvider` | string | auto-detect | LLM provider for memory extraction |
+| `dynamicBankId` | boolean | `false` | Isolate memory per user (`true`) or share across sessions (`false`) |
+| `bankIdPrefix` | string | `"nemoclaw"` | Prefix for the memory bank name |
 
 ### Bank naming
 

@@ -1,3 +1,4 @@
+
 # Reflect
 
 Generate a grounded, disposition-aware response using an agentic reasoning loop.
@@ -7,13 +8,11 @@ When you call **reflect**, Hindsight runs an agentic loop that autonomously sear
 {/* Import raw source files */}
 
 > **ℹ️ How Reflect Works**
-
+>
 Learn about disposition-driven reasoning in the [Reflect Architecture](../reflect.md) guide.
-
 > **💡 Prerequisites**
-
+>
 Make sure you've completed the [Quick Start](./quickstart) to install the client and start the server.
-
 ## Basic Usage
 
 ### Python
@@ -25,7 +24,7 @@ client.reflect(bank_id="my-bank", query="What should I know about Alice?")
 ### Node.js
 
 ```javascript
-await client.reflect("my-bank", "What should I know about Alice?");
+await client.reflect('my-bank', 'What should I know about Alice?');
 ```
 
 ### CLI
@@ -68,14 +67,10 @@ response = client.reflect(
 ### Node.js
 
 ```javascript
-const response = await client.reflect(
-  "my-bank",
-  "What do you think about remote work?",
-  {
-    budget: "mid",
-    context: "We're considering a hybrid work policy",
-  }
-);
+const response = await client.reflect('my-bank', 'What do you think about remote work?', {
+    budget: 'mid',
+    context: "We're considering a hybrid work policy"
+});
 ```
 
 ### CLI
@@ -101,7 +96,7 @@ Limits the length of the final generated response. Defaults to `4096`. This does
 
 ### response_schema
 
-An optional JSON Schema **object** with a non-empty `properties` map (nested objects and arrays are supported). When provided, the response includes a `structured_output` field **in addition to** the markdown `text`: the agent reasons to its answer, then a second pass extracts that answer into JSON matching your schema. `structured_output` is therefore a faithful projection of `text` — you get the readable answer _and_ a typed object to program against, never one instead of the other. Invalid schemas (not an object, or no properties) are rejected before the call runs.
+An optional JSON Schema **object** with a non-empty `properties` map (nested objects and arrays are supported). When provided, the response includes a `structured_output` field **in addition to** the markdown `text`: the agent reasons to its answer, then a second pass extracts that answer into JSON matching your schema. `structured_output` is therefore a faithful projection of `text` — you get the readable answer *and* a typed object to program against, never one instead of the other. Invalid schemas (not an object, or no properties) are rejected before the call runs.
 
 ### Python
 
@@ -133,34 +128,24 @@ print(f"Key factors: {result.key_factors}")
 ```javascript
 // Define JSON schema directly
 const responseSchema = {
-  type: "object",
-  properties: {
-    recommendation: { type: "string" },
-    confidence: { type: "string", enum: ["low", "medium", "high"] },
-    key_factors: { type: "array", items: { type: "string" } },
-    risks: { type: "array", items: { type: "string" } },
-  },
-  required: ["recommendation", "confidence", "key_factors"],
+    type: 'object',
+    properties: {
+        recommendation: { type: 'string' },
+        confidence: { type: 'string', enum: ['low', 'medium', 'high'] },
+        key_factors: { type: 'array', items: { type: 'string' } },
+        risks: { type: 'array', items: { type: 'string' } },
+    },
+    required: ['recommendation', 'confidence', 'key_factors'],
 };
 
-const structuredResponse = await client.reflect(
-  "my-bank",
-  "What do you know about Alice and her career?",
-  {
+const structuredResponse = await client.reflect('my-bank', 'What do you know about Alice and her career?', {
     responseSchema: responseSchema,
-  }
-);
+});
 
 // Structured output (if returned)
 if (structuredResponse.structuredOutput) {
-  console.log(
-    "Recommendation:",
-    structuredResponse.structuredOutput.recommendation || "N/A"
-  );
-  console.log(
-    "Key factors:",
-    structuredResponse.structuredOutput.key_factors || []
-  );
+    console.log('Recommendation:', structuredResponse.structuredOutput.recommendation || 'N/A');
+    console.log('Key factors:', structuredResponse.structuredOutput.key_factors || []);
 }
 ```
 
@@ -230,15 +215,15 @@ models use the same matching modes as [recall tags](./recall#tags). Directives
 have one additional rule: untagged directives are global and remain eligible
 whenever a tag scope is supplied, including with a strict or exact match.
 
-| Reflect configuration                                  | Raw facts and observations                     | Mental models                               | Active directives                                                  |
-| ------------------------------------------------------ | ---------------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------ |
-| Omit `tags`, `tags_match`, and `tag_groups`            | All tagged and untagged data                   | All tagged and untagged models              | Untagged/global directives only                                    |
-| `tags: []`, default `tags_match: "any"`                | All tagged and untagged data                   | All tagged and untagged models              | Untagged/global directives only                                    |
-| No tags, `tags_match: "exact"`                         | Untagged/global data only                      | Untagged/global models only                 | Untagged/global directives only                                    |
-| Non-empty `tags`, `any` or `all`                       | Matching tagged data plus untagged/global data | Matching models plus untagged/global models | Matching tagged directives plus untagged/global directives         |
-| Non-empty `tags`, `any_strict` or `all_strict`         | Matching tagged data only                      | Matching tagged models only                 | Matching tagged directives plus untagged/global directives         |
-| Non-empty `tags`, `exact`                              | Data with exactly the requested tag set        | Models with exactly the requested tag set   | Exactly matching tagged directives plus untagged/global directives |
-| Non-empty `tag_groups`, default top-level `tags_match` | Data matching the compound expression          | Models matching the compound expression     | Matching tagged directives plus untagged/global directives         |
+| Reflect configuration | Raw facts and observations | Mental models | Active directives |
+|-----------------------|----------------------------|---------------|-------------------|
+| Omit `tags`, `tags_match`, and `tag_groups` | All tagged and untagged data | All tagged and untagged models | Untagged/global directives only |
+| `tags: []`, default `tags_match: "any"` | All tagged and untagged data | All tagged and untagged models | Untagged/global directives only |
+| No tags, `tags_match: "exact"` | Untagged/global data only | Untagged/global models only | Untagged/global directives only |
+| Non-empty `tags`, `any` or `all` | Matching tagged data plus untagged/global data | Matching models plus untagged/global models | Matching tagged directives plus untagged/global directives |
+| Non-empty `tags`, `any_strict` or `all_strict` | Matching tagged data only | Matching tagged models only | Matching tagged directives plus untagged/global directives |
+| Non-empty `tags`, `exact` | Data with exactly the requested tag set | Models with exactly the requested tag set | Exactly matching tagged directives plus untagged/global directives |
+| Non-empty `tag_groups`, default top-level `tags_match` | Data matching the compound expression | Models matching the compound expression | Matching tagged directives plus untagged/global directives |
 
 A `tag_groups` leaf may set `resolve: "fuzzy"`, as in
 [recall](./recall#fuzzy-leaves); reflect resolves it once, before the agentic
@@ -250,18 +235,16 @@ applies to every reflect call, leave its `tags` empty. To create a scoped
 directive, assign tags and pass a matching scope to `reflect`.
 
 > **📝 `isolation_mode`**
-
+>
 `isolation_mode` is an internal `list_directives` option, not a public reflect
 request parameter. Reflect always enables it. When neither `tags` nor
 `tag_groups` is supplied, it limits directive loading to untagged directives.
 There is currently no per-request switch to disable it.
-
 > **📝 MCP omitted tags**
-
+>
 The MCP `reflect` tool forwards `tags_match` only when `tags` is present. To
 request the empty exact scope through MCP, pass `tags: []` together with
 `tags_match: "exact"`.
-
 ### Python
 
 ```python
@@ -278,9 +261,9 @@ response = client.reflect(
 
 ```javascript
 // Filter reflect to only use memories tagged for a specific user
-await client.reflect("my-bank", "What feedback did the user give?", {
-  tags: ["user:alice"],
-  tagsMatch: "any_strict",
+await client.reflect('my-bank', 'What feedback did the user give?', {
+    tags: ['user:alice'],
+    tagsMatch: 'any_strict'
 });
 ```
 
@@ -376,14 +359,14 @@ for fact in (response.based_on.memories if response.based_on else []):
 ### Node.js
 
 ```javascript
-const sourcesResponse = await client.reflect("my-bank", "Tell me about Alice", {
-  includeFacts: true,
+const sourcesResponse = await client.reflect('my-bank', 'Tell me about Alice', {
+    includeFacts: true
 });
 
-console.log("Response:", sourcesResponse.text);
-console.log("\nBased on:");
-for (const fact of sourcesResponse.based_on?.memories || []) {
-  console.log(`  - [${fact.type}] ${fact.text}`);
+console.log('Response:', sourcesResponse.text);
+console.log('\nBased on:');
+for (const fact of (sourcesResponse.based_on?.memories || [])) {
+    console.log(`  - [${fact.type}] ${fact.text}`);
 }
 ```
 
@@ -485,4 +468,4 @@ Reflect answers from evidence it gathered, so a run that could not gather it doe
 
 A **successful retrieval that returns nothing is not a failure**: the bank genuinely has nothing on the topic, and reflect says so in its answer.
 
-Two cases are deliberately not failures. A run whose _context window_ overflows synthesizes from the evidence it has — the prompt was too big for the model, which is a budgeting problem, not a broken dependency. And a tool call the model got _wrong_ — a missing argument, a tool that does not exist — is returned to it as an error to fix, not raised.
+Two cases are deliberately not failures. A run whose *context window* overflows synthesizes from the evidence it has — the prompt was too big for the model, which is a budgeting problem, not a broken dependency. And a tool call the model got *wrong* — a missing argument, a tool that does not exist — is returned to it as an error to fix, not raised.

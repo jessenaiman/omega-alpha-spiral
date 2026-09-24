@@ -1,3 +1,4 @@
+
 # GitHub Copilot
 
 Long-term memory for [GitHub Copilot](https://github.com/features/copilot) in VS Code, powered by [Hindsight](https://vectorize.io/hindsight). One command connects Copilot's agent mode to the Hindsight MCP server and adds a recall/retain rule — so Copilot recalls relevant memory at the start of a task and retains durable facts as it works.
@@ -38,10 +39,10 @@ Use a [Hindsight Cloud](https://hindsight.vectorize.io) key, or a self-hosted se
 
 ## Commands
 
-| Command                       | Description                                   |
-| ----------------------------- | --------------------------------------------- |
-| `hindsight-copilot init`      | Add the MCP server + recall/retain rule       |
-| `hindsight-copilot status`    | Show whether the server + rule are configured |
-| `hindsight-copilot uninstall` | Remove the server + rule                      |
+| Command | Description |
+| --- | --- |
+| `hindsight-copilot init` | Add the MCP server + recall/retain rule |
+| `hindsight-copilot status` | Show whether the server + rule are configured |
+| `hindsight-copilot uninstall` | Remove the server + rule |
 
 See the [package README](https://github.com/vectorize-io/hindsight/tree/main/hindsight-integrations/github-copilot) for full configuration options.

@@ -1,3 +1,4 @@
+
 # elizaOS
 
 The `@vectorize-io/hindsight-eliza` package gives [elizaOS](https://github.com/elizaOS/eliza) agents long-term memory backed by [Hindsight](https://hindsight.vectorize.io).
@@ -57,18 +58,18 @@ createHindsightPlugin({
   bank: (message) => message.entityId,
 
   recall: {
-    enabled: true, // set false to disable recall
-    budget: "mid", // "low" | "mid" | "high" — latency vs. depth
+    enabled: true,            // set false to disable recall
+    budget: "mid",            // "low" | "mid" | "high" — latency vs. depth
     types: ["world", "experience"], // restrict to fact types
-    maxTokens: 1000, // cap recalled tokens
-    includeEntities: false, // include entity observations
+    maxTokens: 1000,          // cap recalled tokens
+    includeEntities: false,   // include entity observations
     heading: "# Relevant long-term memories", // prompt heading
   },
 
   retain: {
-    enabled: true, // set false to disable retain
-    async: true, // fire-and-forget; never adds turn latency
-    tags: ["source:eliza"], // tags on every retained memory
+    enabled: true,            // set false to disable retain
+    async: true,              // fire-and-forget; never adds turn latency
+    tags: ["source:eliza"],   // tags on every retained memory
     metadata: { env: "prod" },
     includeAgentMessages: false, // also store the agent's own replies
   },
@@ -83,7 +84,7 @@ can also build the components directly with `createHindsightProvider` and
 
 ## How it works
 
-| Component          | elizaOS seam | When it runs                                     | What it does                                                                            |
-| ------------------ | ------------ | ------------------------------------------------ | --------------------------------------------------------------------------------------- |
-| `HINDSIGHT_MEMORY` | Provider     | During prompt composition, before the model call | Calls Hindsight `recall` with the incoming message and injects the results into context |
-| `HINDSIGHT_RETAIN` | Evaluator    | After the agent processes the turn               | Calls Hindsight `retain` to persist the message (and optionally the agent's replies)    |
+| Component | elizaOS seam | When it runs | What it does |
+| --- | --- | --- | --- |
+| `HINDSIGHT_MEMORY` | Provider | During prompt composition, before the model call | Calls Hindsight `recall` with the incoming message and injects the results into context |
+| `HINDSIGHT_RETAIN` | Evaluator | After the agent processes the turn | Calls Hindsight `retain` to persist the message (and optionally the agent's replies) |

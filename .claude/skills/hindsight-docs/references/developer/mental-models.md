@@ -1,3 +1,5 @@
+
+
 # Mental Models
 
 A **mental model** is a standing answer to a question about a bank. You define the question once; Hindsight writes the answer, keeps it stored, and rewrites it in the background as the bank learns more.
@@ -33,11 +35,11 @@ This also makes answers **consistent**. Two users asking the same question get t
 
 Mental models are also the first thing [reflect](./reflect) reaches for. Its retrieval ladder goes:
 
-| Layer             | Produced by                  | Granularity                   |
-| ----------------- | ---------------------------- | ----------------------------- |
-| **Mental models** | You, explicitly              | A whole document per question |
-| **Observations**  | Consolidation, automatically | One belief per fact cluster   |
-| **Raw facts**     | Retain, automatically        | One fact per statement        |
+| Layer | Produced by | Granularity |
+|---|---|---|
+| **Mental models** | You, explicitly | A whole document per question |
+| **Observations** | Consolidation, automatically | One belief per fact cluster |
+| **Raw facts** | Retain, automatically | One fact per statement |
 
 Each layer is a cheaper, more settled version of the one below it. If the first step turns up a mental model that is fresh and covers the question, reflect can answer from it instead of descending through observations and raw facts — the same saving, applied inside the agentic loop.
 
@@ -47,7 +49,7 @@ Each layer is a cheaper, more settled version of the one below it. If the first 
 
 A mental model is not a cached answer that goes stale silently. Hindsight tracks whether new memories have arrived that the model is supposed to cover, and rebuilds it when they have — either as soon as new knowledge is consolidated, or on a schedule you set.
 
-The check comes first, and it is scoped: a rebuild only happens when something _within this model's own scope_ actually changed. A busy bank does not cause unrelated models to churn, and a scheduled rebuild over an unchanged bank costs nothing.
+The check comes first, and it is scoped: a rebuild only happens when something *within this model's own scope* actually changed. A busy bank does not cause unrelated models to churn, and a scheduled rebuild over an unchanged bank costs nothing.
 
 When a model is handed to the reflect agent, it comes with a freshness signal — whether memories in its scope have landed since it was last written. A model that has fallen behind is still shown, but it no longer short-circuits retrieval, and the agent is expected to check it against the layers below rather than trust it blindly.
 

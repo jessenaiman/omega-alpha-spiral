@@ -1,3 +1,4 @@
+
 # OMO (oh-my-openagent)
 
 [View Changelog →](../../changelog/integrations/omo.md)
@@ -7,7 +8,7 @@ Persistent memory for [oh-my-openagent](https://github.com/code-yeongyu/oh-my-op
 ## Quick Start
 
 > **💡 Recommended: Hindsight Cloud**
-
+>
 [Sign up free](https://ui.hindsight.vectorize.io/signup) for a Hindsight Cloud API key — no self-hosting, no local daemon to manage.
 From the `hindsight-integrations/omo/` directory:
 
@@ -39,8 +40,8 @@ Add env vars to OMO's allowlist in `~/.config/opencode/oh-my-openagent.jsonc`:
   "mcp_env_allowlist": [
     "HINDSIGHT_API_URL",
     "HINDSIGHT_API_TOKEN",
-    "HINDSIGHT_BANK_ID",
-  ],
+    "HINDSIGHT_BANK_ID"
+  ]
 }
 ```
 
@@ -60,13 +61,13 @@ Start a new OMO session — memory is live.
 
 The plugin uses five OMO hook events:
 
-| Hook               | Event              | Purpose                                                         |
-| ------------------ | ------------------ | --------------------------------------------------------------- |
-| `session_start.py` | `SessionStart`     | Warm up — verify Hindsight is reachable                         |
-| `recall.py`        | `UserPromptSubmit` | **Auto-recall** — query memories, inject as `additionalContext` |
-| `retain.py`        | `Stop`             | **Auto-retain** — extract transcript, POST to Hindsight (async) |
-| `retain.py`        | `SubagentStop`     | **Sub-agent retain** — capture delegated sub-agent learnings    |
-| `session_end.py`   | `SessionEnd`       | Force final retain for short sessions                           |
+| Hook | Event | Purpose |
+|------|-------|---------|
+| `session_start.py` | `SessionStart` | Warm up — verify Hindsight is reachable |
+| `recall.py` | `UserPromptSubmit` | **Auto-recall** — query memories, inject as `additionalContext` |
+| `retain.py` | `Stop` | **Auto-retain** — extract transcript, POST to Hindsight (async) |
+| `retain.py` | `SubagentStop` | **Sub-agent retain** — capture delegated sub-agent learnings |
+| `session_end.py` | `SessionEnd` | Force final retain for short sessions |
 
 On `UserPromptSubmit`, the hook reads the prompt, queries Hindsight for the most relevant memories, and outputs a `hookSpecificOutput.additionalContext` block. OMO prepends this to the conversation before sending it to the model:
 
@@ -125,60 +126,60 @@ Settings are loaded from three sources in order (later wins):
 
 ### Connection
 
-| Setting             | Env Var               | Default                              | Description                                               |
-| ------------------- | --------------------- | ------------------------------------ | --------------------------------------------------------- |
-| `hindsightApiUrl`   | `HINDSIGHT_API_URL`   | `https://api.hindsight.vectorize.io` | API endpoint.                                             |
-| `hindsightApiToken` | `HINDSIGHT_API_TOKEN` | —                                    | API key for authentication. Required for Hindsight Cloud. |
+| Setting | Env Var | Default | Description |
+|---------|---------|---------|-------------|
+| `hindsightApiUrl` | `HINDSIGHT_API_URL` | `https://api.hindsight.vectorize.io` | API endpoint. |
+| `hindsightApiToken` | `HINDSIGHT_API_TOKEN` | — | API key for authentication. Required for Hindsight Cloud. |
 
 ---
 
 ### Memory Bank
 
-| Setting                  | Env Var                     | Default                 | Description                                                                                         |
-| ------------------------ | --------------------------- | ----------------------- | --------------------------------------------------------------------------------------------------- |
-| `bankId`                 | `HINDSIGHT_BANK_ID`         | `"omo"`                 | The bank to read from and write to. All sessions share this bank unless `dynamicBankId` is enabled. |
-| `bankMission`            | `HINDSIGHT_BANK_MISSION`    | OMO orchestrator prompt | Describes the agent's purpose. Sent when creating or updating the bank.                             |
-| `retainMission`          | —                           | extraction prompt       | Instructions for Hindsight's fact extraction.                                                       |
-| `dynamicBankId`          | `HINDSIGHT_DYNAMIC_BANK_ID` | `false`                 | When `true`, derives a unique bank ID from `dynamicBankGranularity` fields.                         |
-| `dynamicBankGranularity` | —                           | `["agent", "project"]`  | Fields to combine for dynamic bank IDs. `"project"` = working directory, `"agent"` = agent name.    |
-| `bankIdPrefix`           | —                           | `""`                    | Prefix prepended to all bank IDs.                                                                   |
+| Setting | Env Var | Default | Description |
+|---------|---------|---------|-------------|
+| `bankId` | `HINDSIGHT_BANK_ID` | `"omo"` | The bank to read from and write to. All sessions share this bank unless `dynamicBankId` is enabled. |
+| `bankMission` | `HINDSIGHT_BANK_MISSION` | OMO orchestrator prompt | Describes the agent's purpose. Sent when creating or updating the bank. |
+| `retainMission` | — | extraction prompt | Instructions for Hindsight's fact extraction. |
+| `dynamicBankId` | `HINDSIGHT_DYNAMIC_BANK_ID` | `false` | When `true`, derives a unique bank ID from `dynamicBankGranularity` fields. |
+| `dynamicBankGranularity` | — | `["agent", "project"]` | Fields to combine for dynamic bank IDs. `"project"` = working directory, `"agent"` = agent name. |
+| `bankIdPrefix` | — | `""` | Prefix prepended to all bank IDs. |
 
 ---
 
 ### Auto-Recall
 
-| Setting                | Env Var                            | Default                   | Description                                                                      |
-| ---------------------- | ---------------------------------- | ------------------------- | -------------------------------------------------------------------------------- |
-| `autoRecall`           | `HINDSIGHT_AUTO_RECALL`            | `true`                    | Master switch for auto-recall.                                                   |
-| `recallBudget`         | `HINDSIGHT_RECALL_BUDGET`          | `"mid"`                   | Search depth: `"low"` (fast), `"mid"` (balanced), `"high"` (thorough).           |
-| `recallMaxTokens`      | `HINDSIGHT_RECALL_MAX_TOKENS`      | `1024`                    | Max tokens in the recalled memory block.                                         |
-| `recallTypes`          | —                                  | `["world", "experience"]` | Memory types to retrieve.                                                        |
-| `recallContextTurns`   | `HINDSIGHT_RECALL_CONTEXT_TURNS`   | `1`                       | Prior turns to include when building the recall query. `1` = latest prompt only. |
-| `recallMaxQueryChars`  | `HINDSIGHT_RECALL_MAX_QUERY_CHARS` | `800`                     | Max characters in the query sent to Hindsight.                                   |
-| `recallRoles`          | —                                  | `["user", "assistant"]`   | Roles to include when building a multi-turn query.                               |
-| `recallPromptPreamble` | —                                  | built-in                  | Text placed above the recalled memories in the injected context block.           |
+| Setting | Env Var | Default | Description |
+|---------|---------|---------|-------------|
+| `autoRecall` | `HINDSIGHT_AUTO_RECALL` | `true` | Master switch for auto-recall. |
+| `recallBudget` | `HINDSIGHT_RECALL_BUDGET` | `"mid"` | Search depth: `"low"` (fast), `"mid"` (balanced), `"high"` (thorough). |
+| `recallMaxTokens` | `HINDSIGHT_RECALL_MAX_TOKENS` | `1024` | Max tokens in the recalled memory block. |
+| `recallTypes` | — | `["world", "experience"]` | Memory types to retrieve. |
+| `recallContextTurns` | `HINDSIGHT_RECALL_CONTEXT_TURNS` | `1` | Prior turns to include when building the recall query. `1` = latest prompt only. |
+| `recallMaxQueryChars` | `HINDSIGHT_RECALL_MAX_QUERY_CHARS` | `800` | Max characters in the query sent to Hindsight. |
+| `recallRoles` | — | `["user", "assistant"]` | Roles to include when building a multi-turn query. |
+| `recallPromptPreamble` | — | built-in | Text placed above the recalled memories in the injected context block. |
 
 ---
 
 ### Auto-Retain
 
-| Setting              | Env Var                 | Default                 | Description                                                                                              |
-| -------------------- | ----------------------- | ----------------------- | -------------------------------------------------------------------------------------------------------- |
-| `autoRetain`         | `HINDSIGHT_AUTO_RETAIN` | `true`                  | Master switch for auto-retain.                                                                           |
-| `retainMode`         | `HINDSIGHT_RETAIN_MODE` | `"full-session"`        | `"full-session"` sends the full transcript per session. `"chunked"` sends sliding windows every N turns. |
-| `retainEveryNTurns`  | —                       | `10`                    | Retain fires every N turns. `1` = every turn. Higher values reduce API calls.                            |
-| `retainOverlapTurns` | —                       | `2`                     | Extra turns included from the previous chunk (chunked mode only).                                        |
-| `retainRoles`        | —                       | `["user", "assistant"]` | Roles to include in the retained transcript.                                                             |
-| `retainTags`         | —                       | `["{session_id}"]`      | Tags attached to the stored document. `{session_id}` is replaced at runtime.                             |
-| `retainMetadata`     | —                       | `{}`                    | Arbitrary key-value metadata attached to the stored document.                                            |
-| `retainContext`      | —                       | `"omo"`                 | Label identifying the source integration.                                                                |
+| Setting | Env Var | Default | Description |
+|---------|---------|---------|-------------|
+| `autoRetain` | `HINDSIGHT_AUTO_RETAIN` | `true` | Master switch for auto-retain. |
+| `retainMode` | `HINDSIGHT_RETAIN_MODE` | `"full-session"` | `"full-session"` sends the full transcript per session. `"chunked"` sends sliding windows every N turns. |
+| `retainEveryNTurns` | — | `10` | Retain fires every N turns. `1` = every turn. Higher values reduce API calls. |
+| `retainOverlapTurns` | — | `2` | Extra turns included from the previous chunk (chunked mode only). |
+| `retainRoles` | — | `["user", "assistant"]` | Roles to include in the retained transcript. |
+| `retainTags` | — | `["{session_id}"]` | Tags attached to the stored document. `{session_id}` is replaced at runtime. |
+| `retainMetadata` | — | `{}` | Arbitrary key-value metadata attached to the stored document. |
+| `retainContext` | — | `"omo"` | Label identifying the source integration. |
 
 ---
 
 ### Debug
 
-| Setting | Env Var           | Default | Description                                                                      |
-| ------- | ----------------- | ------- | -------------------------------------------------------------------------------- |
+| Setting | Env Var | Default | Description |
+|---------|---------|---------|-------------|
 | `debug` | `HINDSIGHT_DEBUG` | `false` | Enable verbose logging to stderr. All log lines are prefixed with `[Hindsight]`. |
 
 ## Per-Project Memory

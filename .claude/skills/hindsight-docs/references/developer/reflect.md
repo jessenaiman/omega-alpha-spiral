@@ -1,3 +1,5 @@
+
+
 # Reflect: Agentic Reasoning with Disposition
 
 When you call `reflect()`, Hindsight runs an **agentic loop** that autonomously gathers evidence and reasons through the lens of the bank's disposition to generate contextual responses.
@@ -33,16 +35,15 @@ Unlike simple retrieval, reflect is an **agentic system** that:
 
 The reflect agent runs in a loop with access to these tools:
 
-| Tool                   | Purpose                       | Priority              |
-| ---------------------- | ----------------------------- | --------------------- |
-| `search_mental_models` | User-curated summaries        | Highest (check first) |
-| `search_observations`  | Consolidated knowledge        | High                  |
-| `recall`               | Raw facts (ground truth)      | Fallback              |
-| `expand`               | Get more context for a memory | As needed             |
-| `done`                 | Complete with final answer    | When ready            |
+| Tool | Purpose | Priority |
+|------|---------|----------|
+| `search_mental_models` | User-curated summaries | Highest (check first) |
+| `search_observations` | Consolidated knowledge | High |
+| `recall` | Raw facts (ground truth) | Fallback |
+| `expand` | Get more context for a memory | As needed |
+| `done` | Complete with final answer | When ready |
 
 The agent:
-
 - **Must gather evidence** before answering (guardrail prevents empty responses)
 - **Runs up to 10 iterations** to find relevant information
 - **Validates citations** — only IDs that were actually retrieved can be cited
@@ -68,7 +69,6 @@ Most AI systems can retrieve facts, but they can't **reason** about them in a co
 ### The Problem
 
 Without reflect:
-
 - **No consistent character**: Same question gets different answers each time
 - **No knowledge synthesis**: System never connects related facts
 - **No reasoning context**: Responses don't reflect accumulated knowledge
@@ -77,7 +77,6 @@ Without reflect:
 ### The Value
 
 With reflect:
-
 - **Consistent character**: A "detail-oriented, cautious" bank emphasizes risks and thorough planning
 - **Evolving knowledge**: Observations strengthen and adapt as evidence accumulates
 - **Contextual reasoning**: "Based on what I know about your team's remote work success..."
@@ -85,15 +84,14 @@ With reflect:
 
 ### When to Use Reflect
 
-| Use `recall()` when...             | Use `reflect()` when...                   |
-| ---------------------------------- | ----------------------------------------- |
-| You need raw facts                 | You need reasoned interpretation          |
+| Use `recall()` when... | Use `reflect()` when... |
+|------------------------|-------------------------|
+| You need raw facts | You need reasoned interpretation |
 | You're building your own reasoning | You want disposition-consistent responses |
-| You need maximum control           | You want the bank to "think" for itself   |
-| Simple fact lookup                 | Forming recommendations                   |
+| You need maximum control | You want the bank to "think" for itself |
+| Simple fact lookup | Forming recommendations |
 
 **Example:**
-
 - `recall("Alice")` → Returns all Alice facts and relevant mental models
 - `reflect("Should we hire Alice?")` → Agent gathers evidence about Alice, reasons about fit, returns answer with citations
 
@@ -103,11 +101,11 @@ With reflect:
 
 When you create a memory bank, you can configure its disposition using three traits. These traits influence how the bank interprets information and reasons during `reflect()`:
 
-| Trait          | Scale | Low (1)                                          | High (5)                                           |
-| -------------- | ----- | ------------------------------------------------ | -------------------------------------------------- |
-| **Skepticism** | 1-5   | Trusting, accepts information at face value      | Skeptical, questions and doubts claims             |
-| **Literalism** | 1-5   | Flexible interpretation, reads between the lines | Literal interpretation, takes things at face value |
-| **Empathy**    | 1-5   | Detached, focuses on facts                       | Empathetic, considers emotional context            |
+| Trait | Scale | Low (1) | High (5) |
+|-------|-------|---------|----------|
+| **Skepticism** | 1-5 | Trusting, accepts information at face value | Skeptical, questions and doubts claims |
+| **Literalism** | 1-5 | Flexible interpretation, reads between the lines | Literal interpretation, takes things at face value |
+| **Empathy** | 1-5 | Detached, focuses on facts | Empathetic, considers emotional context |
 
 ### Mission: Natural Language Identity
 
@@ -126,13 +124,12 @@ client.update_bank_config(
 ```
 
 The reflect mission frames how the agent reasons and responds:
-
 - Provides identity context: who the agent is and what it cares about
 - Shapes how disposition traits are applied in practice
 - Keeps reasoning consistent across conversations
 
 > **ℹ️ Per-operation missions**
-
+>
 The reflect mission only affects `reflect()`. To steer what gets extracted during `retain()`, use [`retain_mission`](api/memory-banks.md#retain-configuration). To control what gets synthesised into observations, use [`observations_mission`](api/memory-banks.md#observations-configuration).
 ---
 
@@ -141,11 +138,9 @@ The reflect mission only affects `reflect()`. To steer what gets extracted durin
 Two banks with different dispositions, given identical facts about remote work:
 
 **Bank A** (low skepticism, high empathy):
-
 > "Remote work enables flexibility and work-life balance. The team seems happier and more productive when they can choose their environment."
 
 **Bank B** (high skepticism, low empathy):
-
 > "Remote work claims need verification. What are the actual productivity metrics? The anecdotal benefits may not translate to measurable outcomes."
 
 **Same facts → Different conclusions** because disposition shapes interpretation.
@@ -156,20 +151,20 @@ Two banks with different dispositions, given identical facts about remote work:
 
 Different use cases benefit from different disposition configurations:
 
-| Use Case               | Recommended Traits                       | Why                                       |
-| ---------------------- | ---------------------------------------- | ----------------------------------------- |
-| **Customer Support**   | skepticism: 2, literalism: 2, empathy: 5 | Trusting, flexible, understanding         |
-| **Code Review**        | skepticism: 4, literalism: 5, empathy: 2 | Questions assumptions, precise, direct    |
-| **Legal Analysis**     | skepticism: 5, literalism: 5, empathy: 2 | Highly skeptical, exact interpretation    |
-| **Therapist/Coach**    | skepticism: 2, literalism: 2, empathy: 5 | Supportive, reads between lines           |
+| Use Case | Recommended Traits | Why |
+|----------|-------------------|-----|
+| **Customer Support** | skepticism: 2, literalism: 2, empathy: 5 | Trusting, flexible, understanding |
+| **Code Review** | skepticism: 4, literalism: 5, empathy: 2 | Questions assumptions, precise, direct |
+| **Legal Analysis** | skepticism: 5, literalism: 5, empathy: 2 | Highly skeptical, exact interpretation |
+| **Therapist/Coach** | skepticism: 2, literalism: 2, empathy: 5 | Supportive, reads between lines |
 | **Research Assistant** | skepticism: 4, literalism: 3, empathy: 3 | Questions claims, balanced interpretation |
 
 ---
 
 ## Directives: Hard Rules
 
-While disposition traits _influence_ reasoning style, **directives** are hard
-rules that the agent _must_ follow when they apply to the current reflect scope.
+While disposition traits *influence* reasoning style, **directives** are hard
+rules that the agent *must* follow when they apply to the current reflect scope.
 Untagged directives are global; tagged directives require matching reflect
 tags. See [Memory Banks: Directives](api/memory-banks.md#directives) for
 the full matching and default-behavior tables.
@@ -189,15 +184,15 @@ Directive `tags` scope when a directive applies, just like they scope memories. 
 
 ### Directives vs Disposition
 
-| Aspect        | Disposition                        | Directives                     |
-| ------------- | ---------------------------------- | ------------------------------ |
-| **Nature**    | Soft influence                     | Hard rules                     |
-| **Effect**    | Shapes interpretation and tone     | Must be followed exactly       |
-| **Violation** | Acceptable (it's a tendency)       | Not acceptable                 |
-| **Example**   | High skepticism → questions claims | "Never make medical diagnoses" |
+| Aspect | Disposition | Directives |
+|--------|-------------|------------|
+| **Nature** | Soft influence | Hard rules |
+| **Effect** | Shapes interpretation and tone | Must be followed exactly |
+| **Violation** | Acceptable (it's a tendency) | Not acceptable |
+| **Example** | High skepticism → questions claims | "Never make medical diagnoses" |
 
 > **💡 Tip**
-
+>
 Use disposition for personality and character. Use directives for compliance and guardrails.
 See [Memory Banks: Directives](api/memory-banks.md#directives) for how to create and manage directives.
 
@@ -208,7 +203,6 @@ See [Memory Banks: Directives](api/memory-banks.md#directives) for how to create
 When you call `reflect()`:
 
 **Returns:**
-
 - **Response text** — Disposition-influenced answer from the agent
 - **based_on** — Evidence used: memories, mental models, and directives that grounded the response
 - **trace** — Tool calls, LLM calls, and observations accessed (when `include.tool_calls=True`)
@@ -216,33 +210,20 @@ When you call `reflect()`:
 - **usage** — Token usage metrics
 
 **Example:**
-
 ```json
 {
   "text": "Based on Alice's ML expertise and her work at Google, she'd be an excellent fit for the research team lead position...",
   "based_on": {
     "memories": [
-      {
-        "id": "mem-123",
-        "text": "Alice has 5 years of ML experience",
-        "type": "world"
-      },
-      {
-        "id": "mem-456",
-        "text": "Alice worked at Google on search ranking",
-        "type": "experience"
-      }
+      {"id": "mem-123", "text": "Alice has 5 years of ML experience", "type": "world"},
+      {"id": "mem-456", "text": "Alice worked at Google on search ranking", "type": "experience"}
     ],
     "mental_models": [],
     "directives": [
-      {
-        "id": "dir-001",
-        "name": "Formal Language",
-        "rules": ["Always respond in formal English"]
-      }
+      {"id": "dir-001", "name": "Formal Language", "rules": ["Always respond in formal English"]}
     ]
   },
-  "usage": { "input_tokens": 1500, "output_tokens": 500, "total_tokens": 2000 }
+  "usage": {"input_tokens": 1500, "output_tokens": 500, "total_tokens": 2000}
 }
 ```
 
@@ -253,7 +234,7 @@ The agent automatically gathers evidence, validates citations, and generates a g
 ## Structured Output
 
 Reflect returns prose by default. Pass a `response_schema` (a JSON Schema **object** with a
-`properties` map) to _also_ get a machine-readable version of the same answer:
+`properties` map) to *also* get a machine-readable version of the same answer:
 
 ```json
 {
@@ -290,7 +271,7 @@ against, never one instead of the other.
 
 **When extraction fails.** The reflect still returns `200` with the prose answer, no
 `structured_output`, and a `structured_output_error` field saying why (a provider error, a timeout,
-unparseable output). A missing `structured_output` _without_ that field means the answer simply held
+unparseable output). A missing `structured_output` *without* that field means the answer simply held
 nothing matching your schema — so you can retry the broken case without retrying the ordinary one.
 
 **Schema rules.** The schema must be an object with at least one property. Each property's `type`

@@ -86,7 +86,6 @@ When you modify the OpenAPI spec, regenerate the clients:
 ```
 
 This generates:
-
 - Python client in `hindsight-clients/python/`
 - TypeScript client in `hindsight-clients/typescript/`
 

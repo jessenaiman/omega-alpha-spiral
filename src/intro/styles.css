@@ -172,7 +172,7 @@
   padding: 0.5rem;
   position: absolute;
   right: var(--os-space-lg);
-  width: min(22rem, 42vw);
+  width: 9rem;
   z-index: 2;
 }
 .os-route-guide[hidden] {
@@ -398,14 +398,24 @@
     background: var(--os-surface);
   }
   .os-route-guide {
-    bottom: 8.5rem;
-    right: var(--os-space-default);
-    width: min(12rem, 54vw);
+    bottom: max(1rem, env(safe-area-inset-bottom));
+    right: max(0.5rem, env(safe-area-inset-right));
+    background: transparent;
+    border: 0;
+    padding: 0;
+    width: 7rem;
+  }
+  .os-route-guide-title {
+    clip-path: inset(50%);
+    height: 1px;
+    overflow: hidden;
+    position: absolute;
+    width: 1px;
   }
   .os-route-guide button {
     font-size: 0.65rem;
     line-height: 1.2;
-    min-height: 2.1rem;
+    min-height: 2.75rem;
   }
   .os-footer {
     top: 3.8rem;

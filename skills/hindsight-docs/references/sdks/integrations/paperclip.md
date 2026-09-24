@@ -1,3 +1,4 @@
+
 # Paperclip
 
 Persistent memory for [Paperclip AI](https://github.com/paperclipai/paperclip) agents using [Hindsight](https://hindsight.vectorize.io).
@@ -17,7 +18,7 @@ Then configure in **Settings → Plugins → Hindsight Memory**.
 ## Prerequisites
 
 > **💡 Hindsight Cloud (recommended)**
-
+>
 [Sign up free](https://ui.hindsight.vectorize.io/signup) — no infrastructure to run. Skip straight to Configuration below.
 **Self-hosting alternative** — run Hindsight locally:
 
@@ -52,15 +53,15 @@ Memory is keyed to `companyId` + `agentId` — never to the run ID — so it acc
 
 ## Configuration
 
-| Field                | Default                              | Description                                                                                                                                                            |
-| -------------------- | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `hindsightApiUrl`    | `https://api.hindsight.vectorize.io` | Hindsight server URL (Cloud default; use `http://localhost:8888` for self-hosted)                                                                                      |
-| `hindsightApiKeyRef` | —                                    | Paperclip secret name holding Hindsight Cloud API key                                                                                                                  |
-| `dynamicBankId`      | `true`                               | When `true`, bank ID is derived from `bankGranularity`. Set `false` and provide `bankId` to share one static memory bank across agents                                 |
-| `bankId`             | —                                    | Static bank ID used when `dynamicBankId` is `false`. All agents sharing this value read/write the same memory bank                                                     |
-| `bankGranularity`    | `["company", "agent"]`               | Memory isolation when `dynamicBankId` is `true`: per company+agent, per company, or per agent. Add `"user"` for per-user memory isolation (useful for GDPR compliance) |
-| `recallBudget`       | `mid`                                | `low` = fastest, `mid` = balanced, `high` = most thorough                                                                                                              |
-| `autoRetain`         | `true`                               | Automatically retain run output after every run                                                                                                                        |
+| Field | Default | Description |
+|-------|---------|-------------|
+| `hindsightApiUrl` | `https://api.hindsight.vectorize.io` | Hindsight server URL (Cloud default; use `http://localhost:8888` for self-hosted) |
+| `hindsightApiKeyRef` | — | Paperclip secret name holding Hindsight Cloud API key |
+| `dynamicBankId` | `true` | When `true`, bank ID is derived from `bankGranularity`. Set `false` and provide `bankId` to share one static memory bank across agents |
+| `bankId` | — | Static bank ID used when `dynamicBankId` is `false`. All agents sharing this value read/write the same memory bank |
+| `bankGranularity` | `["company", "agent"]` | Memory isolation when `dynamicBankId` is `true`: per company+agent, per company, or per agent. Add `"user"` for per-user memory isolation (useful for GDPR compliance) |
+| `recallBudget` | `mid` | `low` = fastest, `mid` = balanced, `high` = most thorough |
+| `autoRetain` | `true` | Automatically retain run output after every run |
 
 ## Bank ID Format
 
@@ -85,9 +86,9 @@ Agents can call these tools directly during a run:
 Works with all Paperclip adapter types via the event system:
 
 | Adapter | Supported |
-| ------- | --------- |
-| Claude  | ✓         |
-| Codex   | ✓         |
-| Cursor  | ✓         |
-| HTTP    | ✓         |
-| Process | ✓         |
+|---------|-----------|
+| Claude | ✓ |
+| Codex | ✓ |
+| Cursor | ✓ |
+| HTTP | ✓ |
+| Process | ✓ |

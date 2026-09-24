@@ -1,3 +1,4 @@
+
 # Microsoft Agent Framework
 
 [View Changelog →](../../changelog/integrations/agent-framework.md)
@@ -7,9 +8,8 @@ Persistent memory for [Microsoft Agent Framework](https://github.com/microsoft/a
 ## Quick Start
 
 > **💡 Recommended: Hindsight Cloud**
-
+>
 [Sign up free](https://ui.hindsight.vectorize.io/signup) for a Hindsight Cloud API key — no self-hosting required.
-
 ```bash
 pip install hindsight-agent-framework
 export HINDSIGHT_API_KEY=your-hindsight-key
@@ -32,10 +32,10 @@ await agent.run("Suggest a recipe.", session=session)  # recalls the preference
 
 ## How It Works
 
-| Hook         | Behavior                                                                                                             |
-| ------------ | -------------------------------------------------------------------------------------------------------------------- |
+| Hook | Behavior |
+| --- | --- |
 | `before_run` | Recall memories relevant to the user's message and inject them as a `## Memories` block in the agent's instructions. |
-| `after_run`  | Retain the user input + agent response so future runs build on them.                                                 |
+| `after_run` | Retain the user input + agent response so future runs build on them. |
 
 Memories live in a Hindsight **bank** — one per user, agent, or session (you choose via `bank_id`). Recall and retain are best-effort: a memory hiccup never blocks the agent.
 

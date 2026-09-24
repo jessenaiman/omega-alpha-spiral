@@ -1,3 +1,4 @@
+
 # Operations
 
 Hindsight runs several maintenance and ingestion tasks asynchronously instead of blocking the API call that triggers them. These tasks share a single queue (`async_operations`) and a single worker pool, and the same REST endpoints — list, status, cancel, retry — work across every type.
@@ -7,9 +8,8 @@ This page explains each operation type, when it fires, and how to inspect or man
 {/* Import raw source files */}
 
 > **💡 Prerequisites**
-
+>
 Make sure you've completed the [Quick Start](./quickstart) and understand [how retain works](./retain).
-
 ## How operations work
 
 When an API call needs background work, the request handler writes a row to the `async_operations` table with `status=pending` and returns immediately. A worker (running either in-process inside the API by default, or as a dedicated service — see [Services - Worker Service](../services#worker-service)) polls the table, claims pending rows, executes the corresponding handler, and marks the row `completed` or `failed`.
@@ -18,13 +18,13 @@ By default, every operation runs in-process: no external queue, no extra process
 
 ### Lifecycle
 
-| Status       | Meaning                                                                                                                                             |
-| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pending`    | The row is queued. Either no worker has picked it up yet, or an extension has parked it via `next_retry_at` in the future (e.g., for backpressure). |
-| `processing` | A worker has claimed the row and is actively running the handler.                                                                                   |
-| `completed`  | The handler returned successfully.                                                                                                                  |
-| `failed`     | The handler raised. `error_message` carries the reason; you can re-queue with `POST /…/retry`.                                                      |
-| `cancelled`  | The operation was cancelled via `DELETE /…/operations/{id}`. Works on `pending` and `processing` operations alike.                                  |
+| Status | Meaning |
+|--------|---------|
+| `pending` | The row is queued. Either no worker has picked it up yet, or an extension has parked it via `next_retry_at` in the future (e.g., for backpressure). |
+| `processing` | A worker has claimed the row and is actively running the handler. |
+| `completed` | The handler returned successfully. |
+| `failed` | The handler raised. `error_message` carries the reason; you can re-queue with `POST /…/retry`. |
+| `cancelled` | The operation was cancelled via `DELETE /…/operations/{id}`. Works on `pending` and `processing` operations alike. |
 
 The worker retries failed operations up to `HINDSIGHT_API_WORKER_MAX_RETRIES` times before settling on `failed`. Deterministic failures (e.g., invalid embedding dimensions, integrity violations) skip retries — they won't succeed by re-running.
 
@@ -99,13 +99,13 @@ GET /v1/default/banks/{bank_id}/operations
 
 Query parameters:
 
-| Param             | Description                                                                                                                  |
-| ----------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `status`          | Filter by `pending`, `processing`, `completed`, `failed`, `cancelled`.                                                       |
-| `type`            | Filter by `retain`, `file_convert_retain`, `consolidation`, `refresh_mental_model`, `graph_maintenance`, `webhook_delivery`. |
-| `limit`           | 1–100, default 20.                                                                                                           |
-| `offset`          | Pagination offset.                                                                                                           |
-| `exclude_parents` | Exclude parent batch operations from results (large `retain_batch` calls create one parent + N children).                    |
+| Param | Description |
+|-------|-------------|
+| `status` | Filter by `pending`, `processing`, `completed`, `failed`, `cancelled`. |
+| `type` | Filter by `retain`, `file_convert_retain`, `consolidation`, `refresh_mental_model`, `graph_maintenance`, `webhook_delivery`. |
+| `limit` | 1–100, default 20. |
+| `offset` | Pagination offset. |
+| `exclude_parents` | Exclude parent batch operations from results (large `retain_batch` calls create one parent + N children). |
 
 ### Python
 
@@ -129,25 +129,25 @@ flat = await client.operations.list_operations("my-bank", exclude_parents=True)
 ```javascript
 // List recent operations for a bank (default: 20 most recent).
 const { data: recent } = await sdk.listOperations({
-  client: apiClient,
-  path: { bank_id: "my-bank" },
+    client: apiClient,
+    path: { bank_id: 'my-bank' },
 });
 for (const op of recent.operations) {
-  console.log(op.id, op.task_type, op.status);
+    console.log(op.id, op.task_type, op.status);
 }
 
 // Filter by status and type.
 const { data: pendingRecompute } = await sdk.listOperations({
-  client: apiClient,
-  path: { bank_id: "my-bank" },
-  query: { status: "pending", type: "graph_maintenance" },
+    client: apiClient,
+    path: { bank_id: 'my-bank' },
+    query: { status: 'pending', type: 'graph_maintenance' },
 });
 
 // Hide retain_batch parent rows (show only individual child retain jobs).
 const { data: flat } = await sdk.listOperations({
-  client: apiClient,
-  path: { bank_id: "my-bank" },
-  query: { exclude_parents: true },
+    client: apiClient,
+    path: { bank_id: 'my-bank' },
+    query: { exclude_parents: true },
 });
 ```
 
@@ -201,22 +201,16 @@ detailed = await client.operations.get_operation_status(
 
 ```javascript
 const { data: status } = await sdk.getOperationStatus({
-  client: apiClient,
-  path: {
-    bank_id: "my-bank",
-    operation_id: "550e8400-e29b-41d4-a716-446655440000",
-  },
+    client: apiClient,
+    path: { bank_id: 'my-bank', operation_id: '550e8400-e29b-41d4-a716-446655440000' },
 });
 console.log(status.status, status.error_message);
 
 // Include the submission payload (can be large for retain batches).
 const { data: detailed } = await sdk.getOperationStatus({
-  client: apiClient,
-  path: {
-    bank_id: "my-bank",
-    operation_id: "550e8400-e29b-41d4-a716-446655440000",
-  },
-  query: { include_payload: true },
+    client: apiClient,
+    path: { bank_id: 'my-bank', operation_id: '550e8400-e29b-41d4-a716-446655440000' },
+    query: { include_payload: true },
 });
 ```
 
@@ -243,27 +237,27 @@ _, _, _ = client.OperationsAPI.GetOperationStatus(ctx, "my-bank", operationID).
 
 Query parameters:
 
-| Param             | Description                                                                                                            |
-| ----------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Param | Description |
+|-------|-------------|
 | `include_payload` | Include the raw task payload (the submission params) in the response as `task_payload`. Default `false`; may be large. |
 
 A few response fields are worth calling out:
 
-| Field          | Description                                                                                                                     |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `updated_at`   | When the operation's row last changed — claim, progress heartbeat, or completion.                                               |
-| `progress`     | Last-known progress snapshot for a running operation, or `null` if none was recorded (completed-instantly or pre-feature rows). |
-| `task_payload` | The raw submission params; only populated when `include_payload=true`.                                                          |
+| Field | Description |
+|-------|-------------|
+| `updated_at` | When the operation's row last changed — claim, progress heartbeat, or completion. |
+| `progress` | Last-known progress snapshot for a running operation, or `null` if none was recorded (completed-instantly or pre-feature rows). |
+| `task_payload` | The raw submission params; only populated when `include_payload=true`. |
 
 `progress` is written at coarse phase/batch boundaries (consolidation, batch retain) and lets you tell a healthy long-running job from a frozen one: if `processed` keeps advancing across polls the job is alive; identical numbers with no movement in `at` mean it's stuck. Its shape:
 
-| Field       | Description                                                                               |
-| ----------- | ----------------------------------------------------------------------------------------- |
-| `stage`     | Coarse phase the operation last reported (e.g. `processing_batch`).                       |
-| `at`        | ISO-8601 timestamp when this snapshot was written.                                        |
-| `processed` | Units of work finished so far (sub-batches, memories), when known.                        |
-| `total`     | Total units of work for the operation, when known.                                        |
-| `detail`    | Operation-specific counters (e.g. `observations_created`, `round`, `items_in_sub_batch`). |
+| Field | Description |
+|-------|-------------|
+| `stage` | Coarse phase the operation last reported (e.g. `processing_batch`). |
+| `at` | ISO-8601 timestamp when this snapshot was written. |
+| `processed` | Units of work finished so far (sub-batches, memories), when known. |
+| `total` | Total units of work for the operation, when known. |
+| `detail` | Operation-specific counters (e.g. `observations_created`, `round`, `items_in_sub_batch`). |
 
 ### Cancel an operation
 
@@ -299,11 +293,8 @@ except Exception:
 // Cancel a pending operation before a worker claims it.
 // Returns 409 if the operation is already processing/completed/failed.
 await sdk.cancelOperation({
-  client: apiClient,
-  path: {
-    bank_id: "my-bank",
-    operation_id: "550e8400-e29b-41d4-a716-446655440000",
-  },
+    client: apiClient,
+    path: { bank_id: 'my-bank', operation_id: '550e8400-e29b-41d4-a716-446655440000' },
 });
 ```
 
@@ -343,11 +334,8 @@ except Exception:
 // Re-queue a failed (or cancelled) operation.
 // Returns 409 if the operation isn't in failed/cancelled state.
 await sdk.retryOperation({
-  client: apiClient,
-  path: {
-    bank_id: "my-bank",
-    operation_id: "550e8400-e29b-41d4-a716-446655440000",
-  },
+    client: apiClient,
+    path: { bank_id: 'my-bank', operation_id: '550e8400-e29b-41d4-a716-446655440000' },
 });
 ```
 
@@ -397,26 +385,22 @@ while True:
 ```javascript
 // Submit a large batch asynchronously — the call returns immediately with an
 // operation_id you can poll.
-const submission = await client.retainBatch(
-  "my-bank",
-  [
-    { content: "Alice joined Google in 2023" },
-    { content: "Bob prefers Python over JavaScript" },
-  ],
-  { async: true }
-);
+const submission = await client.retainBatch('my-bank', [
+    { content: 'Alice joined Google in 2023' },
+    { content: 'Bob prefers Python over JavaScript' },
+], { async: true });
 const operationId = submission.operation_id;
 
 while (true) {
-  const { data: s } = await sdk.getOperationStatus({
-    client: apiClient,
-    path: { bank_id: "my-bank", operation_id: operationId },
-  });
-  if (["completed", "failed", "cancelled"].includes(s.status)) {
-    console.log(`finished: ${s.status}`);
-    break;
-  }
-  await new Promise((r) => setTimeout(r, 2000));
+    const { data: s } = await sdk.getOperationStatus({
+        client: apiClient,
+        path: { bank_id: 'my-bank', operation_id: operationId },
+    });
+    if (['completed', 'failed', 'cancelled'].includes(s.status)) {
+        console.log(`finished: ${s.status}`);
+        break;
+    }
+    await new Promise((r) => setTimeout(r, 2000));
 }
 ```
 

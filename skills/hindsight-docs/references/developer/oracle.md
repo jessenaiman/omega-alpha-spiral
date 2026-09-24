@@ -20,15 +20,15 @@ deployment.
 
 ## Requirements
 
-| Requirement     | Details                                                                                                                                          |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Oracle Database | **23ai** (23.4+). [Oracle Database Free 23ai](https://www.oracle.com/database/free/) works for development.                                      |
-| `VECTOR` type   | Used for embeddings. Requires the schema to live in an **ASSM tablespace** (see below).                                                          |
-| Oracle Text     | Full-text search uses Oracle Text indexes. The schema user needs the `CTXAPP` role.                                                              |
-| Driver          | [`python-oracledb`](https://python-oracledb.readthedocs.io/) ≥ 2.5.0, running in **thin mode** — pure Python, no Oracle Instant Client required. |
+| Requirement | Details |
+|-------------|---------|
+| Oracle Database | **23ai** (23.4+). [Oracle Database Free 23ai](https://www.oracle.com/database/free/) works for development. |
+| `VECTOR` type | Used for embeddings. Requires the schema to live in an **ASSM tablespace** (see below). |
+| Oracle Text | Full-text search uses Oracle Text indexes. The schema user needs the `CTXAPP` role. |
+| Driver | [`python-oracledb`](https://python-oracledb.readthedocs.io/) ≥ 2.5.0, running in **thin mode** — pure Python, no Oracle Instant Client required. |
 
 :::warning The schema must use an ASSM tablespace
-Oracle's `SYSTEM` tablespace uses _manual_ segment space management (MSSM),
+Oracle's `SYSTEM` tablespace uses *manual* segment space management (MSSM),
 which **does not support `VECTOR` columns**. Create the Hindsight user in a
 tablespace with **Automatic Segment Space Management (ASSM)** — otherwise
 migrations fail when they create embedding columns. The provisioning SQL below
@@ -130,11 +130,11 @@ Hindsight uses SQLAlchemy-style URLs. The Oracle form is:
 oracle+oracledb://USER:PASSWORD@HOST:PORT/SERVICE_NAME
 ```
 
-| Part                | Example                | Notes                                                                                        |
-| ------------------- | ---------------------- | -------------------------------------------------------------------------------------------- |
+| Part | Example | Notes |
+|------|---------|-------|
 | `USER` / `PASSWORD` | `hindsight` / `s3cret` | The schema user from step 1. URL-encode reserved characters (`@`, `/`, `:`) in the password. |
-| `HOST:PORT`         | `db.internal:1521`     | The listener host and port (Oracle default is `1521`).                                       |
-| `SERVICE_NAME`      | `FREEPDB1`             | The **service name** of your pluggable database (not the SID). `FREEPDB1` for Oracle Free.   |
+| `HOST:PORT` | `db.internal:1521` | The listener host and port (Oracle default is `1521`). |
+| `SERVICE_NAME` | `FREEPDB1` | The **service name** of your pluggable database (not the SID). `FREEPDB1` for Oracle Free. |
 
 Example:
 
@@ -238,12 +238,12 @@ should show your Oracle host and confirm the Oracle backend is active.
 Oracle-relevant settings, all documented in full on the
 [Configuration](./configuration) page:
 
-| Variable                                  | Purpose                                                                                                     |
-| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `HINDSIGHT_API_DATABASE_BACKEND`          | `postgresql` (default) or `oracle`.                                                                         |
-| `HINDSIGHT_API_DATABASE_URL`              | `oracle+oracledb://…` connection URL.                                                                       |
-| `HINDSIGHT_API_DATABASE_SCHEMA`           | Schema/user for the tables. On Oracle set this to your schema user (uppercase); the `public` default fails. |
-| `HINDSIGHT_API_RUN_MIGRATIONS_ON_STARTUP` | Auto-apply migrations when the API boots (default `true`).                                                  |
+| Variable | Purpose |
+|----------|---------|
+| `HINDSIGHT_API_DATABASE_BACKEND` | `postgresql` (default) or `oracle`. |
+| `HINDSIGHT_API_DATABASE_URL` | `oracle+oracledb://…` connection URL. |
+| `HINDSIGHT_API_DATABASE_SCHEMA` | Schema/user for the tables. On Oracle set this to your schema user (uppercase); the `public` default fails. |
+| `HINDSIGHT_API_RUN_MIGRATIONS_ON_STARTUP` | Auto-apply migrations when the API boots (default `true`). |
 
 ## Limitations vs PostgreSQL
 
@@ -253,7 +253,7 @@ internal details differ:
 - **Admin CLI data commands are PostgreSQL-only.** `hindsight-admin` backup,
   restore, bank export/import, and worker-status use asyncpg binary `COPY` and
   `TRUNCATE`, which are PostgreSQL-specific and not available on Oracle.
-  Schema migrations (`run-db-migration`) _are_ supported on Oracle.
+  Schema migrations (`run-db-migration`) *are* supported on Oracle.
 - **No embedded database.** The `pg0` embedded PostgreSQL used for zero-config
   local development has no Oracle equivalent — Oracle always requires a running
   instance (use the [quick-start script](#quick-start-local-oracle) locally).
@@ -267,15 +267,15 @@ internal details differ:
 
 ## Troubleshooting
 
-| Symptom                                                   | Cause / Fix                                                                                                                                                                                      |
-| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `python-oracledb is required for Oracle backend`          | The driver isn't installed. Run `pip install oracledb` (or install the `[oracle]` extra).                                                                                                        |
-| `ORA-01435: user does not exist` on migration             | `HINDSIGHT_API_DATABASE_SCHEMA` is unset (defaults to `public`) or misspelled. Set it to your Oracle schema user, uppercase (e.g. `HINDSIGHT`).                                                  |
-| `ORA-51803: Vector dimension count must match` on retain  | The schema was migrated with a different embedding dimension than the running embeddings model. Migrate with the same embeddings config, or re-run `run-db-migration --embedding-dimension <N>`. |
-| Migration errors when creating embedding/`VECTOR` columns | The schema user's default tablespace is not ASSM (often the `SYSTEM` tablespace). Recreate the user in an ASSM tablespace as shown above.                                                        |
-| Full-text search errors / missing Oracle Text index       | The schema user is missing the `CTXAPP` role. Run `GRANT CTXAPP TO <user>;`.                                                                                                                     |
-| `ORA-12514` / service not found                           | The URL uses a SID or wrong service name. Use the pluggable database **service name** (e.g. `FREEPDB1`), not the SID.                                                                            |
-| Login works manually but fails from Hindsight             | A reserved character in the password isn't URL-encoded. Encode `@ / : ?` in the `DATABASE_URL`.                                                                                                  |
+| Symptom | Cause / Fix |
+|---------|-------------|
+| `python-oracledb is required for Oracle backend` | The driver isn't installed. Run `pip install oracledb` (or install the `[oracle]` extra). |
+| `ORA-01435: user does not exist` on migration | `HINDSIGHT_API_DATABASE_SCHEMA` is unset (defaults to `public`) or misspelled. Set it to your Oracle schema user, uppercase (e.g. `HINDSIGHT`). |
+| `ORA-51803: Vector dimension count must match` on retain | The schema was migrated with a different embedding dimension than the running embeddings model. Migrate with the same embeddings config, or re-run `run-db-migration --embedding-dimension <N>`. |
+| Migration errors when creating embedding/`VECTOR` columns | The schema user's default tablespace is not ASSM (often the `SYSTEM` tablespace). Recreate the user in an ASSM tablespace as shown above. |
+| Full-text search errors / missing Oracle Text index | The schema user is missing the `CTXAPP` role. Run `GRANT CTXAPP TO <user>;`. |
+| `ORA-12514` / service not found | The URL uses a SID or wrong service name. Use the pluggable database **service name** (e.g. `FREEPDB1`), not the SID. |
+| Login works manually but fails from Hindsight | A reserved character in the password isn't URL-encoded. Encode `@ / : ?` in the `DATABASE_URL`. |
 
 ## See also
 

@@ -1,3 +1,4 @@
+
 # Eve
 
 Automatic long-term memory for [Vercel Eve](https://github.com/vercel/eve) agents using [Hindsight](https://vectorize.io/hindsight). Eve is filesystem-first — an agent gains a capability by dropping a file under `agent/`. The `@vectorize-io/hindsight-eve` package wires two files that call Hindsight's REST API directly, so your agent gets memory that **just works** — relevant memory is injected before every turn and each exchange is retained after — **without the model ever choosing to call a tool.**
@@ -32,11 +33,11 @@ export default hindsightRetainHook();
 
 Both read their config from the environment:
 
-| Env var             | Purpose                                                       |
-| ------------------- | ------------------------------------------------------------- |
-| `HINDSIGHT_API_KEY` | Bearer token sent as `Authorization: Bearer <key>`            |
-| `HINDSIGHT_API_URL` | Hindsight REST base (defaults to Hindsight Cloud)             |
-| `HINDSIGHT_BANK_ID` | Bank to scope memory to (defaults to `default`; auto-created) |
+| Env var             | Purpose                                                        |
+| ------------------- | -------------------------------------------------------------- |
+| `HINDSIGHT_API_KEY` | Bearer token sent as `Authorization: Bearer <key>`             |
+| `HINDSIGHT_API_URL` | Hindsight REST base (defaults to Hindsight Cloud)              |
+| `HINDSIGHT_BANK_ID` | Bank to scope memory to (defaults to `default`; auto-created)  |
 
 ### Hindsight Cloud
 
@@ -48,10 +49,7 @@ Set `HINDSIGHT_API_KEY` from your [Hindsight Cloud](https://hindsight.vectorize.
 import { hindsightMemory } from "@vectorize-io/hindsight-eve";
 
 // A local server with no auth:
-export default hindsightMemory({
-  apiUrl: "http://localhost:8000",
-  apiKey: null,
-});
+export default hindsightMemory({ apiUrl: "http://localhost:8000", apiKey: null });
 ```
 
 ## Options
@@ -60,16 +58,16 @@ Both factories accept the same options (each falls back to its env var):
 
 ```ts
 hindsightMemory({
-  apiUrl, // REST base; defaults to HINDSIGHT_API_URL, then Cloud
-  apiKey, // bearer token; null = no auth (local dev)
-  bankId, // bank to scope memory to
+  apiUrl,      // REST base; defaults to HINDSIGHT_API_URL, then Cloud
+  apiKey,      // bearer token; null = no auth (local dev)
+  bankId,      // bank to scope memory to
   recallQuery, // the broad query used for recall (see below)
-  budget, // "low" | "mid" | "high" — recall result budget (default "mid")
-  maxTokens, // recall token budget (default 1024)
-  context, // `context` tag written on retained items (default "eve")
+  budget,      // "low" | "mid" | "high" — recall result budget (default "mid")
+  maxTokens,   // recall token budget (default 1024)
+  context,     // `context` tag written on retained items (default "eve")
   includeAssistantReply, // also retain the assistant's reply (default true)
-  timeoutMs, // HTTP timeout (default 15000)
-  onError, // (err, phase) => void — failures degrade silently (default console.warn)
+  timeoutMs,   // HTTP timeout (default 15000)
+  onError,     // (err, phase) => void — failures degrade silently (default console.warn)
 });
 ```
 

@@ -1,3 +1,4 @@
+
 # Dify
 
 Persistent memory for [Dify](https://dify.ai) workflows via [Hindsight](https://hindsight.vectorize.io). The Hindsight Dify plugin adds three tools — **Retain**, **Recall**, **Reflect** — that work alongside any other Dify node in workflows, chatflows, and agent apps.
@@ -25,9 +26,8 @@ After install, the **Hindsight** plugin appears under **Tools** in the workflow 
 ## Setup
 
 > **💡 Recommended: Hindsight Cloud**
-
+>
 [Sign up free](https://ui.hindsight.vectorize.io/signup) and grab an API key — no self-hosting required.
-
 1. **Sign up** at [Hindsight Cloud](https://ui.hindsight.vectorize.io/signup) (free tier) or [self-host](../../developer/installation.md)
 2. **Get an API key** from the Hindsight dashboard
 3. **In Dify**, open the Hindsight plugin and add credentials:
@@ -40,33 +40,33 @@ After install, the **Hindsight** plugin appears under **Tools** in the workflow 
 
 Store content in a bank. Hindsight extracts facts asynchronously after the call returns.
 
-| Field   | Description                                         |
-| ------- | --------------------------------------------------- |
+| Field | Description |
+|---|---|
 | Bank ID | Memory bank to store in (auto-created on first use) |
-| Content | Free-text content to retain                         |
-| Tags    | Optional comma-separated tags                       |
+| Content | Free-text content to retain |
+| Tags | Optional comma-separated tags |
 
 ### Recall
 
 Search a bank for memories relevant to a query. Returns a `results` array.
 
-| Field      | Description                           |
-| ---------- | ------------------------------------- |
-| Bank ID    | Memory bank to search                 |
-| Query      | Natural-language query                |
-| Budget     | `low` / `mid` / `high`                |
-| Max Tokens | Cap on returned tokens                |
-| Tags       | Optional tag filter (comma-separated) |
+| Field | Description |
+|---|---|
+| Bank ID | Memory bank to search |
+| Query | Natural-language query |
+| Budget | `low` / `mid` / `high` |
+| Max Tokens | Cap on returned tokens |
+| Tags | Optional tag filter (comma-separated) |
 
 ### Reflect
 
 Get an LLM-synthesized answer over the bank. Returns `text`.
 
-| Field   | Description            |
-| ------- | ---------------------- |
-| Bank ID | Memory bank            |
-| Query   | Question to answer     |
-| Budget  | `low` / `mid` / `high` |
+| Field | Description |
+|---|---|
+| Bank ID | Memory bank |
+| Query | Question to answer |
+| Budget | `low` / `mid` / `high` |
 
 ## Example workflows
 

@@ -1,3 +1,4 @@
+
 # SmolAgents
 
 Persistent memory tools for [SmolAgents](https://github.com/huggingface/smolagents) agents via Hindsight. Give your agents long-term memory with retain, recall, and reflect — using SmolAgents' native Tool pattern.
@@ -21,9 +22,8 @@ pip install hindsight-smolagents
 ## Quick Start
 
 > **💡 Recommended: Hindsight Cloud**
-
+>
 [Sign up free](https://ui.hindsight.vectorize.io/signup) and grab an API key — no self-hosting required.
-
 ```python
 from smolagents import CodeAgent, HfApiModel
 from hindsight_smolagents import create_hindsight_tools
@@ -147,49 +147,49 @@ tools = create_hindsight_tools(bank_id="user-123")
 
 ### `create_hindsight_tools()`
 
-| Parameter           | Default    | Description                                |
-| ------------------- | ---------- | ------------------------------------------ |
-| `bank_id`           | _required_ | Hindsight memory bank ID                   |
-| `client`            | `None`     | Pre-configured Hindsight client            |
-| `hindsight_api_url` | `None`     | API URL (used if no client provided)       |
-| `api_key`           | `None`     | API key (used if no client provided)       |
-| `budget`            | `"mid"`    | Recall/reflect budget level (low/mid/high) |
-| `max_tokens`        | `4096`     | Maximum tokens for recall results          |
-| `tags`              | `None`     | Tags applied when storing memories         |
-| `recall_tags`       | `None`     | Tags to filter when searching              |
-| `recall_tags_match` | `"any"`    | Tag matching mode                          |
-| `enable_retain`     | `True`     | Include the retain (store) tool            |
-| `enable_recall`     | `True`     | Include the recall (search) tool           |
-| `enable_reflect`    | `True`     | Include the reflect (synthesize) tool      |
+| Parameter | Default | Description |
+|---|---|---|
+| `bank_id` | *required* | Hindsight memory bank ID |
+| `client` | `None` | Pre-configured Hindsight client |
+| `hindsight_api_url` | `None` | API URL (used if no client provided) |
+| `api_key` | `None` | API key (used if no client provided) |
+| `budget` | `"mid"` | Recall/reflect budget level (low/mid/high) |
+| `max_tokens` | `4096` | Maximum tokens for recall results |
+| `tags` | `None` | Tags applied when storing memories |
+| `recall_tags` | `None` | Tags to filter when searching |
+| `recall_tags_match` | `"any"` | Tag matching mode |
+| `enable_retain` | `True` | Include the retain (store) tool |
+| `enable_recall` | `True` | Include the recall (search) tool |
+| `enable_reflect` | `True` | Include the reflect (synthesize) tool |
 
 ### `memory_instructions()`
 
-| Parameter           | Default                             | Description                          |
-| ------------------- | ----------------------------------- | ------------------------------------ |
-| `bank_id`           | _required_                          | Hindsight memory bank ID             |
-| `client`            | `None`                              | Pre-configured Hindsight client      |
-| `hindsight_api_url` | `None`                              | API URL (used if no client provided) |
-| `api_key`           | `None`                              | API key (used if no client provided) |
-| `query`             | `"relevant context about the user"` | Recall query for memory injection    |
-| `budget`            | `"low"`                             | Recall budget level                  |
-| `max_results`       | `5`                                 | Maximum memories to inject           |
-| `max_tokens`        | `4096`                              | Maximum tokens for recall results    |
-| `prefix`            | `"Relevant memories:\n"`            | Text prepended before memory list    |
-| `tags`              | `None`                              | Tags to filter recall results        |
-| `tags_match`        | `"any"`                             | Tag matching mode                    |
+| Parameter | Default | Description |
+|---|---|---|
+| `bank_id` | *required* | Hindsight memory bank ID |
+| `client` | `None` | Pre-configured Hindsight client |
+| `hindsight_api_url` | `None` | API URL (used if no client provided) |
+| `api_key` | `None` | API key (used if no client provided) |
+| `query` | `"relevant context about the user"` | Recall query for memory injection |
+| `budget` | `"low"` | Recall budget level |
+| `max_results` | `5` | Maximum memories to inject |
+| `max_tokens` | `4096` | Maximum tokens for recall results |
+| `prefix` | `"Relevant memories:\n"` | Text prepended before memory list |
+| `tags` | `None` | Tags to filter recall results |
+| `tags_match` | `"any"` | Tag matching mode |
 
 ### `configure()`
 
-| Parameter           | Default                                                | Description                        |
-| ------------------- | ------------------------------------------------------ | ---------------------------------- |
-| `hindsight_api_url` | Hindsight Cloud (`https://api.hindsight.vectorize.io`) | Hindsight API URL                  |
-| `api_key`           | `HINDSIGHT_API_KEY` env                                | API key for authentication         |
-| `budget`            | `"mid"`                                                | Default recall budget level        |
-| `max_tokens`        | `4096`                                                 | Default max tokens for recall      |
-| `tags`              | `None`                                                 | Default tags for retain operations |
-| `recall_tags`       | `None`                                                 | Default tags to filter recall      |
-| `recall_tags_match` | `"any"`                                                | Default tag matching mode          |
-| `verbose`           | `False`                                                | Enable verbose logging             |
+| Parameter | Default | Description |
+|---|---|---|
+| `hindsight_api_url` | Hindsight Cloud (`https://api.hindsight.vectorize.io`) | Hindsight API URL |
+| `api_key` | `HINDSIGHT_API_KEY` env | API key for authentication |
+| `budget` | `"mid"` | Default recall budget level |
+| `max_tokens` | `4096` | Default max tokens for recall |
+| `tags` | `None` | Default tags for retain operations |
+| `recall_tags` | `None` | Default tags to filter recall |
+| `recall_tags_match` | `"any"` | Default tag matching mode |
+| `verbose` | `False` | Enable verbose logging |
 
 ## Requirements
 

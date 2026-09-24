@@ -10,7 +10,7 @@ import PageHero from '@site/src/components/PageHero';
 
 ## [0.1.2](https://github.com/vectorize-io/hindsight/tree/integrations/nemoclaw/v0.1.2)
 
-_This release contains internal maintenance and infrastructure changes only._
+*This release contains internal maintenance and infrastructure changes only.*
 
 ## [0.1.1](https://github.com/vectorize-io/hindsight/tree/integrations/nemoclaw/v0.1.1)
 

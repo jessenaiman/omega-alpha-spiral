@@ -1,3 +1,4 @@
+
 # CLI Reference
 
 The Hindsight CLI provides command-line access to memory operations and bank management. All commands follow the [OpenAPI specification](../openapi.json), so you can use `--help` on any command to see all available options.
@@ -355,11 +356,10 @@ hindsight knowledge-base delete my-cli-bank "$NODE_ID" -y
 ```
 
 > **💡 Tip**
-
+>
 `hindsight fs mount --bank <bank_id>` mirrors the same knowledge base onto disk as
 real markdown files, kept current by a background refresh loop — handy when you'd
 rather use `grep`, `rg`, or your editor than the commands above.
-
 ## Audit Logs
 
 Inspect the audit trail for a bank:
@@ -395,13 +395,13 @@ hindsight memory recall my-cli-bank "query" -o yaml
 
 ## Global Options
 
-| Flag                    | Description                                                 |
-| ----------------------- | ----------------------------------------------------------- |
-| `-v, --verbose`         | Show detailed output including request/response             |
-| `-o, --output <format>` | Output format: pretty, json, yaml                           |
-| `-p, --profile <name>`  | Use a named profile (see [Named Profiles](#named-profiles)) |
-| `--help`                | Show help                                                   |
-| `--version`             | Show version                                                |
+| Flag | Description |
+|------|-------------|
+| `-v, --verbose` | Show detailed output including request/response |
+| `-o, --output <format>` | Output format: pretty, json, yaml |
+| `-p, --profile <name>` | Use a named profile (see [Named Profiles](#named-profiles)) |
+| `--help` | Show help |
+| `--version` | Show version |
 
 ## Control Plane UI
 
@@ -419,9 +419,8 @@ This runs the Control Plane locally on port 9999 using the API URL from your con
 - **Operation history** — View ingestion and processing logs
 
 > **💡 Tip**
-
+>
 The UI command requires Node.js to be installed. It automatically downloads and runs the `@vectorize-io/hindsight-control-plane` package via npx.
-
 ## Interactive Explorer
 
 Launch the TUI explorer for visual navigation of your memory banks:
@@ -441,13 +440,13 @@ The explorer provides an interactive terminal interface to:
 
 ### Keyboard Shortcuts
 
-| Key     | Action                     |
-| ------- | -------------------------- |
-| `↑/↓`   | Navigate items             |
+| Key | Action |
+|-----|--------|
+| `↑/↓` | Navigate items |
 | `Enter` | Select item / view details |
-| `Tab`   | Switch panels              |
-| `/`     | Search                     |
-| `q`     | Quit                       |
+| `Tab` | Switch panels |
+| `/` | Search |
+| `q` | Quit |
 
 {/* Screenshot placeholder: explore command TUI */}
 

@@ -1,3 +1,4 @@
+
 # Superagent
 
 Safety middleware for [Hindsight](https://vectorize.io/hindsight) memory operations, powered by [Superagent](https://www.superagent.sh). Wrap your memory client with `SafeHindsight` to guard against prompt injection and strip PII before anything is written to memory — and to screen queries before they reach recall or reflect.
@@ -7,9 +8,8 @@ Safety middleware for [Hindsight](https://vectorize.io/hindsight) memory operati
 ## Quick Start
 
 > **💡 Recommended: Hindsight Cloud**
-
+>
 [Sign up free](https://ui.hindsight.vectorize.io/signup) and grab an API key — no self-hosting required.
-
 ```bash
 pip install hindsight-superagent
 ```
@@ -51,9 +51,8 @@ asyncio.run(main())
 ```
 
 > **📝 Hosted guard models**
-
+>
 Superagent's hosted endpoints for its guard models are currently unreliable. The guard models are open-weight (`superagent/guard-0.6b`, `guard-1.7b`, `guard-4b`) and can be [self-hosted](https://docs.superagent.sh/sdk/models) via Ollama or vLLM.
-
 ## Features
 
 - **Guard on Retain** — blocks prompt injection attacks before content is stored in memory

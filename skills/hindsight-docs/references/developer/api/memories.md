@@ -1,3 +1,4 @@
+
 # Memories
 
 A **memory unit** is the atomic fact Hindsight extracts and stores. This page covers the endpoints for working with individual memory units — reading and listing them, inspecting how a derived observation evolved, and **curating** them (correcting, retiring, or restoring). Ingesting and querying memories is covered separately in [Retain](./retain.mdx) and [Recall](./recall.mdx).
@@ -6,13 +7,13 @@ A **memory unit** is the atomic fact Hindsight extracts and stores. This page co
 
 ## Endpoints
 
-| Method   | Endpoint                                              | Purpose                                  |
-| -------- | ----------------------------------------------------- | ---------------------------------------- |
-| `GET`    | `/v1/default/banks/{bank}/memories/list`              | List/filter memory units in a bank       |
-| `GET`    | `/v1/default/banks/{bank}/memories/{id}`              | Fetch a single memory unit               |
-| `GET`    | `/v1/default/banks/{bank}/memories/{id}/history`      | Refresh history of a derived observation |
-| `PATCH`  | `/v1/default/banks/{bank}/memories/{id}`              | Curate: edit / invalidate / restore      |
-| `DELETE` | `/v1/default/banks/{bank}/memories/{id}/observations` | Clear a memory's derived observations    |
+| Method | Endpoint | Purpose |
+|---|---|---|
+| `GET` | `/v1/default/banks/{bank}/memories/list` | List/filter memory units in a bank |
+| `GET` | `/v1/default/banks/{bank}/memories/{id}` | Fetch a single memory unit |
+| `GET` | `/v1/default/banks/{bank}/memories/{id}/history` | Refresh history of a derived observation |
+| `PATCH` | `/v1/default/banks/{bank}/memories/{id}` | Curate: edit / invalidate / restore |
+| `DELETE` | `/v1/default/banks/{bank}/memories/{id}/observations` | Clear a memory's derived observations |
 
 ## List memory units
 
@@ -24,11 +25,11 @@ Narrow the results with query parameters: `type=` (fact type), `q=` (full-text s
 
 `start_date=` and `end_date=` restrict the results to a half-open range `[start, end)`, and `time_field=` chooses which timestamp they apply to:
 
-| `time_field`                      | Means                         |
-| --------------------------------- | ----------------------------- |
-| `created_at` (default)            | When the memory was ingested  |
-| `updated_at`                      | When it was last written      |
-| `mentioned_at`                    | When the fact was mentioned   |
+| `time_field` | Means |
+|---|---|
+| `created_at` (default) | When the memory was ingested |
+| `updated_at` | When it was last written |
+| `mentioned_at` | When the fact was mentioned |
 | `occurred_start` / `occurred_end` | When the fact itself occurred |
 
 `time_field` also becomes the sort order (newest first), and **memories with no value on that column are excluded** — so `total` counts only the memories carrying that timestamp, and can be `0` on a bank that is not empty. Omit all three parameters to keep the default listing, which orders by `mentioned_at` then `created_at` and drops nothing.
@@ -54,13 +55,11 @@ print(f"{len(invalidated.items)} invalidated fact(s)")
 // List memory units in a bank. Invalidated rows are included by default.
 const memories = await client.listMemories(BANK_ID);
 for (const unit of memories.items) {
-  console.log(`- [${unit.fact_type}] ${unit.text}`);
+    console.log(`- [${unit.fact_type}] ${unit.text}`);
 }
 
 // Filter to only the invalidated facts (e.g. to review duplicates).
-const invalidated = await client.listMemories(BANK_ID, {
-  state: "invalidated",
-});
+const invalidated = await client.listMemories(BANK_ID, { state: 'invalidated' });
 console.log(`${invalidated.items.length} invalidated fact(s)`);
 ```
 
@@ -107,9 +106,7 @@ print(f"Type: {memory['type']}  Entities: {memory['entities']}")
 ```javascript
 // Fetch a single memory unit (metadata, entities, dates, state).
 const memory = await (
-  await fetch(
-    `${HINDSIGHT_URL}/v1/default/banks/${BANK_ID}/memories/${memoryId}`
-  )
+    await fetch(`${HINDSIGHT_URL}/v1/default/banks/${BANK_ID}/memories/${memoryId}`)
 ).json();
 console.log(`Text: ${memory.text}`);
 console.log(`Type: ${memory.type}  Entities: ${memory.entities}`);
@@ -147,9 +144,7 @@ print(f"Observation history entries: {len(history)}")
 ```javascript
 // Get the refresh history of a derived observation.
 const history = await (
-  await fetch(
-    `${HINDSIGHT_URL}/v1/default/banks/${BANK_ID}/memories/${observation.id}/history`
-  )
+    await fetch(`${HINDSIGHT_URL}/v1/default/banks/${BANK_ID}/memories/${observation.id}/history`)
 ).json();
 console.log(`Observation history entries: ${history.length}`);
 ```
@@ -175,19 +170,19 @@ Memory is append-only by design — but sometimes a stored fact is **wrong**, ha
 
 ### When to reach for what
 
-Not every "bad memory" needs the same tool. Pick by _why_ it's bad:
+Not every "bad memory" needs the same tool. Pick by *why* it's bad:
 
-| The memory is…                                                                                                     | Use                                                                                       | Why                                                                                                                                   |
-| ------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| **Wrong because the whole bank extracts badly** (e.g. consistently wrong subject)                                  | Fix the bank's `retain_mission` / `observations_mission`, then **reprocess** the document | Systematic problems are best fixed at the source, then replayed — see [Retain](./retain.mdx) and [Observations](../observations.mdx). |
-| **Wrong as a one-off** (a single misextracted fact)                                                                | **Edit** the memory                                                                       | Corrects the fact and regenerates everything derived from it.                                                                         |
-| **No longer true, with nothing to replace it** (decommissioned server, a tool that was fixed, a role that changed) | **Invalidate** the memory                                                                 | Nothing in the pipeline knows the world changed, so you tell it explicitly.                                                           |
-| **A duplicate or superseded fact**                                                                                 | **Invalidate** the memory                                                                 | Removes the noise from recall while keeping the audit trail.                                                                          |
-| **Superseded by a newer fact you're storing anyway** (e.g. "likes BMW" → "likes Toyota")                           | Just retain the new fact                                                                  | Consolidation already reconciles in-stream contradictions into a single observation.                                                  |
+| The memory is… | Use | Why |
+|---|---|---|
+| **Wrong because the whole bank extracts badly** (e.g. consistently wrong subject) | Fix the bank's `retain_mission` / `observations_mission`, then **reprocess** the document | Systematic problems are best fixed at the source, then replayed — see [Retain](./retain.mdx) and [Observations](../observations.mdx). |
+| **Wrong as a one-off** (a single misextracted fact) | **Edit** the memory | Corrects the fact and regenerates everything derived from it. |
+| **No longer true, with nothing to replace it** (decommissioned server, a tool that was fixed, a role that changed) | **Invalidate** the memory | Nothing in the pipeline knows the world changed, so you tell it explicitly. |
+| **A duplicate or superseded fact** | **Invalidate** the memory | Removes the noise from recall while keeping the audit trail. |
+| **Superseded by a newer fact you're storing anyway** (e.g. "likes BMW" → "likes Toyota") | Just retain the new fact | Consolidation already reconciles in-stream contradictions into a single observation. |
 
 The rule of thumb: **if Hindsight could have known, let consolidation handle it; if only you know, curate it.**
 
-Only raw **world** and **experience** facts can be curated. Observations are _derived_ — they regenerate from their sources, so you curate the underlying facts, not the observation. A `PATCH` on an observation returns `400`.
+Only raw **world** and **experience** facts can be curated. Observations are *derived* — they regenerate from their sources, so you curate the underlying facts, not the observation. A `PATCH` on an observation returns `400`.
 
 ### Edit a memory
 
@@ -217,10 +212,7 @@ await client.memory.update_memory(
 ```javascript
 // Correct the fact's text. Re-embeds, drops derived observations/links,
 // re-consolidates, and recomputes the graph automatically.
-await patchMemory(memoryId, {
-  text: "The user visited Paris in 2023.",
-  reason: "wrong subject",
-});
+await patchMemory(memoryId, { text: 'The user visited Paris in 2023.', reason: 'wrong subject' });
 ```
 
 ### CLI
@@ -251,10 +243,10 @@ You can correct the dates, fact type, and entities the same way. For `context`, 
 
 `resolve_entities` controls how the names in `entities` are matched to entities in the bank:
 
-| Value            | Behaviour                                                                                                                                                                                                                          |
-| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Value | Behaviour |
+| --- | --- |
 | `true` (default) | What retain does. Each name is resolved against the bank, so a name close to one already there may resolve to that existing entity instead, based on name similarity plus how strongly it co-occurs with the other names you sent. |
-| `false`          | The names are taken literally. An existing entity is reused only when its name matches case-insensitively, any other name creates a new entity, and names in the same request are never merged with each other.                    |
+| `false` | The names are taken literally. An existing entity is reused only when its name matches case-insensitively, any other name creates a new entity, and names in the same request are never merged with each other. |
 
 **Pass `false` when you are correcting a fact by hand.** With resolution on, a name that is close to one already in the bank can be matched onto that neighbour rather than the entity you named — `Dr. Waller` onto a `Dr Wall` typo, `Alice Smith` onto `Alice` — and because the edit succeeds normally the substitution is not obvious from the response. Resolution is right for names that came out of extraction, where spelling varies and the bank's existing entity is usually the one meant; it is wrong when you already know which entity you want. The default stays `true` so existing callers are unaffected.
 
@@ -287,10 +279,10 @@ await client.memory.update_memory(
 // resolve_entities: false keeps the entity names you wrote from being matched
 // onto a similar entity that already exists.
 await patchMemory(memoryId, {
-  occurred_start: "2023-06-01",
-  fact_type: "experience",
-  entities: ["Alice", "Paris"],
-  resolve_entities: false,
+    occurred_start: '2023-06-01',
+    fact_type: 'experience',
+    entities: ['Alice', 'Paris'],
+    resolve_entities: false,
 });
 ```
 
@@ -351,10 +343,7 @@ await client.memory.update_memory(
 ```javascript
 // Soft-retire a fact: removed from recall/consolidation/graph, links pruned,
 // derived observations recomputed without it — but kept for audit.
-await patchMemory(memoryId, {
-  state: "invalidated",
-  reason: "server decommissioned 2026-06-01",
-});
+await patchMemory(memoryId, { state: 'invalidated', reason: 'server decommissioned 2026-06-01' });
 ```
 
 ### CLI
@@ -396,7 +385,7 @@ await client.memory.update_memory(
 
 ```javascript
 // Restore a previously invalidated fact.
-await patchMemory(memoryId, { state: "valid" });
+await patchMemory(memoryId, { state: 'valid' });
 ```
 
 ### CLI
@@ -421,9 +410,8 @@ client.MemoryAPI.UpdateMemory(ctx, memBankID, memoryID).
 Behind the scenes, invalidating **moves** the row out of the active `memory_units` table into a separate archive, so recall and consolidation never need a "skip invalidated" filter — the rows simply aren't there.
 
 > **📝 Documents are the source of truth**
-
+>
 A memory is extracted from a document. Editing or invalidating a memory does **not** change the document it came from — that's deliberate: the document stays as an accurate historical record. As a result, **reprocessing a document resets curation** of the facts it produced (extraction runs fresh from the original text). Fix systematic issues at the mission level and reprocess; use edit/invalidate for the residue.
-
 ### A pruning workflow
 
 To clean up duplicates and reclaim noise: cluster duplicates from `memories/list`, then **invalidate** them — recall is clean immediately, and the audit trail is preserved.

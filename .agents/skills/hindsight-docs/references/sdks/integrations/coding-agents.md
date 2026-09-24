@@ -2,6 +2,7 @@
 {/* GENERATED from hindsight-integrations/coding-agents/README.md — edit that file, then run
     node hindsight-docs/scripts/sync-coding-agents-doc.mjs */}
 
+
 Long-term project memory for **coding agents**, backed by [Hindsight](https://vectorize.io/hindsight).
 One package, several agents: a shared reflect-and-inject core with a thin entry point per agent
 (**Claude Code**, **Codex CLI**, **DeepAgents Dcode**, **opencode**, **opencode 2**, **Kilo CLI**, **Cursor CLI**, **GitHub Copilot CLI**, **Grok Build**, **Qwen Code**, **Factory Droid**, **ZCode**, **Antigravity CLI**, **Devin CLI**, **Cline CLI**, **pi**, **Prime Agent**, **DeepSeek Harness**). Ingestion is fully
@@ -13,6 +14,33 @@ project-specific decision that isn't in the code at all — a rounding rule, a r
 tie-break policy. Those decisions live in git history and past conversations. This package puts them
 in front of the agent at the moment it starts working, and keeps a curated set of **knowledge pages**
 (architecture, conventions, in-flight initiatives) that future sessions start from.
+
+**Figure: Coding Agents.** An animated diagram on the docs site; its narration, step by step:
+
+- **first session**
+  1. You open a session in a repo. There is no setup command: the plugin’s SessionStart hook does the work.
+  2. It picks the repo’s bank — one per repository, shared by every agent and every worktree — and finds it empty.
+  3. Every session start launches the backfill in the background; it only does what is missing, so the session is never blocked. A cold bank also gets a codebase survey by a headless agent (re-run every 20 commits).
+  4. Its first job configures the bank and creates the repo’s knowledge pages, each a question about this project. They start empty.
+  5. It reads the agent’s own past conversations in this repo, and the commit messages of the last 300 commits.
+  6. Each conversation becomes one document (skipped if already there); the commit history becomes one document, replaced when HEAD moves. Full diffs are opt-in (gitIngest: "full").
+  7. The server extracts facts and labels the durable ones for the page they belong to: a decision, a convention, a component…
+  8. Consolidation merges them into observations — one set per repo, whichever agent wrote the facts.
+  9. Each page is written from the memories labelled for it, and keeps itself current on an hourly schedule (each page on its own minute, only when something changed).
+- **first prompt**
+  1. On the first prompt of a session, the prompt hook fetches memory for the task at hand. (A session on an existing bank also got the page roster and a tool guide at start.)
+  2. By default it runs one bounded reflect over the bank. "pages" searches the knowledge pages and "recall" recalls memories instead — both retrieval-only.
+  3. The answer lands in the agent’s context before it starts, once per session. On a bank with no history or pages yet, it waits for the second prompt instead.
+- **while working**
+  1. Mid-task the agent pulls memory itself through MCP tools. Pages are not pushed every turn; the page roster and tool guide are re-injected every 10 turns.
+  2. Page search ranks the pages and returns a snippet of each — fast, and visible as a tool call. hindsight_read_knowledge_page opens one in full.
+  3. hindsight_reflect goes deeper when pages are not enough; capture_initiative turns a new plan into its own page.
+- **each reply**
+  1. Every time the agent finishes a reply, the Stop hook reads the transcript and takes the turns it has not written yet.
+  2. They are appended to the session’s document (its first reply created it), tagged with the agent that wrote it — that is where the control plane’s agent logo comes from.
+  3. The new turns are extracted like everything else…
+  4. …consolidated into the repo’s beliefs…
+  5. …and the next scheduled refresh edits the page, so the next session starts from it.
 
 [View Changelog →](../../changelog/integrations/coding-agents.md)
 
@@ -516,7 +544,8 @@ hook by Codex...), so one shared config serves several agents side by side:
 | `resolveWorktrees`      | `true`                               | linked worktrees inherit the main checkout's bank identity, path approval, and mapping                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `retainTags`            | —                                    | extra tags on every document written by the integration, e.g. `["project:{gitProject}"]` — see **Recording where a memory came from** below                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | `retainMetadata`        | —                                    | extra metadata on every document written by the integration, e.g. `{"repo": "{gitProject}"}`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| `manageBankConfig`      | `true`                               | let the plugin shape the bank's own configuration — the retain strategies it writes under, the `knowledge` entity-label group, and, on a bank that has none, the missions. Writing is strictly **additive**: it adds what the bank does not define and never overwrites what is there, so your control-plane edits survive. Set `false` to keep it out of the bank config entirely — see **A bank you shape yourself** below                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `manageBankConfig`      | `true`                               | let the plugin shape the bank's own configuration — the retain strategies it writes under, the `knowledge` entity-label group, and, on a bank that has none, the missions. Writing is **additive**: it adds what the bank does not define and never overwrites what is there, so your control-plane edits survive — the one exception is the extraction mode of its own strategies, which follows `retainExtractionMode`. Set `false` to keep it out of the bank config entirely — see **A bank you shape yourself** below                                                                                                                                                                                                                                                                                                                                                                                      |
+| `retainExtractionMode`  | `"concise"`                          | how the server extracts memories from sessions, commits and documents: `"concise"`, `"verbose"`, `"verbatim"` or `"chunks"` (store the text, no extraction). Every Stop writes the session back, so this is what each turn costs — `"verbose"` pulls more detail for several times the tokens. Kept in sync on the plugin's own retain strategies every session, so a change reaches existing banks too (not with `manageBankConfig: false`)                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | `observationScopes`     | `"shared"`                           | how consolidation groups observations: `"shared"` (default) = ONE global scope per bank, so every agent on a repo builds one set of beliefs; also `"combined"` (the server default), `"per_tag"`, `"all_combinations"`, `[["t"]]`; `"per_source"` adds a scope per `source:` kind alongside the global one, so commit knowledge and conversation knowledge consolidate apart                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | `disabled`              | `false`                              | hard off-switch (inert plugin/hook — a no-memory baseline)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | `reflectTimeoutMs`      | `20000`                              | **automatic** session-reflect timeout; on hook harnesses the installer registers a 30s prompt-hook timeout, so going above ~20s also means raising that hook's `timeout` in the host's config, or the host kills the hook mid-reflect; on timeout or a 5xx the hook falls back to knowledge-page search, then to a raw recall of observations (recorded)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
@@ -529,6 +558,8 @@ hook by Codex...), so one shared config serves several agents side by side:
 | `pageRefreshEveryTurns` | `10`                                 | refetch the knowledge pages and re-inject the page roster + tool guide every N user turns                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | `pageTriggerType`       | `"cron"`                             | when NEW knowledge pages refresh, i.e. what keeping them current costs — `"cron"` (default) on `pageTriggerCron` only and only when actually stale, `"auto-refresh"` after every consolidation that produced new material, `"manual"` never on their own. Auto-refresh is the most current and by far the most expensive: one synthesis per page per consolidation. Maps to the page's `trigger.refresh_cron`, or `trigger.refresh_after_consolidation` in the Hindsight API (`true` for auto-refresh, `false` for manual)                                                                                                                                                                                                                                                                                                                                                                                      |
 | `pageTriggerCron`       | `"H * * * *"`                        | schedule for `pageTriggerType: "cron"` — UTC, standard 5-field cron, e.g. `"0 3 * * *"`. The default is hourly, each page on its own hashed minute. Sets the page's `trigger.refresh_cron`, which the API treats as mutually exclusive with `refresh_after_consolidation`; a scheduled refresh is skipped when nothing changed. Write a field as `H` to give each page its own value there — see **Spreading refreshes with `H`** below                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `pages`                 | every page                           | per-page configuration for the seeded knowledge pages, keyed by page name (case-insensitive): `false` skips a page entirely, `{"source_query": "..."}` seeds it with your question instead of the built-in one. Omitted, all five pages are seeded with their built-in queries. This is the supported way to own a page's wording — the plugin re-syncs a page whose live query differs from the one it is configured to have, so a query edited through the API or the control plane is replaced on the next session. A skipped page is **not deleted**: one already seeded keeps its content and stops being re-synced. The scoping clause is appended to your query too, so a reworded page cannot start reporting a dependency's decisions as this project's. File-only, like `recallOptions`; in a `banks.<id>` section it replaces the global map rather than merging into it                             |
+| `customPages`           | —                                    | knowledge pages of your own, seeded alongside the five above and keyed by the name they get: `{"Security posture": {"source_query": "...", "tags": ["knowledge:decision"]}}`. `source_query` is required; `tags` picks which facts feed the page and is optional — omitted, the page draws on everything the bank holds. A separate setting from `pages` on purpose, so that an unknown name there stays a typo warning rather than quietly creating a page. File-only, and replaced (not merged) by a `banks.<id>` section                                                                                                                                                                                                                                                                                                                                                                                     |
 | `autoSeed`              | `true`                               | SessionStart: auto-seed a cold repo's bank from git history                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | `seedLimit`             | `300`                                | auto-seed: most-recent-N-commits cap                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | `codebaseSurvey`        | `true`                               | SessionStart: headless survey of a cold repo's structure, run under the current harness's own CLI (claude/codex/antigravity/opencode), falling back to any available agent                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
@@ -588,6 +619,123 @@ file is the source of truth for these pages: to give one a different schedule, c
 page. Only the fields this plugin states are touched — a page's `mode`, its excluded siblings and
 its minimum refresh interval are left exactly as they are.
 
+### Customize Knowledge Pages — `pages`
+
+Every repo gets the same five pages. They are a **taxonomy**, not a summary of your source: each one
+is synthesized from what the bank ingested — commit history and past conversations — and each is
+pinned to one knowledge tier, so a page draws only on the facts the extractor routed to it.
+
+| Page                           | What it answers                                                                                         | Tier tag                 |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------- | ------------------------ |
+| `Component map`                | the main components/modules/subsystems, what each is responsible for, and how they depend on each other | `knowledge:component`    |
+| `Core concepts`                | the domain abstractions and key entities — the vocabulary a developer has to know                       | `knowledge:concept`      |
+| `Conventions and patterns`     | how THIS project does things: testing, error handling, naming, structure, how changes are made          | `knowledge:convention`   |
+| `Key decisions and rationale`  | the significant technical decisions and the durable "why we do it this way" behind them                 | `knowledge:decision`     |
+| `Initiatives and enhancements` | the major initiatives and features over time, linking out to each captured initiative's own page        | `knowledge:feature-work` |
+
+`pages` says which of them to seed and what each one asks. Keys are the page names above, matched
+ignoring case and surrounding spaces:
+
+```jsonc
+{
+  "pages": {
+    // don't seed this page at all
+    "Component map": false,
+    // seed it, but ask your question instead of the built-in one
+    "Key decisions and rationale": {
+      "source_query": "What did we decide about data retention, encryption and PII handling, and why? Prefer decisions that constrain what new code may do.",
+    },
+  },
+}
+```
+
+Omit `pages` entirely — the default — and all five are seeded with their built-in queries.
+
+**Fewer pages.** Each page costs one LLM synthesis per refresh, so a repo that only wants the
+architecture ones turns the rest off:
+
+```jsonc
+{
+  "pages": {
+    "Initiatives and enhancements": false,
+    "Conventions and patterns": false,
+    "Key decisions and rationale": false,
+  },
+}
+```
+
+**Per repo**, like every other field — usually where this belongs, since what a page should ask is a
+property of the project, not of your machine:
+
+```jsonc
+{
+  "banks": {
+    "coding-agent::payments-api": {
+      "pages": {
+        "Core concepts": {
+          "source_query": "What are the payment domain's entities — orders, ledgers, settlement states — and what does each mean in OUR model?",
+        },
+      },
+    },
+  },
+}
+```
+
+Four things worth knowing before you reach for it:
+
+- **This is the only durable way to reword a page.** Every session compares each seeded page against
+  the query it is configured to have and re-syncs the ones that differ, so a `source_query` edited
+  through the API or the control plane is replaced the next time an agent runs. Setting it here makes
+  your wording the configured one. When a re-sync does replace a query, the plugin now says which
+  page in the plugin log rather than doing it silently.
+- **Your query still gets the scoping clause.** The sentence that keeps a dependency's decisions off
+  your project's page is appended to a custom query too — a bank holds facts about the libraries and
+  services a repo merely uses, and without that clause a page will present them as yours.
+- **The tier tag stays the taxonomy's.** It selects which facts the synthesis reads; rewording the
+  question changes what is asked of those facts, not which ones are in scope.
+- **`false` does not delete anything.** A page already seeded keeps its content and simply stops
+  being re-synced — remove it in the control plane if you want it gone.
+
+A name that matches no page above is ignored with a warning in the plugin log, so a typo fails
+loudly instead of looking like it disabled something. Adding pages of your own is not what this
+setting is for: the agent's `hindsight_capture_initiative` tool already creates pages, one per
+initiative, each with its own query.
+
+#### Pages of your own — `customPages`
+
+`pages` only reworks the five above. To add a page, name it under `customPages`:
+
+```jsonc
+{
+  "customPages": {
+    "Security posture": {
+      "source_query": "What are this project's security decisions — authn, secrets handling, PII, dependency policy — and what do they constrain in new code?",
+      "tags": ["knowledge:decision"],
+    },
+    "Operational runbook": {
+      "source_query": "How does this project get deployed, monitored and rolled back? What has broken in production, and what fixed it?",
+    },
+  },
+}
+```
+
+`source_query` is required. `tags` is optional and picks which facts feed the page — one of the tier
+tags above, or any tag you stamp on your own writes with `retainTags`. Omit it and the page draws on
+everything the bank holds: a refresh matches tags with `all`, so no tags means no tag constraint,
+**not** an empty page.
+
+Your pages are seeded at the same root as the taxonomy, on the same refresh schedule, and re-synced
+from the config the same way — reword one here and the live page follows on the next session. They
+compose with `pages`, so trading two built-ins for one of your own is just both settings at once.
+
+**Why it is a separate setting.** `pages` refuses a name that matches no seeded page, and that is
+what makes a typo loud: if an unknown key there meant "create this page", `"Componnet map"` would
+quietly create an empty second page instead of rewording the one you meant. For the same reason,
+naming a seeded page under `customPages` is refused — reword it under `pages`.
+
+A page you create yourself in the control plane is a third thing again, and the plugin never touches
+it: the seed pass only visits the pages it is configured to own.
+
 ### A bank you shape yourself — `manageBankConfig`
 
 Pointed at a bank, this plugin gives it the shape its ingestion needs: retain strategies for the
@@ -602,6 +750,11 @@ that a plugin release which _rewords_ an existing strategy or label does not rea
 already has it. To take the current default back, clear that override on the bank (delete the
 strategy, or the whole `retain_strategies` entry, in the control plane): the next session finds the
 bank silent there and seeds it again.
+
+One field is the exception: the extraction mode of the plugin's own four strategies (`git`,
+`gitlog`, `conversation`, `document`) follows `retainExtractionMode` and is put back on every session
+if it drifts — the same way a seeded page's query is. Change it in `coding-agent.json`, not in the
+control plane. The strategies' other fields, and your own strategies, are still left alone.
 
 Set `manageBankConfig: false` to keep the plugin out of the bank's configuration altogether — the
 right setting for a bank you share with non-coding work, or one you configure yourself. That bank

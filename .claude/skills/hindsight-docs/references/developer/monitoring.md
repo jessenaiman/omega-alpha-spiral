@@ -11,7 +11,6 @@ For local observability, use the Grafana LGTM (Loki, Grafana, Tempo, Mimir) all-
 ```
 
 This starts a single Docker container providing:
-
 - **Grafana UI**: http://localhost:3000 (anonymous admin access)
 - **Traces (Tempo)**: OTLP endpoint at http://localhost:4318 (HTTP) and http://localhost:4317 (gRPC)
 - **Metrics (Prometheus/Mimir)**: Scrapes http://localhost:8888/metrics automatically
@@ -19,7 +18,6 @@ This starts a single Docker container providing:
 - **Pre-built Dashboards**: Hindsight Operations, LLM Metrics, API Service
 
 **Enable tracing in your API:**
-
 ```bash
 export HINDSIGHT_API_OTEL_TRACES_ENABLED=true
 export HINDSIGHT_API_OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
@@ -33,11 +31,11 @@ The local monitoring stack is for development only. In production, deploy Grafan
 
 Pre-built dashboards are available in [`monitoring/grafana/dashboards/`](https://github.com/anthropics/hindsight/tree/main/monitoring/grafana/dashboards). Import these JSON files into your Grafana instance:
 
-| Dashboard                 | Description                                            |
-| ------------------------- | ------------------------------------------------------ |
-| **Hindsight Operations**  | Operation rates, latency percentiles, per-bank metrics |
-| **Hindsight LLM Metrics** | LLM calls, token usage, latency by scope/provider      |
-| **Hindsight API Service** | HTTP requests, error rates, DB pool, process metrics   |
+| Dashboard | Description |
+|-----------|-------------|
+| **Hindsight Operations** | Operation rates, latency percentiles, per-bank metrics |
+| **Hindsight LLM Metrics** | LLM calls, token usage, latency by scope/provider |
+| **Hindsight API Service** | HTTP requests, error rates, DB pool, process metrics |
 
 The dashboards are automatically provisioned when using the monitoring stack script.
 
@@ -56,11 +54,11 @@ endpoints. They answer two different questions, and pointing a probe at the wron
 one is the difference between riding out a database blip and turning it into an
 outage:
 
-| Endpoint        | Checks the database? | Use for                                                      |
-| --------------- | -------------------- | ------------------------------------------------------------ |
-| `/health/live`  | No                   | Liveness probes                                              |
-| `/health/ready` | Yes                  | Readiness probes                                             |
-| `/health`       | Yes                  | Readiness — alias of `/health/ready`, kept for compatibility |
+| Endpoint | Checks the database? | Use for |
+|----------|----------------------|---------|
+| `/health/live` | No | Liveness probes |
+| `/health/ready` | Yes | Readiness probes |
+| `/health` | Yes | Readiness — alias of `/health/ready`, kept for compatibility |
 
 **`/health/live`** returns 200 whenever the process can serve a request, and does
 no I/O to get there:
@@ -83,12 +81,7 @@ separates the two ways that can go wrong — `db_acquire_ms` and `db_pool_waitin
 point at pool exhaustion, a slow query at the database itself:
 
 ```json
-{
-  "status": "healthy",
-  "database": "connected",
-  "db_acquire_ms": 0.4,
-  "db_pool_waiting": 0
-}
+{ "status": "healthy", "database": "connected", "db_acquire_ms": 0.4, "db_pool_waiting": 0 }
 ```
 
 :::warning Never point a liveness probe at a dependency check
@@ -116,13 +109,12 @@ only on deployments with few banks or tenants. The backlog gauges always carry `
 
 ### Operation Metrics
 
-| Metric                         | Type      | Labels                                                  | Description                         |
-| ------------------------------ | --------- | ------------------------------------------------------- | ----------------------------------- |
-| `hindsight.operation.duration` | Histogram | operation, bank_id, source, budget, max_tokens, success | Duration of operations in seconds   |
-| `hindsight.operation.total`    | Counter   | operation, bank_id, source, budget, max_tokens, success | Total number of operations executed |
+| Metric | Type | Labels | Description |
+|--------|------|--------|-------------|
+| `hindsight.operation.duration` | Histogram | operation, bank_id, source, budget, max_tokens, success | Duration of operations in seconds |
+| `hindsight.operation.total` | Counter | operation, bank_id, source, budget, max_tokens, success | Total number of operations executed |
 
 **Labels:**
-
 - `operation`: Operation type (`retain`, `recall`, `reflect`, plus async worker task types such as `consolidation`)
 - `bank_id`: Memory bank identifier
 - `source`: Where the operation was triggered from (`api`, `reflect`, `internal`, `worker`)
@@ -131,7 +123,6 @@ only on deployments with few banks or tenants. The backlog gauges always carry `
 - `success`: Whether the operation succeeded (`true`, `false`)
 
 The `source` label allows distinguishing between:
-
 - `api`: Direct API calls from clients
 - `reflect`: Internal recall calls made during reflect operations
 - `internal`: Other internal operations
@@ -146,12 +137,11 @@ failure status.
 
 ### Retain Metrics
 
-| Metric                             | Type    | Labels           | Description                                          |
-| ---------------------------------- | ------- | ---------------- | ---------------------------------------------------- |
+| Metric | Type | Labels | Description |
+|--------|------|--------|-------------|
 | `hindsight.retain.documents.total` | Counter | outcome, bank_id | Documents processed by retain, by extraction outcome |
 
 **Labels:**
-
 - `outcome`: `facts` when the document has memory units after the retain, `no_facts` when it has none
 - `bank_id`: Memory bank identifier
 
@@ -164,15 +154,14 @@ sum(rate(hindsight_retain_documents_total{outcome="no_facts"}[15m]))
 
 ### LLM Metrics
 
-| Metric                        | Type      | Labels                                        | Description                          |
-| ----------------------------- | --------- | --------------------------------------------- | ------------------------------------ |
-| `hindsight.llm.duration`      | Histogram | provider, model, scope, success               | Duration of LLM API calls in seconds |
-| `hindsight.llm.calls.total`   | Counter   | provider, model, scope, success               | Total number of LLM API calls        |
-| `hindsight.llm.tokens.input`  | Counter   | provider, model, scope, success, token_bucket | Input tokens for LLM calls           |
-| `hindsight.llm.tokens.output` | Counter   | provider, model, scope, success, token_bucket | Output tokens from LLM calls         |
+| Metric | Type | Labels | Description |
+|--------|------|--------|-------------|
+| `hindsight.llm.duration` | Histogram | provider, model, scope, success | Duration of LLM API calls in seconds |
+| `hindsight.llm.calls.total` | Counter | provider, model, scope, success | Total number of LLM API calls |
+| `hindsight.llm.tokens.input` | Counter | provider, model, scope, success, token_bucket | Input tokens for LLM calls |
+| `hindsight.llm.tokens.output` | Counter | provider, model, scope, success, token_bucket | Output tokens from LLM calls |
 
 **Labels:**
-
 - `provider`: LLM provider (`openai`, `anthropic`, `gemini`, `groq`, `ollama`, `lmstudio`, `bedrock`, `litellm`)
 - `model`: Model name (e.g., `gpt-4`, `claude-3-sonnet`)
 - `scope`: What the LLM call is for (`memory`, `reflect`, `consolidation`, `answer`)
@@ -181,17 +170,16 @@ sum(rate(hindsight_retain_documents_total{outcome="no_facts"}[15m]))
 
 ### Consolidation Metrics
 
-| Metric                                   | Type    | Labels                    | Description                                                                                 |
-| ---------------------------------------- | ------- | ------------------------- | ------------------------------------------------------------------------------------------- |
+| Metric | Type | Labels | Description |
+|--------|------|--------|-------------|
 | `hindsight.consolidation.batch_failures` | Counter | failure_class, error_type | Consolidation LLM batch calls that failed, including those whose facts were later recovered |
 
 **Labels:**
-
 - `failure_class`: How the call was treated (`fail_fast` — the model returned something the response schema rejects, so a re-send of the same payload cannot help; `retry` — transport-shaped, an unchanged re-send may succeed; `propagate` — not a batch failure, re-raised to the task handler)
 - `error_type`: Exception class name (e.g. `ValidationError`, `JSONDecodeError`)
 
 This is not the same signal as the `failed_consolidation` field in bank stats. That
-field counts _facts_ still waiting to be consolidated after a failure; when a batch
+field counts *facts* still waiting to be consolidated after a failure; when a batch
 call fails, consolidation halves the batch and retries, so a call that failed at
 batch size 8 and succeeded at size 1 leaves `failed_consolidation` at 0. Everything
 the failed response asked for is dropped, though — including any observations it
@@ -211,19 +199,18 @@ the provider supports grammar-enforced schemas, is the usual fix.
 
 The same count is reported per run as `llm_batch_failures` in the consolidation
 operation's result, and the consolidation log summary prints a warning line
-whenever it is non-zero. Both count _attempts_ — one batch call retried three times
+whenever it is non-zero. Both count *attempts* — one batch call retried three times
 contributes three — so they are not bounded by the number of batches in the run.
 
 ### HTTP Request Metrics
 
-| Metric                                | Type          | Labels                                      | Description                                       |
-| ------------------------------------- | ------------- | ------------------------------------------- | ------------------------------------------------- |
-| `hindsight.http.duration`             | Histogram     | method, endpoint, status_code, status_class | Duration of HTTP requests in seconds              |
-| `hindsight.http.requests.total`       | Counter       | method, endpoint, status_code, status_class | Total number of HTTP requests                     |
-| `hindsight.http.requests.in_progress` | UpDownCounter | method, endpoint                            | Number of HTTP requests currently being processed |
+| Metric | Type | Labels | Description |
+|--------|------|--------|-------------|
+| `hindsight.http.duration` | Histogram | method, endpoint, status_code, status_class | Duration of HTTP requests in seconds |
+| `hindsight.http.requests.total` | Counter | method, endpoint, status_code, status_class | Total number of HTTP requests |
+| `hindsight.http.requests.in_progress` | UpDownCounter | method, endpoint | Number of HTTP requests currently being processed |
 
 **Labels:**
-
 - `method`: HTTP method (`GET`, `POST`, `PUT`, `DELETE`)
 - `endpoint`: Request path (normalized to reduce cardinality - UUIDs replaced with `{id}`)
 - `status_code`: HTTP status code (`200`, `400`, `500`, etc.)
@@ -231,24 +218,23 @@ contributes three — so they are not bounded by the number of batches in the ru
 
 ### Database Pool Metrics
 
-| Metric                   | Type  | Labels | Description                               |
-| ------------------------ | ----- | ------ | ----------------------------------------- |
-| `hindsight.db.pool.size` | Gauge | -      | Current number of connections in the pool |
-| `hindsight.db.pool.idle` | Gauge | -      | Number of idle connections in the pool    |
-| `hindsight.db.pool.min`  | Gauge | -      | Minimum pool size                         |
-| `hindsight.db.pool.max`  | Gauge | -      | Maximum pool size                         |
+| Metric | Type | Labels | Description |
+|--------|------|--------|-------------|
+| `hindsight.db.pool.size` | Gauge | - | Current number of connections in the pool |
+| `hindsight.db.pool.idle` | Gauge | - | Number of idle connections in the pool |
+| `hindsight.db.pool.min` | Gauge | - | Minimum pool size |
+| `hindsight.db.pool.max` | Gauge | - | Maximum pool size |
 
 ### Process Metrics
 
-| Metric                           | Type  | Labels | Description                     |
-| -------------------------------- | ----- | ------ | ------------------------------- |
-| `hindsight.process.cpu.seconds`  | Gauge | type   | Process CPU time in seconds     |
-| `hindsight.process.memory.bytes` | Gauge | type   | Process memory usage in bytes   |
-| `hindsight.process.open_fds`     | Gauge | -      | Number of open file descriptors |
-| `hindsight.process.threads`      | Gauge | -      | Number of active threads        |
+| Metric | Type | Labels | Description |
+|--------|------|--------|-------------|
+| `hindsight.process.cpu.seconds` | Gauge | type | Process CPU time in seconds |
+| `hindsight.process.memory.bytes` | Gauge | type | Process memory usage in bytes |
+| `hindsight.process.open_fds` | Gauge | - | Number of open file descriptors |
+| `hindsight.process.threads` | Gauge | - | Number of active threads |
 
 **Labels:**
-
 - `type` (CPU): `user` or `system`
 - `type` (Memory): `rss_max` (maximum resident set size)
 
@@ -257,19 +243,16 @@ contributes three — so they are not bounded by the number of batches in the ru
 Custom bucket boundaries are configured for better percentile accuracy:
 
 **Operation Duration Buckets (seconds):**
-
 ```
 0.1, 0.25, 0.5, 0.75, 1.0, 2.0, 3.0, 5.0, 7.5, 10.0, 15.0, 20.0, 30.0, 60.0, 120.0
 ```
 
 **LLM Duration Buckets (seconds):**
-
 ```
 0.1, 0.25, 0.5, 1.0, 2.0, 3.0, 5.0, 10.0, 15.0, 30.0, 60.0, 120.0
 ```
 
 **HTTP Duration Buckets (seconds):**
-
 ```
 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0, 30.0
 ```
@@ -278,75 +261,64 @@ Custom bucket boundaries are configured for better percentile accuracy:
 
 ```yaml
 scrape_configs:
-  - job_name: "hindsight"
+  - job_name: 'hindsight'
     static_configs:
-      - targets: ["localhost:8888"]
+      - targets: ['localhost:8888']
 ```
 
 ## Example Queries
 
 ### Average operation latency by type
-
 ```promql
 rate(hindsight_operation_duration_sum[5m]) / rate(hindsight_operation_duration_count[5m])
 ```
 
 ### LLM calls per minute by provider
-
 ```promql
 rate(hindsight_llm_calls_total[1m]) * 60
 ```
 
 ### P95 LLM latency
-
 ```promql
 histogram_quantile(0.95, rate(hindsight_llm_duration_bucket[5m]))
 ```
 
 ### Total tokens consumed by model
-
 ```promql
 sum by (model) (hindsight_llm_tokens_input_total + hindsight_llm_tokens_output_total)
 ```
 
 ### Internal vs API recall operations
-
 ```promql
 sum by (source) (rate(hindsight_operation_total{operation="recall"}[5m]))
 ```
 
 ### HTTP requests per second by endpoint
-
 ```promql
 sum by (endpoint) (rate(hindsight_http_requests_total[1m]))
 ```
 
 ### HTTP error rate (5xx)
-
 ```promql
 sum(rate(hindsight_http_requests_total{status_class="5xx"}[5m])) / sum(rate(hindsight_http_requests_total[5m]))
 ```
 
 ### P95 HTTP latency
-
 ```promql
 histogram_quantile(0.95, sum by (le) (rate(hindsight_http_duration_seconds_bucket[5m])))
 ```
 
 ### Database pool utilization
-
 ```promql
 hindsight_db_pool_size / hindsight_db_pool_max
 ```
 
 ### Active database connections
-
 ```promql
 hindsight_db_pool_size - hindsight_db_pool_idle
 ```
 
 ### CPU usage rate
-
 ```promql
 rate(hindsight_process_cpu_seconds{type="user"}[1m])
 ```
@@ -362,7 +334,6 @@ Hindsight supports OpenTelemetry distributed tracing for memory operations and L
 See [Configuration - OpenTelemetry Tracing](./configuration#opentelemetry-tracing) for environment variables.
 
 **Quick Start:**
-
 ```bash
 # Enable tracing
 export HINDSIGHT_API_OTEL_TRACES_ENABLED=true
@@ -378,7 +349,6 @@ Supports any OTLP-compatible backend (Grafana LGTM, Langfuse, OpenLIT, DataDog, 
 ### Span Hierarchy
 
 **Parent Spans (Operations):**
-
 - `hindsight.retain` - Memory ingestion
 - `hindsight.recall` - Memory retrieval
   - `hindsight.recall_embedding` - Query embedding
@@ -391,7 +361,6 @@ Supports any OTLP-compatible backend (Grafana LGTM, Langfuse, OpenLIT, DataDog, 
 - `hindsight.mental_model_refresh` - Mental model updates
 
 **Child Spans (LLM Calls):**
-
 - Named by scope (e.g., `hindsight.memory`, `hindsight.reflect`)
 - Contain full prompts/completions as events
 - Follow GenAI semantic conventions for attributes
@@ -399,7 +368,6 @@ Supports any OTLP-compatible backend (Grafana LGTM, Langfuse, OpenLIT, DataDog, 
 ### Span Attributes
 
 **Operation Spans:**
-
 - `hindsight.operation` - Operation type
 - `hindsight.bank_id` - Memory bank ID
 - `hindsight.query` - Query text (truncated to 100 chars)
@@ -408,7 +376,6 @@ Supports any OTLP-compatible backend (Grafana LGTM, Langfuse, OpenLIT, DataDog, 
 - `hindsight.max_tokens` - Token limit
 
 **LLM Spans (GenAI Semantic Conventions):**
-
 - `gen_ai.operation.name` - Always `"chat"`
 - `gen_ai.provider.name` - Provider (`openai`, `anthropic`, `google`, etc.)
 - `gen_ai.request.model` - Model name
@@ -417,7 +384,6 @@ Supports any OTLP-compatible backend (Grafana LGTM, Langfuse, OpenLIT, DataDog, 
 - `hindsight.scope` - LLM call purpose (`memory`, `reflect`, `consolidation`, etc.)
 
 **Events:**
-
 - `gen_ai.client.inference.operation.details` - Full prompts and completions
 
 ### Trace Context Propagation

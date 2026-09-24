@@ -1,4 +1,7 @@
 {
   "selectedRagSetting": null,
-  "ragSettings": {}
+  "ragSettings": {},
+  "sentPromptHistory": [
+    "spiral storytelling? I need to find it and explain it"
+  ]
 }

@@ -1,3 +1,4 @@
+
 # n8n
 
 Persistent memory for [n8n](https://n8n.io) workflows via [Hindsight](https://hindsight.vectorize.io). The `@vectorize-io/n8n-nodes-hindsight` community node package adds three operations — **Retain**, **Recall**, **Reflect** — that work alongside any other n8n node.
@@ -32,9 +33,8 @@ Restart n8n; the **Hindsight** node appears in the node panel.
 ## Setup
 
 > **💡 Recommended: Hindsight Cloud**
-
+>
 [Sign up free](https://ui.hindsight.vectorize.io/signup) and grab an API key — no self-hosting required.
-
 1. **Sign up** at [Hindsight Cloud](https://ui.hindsight.vectorize.io/signup) (free tier) or [self-host](../../developer/installation.md)
 2. **Get an API key** from the Hindsight dashboard
 3. **In n8n**, create a new **Hindsight API** credential with your API URL (defaults to Hindsight Cloud) and the `hsk_...` key
@@ -45,33 +45,33 @@ Restart n8n; the **Hindsight** node appears in the node panel.
 
 Store content in a bank. Hindsight extracts facts asynchronously after the call returns.
 
-| Field   | Description                                         |
-| ------- | --------------------------------------------------- |
+| Field | Description |
+|---|---|
 | Bank ID | Memory bank to store in (auto-created on first use) |
-| Content | Free text to retain                                 |
-| Tags    | Comma-separated tags                                |
+| Content | Free text to retain |
+| Tags | Comma-separated tags |
 
 ### Recall
 
 Search a bank for memories relevant to a query. Returns a `results` array.
 
-| Field       | Description                   |
-| ----------- | ----------------------------- |
-| Bank ID     | Memory bank to search         |
-| Query       | Natural-language query        |
-| Budget      | `low` / `mid` / `high`        |
-| Max Tokens  | Cap on returned memory tokens |
-| Tags Filter | Filter by tag                 |
+| Field | Description |
+|---|---|
+| Bank ID | Memory bank to search |
+| Query | Natural-language query |
+| Budget | `low` / `mid` / `high` |
+| Max Tokens | Cap on returned memory tokens |
+| Tags Filter | Filter by tag |
 
 ### Reflect
 
 Get an LLM-synthesized answer over the bank. Returns `text`.
 
-| Field   | Description            |
-| ------- | ---------------------- |
-| Bank ID | Memory bank            |
-| Query   | Question to answer     |
-| Budget  | `low` / `mid` / `high` |
+| Field | Description |
+|---|---|
+| Bank ID | Memory bank |
+| Query | Question to answer |
+| Budget | `low` / `mid` / `high` |
 
 ## Example workflows
 

@@ -1,16 +1,20 @@
+
 # Hermes Desktop
 
 Configure [Hindsight](https://vectorize.io/hindsight) as the memory provider for the **[Hermes](https://github.com/NousResearch/hermes-agent) desktop app** — entirely from Settings. No `config.json`, no `.env`, no terminal. Pick a mode, paste an API key, and Hermes remembers across every session.
 
 > **💡 Tip**
-
+>
 Prefer the command line, or running Hermes as a CLI/gateway? See the [Hermes Agent integration](hermes.md) for the `hermes memory setup` wizard, plugin architecture, and the full configuration reference.
-
 ## Setup
 
 **1. Open Settings → Memory & Context.** In the **Memory Provider** dropdown, choose **Hindsight**.
 
+
+
 **2. Fill in the Hindsight settings panel.** Selecting Hindsight reveals its configuration fields:
+
+
 
 | Field             | What it does                                                                                    | Default                              |
 | ----------------- | ----------------------------------------------------------------------------------------------- | ------------------------------------ |

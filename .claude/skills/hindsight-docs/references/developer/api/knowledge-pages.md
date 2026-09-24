@@ -1,3 +1,4 @@
+
 # Knowledge Pages
 
 Living markdown documents, organized in a folder tree, that rewrite themselves as the bank learns.
@@ -37,10 +38,10 @@ for root in tree.roots:
 const tree = await client.getKnowledgeBaseTree(BANK_ID);
 
 for (const root of tree.roots) {
-  console.log(`${root.kind}: ${root.name}`);
-  for (const child of root.children ?? []) {
-    console.log(`  ${child.kind}: ${child.name} (stale: ${child.is_stale})`);
-  }
+    console.log(`${root.kind}: ${root.name}`);
+    for (const child of root.children ?? []) {
+        console.log(`  ${child.kind}: ${child.name} (stale: ${child.is_stale})`);
+    }
 }
 ```
 
@@ -99,15 +100,15 @@ for _, root := range tree.Roots {
 }
 ```
 
-| Field                    | Description                                                                                                                                                                                                     |
-| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `kind`                   | `folder` or `page`                                                                                                                                                                                              |
-| `mental_model_id`        | The backing mental model (pages only)                                                                                                                                                                           |
-| `description`            | The page's source query — the question that rebuilds it                                                                                                                                                         |
-| `timestamp`              | Last refresh for a page, last update for a folder                                                                                                                                                               |
-| `is_stale`               | Pages only: `true` when a memory in _this page's_ scope has been written since the page last read the memories (see below)                                                                                      |
+| Field | Description |
+|---|---|
+| `kind` | `folder` or `page` |
+| `mental_model_id` | The backing mental model (pages only) |
+| `description` | The page's source query — the question that rebuilds it |
+| `timestamp` | Last refresh for a page, last update for a folder |
+| `is_stale` | Pages only: `true` when a memory in *this page's* scope has been written since the page last read the memories (see below) |
 | `last_refresh_failed_at` | Pages only: when this page's last refresh failed, or `null` when it succeeded. While it is set the page does not rebuild itself on its trigger — an explicit refresh still runs, and a successful one clears it |
-| `managed`                | `true` when the node is flagged as system-owned rather than hand-authored                                                                                                                                       |
+| `managed` | `true` when the node is flagged as system-owned rather than hand-authored |
 
 ### How `is_stale` is decided
 
@@ -115,7 +116,7 @@ Each page is answered against its own scope — its tags and its `fact_types` �
 
 The whole tree is answered in one query, so the flag costs the same whether the bank has three pages or three hundred, and [`GET /mental-models/{id}`](./mental-models) returns the identical value for the page's backing model.
 
-One thing it does not see: **deletions**. The check asks what has been _written_ since the page last read the memories, and deleting an in-scope memory leaves no write behind — a page that cites a deleted fact keeps reporting itself up to date.
+One thing it does not see: **deletions**. The check asks what has been *written* since the page last read the memories, and deleting an in-scope memory leaves no write behind — a page that cites a deleted fact keeps reporting itself up to date.
 
 ---
 
@@ -144,10 +145,10 @@ print(f"Page ID: {page.page_id}, operation: {page.operation_id}")
 ```javascript
 // Create a page — content is generated in the background
 const page = await client.createKnowledgePage(
-  BANK_ID,
-  "Deploying the API",
-  "How is the API deployed?",
-  { parentId: folder.id, tags: ["ops", "type:runbook"] }
+    BANK_ID,
+    'Deploying the API',
+    'How is the API deployed?',
+    { parentId: folder.id, tags: ['ops', 'type:runbook'] },
 );
 
 // Poll the operation to know when the first build has finished
@@ -191,14 +192,14 @@ fmt.Printf("Page ID: %s, operation: %s\n", page.PageId, page.GetOperationId())
 
 ### Parameters
 
-| Parameter      | Type   | Required | Description                                                                                                                                                                                       |
-| -------------- | ------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `name`         | string | Yes      | Page name. Must be unique within its folder, case-insensitively — a duplicate returns `409`. (Enforced on PostgreSQL only.)                                                                       |
-| `source_query` | string | Yes      | The question the page answers, re-asked on every refresh.                                                                                                                                         |
-| `parent_id`    | string | No       | Folder to create the page in. `null` (or omitted) creates it at the root.                                                                                                                         |
-| `tags`         | list   | No       | Tags that scope which memories the page is built from — see [Tags Are a Filter](#tags-are-a-filter). A `type:<x>` tag also sets the page's rendered type, and still counts as part of the filter. |
-| `max_tokens`   | int    | No       | Content budget. Defaults to `4096` (a plain mental model defaults to `2048`).                                                                                                                     |
-| `trigger`      | object | No       | Refresh configuration — see below.                                                                                                                                                                |
+| Parameter | Type | Required | Description |
+|---|---|---|---|
+| `name` | string | Yes | Page name. Must be unique within its folder, case-insensitively — a duplicate returns `409`. (Enforced on PostgreSQL only.) |
+| `source_query` | string | Yes | The question the page answers, re-asked on every refresh. |
+| `parent_id` | string | No | Folder to create the page in. `null` (or omitted) creates it at the root. |
+| `tags` | list | No | Tags that scope which memories the page is built from — see [Tags Are a Filter](#tags-are-a-filter). A `type:<x>` tag also sets the page's rendered type, and still counts as part of the filter. |
+| `max_tokens` | int | No | Content budget. Defaults to `4096` (a plain mental model defaults to `2048`). |
+| `trigger` | object | No | Refresh configuration — see below. |
 
 ### Tags Are a Filter
 
@@ -214,17 +215,17 @@ So a page created like this:
 }
 ```
 
-is built only from memories tagged `type:runbook` **and** `homelab` **and** `infrastructure`. If your memories were retained without those exact tags — which is the usual case when the tags are invented at page-creation time to describe the topic — the page matches nothing and generates as _"I don't have information about this."_ A direct [recall](./recall) for the same query still returns everything, because recall was not given the same filter.
+is built only from memories tagged `type:runbook` **and** `homelab` **and** `infrastructure`. If your memories were retained without those exact tags — which is the usual case when the tags are invented at page-creation time to describe the topic — the page matches nothing and generates as *"I don't have information about this."* A direct [recall](./recall) for the same query still returns everything, because recall was not given the same filter.
 
 The `type:<x>` tag makes this easy to trip over: it is documented as setting the page's rendered type, but it narrows retrieval like any other tag.
 
 Three ways to get this right:
 
-| You want                                                                 | Do this                                             |
-| ------------------------------------------------------------------------ | --------------------------------------------------- |
-| The page built from the whole bank                                       | Omit `tags` (or pass `[]`)                          |
-| The tags to scope the page, but untagged memories still included         | Keep `tags`, add `"trigger": {"tags_match": "all"}` |
-| Only memories carrying every tag (strict isolation, e.g. per-user pages) | Keep `tags` and the `all_strict` default            |
+| You want | Do this |
+|---|---|
+| The page built from the whole bank | Omit `tags` (or pass `[]`) |
+| The tags to scope the page, but untagged memories still included | Keep `tags`, add `"trigger": {"tags_match": "all"}` |
+| Only memories carrying every tag (strict isolation, e.g. per-user pages) | Keep `tags` and the `all_strict` default |
 
 To repair a page that already generated empty, `PATCH` it with `{"tags": []}` or with the widened `tags_match`, then refresh it — the tags are stored on the backing mental model, not baked into the content.
 
@@ -245,12 +246,12 @@ When `trigger` is omitted, the page is created with a document-oriented configur
 
 This makes the page a living document built from consolidated observations only, refreshed incrementally whenever consolidation produces new knowledge in its scope, and never influenced by other pages.
 
-| Setting                             | Why                                                                                                                                                                                                                                                                                                                                         |
-| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `fact_types: ["observation"]`       | The page reads consolidated beliefs, not the raw conversational noise underneath them. Observations are already deduplicated and evidence-backed, so a page reads as a settled document instead of a transcript. Enforced structurally — with only `observation` in scope, the refresh agent isn't given the raw-memory recall tool at all. |
-| `exclude_mental_models: true`       | A page never reflects on sibling pages. Without this, pages would cite each other and drift into a feedback loop where one wrong claim propagates across the knowledge base.                                                                                                                                                                |
-| `mode: "delta"`                     | Each refresh edits the existing document with what is new since the last refresh instead of regenerating it, so hand-tuned structure and wording survive. See [Refresh Mode](./mental-models#refresh-mode).                                                                                                                                 |
-| `refresh_after_consolidation: true` | The page rewrites itself whenever consolidation produces new knowledge in its scope — gated by the same [staleness check](./mental-models#staleness-gating) as any mental model, so unrelated bank activity doesn't trigger rebuilds.                                                                                                       |
+| Setting | Why |
+|---|---|
+| `fact_types: ["observation"]` | The page reads consolidated beliefs, not the raw conversational noise underneath them. Observations are already deduplicated and evidence-backed, so a page reads as a settled document instead of a transcript. Enforced structurally — with only `observation` in scope, the refresh agent isn't given the raw-memory recall tool at all. |
+| `exclude_mental_models: true` | A page never reflects on sibling pages. Without this, pages would cite each other and drift into a feedback loop where one wrong claim propagates across the knowledge base. |
+| `mode: "delta"` | Each refresh edits the existing document with what is new since the last refresh instead of regenerating it, so hand-tuned structure and wording survive. See [Refresh Mode](./mental-models#refresh-mode). |
+| `refresh_after_consolidation: true` | The page rewrites itself whenever consolidation produces new knowledge in its scope — gated by the same [staleness check](./mental-models#staleness-gating) as any mental model, so unrelated bank activity doesn't trigger rebuilds. |
 
 ### Page Lifecycle
 
@@ -260,10 +261,10 @@ This makes the page a living document built from consolidated observations only,
 4. **Staleness check** — pages whose trigger asks for it are checked against their own scope (tags and `fact_types` both apply).
 5. **Delta refresh** — stale pages are rewritten by editing the existing document with the new observations only.
 
-Observations are what a page is _built from_, but it can still inspect the evidence underneath them: the refresh agent can expand a memory to its original chunk or document (unless `store_document_text` is disabled for the bank), and if `HINDSIGHT_API_REFLECT_SOURCE_FACTS_MAX_TOKENS` is enabled — off by default — observation search also returns each observation's grounding facts.
+Observations are what a page is *built from*, but it can still inspect the evidence underneath them: the refresh agent can expand a memory to its original chunk or document (unless `store_document_text` is disabled for the bank), and if `HINDSIGHT_API_REFLECT_SOURCE_FACTS_MAX_TOKENS` is enabled — off by default — observation search also returns each observation's grounding facts.
 
 > **ℹ️ Info**
-
+>
 A supplied `trigger` is a **patch**: only the fields you actually send are applied, and the rest keep the defaults above. Sending `{"trigger": {"tags_match": "all"}}` widens the tag filter and leaves `mode`, `fact_types`, `exclude_mental_models`, and `refresh_after_consolidation` as they are. The one exception is the two refresh triggers, which stay mutually exclusive: setting `refresh_cron` clears `refresh_after_consolidation`, and vice versa.
 Every [mental model trigger setting](./mental-models#trigger-settings) is accepted here — including `refresh_cron` for scheduled rebuilds instead of consolidation-driven ones, and `tag_groups` for compound tag scoping.
 
@@ -284,7 +285,7 @@ print(f"Folder ID: {folder.id}")
 
 ```javascript
 // Create a folder (omit parentId, or pass null, to create it at the root)
-const folder = await client.createKnowledgeFolder(BANK_ID, "Operations");
+const folder = await client.createKnowledgeFolder(BANK_ID, 'Operations');
 
 console.log(`Folder ID: ${folder.id}`);
 ```
@@ -307,10 +308,10 @@ folder, _, _ := client.KnowledgeBaseAPI.CreateKnowledgeFolder(ctx, kpBankID).
 fmt.Printf("Folder ID: %s\n", folder.Id)
 ```
 
-| Parameter   | Type   | Required | Description                                      |
-| ----------- | ------ | -------- | ------------------------------------------------ |
-| `name`      | string | Yes      | Folder name                                      |
-| `parent_id` | string | No       | Parent folder. Omit or pass `null` for the root. |
+| Parameter | Type | Required | Description |
+|---|---|---|---|
+| `name` | string | Yes | Folder name |
+| `parent_id` | string | No | Parent folder. Omit or pass `null` for the root. |
 
 A `parent_id` that does not exist, or that points at a page rather than a folder, returns `400`.
 
@@ -337,9 +338,9 @@ print(document.markdown)  # YAML frontmatter + body
 // Read a page as a markdown document
 const document = await client.getKnowledgePage(BANK_ID, page.page_id);
 
-console.log(document.type); // "runbook" — from the type:runbook tag
-console.log(document.body); // the synthesized markdown body
-console.log(document.markdown); // YAML frontmatter + body
+console.log(document.type);      // "runbook" — from the type:runbook tag
+console.log(document.body);      // the synthesized markdown body
+console.log(document.markdown);  // YAML frontmatter + body
 ```
 
 ### CLI
@@ -397,12 +398,10 @@ for hit in results.results:
 
 ```javascript
 // Hybrid search (full-text + vector) over whole pages
-const results = await client.searchKnowledgeBase(BANK_ID, "how do we deploy", {
-  limit: 5,
-});
+const results = await client.searchKnowledgeBase(BANK_ID, 'how do we deploy', { limit: 5 });
 
 for (const hit of results.results) {
-  console.log(`${hit.score.toFixed(3)}  ${hit.name}: ${hit.snippet}`);
+    console.log(`${hit.score.toFixed(3)}  ${hit.name}: ${hit.snippet}`);
 }
 ```
 
@@ -441,10 +440,10 @@ for _, hit := range results.Results {
 }
 ```
 
-| Parameter | Type   | Default | Description                            |
-| --------- | ------ | ------- | -------------------------------------- |
-| `q`       | string | —       | Required. Search query (min length 1). |
-| `limit`   | int    | `10`    | Maximum results, 1–50.                 |
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `q` | string | — | Required. Search query (min length 1). |
+| `limit` | int | `10` | Maximum results, 1–50. |
 
 This searches whole pages. To search individual memories, use [recall](./recall).
 
@@ -473,8 +472,8 @@ client.update_knowledge_node(
 // Rename a node, move it, and/or update a page's options.
 // Changing sourceQuery rebuilds the page against the new question.
 await client.updateKnowledgeNode(BANK_ID, page.page_id, {
-  name: "Deploying the API (v2)",
-  tags: ["ops", "type:runbook", "reviewed"],
+    name: 'Deploying the API (v2)',
+    tags: ['ops', 'type:runbook', 'reviewed'],
 });
 ```
 
@@ -500,14 +499,14 @@ client.KnowledgeBaseAPI.UpdateKnowledgeNode(ctx, kpBankID, page.PageId).
 	}).Execute()
 ```
 
-| Parameter      | Type           | Applies to | Description                                                                                                                                          |
-| -------------- | -------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `name`         | string         | Both       | New name                                                                                                                                             |
-| `parent_id`    | string \| null | Both       | New parent folder. Pass `null` explicitly to move to the root.                                                                                       |
-| `source_query` | string         | Pages      | New question. Changing it schedules an async refresh so the page rebuilds against the new question.                                                  |
-| `tags`         | list           | Pages      | Replaces the page's tags, and so [the scope it is built from](#tags-are-a-filter). Pass `[]` to clear them and rebuild the page from the whole bank. |
-| `max_tokens`   | int            | Pages      | New content budget                                                                                                                                   |
-| `trigger`      | object         | Pages      | Refresh settings to change, applied as a patch. `{"tags_match": "all"}` keeps the page's tags but stops excluding untagged memories.                 |
+| Parameter | Type | Applies to | Description |
+|---|---|---|---|
+| `name` | string | Both | New name |
+| `parent_id` | string \| null | Both | New parent folder. Pass `null` explicitly to move to the root. |
+| `source_query` | string | Pages | New question. Changing it schedules an async refresh so the page rebuilds against the new question. |
+| `tags` | list | Pages | Replaces the page's tags, and so [the scope it is built from](#tags-are-a-filter). Pass `[]` to clear them and rebuild the page from the whole bank. |
+| `max_tokens` | int | Pages | New content budget |
+| `trigger` | object | Pages | Refresh settings to change, applied as a patch. `{"tags_match": "all"}` keeps the page's tags but stops excluding untagged memories. |
 
 Sending an empty body returns `400`; an unknown node returns `404`.
 
@@ -546,7 +545,7 @@ client.KnowledgeBaseAPI.DeleteKnowledgeNode(ctx, kpBankID, folder.Id).Execute()
 ```
 
 ```json
-{ "status": "deleted" }
+{"status": "deleted"}
 ```
 
 ---
@@ -572,7 +571,7 @@ for file in bundle.files:
 const bundle = await client.exportKnowledgeBase(BANK_ID);
 
 for (const file of bundle.files) {
-  console.log(file.path); // index.md, <page-id>.md, <page-id>.log.md
+    console.log(file.path);  // index.md, <page-id>.md, <page-id>.log.md
 }
 ```
 
@@ -597,24 +596,24 @@ for _, file := range bundle.Files {
 ```json
 {
   "files": [
-    { "path": "index.md", "content": "---\ntype: \"index\"\n..." },
-    { "path": "kp-2e85....md", "content": "---\nid: \"kp-2e85...\"\n..." },
-    { "path": "kp-2e85....log.md", "content": "---\ntype: \"log\"\n..." }
+    {"path": "index.md", "content": "---\ntype: \"index\"\n..."},
+    {"path": "kp-2e85....md", "content": "---\nid: \"kp-2e85...\"\n..."},
+    {"path": "kp-2e85....log.md", "content": "---\ntype: \"log\"\n..."}
   ]
 }
 ```
 
 > **💡 Mirror it to disk**
-
+>
 `hindsight fs mount --bank my-bank` keeps a local folder in sync with this bundle via a background refresh loop, so `ls`, `grep`, `rg`, and your editor work against real files.
 ---
 
 ## Storage
 
-| Table             | Holds                                                                                                                                   |
-| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Table | Holds |
+|---|---|
 | `knowledge_pages` | The tree: folders and pages, their names, parents, and ordering. A page row references its backing mental model; a folder row has none. |
-| `mental_models`   | The content: the document body, its source query, tags, token budget, trigger, and refresh history.                                     |
+| `mental_models` | The content: the document body, its source query, tags, token budget, trigger, and refresh history. |
 
 The page layer owns only tree structure — everything about the content lives on the backing mental model, which is why every [mental model](./mental-models) capability applies to pages unchanged.
 
@@ -622,13 +621,13 @@ The page layer owns only tree structure — everything about the content lives o
 
 ## Endpoint Summary
 
-| Method   | Path                              | Description                             |
-| -------- | --------------------------------- | --------------------------------------- |
-| `GET`    | `/knowledge-base/tree`            | Nested folder/page tree with staleness  |
-| `POST`   | `/knowledge-base/folders`         | Create a folder                         |
-| `POST`   | `/knowledge-base/pages`           | Create a page (async first build)       |
-| `GET`    | `/knowledge-base/pages/{page_id}` | Read a page as markdown                 |
-| `GET`    | `/knowledge-base/search`          | Hybrid search over pages                |
-| `PATCH`  | `/knowledge-base/nodes/{node_id}` | Rename, move, or reconfigure a node     |
-| `DELETE` | `/knowledge-base/nodes/{node_id}` | Delete a node and its subtree           |
-| `GET`    | `/knowledge-base/export`          | Export the whole base as markdown files |
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/knowledge-base/tree` | Nested folder/page tree with staleness |
+| `POST` | `/knowledge-base/folders` | Create a folder |
+| `POST` | `/knowledge-base/pages` | Create a page (async first build) |
+| `GET` | `/knowledge-base/pages/{page_id}` | Read a page as markdown |
+| `GET` | `/knowledge-base/search` | Hybrid search over pages |
+| `PATCH` | `/knowledge-base/nodes/{node_id}` | Rename, move, or reconfigure a node |
+| `DELETE` | `/knowledge-base/nodes/{node_id}` | Delete a node and its subtree |
+| `GET` | `/knowledge-base/export` | Export the whole base as markdown files |

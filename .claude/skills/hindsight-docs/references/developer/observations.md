@@ -1,3 +1,5 @@
+
+
 # Observations: Knowledge Consolidation
 
 After memories are retained, Hindsight automatically consolidates related facts into **observations** — deduplicated, evidence-grounded beliefs the bank has built up from multiple memories. Each observation tracks its supporting evidence (with exact quotes) and a proof count, and is refined rather than overwritten when new evidence arrives.
@@ -27,14 +29,13 @@ After memories are retained, Hindsight automatically consolidates related facts 
 
 Observations are **consolidated knowledge** built from multiple facts. Unlike raw facts — which are individual pieces of information — observations represent deduplicated beliefs, preferences, and learnings grounded in accumulated evidence. They are not summaries the LLM invents on the fly: each observation is backed by specific source memories, carries a proof count, and evolves as new evidence supports, contradicts, or extends it.
 
-| Raw Facts                     | Observation                                                                 |
-| ----------------------------- | --------------------------------------------------------------------------- |
-| "Alice prefers Python"        | "Alice is a Python-focused developer who values readability and simplicity" |
-| "Alice dislikes verbose code" |                                                                             |
-| "Alice recommends type hints" |                                                                             |
+| Raw Facts | Observation |
+|-----------|--------------|
+| "Alice prefers Python" | "Alice is a Python-focused developer who values readability and simplicity" |
+| "Alice dislikes verbose code" | |
+| "Alice recommends type hints" | |
 
 Observations provide:
-
 - **Deduplication**: One durable belief instead of many overlapping facts
 - **Grounding**: Every observation references the specific memories (with quotes) that support it
 - **Evolution**: Refined as evidence strengthens, weakens, or contradicts it — history is preserved
@@ -98,12 +99,12 @@ When `observation_scopes` is omitted, all unconsolidated memories are processed 
 
 Observations evolve as new evidence arrives:
 
-| Event      | What the bank learns                     | Observation state                                                                        |
-| ---------- | ---------------------------------------- | ---------------------------------------------------------------------------------------- |
-| **Day 1**  | "Redis is open source under BSD license" | "Redis is excellent for caching — fast, reliable, and OSS-friendly" (2 supporting facts) |
-| **Day 2**  | "Redis has great community support"      | Observation reinforced (3 supporting facts)                                              |
-| **Day 30** | "Redis changed license to SSPL"          | Observation refined: "Redis is technically strong, but has license concerns for cloud"   |
-| **Day 45** | "Valkey forked Redis under BSD"          | New observation: "Consider Valkey for new projects requiring true OSS"                   |
+| Event | What the bank learns | Observation state |
+|-------|---------------------|----------------|
+| **Day 1** | "Redis is open source under BSD license" | "Redis is excellent for caching — fast, reliable, and OSS-friendly" (2 supporting facts) |
+| **Day 2** | "Redis has great community support" | Observation reinforced (3 supporting facts) |
+| **Day 30** | "Redis changed license to SSPL" | Observation refined: "Redis is technically strong, but has license concerns for cloud" |
+| **Day 45** | "Valkey forked Redis under BSD" | New observation: "Consider Valkey for new projects requiring true OSS" |
 
 ### Handling Contradictory Evidence
 
@@ -113,20 +114,19 @@ The consolidation engine doesn't blindly overwrite — it **reconciles** the con
 
 **Example: User preference changes**
 
-| Time   | Fact                                                            | Observation                                                                                                                        |
-| ------ | --------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| Week 1 | "User says they love React"                                     | "User prefers React for frontend development"                                                                                      |
-| Week 2 | "User praises React's component model"                          | "User is enthusiastic about React, particularly its component model"                                                               |
+| Time | Fact | Observation |
+|------|------|--------------|
+| Week 1 | "User says they love React" | "User prefers React for frontend development" |
+| Week 2 | "User praises React's component model" | "User is enthusiastic about React, particularly its component model" |
 | Week 3 | "User says they've switched to Vue and won't use React anymore" | "User was previously a React enthusiast who appreciated its component model, but has now switched to Vue and no longer uses React" |
 
 Notice how the final observation captures the **full journey** — not just "User prefers Vue" but the complete evolution of their preference. This nuanced understanding means:
 
 - Your agent won't recommend React tutorials to someone who explicitly moved away from it
-- Your agent understands _why_ this matters (they were enthusiastic before, so this is a deliberate choice)
+- Your agent understands *why* this matters (they were enthusiastic before, so this is a deliberate choice)
 - Your agent can reference this history when relevant ("I know you used to work with React...")
 
 The system:
-
 1. **Detects the conflict** — New fact contradicts existing observation
 2. **Preserves history** — Incorporates the previous understanding into the new observation
 3. **Creates nuanced observation** — Synthesizes a richer understanding that captures the change
@@ -134,9 +134,9 @@ The system:
 
 **Example: Correcting misinformation**
 
-| Time   | Fact                                       | Observation                                                  |
-| ------ | ------------------------------------------ | ------------------------------------------------------------ |
-| Day 1  | "Alice works at Google"                    | "Alice is a Google employee"                                 |
+| Time | Fact | Observation |
+|------|------|--------------|
+| Day 1 | "Alice works at Google" | "Alice is a Google employee" |
 | Day 10 | "Alice actually works at Meta, not Google" | "Alice works at Meta (previously thought to work at Google)" |
 
 When a fact explicitly corrects previous information, the observation is updated to reflect the correction while noting the previous understanding. The raw facts are always preserved, so you can trace back to see what was originally stated and when it was corrected.
@@ -214,12 +214,12 @@ Leave it blank to use the server default — durable, specific facts that stay t
 
 **Examples:**
 
-| `observations_mission`                                                   | What gets synthesised                                                 |
-| ------------------------------------------------------------------------ | --------------------------------------------------------------------- |
-| _(unset — default)_                                                      | Durable facts: preferences, skills, relationships, recurring patterns |
-| _"Observations are weekly summaries of sprint outcomes and blockers"_    | Broad event summaries grouped by time period                          |
-| _"Observations are stable facts about named individuals only"_           | Person-centric knowledge, tied to specific people                     |
-| _"Observations are recurring patterns in customer support interactions"_ | Failure modes, common requests, pain points                           |
+| `observations_mission` | What gets synthesised |
+|------------------------|----------------------|
+| *(unset — default)* | Durable facts: preferences, skills, relationships, recurring patterns |
+| *"Observations are weekly summaries of sprint outcomes and blockers"* | Broad event summaries grouped by time period |
+| *"Observations are stable facts about named individuals only"* | Person-centric knowledge, tied to specific people |
+| *"Observations are recurring patterns in customer support interactions"* | Failure modes, common requests, pain points |
 
 Set `observations_mission` via the [bank config API](api/memory-banks.md#observations-configuration) or the [`HINDSIGHT_API_OBSERVATIONS_MISSION`](configuration.md#observations) environment variable.
 
@@ -234,12 +234,12 @@ This is what makes one bank work across several audiences. Say each memory is ta
 ```json
 [
   {
-    "scopes": [{ "tags": ["company:*"] }],
+    "scopes": [{"tags": ["company:*"]}],
     "observations_mission": "This scope is shared with the whole company. Record only general, industry-level trends. Never name a specific company, person, deal size or funding stage.",
     "max_observations_per_scope": 20
   },
   {
-    "scopes": [{ "tags": ["team:*"] }],
+    "scopes": [{"tags": ["team:*"]}],
     "observations_mission": "Record decisions the team must act on."
   }
 ]
@@ -252,15 +252,14 @@ How a strategy is matched:
 - **`scopes`** is a list of alternatives. Each is `{"tags": [...], "tags_match": "all" | "exact"}`, where `tags` are [fnmatch](https://docs.python.org/3/library/fnmatch.html) patterns (`*` matches any text). A strategy applies to a consolidation scope when **any** of its alternatives matches it (OR); the tags inside one alternative must all be present (AND).
 - **`tags_match`**, set per alternative, decides whether other tags are allowed:
 
-  | `tags_match`        | `{"tags": ["company:*", "team:*"]}` matches…                        | …but not                                                   |
-  | ------------------- | ------------------------------------------------------------------- | ---------------------------------------------------------- |
-  | `"all"` _(default)_ | `{company:acme, team:exec}`, `{user:dana, team:exec, company:acme}` | `{company:acme}` (no team)                                 |
-  | `"exact"`           | `{company:acme, team:exec}` only                                    | `{user:dana, team:exec, company:acme}` (extra `user:` tag) |
+  | `tags_match` | `{"tags": ["company:*", "team:*"]}` matches… | …but not |
+  |---|---|---|
+  | `"all"` *(default)* | `{company:acme, team:exec}`, `{user:dana, team:exec, company:acme}` | `{company:acme}` (no team) |
+  | `"exact"` | `{company:acme, team:exec}` only | `{user:dana, team:exec, company:acme}` (extra `user:` tag) |
 
-  Because the mode is per alternative, one strategy can mix them — `[{"tags": ["company:*"], "tags_match": "exact"}, {"tags": ["team:*"]}]` claims scopes that are _only_ a company, or that have a team among other tags. To match _any one_ of several tags, give each its own alternative: `[{"tags": ["company:*"]}, {"tags": ["team:*"]}]`. Excluding a tag ("has a company but no user") is not expressible.
+  Because the mode is per alternative, one strategy can mix them — `[{"tags": ["company:*"], "tags_match": "exact"}, {"tags": ["team:*"]}]` claims scopes that are *only* a company, or that have a team among other tags. To match *any one* of several tags, give each its own alternative: `[{"tags": ["company:*"]}, {"tags": ["team:*"]}]`. Excluding a tag ("has a company but no user") is not expressible.
 
   Remember that a strategy matches **observation scopes** — the tag sets consolidation groups observations under, set by [`observation_scopes`](./api/retain#observation_scopes) at retain time — not the tags of individual memories. A memory tagged with a user, a team and a company but retained with `observation_scopes: [["user:dana"], ["team:exec"], ["company:acme"]]` produces three single-tag scopes, none of which has both a company and a team.
-
 - **What a strategy can set:** `observations_mission`, `max_observations_per_scope`, `consolidation_source_facts_max_tokens` and `consolidation_source_facts_max_tokens_per_observation`. Every one is optional.
 - **Anything a strategy leaves unset, and every scope no strategy matches,** uses the bank-wide value. The control plane shows these bank-wide values as the **Default** strategy.
 
@@ -272,11 +271,8 @@ The strategies are never mixed. If the winning strategy leaves a setting empty, 
 
 ```json
 [
-  { "scopes": [{ "tags": ["company:acme"] }], "max_observations_per_scope": 5 },
-  {
-    "scopes": [{ "tags": ["company:*"] }],
-    "observations_mission": "Record only general trends."
-  }
+  {"scopes": [{"tags": ["company:acme"]}], "max_observations_per_scope": 5},
+  {"scopes": [{"tags": ["company:*"]}], "observations_mission": "Record only general trends."}
 ]
 ```
 
@@ -286,7 +282,7 @@ To see which strategy a scope uses, open the strategy in the control plane: each
 
 A strategy that sets nothing is ignored: it matches no scope and doesn't block later ones.
 
-A malformed strategy is rejected when you save it — an unknown key (`"scope"` for `"scopes"`), a tag list that is not a list of strings, an unknown `tags_match` — with a 400 naming the offending entry. An _incomplete_ one is accepted, because the control plane saves strategies as you type them: a rule with no tags yet, or a strategy with no setting yet, is stored and simply ignored until you finish it. Strategies survive [bank template](api/memory-banks.md) export and import unchanged.
+A malformed strategy is rejected when you save it — an unknown key (`"scope"` for `"scopes"`), a tag list that is not a list of strings, an unknown `tags_match` — with a 400 naming the offending entry. An *incomplete* one is accepted, because the control plane saves strategies as you type them: a rule with no tags yet, or a strategy with no setting yet, is stored and simply ignored until you finish it. Strategies survive [bank template](api/memory-banks.md) export and import unchanged.
 
 Each scope is consolidated in its own LLM call, so one scope's mission never reaches another scope's call.
 
@@ -300,11 +296,11 @@ Set `consolidation_strategies` in the control plane (bank **Configuration → Ob
 
 Observations are derived from source memories. When source memories are removed, Hindsight automatically keeps observations consistent:
 
-| Action                               | Effect on observations                                            |
-| ------------------------------------ | ----------------------------------------------------------------- |
-| Delete a document                    | All observations derived from the document's memories are deleted |
-| Delete individual memories (by type) | Observations sourced from those memories are deleted              |
-| Delete an entire bank                | All observations are deleted along with everything else           |
+| Action | Effect on observations |
+|--------|----------------------|
+| Delete a document | All observations derived from the document's memories are deleted |
+| Delete individual memories (by type) | Observations sourced from those memories are deleted |
+| Delete an entire bank | All observations are deleted along with everything else |
 
 After deletion, the **remaining source memories** that fed the affected observations have their consolidation state reset, so they will be re-consolidated on the next consolidation run and produce fresh observations.
 
@@ -313,7 +309,6 @@ After deletion, the **remaining source memories** that fed the affected observat
 You can clear all observations derived from a single memory without deleting the memory itself. This is useful when you want to force re-synthesis of a memory's contribution to consolidated knowledge.
 
 Use the `DELETE /v1/default/banks/{bank_id}/memories/{memory_id}/observations` endpoint. This will:
-
 1. Delete all observations that list the memory as a source
 2. Reset `consolidated_at` on the memory itself and any other source memories that contributed to those observations
 3. Trigger a consolidation job so fresh observations are produced automatically
@@ -346,8 +341,8 @@ Content-Type: application/json
 
 The request body is optional. When omitted (or sent as an empty body), all unconsolidated memories in the bank are processed.
 
-| Parameter            | Type                        | Description                                                                                                                             |
-| -------------------- | --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Parameter | Type | Description |
+|-----------|------|-------------|
 | `observation_scopes` | `list[list[str]]` \| `null` | Optional list of tag scopes. Only memories whose tags contain all tags in at least one scope are processed. Omit for a full-bank sweep. |
 
 ## Configuration

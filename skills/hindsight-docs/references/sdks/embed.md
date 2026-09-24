@@ -113,14 +113,14 @@ The control center runs as a separate process from the memory daemon. Stopping o
 
 ## Environment Variables
 
-| Variable                                  | Description                                                                       | Default             |
-| ----------------------------------------- | --------------------------------------------------------------------------------- | ------------------- |
-| `HINDSIGHT_API_LLM_API_KEY`               | **Required**. API key for LLM provider                                            | -                   |
-| `HINDSIGHT_API_LLM_PROVIDER`              | LLM provider: `openai`, `anthropic`, `gemini`, `groq`, `minimax`, `ollama`        | `openai`            |
-| `HINDSIGHT_API_LLM_MODEL`                 | Model name                                                                        | `gpt-4o-mini`       |
-| `HINDSIGHT_EMBED_DAEMON_LOG_MAX_BYTES`    | Rotate the daemon log at startup when it reaches this size; `0` disables rotation | `10485760` (10 MiB) |
-| `HINDSIGHT_EMBED_DAEMON_LOG_BACKUP_COUNT` | Retained backups; `0` truncates a full log at startup                             | `3`                 |
-| `HINDSIGHT_EMBED_CONTROL_PORT`            | Default port for `hindsight-embed control start`                                  | `7878`              |
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `HINDSIGHT_API_LLM_API_KEY` | **Required**. API key for LLM provider | - |
+| `HINDSIGHT_API_LLM_PROVIDER` | LLM provider: `openai`, `anthropic`, `gemini`, `groq`, `minimax`, `ollama` | `openai` |
+| `HINDSIGHT_API_LLM_MODEL` | Model name | `gpt-4o-mini` |
+| `HINDSIGHT_EMBED_DAEMON_LOG_MAX_BYTES` | Rotate the daemon log at startup when it reaches this size; `0` disables rotation | `10485760` (10 MiB) |
+| `HINDSIGHT_EMBED_DAEMON_LOG_BACKUP_COUNT` | Retained backups; `0` truncates a full log at startup | `3` |
+| `HINDSIGHT_EMBED_CONTROL_PORT` | Default port for `hindsight-embed control start` | `7878` |
 
 The size is checked only when a daemon starts, so a single uninterrupted run is never truncated and can
 grow past `MAX_BYTES` — and at the next start that whole file is kept as the first backup. Retained size
@@ -257,7 +257,6 @@ hindsight-embed daemon logs -f
 ```
 
 Common issues:
-
 - **Missing API key**: Set `HINDSIGHT_API_LLM_API_KEY`
 - **Port conflict**: Another service using port 8888
 - **Permissions**: Check `~/.hindsight/` directory permissions
@@ -282,14 +281,12 @@ hindsight-embed configure
 ## When to Use
 
 **Perfect for:**
-
 - Development and prototyping
 - Single-user applications
 - Local-first tools
 - Quick experiments with Hindsight
 
 **Not suitable for:**
-
 - Production multi-user deployments
 - Network-accessible services
 - High-availability requirements

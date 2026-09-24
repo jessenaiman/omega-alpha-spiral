@@ -1,3 +1,4 @@
+
 # Amazon Bedrock AgentCore Runtime
 
 Persistent memory for [Amazon Bedrock AgentCore Runtime](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/runtime-sessions.html) agents using Hindsight.
@@ -24,7 +25,6 @@ AgentCore Runtime invocation
 Memory is keyed to stable user identity — **not** the `runtimeSessionId`. Banks survive session churn.
 
 Default bank format:
-
 ```
 tenant:{tenant_id}:user:{user_id}:agent:{agent_name}
 ```
@@ -38,9 +38,8 @@ pip install hindsight-agentcore
 ## Quick Start
 
 > **💡 Recommended: Hindsight Cloud**
-
+>
 [Sign up free](https://ui.hindsight.vectorize.io/signup) and grab an API key — no self-hosting required.
-
 ```python
 import os
 from hindsight_agentcore import HindsightRuntimeAdapter, TurnContext, configure
@@ -152,7 +151,6 @@ await adapter.after_turn(
 **Never use `runtimeSessionId` as the bank ID.** Sessions expire. Memory must survive session churn.
 
 Preferred identity sources (in order):
-
 1. Validated user ID from AgentCore JWT/OAuth context
 2. `X-Amzn-Bedrock-AgentCore-Runtime-User-Id` header
 3. Application-supplied user ID in trusted server-side deployments
@@ -183,25 +181,25 @@ adapter = HindsightRuntimeAdapter(bank_resolver=my_resolver)
 
 ## Configuration Reference
 
-| Option              | Env Variable        | Default         | Description                           |
-| ------------------- | ------------------- | --------------- | ------------------------------------- |
-| `hindsight_api_url` | `HINDSIGHT_API_URL` | Hindsight Cloud | Hindsight server URL                  |
-| `api_key`           | `HINDSIGHT_API_KEY` | —               | API key for Hindsight Cloud           |
-| `recall_budget`     | —                   | `"mid"`         | Search depth: `low`, `mid`, `high`    |
-| `recall_max_tokens` | —                   | `1500`          | Max tokens recalled                   |
-| `retain_async`      | —                   | `True`          | Non-blocking retention                |
-| `timeout`           | —                   | `15.0`          | HTTP timeout in seconds               |
-| `tags`              | —                   | `[]`            | Tags applied to all retained memories |
-| `verbose`           | —                   | `False`         | Log memory operations                 |
+| Option | Env Variable | Default | Description |
+|---|---|---|---|
+| `hindsight_api_url` | `HINDSIGHT_API_URL` | Hindsight Cloud | Hindsight server URL |
+| `api_key` | `HINDSIGHT_API_KEY` | — | API key for Hindsight Cloud |
+| `recall_budget` | — | `"mid"` | Search depth: `low`, `mid`, `high` |
+| `recall_max_tokens` | — | `1500` | Max tokens recalled |
+| `retain_async` | — | `True` | Non-blocking retention |
+| `timeout` | — | `15.0` | HTTP timeout in seconds |
+| `tags` | — | `[]` | Tags applied to all retained memories |
+| `verbose` | — | `False` | Log memory operations |
 
 ## Failure Modes
 
-| Failure               | Behavior                                      |
-| --------------------- | --------------------------------------------- |
+| Failure | Behavior |
+|---|---|
 | Hindsight unavailable | `before_turn()` returns `""`, agent continues |
-| Recall timeout        | Returns `""`, agent continues                 |
-| Retain failure        | Logged as warning, user turn unaffected       |
-| Bad bank resolution   | Fails closed — no cross-user memory leakage   |
+| Recall timeout | Returns `""`, agent continues |
+| Retain failure | Logged as warning, user turn unaffected |
+| Bad bank resolution | Fails closed — no cross-user memory leakage |
 
 ## Requirements
 

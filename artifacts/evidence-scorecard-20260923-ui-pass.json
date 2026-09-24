@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "runId": "scorecard-20260923-ui-pass",
+  "captures": [
+    { "mode": "desktop", "state": "question-1", "report": "artifacts/scorecard-20260923-ui-pass/desktop-question-1.json" },
+    { "mode": "mobile", "state": "question-1", "report": "artifacts/scorecard-20260923-ui-pass/mobile-question-1.json" }
+  ]
+}

@@ -66,33 +66,3 @@ Real-input motion: [full bot playthrough](intro-flow-20260923-c/bot-playthrough.
 ## Remaining visual decisions
 
 The route camera now moves between questions, but the four station silhouettes still resemble one another. The faceless avatar grows but remains blocky. The portal interior is dark; the actual first playable stage is not yet legible through it. The next art pass should decide each station's constructed landmark, refine the figure and terminal materials, and make the level reveal readable without turning the early intro into a galaxy backdrop. The mobile door needs a static merged variant or another draw-call reduction before claiming the starting mobile budget. The typed name is stored by the intro; Chapter Two currently receives the last chosen thread.
-
-## Active isolated ghost typing study — September 23, 2026
-
-The sections above are historical intro evidence. The new study is separate: [current handoff](ghost-type-study/README.md), [Wayfinder map](https://github.com/jessenaiman/omega-alpha-spiral/issues/55).
-
-- Starts at http://127.0.0.1:5191/intro-type-prototype.html with manuscript, fragments and passage layouts. Browser observations confirm readable world-space terminal text, selector/layout navigation, and the answer/reconsidering state. No full gameplay claim.
-- TypeScript passed in the normal commit hook; 22/23 existing unit tests passed. The old intro finale assertion failed. Owner explicitly approved one commit skipping hooks with that failure documented. No additional tests were added.
-- Visual review found fragment clipping and competing old-text traces; local adjustments move Light inward and fade traces. Phone controls were observed at a 390×844 override, then viewport restored. Motion captures, persistent screenshots, a complete mobile readability review and final human visual preference remain pending.
-- Native OpenAI concept was delegated to Luna. Generated sheet is reference-only; it omitted Omega. Runtime lettering uses a deterministic canvas atlas with an instanced glyph shader.
-
-### Shared scene era follow-up
-
-Live browser showed Floor 1 owned by Light while Shadow spoke in DOS glyphs; switching to the smooth era visibly changed the same words and preserved Shadow's angled layout. No tests rerun. Shared configuration is reusable but actual floor integration remains pending; no new commit claimed.
-
-## Omega Dialogue Studio checkpoint — September 23, 2026
-
-- Canonical route: `/omega-dialogue-studio.html`; legacy study URL redirects with parameters preserved. Scene owner and shared eras are reusable configuration; actual game integration is pending.
-- TypeScript/Vite production build passed. Requested QA skill captured desktop 1280×720 and mobile 390×664 on the hardware NVIDIA GPU. Both final reports have no console or page errors. Initial favicon 404 was fixed and its failed evidence retained.
-- Three declared artifacts passed the evidence coverage checker. Real controls and Omega's post-answer revision were exercised; a short typing/revision recording is saved. No frame-time or complete gameplay claim.
-- [Studio release notes and captures](omega-dialogue-studio/README.md), [manifest](omega-dialogue-studio/evidence.json). No additional unit tests. Next: commit/push, then design the gameplay integration before more studio features.
-
-## Later studio opening slice — separate from the intro run above
-
-See [opening block observations](omega-dialogue-studio/opening-block.md). Live loading and rendered text observed; export/import, build and motion capture remain unverified. No additional tests run.
-
-- Later persistence controls (schema-backed presentation, undo/redo, JSON source) are implemented but not runtime-verified in this follow-up. Owner round-trip check pending; earlier visual evidence does not cover these controls.
-
-## Current opening adapter — 2026-09-23
-
-Owner reports saved studio era appears in the real intro and Continue works. Direct fresh-load observation confirms styled shader lettering with no captured browser errors. This does not establish the remaining five-question/name/door progression. No test suite ran this pass. Integration remains uncommitted. Detailed limits: omega-dialogue-studio/integration-check.md.

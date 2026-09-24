@@ -1,7 +1,8 @@
+
 # Codex
 
 > **⚠️ Superseded by the Coding Agents plugin**
-
+>
 **The Codex CLI integration** is superseded by the [Coding Agents plugin](coding-agents.md) — one
 package covering Claude Code, Codex, opencode, Kilo, Cursor, Copilot, Grok, Antigravity, Devin and Cline and other CLI agents, with a per-repo memory bank they all share instead
 of one bank per agent.
@@ -35,9 +36,8 @@ Persistent memory for [Codex CLI](https://github.com/openai/codex) using [Hindsi
 ## Quick Start
 
 > **💡 Recommended: Hindsight Cloud**
-
+>
 [Sign up free](https://ui.hindsight.vectorize.io/signup) for a Hindsight Cloud API key — no self-hosting, no local daemon to manage.
-
 ```bash
 curl -fsSL https://hindsight.vectorize.io/get-codex | bash
 ```
@@ -62,11 +62,11 @@ curl -fsSL https://hindsight.vectorize.io/get-codex | bash -s -- --uninstall
 
 The plugin uses three Codex hook events:
 
-| Hook               | Event              | Purpose                                                         |
-| ------------------ | ------------------ | --------------------------------------------------------------- |
-| `session_start.py` | `SessionStart`     | Warm up — verify Hindsight is reachable                         |
-| `recall.py`        | `UserPromptSubmit` | **Auto-recall** — query memories, inject as `additionalContext` |
-| `retain.py`        | `Stop`             | **Auto-retain** — extract transcript, POST to Hindsight (async) |
+| Hook | Event | Purpose |
+|------|-------|---------|
+| `session_start.py` | `SessionStart` | Warm up — verify Hindsight is reachable |
+| `recall.py` | `UserPromptSubmit` | **Auto-recall** — query memories, inject as `additionalContext` |
+| `retain.py` | `Stop` | **Auto-retain** — extract transcript, POST to Hindsight (async) |
 
 On `UserPromptSubmit`, the hook reads the prompt, queries Hindsight for the most relevant memories, and outputs a `hookSpecificOutput.additionalContext` block. Codex prepends this to the conversation before sending it to the model:
 
@@ -120,62 +120,62 @@ Settings are loaded from `~/.hindsight/codex.json`. Every setting can also be ov
 
 ### Connection
 
-| Setting             | Env Var               | Default | Description                                                 |
-| ------------------- | --------------------- | ------- | ----------------------------------------------------------- |
-| `hindsightApiUrl`   | `HINDSIGHT_API_URL`   | `""`    | URL of the Hindsight API server. Required.                  |
-| `hindsightApiToken` | `HINDSIGHT_API_TOKEN` | `null`  | API token for authentication. Required for Hindsight Cloud. |
-| `apiPort`           | `HINDSIGHT_API_PORT`  | `9077`  | Port for the local `hindsight-embed` daemon.                |
+| Setting | Env Var | Default | Description |
+|---------|---------|---------|-------------|
+| `hindsightApiUrl` | `HINDSIGHT_API_URL` | `""` | URL of the Hindsight API server. Required. |
+| `hindsightApiToken` | `HINDSIGHT_API_TOKEN` | `null` | API token for authentication. Required for Hindsight Cloud. |
+| `apiPort` | `HINDSIGHT_API_PORT` | `9077` | Port for the local `hindsight-embed` daemon. |
 
 ---
 
 ### Memory Bank
 
-| Setting                  | Env Var                     | Default                 | Description                                                                                                    |
-| ------------------------ | --------------------------- | ----------------------- | -------------------------------------------------------------------------------------------------------------- |
-| `bankId`                 | `HINDSIGHT_BANK_ID`         | `"codex"`               | The bank to read from and write to. All sessions share this bank unless `dynamicBankId` is enabled.            |
-| `bankMission`            | `HINDSIGHT_BANK_MISSION`    | coding assistant prompt | Describes the agent's purpose. Sent when creating or updating the bank.                                        |
-| `retainMission`          | —                           | extraction prompt       | Instructions for Hindsight's fact extraction — what to extract from coding conversations.                      |
-| `dynamicBankId`          | `HINDSIGHT_DYNAMIC_BANK_ID` | `false`                 | When `true`, derives a unique bank ID from `dynamicBankGranularity` fields — useful for per-project isolation. |
-| `dynamicBankGranularity` | —                           | `["agent", "project"]`  | Which fields to combine for dynamic bank IDs. `"project"` = working directory, `"agent"` = agent name.         |
-| `bankIdPrefix`           | —                           | `""`                    | Prefix prepended to all bank IDs.                                                                              |
-| `agentName`              | `HINDSIGHT_AGENT_NAME`      | `"codex"`               | Agent name used in dynamic bank ID derivation.                                                                 |
+| Setting | Env Var | Default | Description |
+|---------|---------|---------|-------------|
+| `bankId` | `HINDSIGHT_BANK_ID` | `"codex"` | The bank to read from and write to. All sessions share this bank unless `dynamicBankId` is enabled. |
+| `bankMission` | `HINDSIGHT_BANK_MISSION` | coding assistant prompt | Describes the agent's purpose. Sent when creating or updating the bank. |
+| `retainMission` | — | extraction prompt | Instructions for Hindsight's fact extraction — what to extract from coding conversations. |
+| `dynamicBankId` | `HINDSIGHT_DYNAMIC_BANK_ID` | `false` | When `true`, derives a unique bank ID from `dynamicBankGranularity` fields — useful for per-project isolation. |
+| `dynamicBankGranularity` | — | `["agent", "project"]` | Which fields to combine for dynamic bank IDs. `"project"` = working directory, `"agent"` = agent name. |
+| `bankIdPrefix` | — | `""` | Prefix prepended to all bank IDs. |
+| `agentName` | `HINDSIGHT_AGENT_NAME` | `"codex"` | Agent name used in dynamic bank ID derivation. |
 
 ---
 
 ### Auto-Recall
 
-| Setting                | Env Var                            | Default                   | Description                                                                      |
-| ---------------------- | ---------------------------------- | ------------------------- | -------------------------------------------------------------------------------- |
-| `autoRecall`           | `HINDSIGHT_AUTO_RECALL`            | `true`                    | Master switch for auto-recall.                                                   |
-| `recallBudget`         | `HINDSIGHT_RECALL_BUDGET`          | `"mid"`                   | Search depth: `"low"` (fast), `"mid"` (balanced), `"high"` (thorough).           |
-| `recallMaxTokens`      | `HINDSIGHT_RECALL_MAX_TOKENS`      | `1024`                    | Max tokens in the recalled memory block.                                         |
-| `recallTypes`          | —                                  | `["world", "experience"]` | Memory types to retrieve.                                                        |
-| `recallContextTurns`   | `HINDSIGHT_RECALL_CONTEXT_TURNS`   | `1`                       | Prior turns to include when building the recall query. `1` = latest prompt only. |
-| `recallMaxQueryChars`  | `HINDSIGHT_RECALL_MAX_QUERY_CHARS` | `800`                     | Max characters in the query sent to Hindsight.                                   |
-| `recallRoles`          | —                                  | `["user", "assistant"]`   | Which roles to include when building a multi-turn query.                         |
-| `recallPromptPreamble` | —                                  | built-in                  | Text placed above the recalled memories in the injected context block.           |
+| Setting | Env Var | Default | Description |
+|---------|---------|---------|-------------|
+| `autoRecall` | `HINDSIGHT_AUTO_RECALL` | `true` | Master switch for auto-recall. |
+| `recallBudget` | `HINDSIGHT_RECALL_BUDGET` | `"mid"` | Search depth: `"low"` (fast), `"mid"` (balanced), `"high"` (thorough). |
+| `recallMaxTokens` | `HINDSIGHT_RECALL_MAX_TOKENS` | `1024` | Max tokens in the recalled memory block. |
+| `recallTypes` | — | `["world", "experience"]` | Memory types to retrieve. |
+| `recallContextTurns` | `HINDSIGHT_RECALL_CONTEXT_TURNS` | `1` | Prior turns to include when building the recall query. `1` = latest prompt only. |
+| `recallMaxQueryChars` | `HINDSIGHT_RECALL_MAX_QUERY_CHARS` | `800` | Max characters in the query sent to Hindsight. |
+| `recallRoles` | — | `["user", "assistant"]` | Which roles to include when building a multi-turn query. |
+| `recallPromptPreamble` | — | built-in | Text placed above the recalled memories in the injected context block. |
 
 ---
 
 ### Auto-Retain
 
-| Setting              | Env Var                 | Default                 | Description                                                                                                                       |
-| -------------------- | ----------------------- | ----------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `autoRetain`         | `HINDSIGHT_AUTO_RETAIN` | `true`                  | Master switch for auto-retain.                                                                                                    |
-| `retainMode`         | `HINDSIGHT_RETAIN_MODE` | `"full-session"`        | `"full-session"` sends the full transcript per session (upserted by session ID). `"chunked"` sends sliding windows every N turns. |
-| `retainEveryNTurns`  | —                       | `10`                    | Retain fires every N turns. `1` = every turn. Higher values reduce API calls.                                                     |
-| `retainOverlapTurns` | —                       | `2`                     | Extra turns included from the previous chunk (chunked mode only).                                                                 |
-| `retainRoles`        | —                       | `["user", "assistant"]` | Which roles to include in the retained transcript.                                                                                |
-| `retainTags`         | —                       | `["{session_id}"]`      | Tags attached to the stored document. `{session_id}` is replaced at runtime.                                                      |
-| `retainMetadata`     | —                       | `{}`                    | Arbitrary key-value metadata attached to the stored document.                                                                     |
-| `retainContext`      | —                       | `"codex"`               | Label identifying the source integration. Useful when multiple integrations write to the same bank.                               |
+| Setting | Env Var | Default | Description |
+|---------|---------|---------|-------------|
+| `autoRetain` | `HINDSIGHT_AUTO_RETAIN` | `true` | Master switch for auto-retain. |
+| `retainMode` | `HINDSIGHT_RETAIN_MODE` | `"full-session"` | `"full-session"` sends the full transcript per session (upserted by session ID). `"chunked"` sends sliding windows every N turns. |
+| `retainEveryNTurns` | — | `10` | Retain fires every N turns. `1` = every turn. Higher values reduce API calls. |
+| `retainOverlapTurns` | — | `2` | Extra turns included from the previous chunk (chunked mode only). |
+| `retainRoles` | — | `["user", "assistant"]` | Which roles to include in the retained transcript. |
+| `retainTags` | — | `["{session_id}"]` | Tags attached to the stored document. `{session_id}` is replaced at runtime. |
+| `retainMetadata` | — | `{}` | Arbitrary key-value metadata attached to the stored document. |
+| `retainContext` | — | `"codex"` | Label identifying the source integration. Useful when multiple integrations write to the same bank. |
 
 ---
 
 ### Debug
 
-| Setting | Env Var           | Default | Description                                                                      |
-| ------- | ----------------- | ------- | -------------------------------------------------------------------------------- |
+| Setting | Env Var | Default | Description |
+|---------|---------|---------|-------------|
 | `debug` | `HINDSIGHT_DEBUG` | `false` | Enable verbose logging to stderr. All log lines are prefixed with `[Hindsight]`. |
 
 ## Per-Project Memory

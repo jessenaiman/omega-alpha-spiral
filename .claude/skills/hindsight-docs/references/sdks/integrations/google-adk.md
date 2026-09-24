@@ -1,3 +1,4 @@
+
 # Google ADK
 
 Persistent long-term memory for [Google ADK](https://adk.dev/) agents via Hindsight. The `hindsight-google-adk` package gives you two complementary patterns:
@@ -6,7 +7,7 @@ Persistent long-term memory for [Google ADK](https://adk.dev/) agents via Hindsi
 - **`create_hindsight_tools(...)`** — Returns a list of ADK `FunctionTool`s (`hindsight_retain`, `hindsight_recall`, `hindsight_reflect`) the model can call directly inside a turn.
 
 > **💡 Recommended: Hindsight Cloud**
-
+>
 [Sign up free](https://ui.hindsight.vectorize.io/signup) for a Hindsight Cloud API key. The integration points at production by default — no local server to manage.
 [View Changelog →](../../changelog/integrations/google-adk.md)
 
@@ -110,18 +111,18 @@ configure(
 
 ## Configuration Reference
 
-| Argument            | Default                              | Description                                                                                |
-| ------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------ |
-| `hindsight_api_url` | `https://api.hindsight.vectorize.io` | Hindsight API URL. Cloud by default.                                                       |
-| `api_key`           | `HINDSIGHT_API_KEY` env              | Bearer token for Hindsight Cloud.                                                          |
-| `bank_id_template`  | `"{app_name}::{user_id}"`            | Format string used to derive the bank id from ADK's `app_name` / `user_id`.                |
-| `budget`            | `"mid"`                              | Recall budget level: `low`/`mid`/`high`.                                                   |
-| `max_tokens`        | `4096`                               | Max tokens for recall results.                                                             |
-| `tags`              | `None`                               | Tags added to every retained document. `app:<name>` and `user:<id>` are always added.      |
-| `recall_tags`       | `None`                               | Tags appended to recall queries. `user:<id>` is always added.                              |
-| `recall_tags_match` | `"any"`                              | Tag match mode: `any` / `all` / `any_strict` / `all_strict`.                               |
-| `mission`           | `None`                               | If set, the bank is created (idempotently) on first use with this fact-extraction mission. |
-| `context`           | `"google-adk"`                       | Source label attached to retained content.                                                 |
+| Argument | Default | Description |
+|---|---|---|
+| `hindsight_api_url` | `https://api.hindsight.vectorize.io` | Hindsight API URL. Cloud by default. |
+| `api_key` | `HINDSIGHT_API_KEY` env | Bearer token for Hindsight Cloud. |
+| `bank_id_template` | `"{app_name}::{user_id}"` | Format string used to derive the bank id from ADK's `app_name` / `user_id`. |
+| `budget` | `"mid"` | Recall budget level: `low`/`mid`/`high`. |
+| `max_tokens` | `4096` | Max tokens for recall results. |
+| `tags` | `None` | Tags added to every retained document. `app:<name>` and `user:<id>` are always added. |
+| `recall_tags` | `None` | Tags appended to recall queries. `user:<id>` is always added. |
+| `recall_tags_match` | `"any"` | Tag match mode: `any` / `all` / `any_strict` / `all_strict`. |
+| `mission` | `None` | If set, the bank is created (idempotently) on first use with this fact-extraction mission. |
+| `context` | `"google-adk"` | Source label attached to retained content. |
 
 ## Production Patterns
 

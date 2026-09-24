@@ -1,3 +1,4 @@
+
 # Models
 
 Hindsight uses several machine learning models for different tasks.
@@ -51,7 +52,7 @@ Used for fact extraction, entity resolution, mental model consolidation, and ans
 Also supports **any OpenAI-compatible API** (e.g., Azure OpenAI, Together AI, Fireworks) and **100+ providers via LiteLLM** (e.g., AWS Bedrock, Azure OpenAI, Together AI).
 
 > **💡 OpenAI-Compatible Providers**
-
+>
 Hindsight works with any provider that exposes an OpenAI-compatible API. Set `HINDSIGHT_API_LLM_PROVIDER=openai` and point `HINDSIGHT_API_LLM_BASE_URL` at the endpoint that serves `/chat/completions` — for most providers that is the URL ending in `/v1`, **not** the account or resource root.
 
 **Azure OpenAI does not serve the API at the resource root**, so `https://<resource>.openai.azure.com` on its own returns `404 Resource not found`. See [Azure OpenAI Setup](#azure-openai-setup) for the two URL shapes that work.
@@ -59,9 +60,8 @@ Hindsight works with any provider that exposes an OpenAI-compatible API. Set `HI
 The `openai` provider talks to the **Chat Completions API** (`/v1/chat/completions`). For the newer **Responses API** (`/v1/responses`), use `HINDSIGHT_API_LLM_PROVIDER=openai-responses` — see the tip below. Both accept a custom `HINDSIGHT_API_LLM_BASE_URL`, so an OpenAI-compatible endpoint that exposes `/v1/responses` works the same way as a Chat Completions one.
 
 See [Configuration](./configuration#llm-provider) for setup examples.
-
 > **💡 OpenAI Responses API (reasoning + tools together)**
-
+>
 Set `HINDSIGHT_API_LLM_PROVIDER=openai-responses` to call OpenAI's **Responses API** (`/v1/responses`) instead of Chat Completions.
 
 Why it exists: some reasoning models — e.g. `gpt-5.6-terra` — **reject `reasoning_effort` when function tools are present** on Chat Completions (HTTP 400 unless `reasoning_effort="none"`). Reflect is a tool-calling loop, so on the `openai` (Completions) provider that forces the whole operation — including the final synthesis — to run with reasoning disabled. The Responses API keeps the model's chain-of-thought as a first-class reasoning item, so **reasoning and tools coexist**: reflect's search loop runs with a real `HINDSIGHT_API_LLM_REASONING_EFFORT` (e.g. `high`).
@@ -69,83 +69,76 @@ Why it exists: some reasoning models — e.g. `gpt-5.6-terra` — **reject `reas
 Recommended for reasoning models (gpt-5.x, o-series) that use tools. It also honors a custom `HINDSIGHT_API_LLM_BASE_URL`, so any OpenAI-compatible endpoint exposing `/v1/responses` (gateways, Azure-style deployments) can be used just like the Chat Completions path.
 
 See [Configuration](./configuration#llm-provider) for setup examples.
-
 > **ℹ️ Reasoning/thinking models and `max_tokens`**
-
+>
 On a thinking model (Gemini 2.5+/3.x, GPT-5/o-series, Grok reasoning, Claude extended thinking) the provider's output budget covers **reasoning tokens plus visible output** — the reasoning is billed against the same `max_output_tokens`/`max_completion_tokens` cap. A small cap can therefore be fully consumed by reasoning, leaving the visible answer truncated mid-word.
 
 Hindsight keeps the reflect/mental-model `max_tokens` meaning **visible page length**: it is applied as a prompt-level target plus a post-hoc rewrite, **not** as a hard cap on the provider call. Reflect's synthesis call is uncapped by default so reasoning never starves the answer. If you want a hard cost ceiling on that call, set `HINDSIGHT_API_REFLECT_MAX_COMPLETION_TOKENS` — but leave enough headroom above your page length for reasoning, or thinking models will truncate again.
 
 When a Gemini call does hit its cap, Hindsight logs a `truncated at max_output_tokens` warning instead of returning the half-written text as a silent success.
-
 > **💡 AWS Bedrock**
-
+>
 Set `HINDSIGHT_API_LLM_PROVIDER=bedrock` to use AWS Bedrock models directly. Model names use Bedrock model IDs (e.g., `us.amazon.nova-2-lite-v1:0`). No API key is required — authentication uses AWS credentials (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION_NAME`) or IAM roles. For 50% cost savings on throughput, set `HINDSIGHT_API_LLM_BEDROCK_SERVICE_TIER=flex` (see [Configuration](./configuration#llm-provider)).
 
 See [Configuration](./configuration#llm-provider) for setup examples.
-
 > **💡 Built-in llama.cpp (fully local, no API key)**
-
+>
 Set `HINDSIGHT_API_LLM_PROVIDER=llamacpp` to run a built-in llama.cpp server with no external dependencies. A Gemma 4 E2B GGUF model (~3.5 GB) is auto-downloaded on first run. Requires the `local-llm` extra: `pip install 'hindsight-api-slim[local-llm]'`.
 
 The published Docker image does not bundle `llama-cpp-python` (to keep the image small). For a runnable Docker setup that adds it on top, see [`docker/docker-compose/local-llm/`](https://github.com/vectorize-io/hindsight/tree/main/docker/docker-compose/local-llm).
 
 See [Configuration](./configuration#built-in-llamacpp) for all options.
-
 > **💡 LiteLLM Provider (Azure, Together AI, and more)**
-
+>
 Set `HINDSIGHT_API_LLM_PROVIDER=litellm` to use any model supported by [LiteLLM](https://docs.litellm.ai/docs/providers), including **Azure OpenAI**, **Together AI**, **Fireworks AI**, and many more. Model names use LiteLLM's provider prefix format (e.g., `azure/gpt-4o`).
 
 See [Configuration](./configuration#llm-provider) for setup examples.
-
 > **💡 LiteLLM Router (fallback chains, load-balancing, per-deployment limits)**
-
+>
 Set `HINDSIGHT_API_LLM_PROVIDER=litellmrouter` to run the default LLM through [LiteLLM's Router](https://docs.litellm.ai/docs/routing) — ordered fallback across deployments, load-balanced same-tier routing, weighted picks, per-deployment `rpm`/`tpm` limits, and cooldowns are all available via the [`Router` config](https://docs.litellm.ai/docs/routing#fallbacks). Hindsight passes the JSON config through verbatim.
 
 See [Configuration](./configuration#llm-router-litellm-router) for setup.
-
 ### Provider Capabilities
 
 Beyond basic generation, some providers support optional features that lower cost or latency. Hindsight uses each feature automatically when the configured provider supports it.
 
-| Provider                              | Batch API | Explicit prompt caching |
-| ------------------------------------- | :-------: | :---------------------: |
-| OpenAI (`openai`)                     |    ✅     |            —            |
-| OpenAI Responses (`openai-responses`) |     —     |            —            |
-| Anthropic (`anthropic`)               |     —     |            —            |
-| Google Gemini (`gemini`)              |    ✅     |           ✅            |
-| Vertex AI (`vertexai`)                |     —     |           ✅            |
-| Groq (`groq`)                         |    ✅     |            —            |
-| Ollama (`ollama`)                     |     —     |            —            |
-| Ollama Cloud (`ollama-cloud`)         |     —     |            —            |
-| LM Studio (`lmstudio`)                |     —     |            —            |
-| llama.cpp (`llamacpp`)                |     —     |            —            |
-| MiniMax (`minimax`)                   |     —     |            —            |
-| DeepSeek (`deepseek`)                 |     —     |            —            |
-| z.ai (`zai`)                          |     —     |            —            |
-| opencode-go (`opencode-go`)           |     —     |            —            |
-| Atlas Cloud (`atlas`)                 |     —     |            —            |
-| Meta Model API (`meta`)               |     —     |            —            |
-| Volcano Engine (`volcano`)            |     —     |            —            |
-| OpenRouter (`openrouter`)             |     —     |            —            |
-| Requesty (`requesty`)                 |     —     |            —            |
-| OpenAI Codex (`openai-codex`)         |     —     |            —            |
-| Claude Code (`claude-code`)           |     —     |            —            |
-| Cursor (`cursor`)                     |     —     |            —            |
-| GitHub Copilot (`github-copilot`)     |     —     |            —            |
-| AWS Bedrock (`bedrock`)               |     —     |            —            |
-| Fireworks AI (`fireworks`)            |    ✅     |            —            |
-| Nous Portal (`nous`)                  |     —     |            —            |
-| SuperGrok (OAuth) (`xai-oauth`)       |     —     |            —            |
-| LiteLLM (100+) (`litellm`)            |     —     |            —            |
+| Provider | Batch API | Explicit prompt caching |
+|----------|:---------:|:-----------------------:|
+| OpenAI (`openai`) | ✅ | — |
+| OpenAI Responses (`openai-responses`) | — | — |
+| Anthropic (`anthropic`) | — | — |
+| Google Gemini (`gemini`) | ✅ | ✅ |
+| Vertex AI (`vertexai`) | — | ✅ |
+| Groq (`groq`) | ✅ | — |
+| Ollama (`ollama`) | — | — |
+| Ollama Cloud (`ollama-cloud`) | — | — |
+| LM Studio (`lmstudio`) | — | — |
+| llama.cpp (`llamacpp`) | — | — |
+| MiniMax (`minimax`) | — | — |
+| DeepSeek (`deepseek`) | — | — |
+| z.ai (`zai`) | — | — |
+| opencode-go (`opencode-go`) | — | — |
+| Atlas Cloud (`atlas`) | — | — |
+| Meta Model API (`meta`) | — | — |
+| Volcano Engine (`volcano`) | — | — |
+| OpenRouter (`openrouter`) | — | — |
+| Requesty (`requesty`) | — | — |
+| OpenAI Codex (`openai-codex`) | — | — |
+| Claude Code (`claude-code`) | — | — |
+| Cursor (`cursor`) | — | — |
+| GitHub Copilot (`github-copilot`) | — | — |
+| AWS Bedrock (`bedrock`) | — | — |
+| Fireworks AI (`fireworks`) | ✅ | — |
+| Nous Portal (`nous`) | — | — |
+| SuperGrok (OAuth) (`xai-oauth`) | — | — |
+| LiteLLM (100+) (`litellm`) | — | — |
 
 - **Batch API** — submits bulk retain extraction through the provider's asynchronous batch endpoint, typically at ~50% lower cost. Used automatically when available; otherwise calls run synchronously.
 - **Explicit prompt caching** — reuses the large, fixed system prefix that retain (fact extraction), consolidation, and the reflect tool-loop send on every call, billing it at the provider's cached-input rate. On Gemini/Vertex this uses the `CachedContent` API. **On by default**; disable with `HINDSIGHT_API_LLM_PROMPT_CACHE_ENABLED=false`. Hindsight structures these prompts so the cached prefix is **bank-agnostic** — one cache is shared across all banks rather than one per bank/mission, and creation soft-fails to an uncached call, so it never breaks a request.
 
 > **📝 Note**
-
+>
 A blank "Explicit prompt caching" cell does not mean a provider has no caching. OpenAI, for example, caches a stable leading prompt prefix **automatically** server-side, so it benefits with no configuration; Anthropic supports caching via `cache_control` breakpoints which can be wired up through the same provider hook. The column tracks only Hindsight's explicit `get_or_create_cached_prefix` hook, which Gemini/Vertex implement today.
-
 ### Benchmarks
 
 Not sure which model to use? The **[Model Leaderboard](https://benchmarks.hindsight.vectorize.io/)** benchmarks models across accuracy, speed, cost, and reliability for retain, reflect, and observation consolidation so you can pick the right trade-off for your use case.
@@ -156,61 +149,60 @@ Not sure which model to use? The **[Model Leaderboard](https://benchmarks.hindsi
 
 The following models have been tested and verified to work correctly with Hindsight:
 
-| Provider      | Model                        |
-| ------------- | ---------------------------- |
-| **OpenAI**    | `gpt-5.2`                    |
-| **OpenAI**    | `gpt-5`                      |
-| **OpenAI**    | `gpt-5-mini`                 |
-| **OpenAI**    | `gpt-5-nano`                 |
-| **OpenAI**    | `gpt-4.1-mini`               |
-| **OpenAI**    | `gpt-4.1-nano`               |
-| **OpenAI**    | `gpt-4o-mini`                |
-| **Anthropic** | `claude-sonnet-4-20250514`   |
+| Provider | Model |
+|----------|-------|
+| **OpenAI** | `gpt-5.2` |
+| **OpenAI** | `gpt-5` |
+| **OpenAI** | `gpt-5-mini` |
+| **OpenAI** | `gpt-5-nano` |
+| **OpenAI** | `gpt-4.1-mini` |
+| **OpenAI** | `gpt-4.1-nano` |
+| **OpenAI** | `gpt-4o-mini` |
+| **Anthropic** | `claude-sonnet-4-20250514` |
 | **Anthropic** | `claude-3-5-sonnet-20241022` |
-| **Gemini**    | `gemini-3.5-flash`           |
-| **Gemini**    | `gemini-3.1-pro-preview`     |
-| **Gemini**    | `gemini-3.1-flash-lite`      |
-| **Groq**      | `openai/gpt-oss-120b`        |
-| **Groq**      | `openai/gpt-oss-20b`         |
-| **Meta**      | `muse-spark-1.3`             |
+| **Gemini** | `gemini-3.5-flash` |
+| **Gemini** | `gemini-3.1-pro-preview` |
+| **Gemini** | `gemini-3.1-flash-lite` |
+| **Groq** | `openai/gpt-oss-120b` |
+| **Groq** | `openai/gpt-oss-20b` |
+| **Meta** | `muse-spark-1.3` |
 
 ### Provider Default Models
 
 Each provider has a recommended default model that's used when `HINDSIGHT_API_LLM_MODEL` is not explicitly set. This makes configuration simpler - just specify the provider and get a sensible default:
 
-| Provider           | Default Model                                      |
-| ------------------ | -------------------------------------------------- |
-| `openai`           | `gpt-4o-mini`                                      |
-| `openai-responses` | `gpt-5.6`                                          |
-| `anthropic`        | `claude-haiku-4-5`                                 |
-| `gemini`           | `gemini-3.5-flash`                                 |
-| `vertexai`         | `google/gemini-3.1-flash-lite`                     |
-| `groq`             | `openai/gpt-oss-120b`                              |
-| `ollama`           | `gemma3:12b`                                       |
-| `ollama-cloud`     | `gemma3:12b`                                       |
-| `lmstudio`         | `local-model`                                      |
-| `llamacpp`         | `gemma-4-e2b-it` (auto-downloaded GGUF)            |
-| `minimax`          | `MiniMax-M3`                                       |
-| `deepseek`         | `deepseek-v4-flash`                                |
-| `zai`              | `glm-4.5-flash`                                    |
-| `opencode-go`      | `deepseek-v4-flash`                                |
-| `atlas`            | `deepseek-ai/deepseek-v4-pro`                      |
-| `meta`             | `muse-spark-1.3`                                   |
-| `volcano`          | `doubao-pro-32k`                                   |
-| `openrouter`       | `qwen/qwen3.5-9b`                                  |
-| `requesty`         | `openai/gpt-4o-mini`                               |
-| `openai-codex`     | `gpt-5.4-mini`                                     |
-| `claude-code`      | `claude-sonnet-4-5-20250929`                       |
-| `cursor`           | `auto`                                             |
-| `github-copilot`   | `gpt-5.6-terra`                                    |
-| `bedrock`          | `us.amazon.nova-2-lite-v1:0`                       |
-| `fireworks`        | `accounts/fireworks/models/llama-v3p1-8b-instruct` |
-| `nous`             | `deepseek/deepseek-v4-flash`                       |
-| `xai-oauth`        | `grok-4.5`                                         |
-| `litellm`          | `gpt-4o-mini`                                      |
+| Provider | Default Model |
+|----------|--------------|
+| `openai` | `gpt-4o-mini` |
+| `openai-responses` | `gpt-5.6` |
+| `anthropic` | `claude-haiku-4-5` |
+| `gemini` | `gemini-3.5-flash` |
+| `vertexai` | `google/gemini-3.1-flash-lite` |
+| `groq` | `openai/gpt-oss-120b` |
+| `ollama` | `gemma3:12b` |
+| `ollama-cloud` | `gemma3:12b` |
+| `lmstudio` | `local-model` |
+| `llamacpp` | `gemma-4-e2b-it` (auto-downloaded GGUF) |
+| `minimax` | `MiniMax-M3` |
+| `deepseek` | `deepseek-v4-flash` |
+| `zai` | `glm-4.5-flash` |
+| `opencode-go` | `deepseek-v4-flash` |
+| `atlas` | `deepseek-ai/deepseek-v4-pro` |
+| `meta` | `muse-spark-1.3` |
+| `volcano` | `doubao-pro-32k` |
+| `openrouter` | `qwen/qwen3.5-9b` |
+| `requesty` | `openai/gpt-4o-mini` |
+| `openai-codex` | `gpt-5.4-mini` |
+| `claude-code` | `claude-sonnet-4-5-20250929` |
+| `cursor` | `auto` |
+| `github-copilot` | `gpt-5.6-terra` |
+| `bedrock` | `us.amazon.nova-2-lite-v1:0` |
+| `fireworks` | `accounts/fireworks/models/llama-v3p1-8b-instruct` |
+| `nous` | `deepseek/deepseek-v4-flash` |
+| `xai-oauth` | `grok-4.5` |
+| `litellm` | `gpt-4o-mini` |
 
 **Example:** Setting just the provider uses its default model:
-
 ```bash
 # Uses claude-haiku-4-5 automatically
 export HINDSIGHT_API_LLM_PROVIDER=anthropic
@@ -218,7 +210,6 @@ export HINDSIGHT_API_LLM_API_KEY=sk-ant-xxxxxxxxxxxx
 ```
 
 You can override the default by explicitly setting `HINDSIGHT_API_LLM_MODEL`:
-
 ```bash
 # Override to use Sonnet instead
 export HINDSIGHT_API_LLM_PROVIDER=anthropic
@@ -227,7 +218,6 @@ export HINDSIGHT_API_LLM_MODEL=claude-sonnet-4-5-20250929
 ```
 
 This also applies to per-operation overrides:
-
 ```bash
 # Global: OpenAI gpt-4o-mini (default)
 export HINDSIGHT_API_LLM_PROVIDER=openai
@@ -241,7 +231,7 @@ export HINDSIGHT_API_RETAIN_LLM_PROVIDER=anthropic
 Other LLM models not listed above may work with Hindsight, but they must support **at least 65,000 output tokens** to ensure reliable fact extraction. If you need support for a specific model that doesn't meet this requirement, please [open an issue](https://github.com/hindsight-ai/hindsight/issues) to request an exception.
 
 > **💡 Models with Limited Output Tokens**
-
+>
 If your model only supports 32k or fewer output tokens (e.g., some older models), you can reduce the retain completion token limit:
 
 ```bash
@@ -253,11 +243,9 @@ export HINDSIGHT_API_RETAIN_MAX_COMPLETION_TOKENS=16000
 ```
 
 **Important:** `HINDSIGHT_API_RETAIN_MAX_COMPLETION_TOKENS` must be greater than `HINDSIGHT_API_RETAIN_CHUNK_SIZE` (default: 3000). The system will validate this on startup and provide an error message if the configuration is invalid.
-
 > **⚠️ Groq free tier is not suitable for Hindsight**
-
+>
 Groq's free tier only allows 8,000 tokens per minute — far below what Hindsight needs for a single retain call (~64k). Free-tier Groq models therefore can't be used with Hindsight; use a paid Groq tier or a different provider.
-
 ### Configuration
 
 ```bash
@@ -374,7 +362,6 @@ export HINDSIGHT_API_LLM_VERTEXAI_PROJECT_ID=your-gcp-project-id
 Use a GitHub Copilot subscription for Hindsight's extraction, consolidation, and reflection calls through the official GitHub Copilot SDK.
 
 **Prerequisites:**
-
 - An active GitHub Copilot entitlement
 - Copilot CLI signed in under the same operating-system user that runs Hindsight
 
@@ -391,7 +378,6 @@ The provider starts one shared Copilot runtime for all Hindsight LLM lanes. That
 For automation, the Copilot SDK also accepts `COPILOT_GITHUB_TOKEN`, `GH_TOKEN`, or `GITHUB_TOKEN`. With one of those set, Copilot CLI never has to have been run on the host, so containers and CI images work with no `~/.copilot` at all. GitHub Actions and server-to-server deployments must have the appropriate Copilot organization policy and token permissions.
 
 **Important notes:**
-
 - Usage counts against the authenticated account or organization's Copilot allowance and AI Credits.
 - `HINDSIGHT_API_LLM_BASE_URL` optionally points to an existing headless Copilot runtime, such as `http://127.0.0.1:4321`; it is not an LLM-provider endpoint for this provider.
 - GitHub-hosted Copilot sessions do not expose temperature or maximum-output-token controls through the SDK, so those Hindsight settings are not applied.
@@ -404,34 +390,28 @@ For automation, the Copilot SDK also accepts `COPILOT_GITHUB_TOKEN`, `GH_TOKEN`,
 Use your ChatGPT Plus or Pro subscription for Hindsight without separate OpenAI Platform API costs.
 
 **Prerequisites:**
-
 - Active ChatGPT Plus or Pro subscription
 - Node.js/npm installed (for Codex CLI)
 
 **Setup Steps:**
 
 1. **Install Codex CLI:**
-
    ```bash
    npm install -g @openai/codex
    ```
 
 2. **Login with ChatGPT credentials:**
-
    ```bash
    codex auth login
    ```
-
    This opens a browser window to authenticate with your ChatGPT account and saves OAuth tokens to `~/.codex/auth.json`.
 
 3. **Verify authentication:**
-
    ```bash
    ls ~/.codex/auth.json  # Should show the auth file exists
    ```
 
 4. **Configure Hindsight:**
-
    ```bash
    export HINDSIGHT_API_LLM_PROVIDER=openai-codex
    # export HINDSIGHT_API_LLM_MODEL=gpt-5.6-luna  # defaults to gpt-5.4-mini
@@ -446,7 +426,6 @@ Use your ChatGPT Plus or Pro subscription for Hindsight without separate OpenAI 
 You can use any model supported by OpenAI Codex CLI
 
 **Important Notes:**
-
 - OAuth tokens are stored in `~/.codex/auth.json`
 - Tokens refresh automatically when needed
 - Usage is billed to your ChatGPT subscription (not separate API costs)
@@ -552,12 +531,12 @@ prompts and completions. All share a 1,048,576-token context window.
 Muse Spark **always reasons** before it replies. That single property drives every
 setting below, so treat these as required rather than optional tuning:
 
-| Variable                                     | Set it to                                         | Why                                                                                                                                                        |
-| -------------------------------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `HINDSIGHT_API_REFLECT_LLM_TIMEOUT`          | `300`                                             | Reflect's default is 30s. Muse Spark's final synthesis exceeds that, and the call fails after its retries rather than degrading — reflect returns nothing. |
-| `HINDSIGHT_API_LLM_TIMEOUT`                  | `300`                                             | The global deadline (default 120s) covers retain and consolidation, which are slower here than on a non-reasoning model.                                   |
-| `HINDSIGHT_API_LLM_REASONING_EFFORT`         | unset, or `minimal`/`low`/`medium`/`high`/`xhigh` | `none` is rejected with `HTTP 400`. Leave it unset to let the model choose its own depth.                                                                  |
-| `HINDSIGHT_API_RETAIN_MAX_COMPLETION_TOKENS` | leave at the `64000` default                      | Reasoning tokens are billed against the **output** budget. Lower this too far and a reply comes back with no content at all.                               |
+| Variable | Set it to | Why |
+|----------|-----------|-----|
+| `HINDSIGHT_API_REFLECT_LLM_TIMEOUT` | `300` | Reflect's default is 30s. Muse Spark's final synthesis exceeds that, and the call fails after its retries rather than degrading — reflect returns nothing. |
+| `HINDSIGHT_API_LLM_TIMEOUT` | `300` | The global deadline (default 120s) covers retain and consolidation, which are slower here than on a non-reasoning model. |
+| `HINDSIGHT_API_LLM_REASONING_EFFORT` | unset, or `minimal`/`low`/`medium`/`high`/`xhigh` | `none` is rejected with `HTTP 400`. Leave it unset to let the model choose its own depth. |
+| `HINDSIGHT_API_RETAIN_MAX_COMPLETION_TOKENS` | leave at the `64000` default | Reasoning tokens are billed against the **output** budget. Lower this too far and a reply comes back with no content at all. |
 
 #### Good to know
 
@@ -578,28 +557,23 @@ setting below, so treat these as required rather than optional tuning:
 Use your [Nous Portal](https://portal.nousresearch.com) subscription for Hindsight via the Hermes CLI login — no static API key required.
 
 **Prerequisites:**
-
 - A Nous Portal account
 - The [Hermes](https://hermes-agent.nousresearch.com) CLI installed
 
 **Setup Steps:**
 
 1. **Log in to Nous Portal:**
-
    ```bash
    hermes portal
    ```
-
    This opens a browser to authenticate with Nous Portal and saves OAuth credentials to `~/.hermes/auth.json`.
 
 2. **Verify authentication:**
-
    ```bash
    hermes portal status  # should show "Auth: ✓ logged in"
    ```
 
 3. **Configure Hindsight:**
-
    ```bash
    export HINDSIGHT_API_LLM_PROVIDER=nous
    # export HINDSIGHT_API_LLM_MODEL=deepseek/deepseek-v4-flash  # defaults to deepseek/deepseek-v4-flash
@@ -614,7 +588,6 @@ Use your [Nous Portal](https://portal.nousresearch.com) subscription for Hindsig
 You can use any model hosted on the Nous Portal inference API.
 
 **Important Notes:**
-
 - Credentials are read from `~/.hermes/auth.json` (the same store the Hermes agent uses) — no static API key in Hindsight's config.
 - The short-lived inference JWT is refreshed automatically, before expiry and reactively on a 401.
 - Refreshes coordinate with a running Hermes agent through the shared auth store, so the two never disrupt each other's session.
@@ -627,6 +600,7 @@ You can use any model hosted on the Nous Portal inference API.
 Use your Claude Pro or Max subscription for Hindsight without separate Anthropic API costs.
 
 > **⚠️ Terms of Service Notice**
+>
 
 This integration uses the Claude Agent SDK with your personal Claude Pro/Max subscription
 credentials. You must be logged into Claude Code on your own machine before using this provider.
@@ -651,14 +625,12 @@ For production or team use, we recommend using `HINDSIGHT_API_LLM_PROVIDER=anthr
 an API key from the [Anthropic Console](https://console.anthropic.com/).
 
 **Prerequisites:**
-
 - Active Claude Pro or Max subscription
 - Claude Code CLI installed
 
 **Setup Steps:**
 
 1. **Install Claude Code CLI:**
-
    ```bash
    npm install -g @anthropics/claude-code
    # Or via Homebrew
@@ -666,22 +638,18 @@ an API key from the [Anthropic Console](https://console.anthropic.com/).
    ```
 
 2. **Login with Claude credentials:**
-
    ```bash
    claude auth login
    ```
-
    This opens a browser window to authenticate with your Claude account. Authentication is automatically managed by the Claude Agent SDK.
 
 3. **Verify authentication:**
-
    ```bash
    claude --version
    # Should show version without errors
    ```
 
 4. **Configure Hindsight:**
-
    ```bash
    export HINDSIGHT_API_LLM_PROVIDER=claude-code
    # No API key needed - uses claude auth login credentials
@@ -695,7 +663,6 @@ an API key from the [Anthropic Console](https://console.anthropic.com/).
 You can use any model supported by Claude Code CLI.
 
 **Important Notes:**
-
 - Authentication handled by Claude Agent SDK (uses bundled CLI)
 - Credentials managed securely by Claude Code
 - Usage billed to your Claude subscription (not separate API costs)
@@ -710,29 +677,25 @@ subscription**, by driving the `cursor-agent` CLI in its headless print mode. No
 and no second per-token billing relationship.
 
 This is the opposite direction from the [Cursor integration](../sdks/integrations/cursor.md),
-which makes Cursor a _client_ of Hindsight. Here Cursor is the model backend Hindsight calls.
+which makes Cursor a *client* of Hindsight. Here Cursor is the model backend Hindsight calls.
 
 **Prerequisites:**
-
 - An active Cursor subscription (a free plan works, but only with `auto` — see below)
 - `cursor-agent` installed and signed in under the same OS user that runs Hindsight
 
 **Setup Steps:**
 
 1. **Install the CLI:**
-
    ```bash
    curl https://cursor.com/install -fsS | bash
    ```
 
 2. **Log in:**
-
    ```bash
    cursor-agent login
    ```
 
 3. **Verify:**
-
    ```bash
    cursor-agent --version
    cursor-agent --list-models
@@ -766,7 +729,7 @@ which makes Cursor a _client_ of Hindsight. Here Cursor is the model backend Hin
   `cursor-agent --list-models`.
 - **The agent's own tools are turned off.** `cursor-agent` is an agent, not a completions
   endpoint: it ships Shell, Read, Write, Delete, web fetch and more, and `--mode ask` is
-  _not_ a tool switch — a headless run in ask mode will still read files out of its
+  *not* a tool switch — a headless run in ask mode will still read files out of its
   working directory. Hindsight therefore runs the CLI in an empty scratch workspace, with
   its own `CURSOR_CONFIG_DIR` (so it never sees your `~/.cursor` config, hooks or session
   history), and writes a `cli-config.json` there that denies every tool by name. That is
@@ -795,6 +758,7 @@ Apache-2.0 Grok CLI sources. Hindsight keeps its own credential file and never
 reads or writes the Grok CLI's `~/.grok/auth.json`.
 
 > **📝 Subscription entitlement**
+>
 
 xAI may restrict `api.x.ai` access by SuperGrok subscription tier: an OAuth
 grant can be valid and still be refused with HTTP 403. Hindsight reports that
@@ -807,7 +771,6 @@ spending limit stops a call, Hindsight raises a distinct quota error and leaves
 the credential alone.
 
 **Prerequisites:**
-
 - An active SuperGrok subscription
 - A browser on the machine you run the login from (the device-code flow needs
   an interactive approval; the running service never performs one)
@@ -815,16 +778,13 @@ the credential alone.
 **Setup steps:**
 
 1. **Log in once, on the host that will own the credential:**
-
    ```bash
    python -m hindsight_api.engine.providers.xai_oauth_auth login
    ```
-
    The command prints a verification URL and a user code, waits for approval,
    then writes `~/.hindsight/xai_oauth.json` with owner-only permissions.
 
 2. **Configure Hindsight:**
-
    ```bash
    export HINDSIGHT_API_LLM_PROVIDER=xai-oauth
    # export HINDSIGHT_API_LLM_MODEL=grok-4.5   # defaults to grok-4.5
@@ -837,7 +797,6 @@ the credential alone.
    ```
 
 **Important notes:**
-
 - The access token is refreshed automatically: proactively 60 seconds before
   expiry (or before the configured request timeout, whichever is longer), and
   once reactively on an HTTP 401. Several configured lanes share one credential
@@ -854,14 +813,14 @@ the credential alone.
 
 **Optional environment overrides:**
 
-| Variable                                          | Purpose                                                                                           | Default                                                          |
-| ------------------------------------------------- | ------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| `HINDSIGHT_API_XAI_OAUTH_BASE_URL`                | Point at a different upstream. Takes precedence over `HINDSIGHT_API_LLM_BASE_URL`.                | `https://api.x.ai/v1`                                            |
-| `HINDSIGHT_API_XAI_OAUTH_TOKEN_PATH`              | Relocate the credential store. Both the read and the write follow it.                             | `~/.hindsight/xai_oauth.json`                                    |
-| `HINDSIGHT_API_XAI_OAUTH_CLIENT_ID`               | Override the OAuth client id used for login and refresh.                                          | xAI's published public client id                                 |
-| `HINDSIGHT_API_XAI_OAUTH_SCOPE`                   | Override the scope string requested at login.                                                     | `openid profile email offline_access grok-cli:access api:access` |
-| `HINDSIGHT_API_XAI_OAUTH_REFRESH_SKEW_SECONDS`    | Refresh this many seconds before expiry. Widen it for deployments that touch the provider rarely. | `60`                                                             |
-| `HINDSIGHT_API_XAI_OAUTH_REFRESH_TIMEOUT_SECONDS` | Per-request timeout for discovery, login and refresh calls.                                       | `20`                                                             |
+| Variable | Purpose | Default |
+|---|---|---|
+| `HINDSIGHT_API_XAI_OAUTH_BASE_URL` | Point at a different upstream. Takes precedence over `HINDSIGHT_API_LLM_BASE_URL`. | `https://api.x.ai/v1` |
+| `HINDSIGHT_API_XAI_OAUTH_TOKEN_PATH` | Relocate the credential store. Both the read and the write follow it. | `~/.hindsight/xai_oauth.json` |
+| `HINDSIGHT_API_XAI_OAUTH_CLIENT_ID` | Override the OAuth client id used for login and refresh. | xAI's published public client id |
+| `HINDSIGHT_API_XAI_OAUTH_SCOPE` | Override the scope string requested at login. | `openid profile email offline_access grok-cli:access api:access` |
+| `HINDSIGHT_API_XAI_OAUTH_REFRESH_SKEW_SECONDS` | Refresh this many seconds before expiry. Widen it for deployments that touch the provider rarely. | `60` |
+| `HINDSIGHT_API_XAI_OAUTH_REFRESH_TIMEOUT_SECONDS` | Per-request timeout for discovery, login and refresh calls. | `20` |
 
 #### Deployment note
 
@@ -892,12 +851,12 @@ The one thing that trips people up is the base URL. Azure does not serve the
 OpenAI API at the resource root, so the endpoint shown in the Azure portal is
 not usable on its own:
 
-| `HINDSIGHT_API_LLM_BASE_URL`                                                                | Result                                      |
-| ------------------------------------------------------------------------------------------- | ------------------------------------------- |
-| `https://<resource>.openai.azure.com`                                                       | `404 Resource not found`                    |
-| `https://<resource>.openai.azure.com/openai/deployments/<deployment>`                       | `404 Resource not found` (no `api-version`) |
-| `https://<resource>.openai.azure.com/openai/v1`                                             | works                                       |
-| `https://<resource>.openai.azure.com/openai/deployments/<deployment>?api-version=<version>` | works                                       |
+| `HINDSIGHT_API_LLM_BASE_URL` | Result |
+|---|---|
+| `https://<resource>.openai.azure.com` | `404 Resource not found` |
+| `https://<resource>.openai.azure.com/openai/deployments/<deployment>` | `404 Resource not found` (no `api-version`) |
+| `https://<resource>.openai.azure.com/openai/v1` | works |
+| `https://<resource>.openai.azure.com/openai/deployments/<deployment>?api-version=<version>` | works |
 
 **Recommended — the v1 surface:**
 
@@ -916,11 +875,10 @@ export HINDSIGHT_API_LLM_BASE_URL=https://<resource>.openai.azure.com/openai/dep
 ```
 
 **Important notes:**
-
 - `HINDSIGHT_API_LLM_MODEL` is your **deployment name**, not the model name. A
   `gpt-4o` deployed as `my-gpt4o` is configured as `my-gpt4o`.
 - The key is the Azure OpenAI **resource** key (`az cognitiveservices account
-keys list -n <resource> -g <group>`). An API Management subscription key is a
+  keys list -n <resource> -g <group>`). An API Management subscription key is a
   different credential: with APIM in front, the base URL must be the APIM route
   and APIM has to forward the `api-key` header. Test against the Azure endpoint
   directly first to isolate which layer is failing.
@@ -941,22 +899,20 @@ keys list -n <resource> -g <group>`). An API Management subscription key is a
 Google Cloud's Vertex AI provides access to Gemini models via the native Google GenAI SDK.
 
 **Prerequisites:**
-
 - GCP project with Vertex AI API enabled
 - IAM role `roles/aiplatform.user` for your credentials
 
 **Environment Variables:**
 
-| Variable                                         | Description                           | Required                    |
-| ------------------------------------------------ | ------------------------------------- | --------------------------- |
-| `HINDSIGHT_API_LLM_VERTEXAI_PROJECT_ID`          | Your GCP project ID                   | Yes                         |
-| `HINDSIGHT_API_LLM_VERTEXAI_REGION`              | GCP region (e.g., `us-central1`)      | No (default: `us-central1`) |
-| `HINDSIGHT_API_LLM_VERTEXAI_SERVICE_ACCOUNT_KEY` | Path to service account JSON key file | No (uses ADC if not set)    |
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `HINDSIGHT_API_LLM_VERTEXAI_PROJECT_ID` | Your GCP project ID | Yes |
+| `HINDSIGHT_API_LLM_VERTEXAI_REGION` | GCP region (e.g., `us-central1`) | No (default: `us-central1`) |
+| `HINDSIGHT_API_LLM_VERTEXAI_SERVICE_ACCOUNT_KEY` | Path to service account JSON key file | No (uses ADC if not set) |
 
 **Authentication Methods:**
 
 1. **Application Default Credentials (ADC)** - Recommended for development
-
    ```bash
    # Setup ADC
    gcloud auth application-default login
@@ -985,7 +941,6 @@ Google Cloud's Vertex AI provides access to Gemini models via the native Google 
    ```
 
 **Notes:**
-
 - Model names can optionally include the `google/` prefix (e.g., `google/gemini-3.1-flash-lite`) — it will be stripped automatically
 - The native SDK handles token refresh automatically
 - Uses service account credentials if provided, otherwise falls back to ADC
@@ -1000,40 +955,40 @@ Converts text into dense vector representations for semantic similarity search.
 
 ### Supported Providers
 
-| Provider       | Description                                                      | Best For                               |
-| -------------- | ---------------------------------------------------------------- | -------------------------------------- |
-| `local`        | SentenceTransformers (default)                                   | Development, low latency               |
-| `onnx`         | In-process ONNX Runtime embedder (no Ollama/TEI/API sidecar)     | Lightweight local CPU, multilingual    |
-| `openai`       | OpenAI embeddings API                                            | Production, high quality               |
-| `openai-codex` | OpenAI embeddings via Codex OAuth (ChatGPT Plus/Pro, no API key) | Existing ChatGPT/Codex subscribers     |
-| `openrouter`   | OpenRouter embeddings (OpenAI-compatible gateway)                | Multi-provider setups                  |
-| `cohere`       | Cohere embeddings API                                            | Production, multilingual               |
-| `google`       | Google embeddings (Gemini API or Vertex AI)                      | Production, multilingual, high quality |
-| `tei`          | HuggingFace Text Embeddings Inference                            | Production, self-hosted                |
-| `zeroentropy`  | ZeroEntropy zembed-1                                             | Production, high quality retrieval     |
-| `litellm`      | LiteLLM proxy (unified gateway)                                  | Multi-provider setups                  |
-| `litellm-sdk`  | LiteLLM SDK (direct API, no proxy)                               | Multi-provider, simpler setup          |
+| Provider | Description | Best For |
+|----------|-------------|----------|
+| `local` | SentenceTransformers (default) | Development, low latency |
+| `onnx` | In-process ONNX Runtime embedder (no Ollama/TEI/API sidecar) | Lightweight local CPU, multilingual |
+| `openai` | OpenAI embeddings API | Production, high quality |
+| `openai-codex` | OpenAI embeddings via Codex OAuth (ChatGPT Plus/Pro, no API key) | Existing ChatGPT/Codex subscribers |
+| `openrouter` | OpenRouter embeddings (OpenAI-compatible gateway) | Multi-provider setups |
+| `cohere` | Cohere embeddings API | Production, multilingual |
+| `google` | Google embeddings (Gemini API or Vertex AI) | Production, multilingual, high quality |
+| `tei` | HuggingFace Text Embeddings Inference | Production, self-hosted |
+| `zeroentropy` | ZeroEntropy zembed-1 | Production, high quality retrieval |
+| `litellm` | LiteLLM proxy (unified gateway) | Multi-provider setups |
+| `litellm-sdk` | LiteLLM SDK (direct API, no proxy) | Multi-provider, simpler setup |
 
 ### Local Models
 
-| Model                                                         | Dimensions | Use Case                     |
-| ------------------------------------------------------------- | ---------- | ---------------------------- |
-| `BAAI/bge-small-en-v1.5`                                      | 384        | Default, fast, good quality  |
-| `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` | 384        | Multilingual (50+ languages) |
+| Model | Dimensions | Use Case |
+|-------|------------|----------|
+| `BAAI/bge-small-en-v1.5` | 384 | Default, fast, good quality |
+| `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` | 384 | Multilingual (50+ languages) |
 
 ### OpenAI Models
 
-| Model                    | Dimensions | Use Case                       |
-| ------------------------ | ---------- | ------------------------------ |
-| `text-embedding-3-small` | 1536       | Default OpenAI, cost-effective |
-| `text-embedding-3-large` | 3072       | Higher quality, more expensive |
-| `text-embedding-ada-002` | 1536       | Legacy model                   |
+| Model | Dimensions | Use Case |
+|-------|------------|----------|
+| `text-embedding-3-small` | 1536 | Default OpenAI, cost-effective |
+| `text-embedding-3-large` | 3072 | Higher quality, more expensive |
+| `text-embedding-ada-002` | 1536 | Legacy model |
 
 ### Google Models
 
-| Model                        | Dimensions         | Use Case                                                    |
-| ---------------------------- | ------------------ | ----------------------------------------------------------- |
-| `gemini-embedding-001`       | 768 (configurable) | Default Google, general purpose                             |
+| Model | Dimensions | Use Case |
+|-------|------------|----------|
+| `gemini-embedding-001` | 768 (configurable) | Default Google, general purpose |
 | `gemini-embedding-2-preview` | 768 (configurable) | Gemini Embedding 2 family; multimodal, one vector per input |
 
 Google's `gemini-embedding-001` supports configurable output dimensionality via truncation, google recommend using: 768, 1536, 3072, via `HINDSIGHT_API_EMBEDDINGS_GEMINI_OUTPUT_DIMENSIONALITY`. Default is 768.
@@ -1042,21 +997,21 @@ The `gemini-embedding-2` family, including `gemini-embedding-2-preview`, is supp
 
 ### Cohere Models
 
-| Model                     | Dimensions | Use Case       |
-| ------------------------- | ---------- | -------------- |
-| `embed-english-v3.0`      | 1024       | English text   |
-| `embed-multilingual-v3.0` | 1024       | 100+ languages |
+| Model | Dimensions | Use Case |
+|-------|------------|----------|
+| `embed-english-v3.0` | 1024 | English text |
+| `embed-multilingual-v3.0` | 1024 | 100+ languages |
 
 ### ZeroEntropy Models
 
-| Model      | Dimensions                                              | Use Case                          |
-| ---------- | ------------------------------------------------------- | --------------------------------- |
+| Model | Dimensions | Use Case |
+|-------|------------|----------|
 | `zembed-1` | 1280 default (2560/1280/640/320/160/80/40 configurable) | High quality asymmetric retrieval |
 
 Hindsight sends retained memory text to ZeroEntropy as `document` inputs and recall/search text as `query` inputs. ZeroEntropy's API default is 2560 dimensions; Hindsight defaults to 1280 so pgvector HNSW works without changing the vector extension.
 
 > **⚠️ Embedding Dimensions**
-
+>
 Hindsight automatically detects the embedding dimension at startup and adjusts the database schema. Once memories are stored, you cannot change dimensions without losing data.
 **Configuration Examples:**
 
@@ -1116,6 +1071,7 @@ export HINDSIGHT_API_EMBEDDINGS_LITELLM_SDK_MODEL=bedrock/amazon.titan-embed-tex
 ```
 
 > **💡 AWS Bedrock application inference profiles**
+>
 
 If your org's Service Control Policy denies `bedrock:InvokeModel` on the bare model id once an [application inference profile](https://docs.aws.amazon.com/bedrock/latest/userguide/inference-profiles-support.html) exists, keep `..._MODEL` as-is and add the profile ARN separately:
 
@@ -1145,63 +1101,63 @@ Reranks initial search results to improve precision.
 
 ### Supported Providers
 
-| Provider      | Description                                                              | Best For                                                                          |
-| ------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------- |
-| `local`       | SentenceTransformers CrossEncoder (default)                              | Development, low latency                                                          |
-| `cohere`      | Cohere rerank API                                                        | Production, high quality                                                          |
-| `openrouter`  | OpenRouter rerank API (Cohere-compatible gateway)                        | Multi-provider setups                                                             |
-| `zeroentropy` | ZeroEntropy rerank API (zerank-2)                                        | Production, state-of-the-art accuracy                                             |
-| `siliconflow` | SiliconFlow rerank API (Cohere-compatible `/rerank` endpoint)            | Users in China or anyone on SiliconFlow's platform                                |
-| `typesafe`    | TypeSafe typed-decision API (Jev) — ranks the whole pool in one question | Production, highest ranking quality; can also return only the relevant candidates |
-| `alibaba`     | Alibaba Cloud DashScope rerank API (qwen3-rerank)                        | Users on Alibaba Cloud / DashScope                                                |
-| `google`      | Google Discovery Engine ranking API (REST + Google auth)                 | Production, GCP integration                                                       |
-| `tei`         | HuggingFace Text Embeddings Inference                                    | Production, self-hosted                                                           |
-| `flashrank`   | FlashRank (lightweight, fast)                                            | Resource-constrained environments                                                 |
-| `litellm`     | LiteLLM proxy (unified gateway)                                          | Multi-provider setups                                                             |
-| `litellm-sdk` | LiteLLM SDK (direct API, no proxy)                                       | Multi-provider, simpler setup                                                     |
-| `jina-mlx`    | Jina rerank v3 via Apple Silicon MLX (local, no API key)                 | Apple Silicon (M1+) local inference                                               |
-| `rrf`         | RRF-only (no neural reranking)                                           | Testing, minimal resources                                                        |
+| Provider | Description | Best For |
+|----------|-------------|----------|
+| `local` | SentenceTransformers CrossEncoder (default) | Development, low latency |
+| `cohere` | Cohere rerank API | Production, high quality |
+| `openrouter` | OpenRouter rerank API (Cohere-compatible gateway) | Multi-provider setups |
+| `zeroentropy` | ZeroEntropy rerank API (zerank-2) | Production, state-of-the-art accuracy |
+| `siliconflow` | SiliconFlow rerank API (Cohere-compatible `/rerank` endpoint) | Users in China or anyone on SiliconFlow's platform |
+| `typesafe` | TypeSafe typed-decision API (Jev) — ranks the whole pool in one question | Production, highest ranking quality; can also return only the relevant candidates |
+| `alibaba` | Alibaba Cloud DashScope rerank API (qwen3-rerank) | Users on Alibaba Cloud / DashScope |
+| `google` | Google Discovery Engine ranking API (REST + Google auth) | Production, GCP integration |
+| `tei` | HuggingFace Text Embeddings Inference | Production, self-hosted |
+| `flashrank` | FlashRank (lightweight, fast) | Resource-constrained environments |
+| `litellm` | LiteLLM proxy (unified gateway) | Multi-provider setups |
+| `litellm-sdk` | LiteLLM SDK (direct API, no proxy) | Multi-provider, simpler setup |
+| `jina-mlx` | Jina rerank v3 via Apple Silicon MLX (local, no API key) | Apple Silicon (M1+) local inference |
+| `rrf` | RRF-only (no neural reranking) | Testing, minimal resources |
 
 ### Local Models
 
-| Model                                        | Use Case        |
-| -------------------------------------------- | --------------- |
-| `cross-encoder/ms-marco-MiniLM-L-6-v2`       | Default, fast   |
-| `cross-encoder/ms-marco-MiniLM-L-12-v2`      | Higher accuracy |
-| `cross-encoder/mmarco-mMiniLMv2-L12-H384-v1` | Multilingual    |
+| Model | Use Case |
+|-------|----------|
+| `cross-encoder/ms-marco-MiniLM-L-6-v2` | Default, fast |
+| `cross-encoder/ms-marco-MiniLM-L-12-v2` | Higher accuracy |
+| `cross-encoder/mmarco-mMiniLMv2-L12-H384-v1` | Multilingual |
 
 ### Cohere Models
 
-| Model                      | Use Case       |
-| -------------------------- | -------------- |
-| `rerank-english-v3.0`      | English text   |
+| Model | Use Case |
+|-------|----------|
+| `rerank-english-v3.0` | English text |
 | `rerank-multilingual-v3.0` | 100+ languages |
 
 ### ZeroEntropy Models
 
-| Model            | Use Case                                 |
-| ---------------- | ---------------------------------------- |
-| `zerank-2`       | Flagship multilingual reranker (default) |
-| `zerank-2-small` | Faster, lighter variant                  |
+| Model | Use Case |
+|-------|----------|
+| `zerank-2` | Flagship multilingual reranker (default) |
+| `zerank-2-small` | Faster, lighter variant |
 
 ### SiliconFlow Models
 
 SiliconFlow hosts a range of open-weight rerankers behind a Cohere-compatible `/rerank` endpoint:
 
-| Model                     | Use Case                     |
-| ------------------------- | ---------------------------- |
+| Model | Use Case |
+|-------|----------|
 | `BAAI/bge-reranker-v2-m3` | Multilingual, strong default |
-| `Qwen/Qwen3-Reranker-8B`  | Larger, higher accuracy      |
+| `Qwen/Qwen3-Reranker-8B` | Larger, higher accuracy |
 
 ### TypeSafe Models
 
-TypeSafe is not a `/rerank` endpoint — it answers typed _questions_ against a _state_.
+TypeSafe is not a `/rerank` endpoint — it answers typed *questions* against a *state*.
 Hindsight makes the candidates the options of a single Choice question, so the returned
 probability distribution is the ranking: one call for the whole pool, however many
 candidates it holds.
 
-| Model        | Use Case                                |
-| ------------ | --------------------------------------- |
+| Model | Use Case |
+|-------|----------|
 | `jev-latest` | Default; tracks the current Jev release |
 
 Setting `HINDSIGHT_API_RERANKER_TYPESAFE_PRUNE_CANDIDATES=true` adds a second question
@@ -1214,21 +1170,21 @@ behaviour and its trade-offs.
 
 Alibaba Cloud DashScope exposes `qwen3-rerank` via a Cohere-compatible `/reranks` endpoint:
 
-| Model          | Use Case                |
-| -------------- | ----------------------- |
+| Model | Use Case |
+|-------|----------|
 | `qwen3-rerank` | 100+ languages, default |
 
 ### LiteLLM Supported Providers
 
 LiteLLM supports multiple reranking providers via the `/rerank` endpoint:
 
-| Provider    | Model Example                |
-| ----------- | ---------------------------- |
-| Cohere      | `cohere/rerank-english-v3.0` |
-| Together AI | `together_ai/...`            |
-| Voyage AI   | `voyage/rerank-2`            |
-| Jina AI     | `jina_ai/...`                |
-| AWS Bedrock | `bedrock/...`                |
+| Provider | Model Example |
+|----------|---------------|
+| Cohere | `cohere/rerank-english-v3.0` |
+| Together AI | `together_ai/...` |
+| Voyage AI | `voyage/rerank-2` |
+| Jina AI | `jina_ai/...` |
+| AWS Bedrock | `bedrock/...` |
 
 **Configuration Examples:**
 

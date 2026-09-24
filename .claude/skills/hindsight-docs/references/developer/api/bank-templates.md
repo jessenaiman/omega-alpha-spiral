@@ -1,3 +1,4 @@
+
 # Bank Templates
 
 Declarative JSON manifests for creating pre-configured memory banks with a single API call.
@@ -9,7 +10,6 @@ Declarative JSON manifests for creating pre-configured memory banks with a singl
 A bank template is a JSON manifest that describes a bank's full setup: configuration overrides, mental models, directives, and more. Instead of making multiple API calls to configure a bank, you submit one manifest and the API provisions everything.
 
 Templates are useful for:
-
 - **Replication** — stamp out identically-configured banks for multiple users or agents
 - **Onboarding** — new users start with a known-good configuration instead of configuring from scratch
 - **Sharing** — distribute recommended setups as portable JSON files
@@ -34,13 +34,7 @@ Browse the Bank Templates Hub for ready-to-use templates.
     "disposition_empathy": 3,
     "enable_observations": true,
     "observations_mission": "...",
-    "entity_labels": [
-      {
-        "key": "sentiment",
-        "type": "value",
-        "values": [{ "value": "positive" }, { "value": "negative" }]
-      }
-    ],
+    "entity_labels": [{ "key": "sentiment", "type": "value", "values": [{ "value": "positive" }, { "value": "negative" }] }],
     "entities_allow_free_form": true
   },
   "mental_models": [
@@ -72,12 +66,12 @@ Browse the Bank Templates Hub for ready-to-use templates.
 
 ### Fields
 
-| Field           | Required | Description                                                   |
-| --------------- | -------- | ------------------------------------------------------------- |
-| `version`       | Yes      | Schema version. Currently `"1"`.                              |
-| `bank`          | No       | Bank configuration overrides. Omit to leave config unchanged. |
-| `mental_models` | No       | Mental models to create or update. Omit to leave unchanged.   |
-| `directives`    | No       | Directives to create or update. Omit to leave unchanged.      |
+| Field | Required | Description |
+|-------|----------|-------------|
+| `version` | Yes | Schema version. Currently `"1"`. |
+| `bank` | No | Bank configuration overrides. Omit to leave config unchanged. |
+| `mental_models` | No | Mental models to create or update. Omit to leave unchanged. |
+| `directives` | No | Directives to create or update. Omit to leave unchanged. |
 
 All of `bank`, `mental_models`, and `directives` are optional. Omit any section to leave that part of the bank unchanged.
 
@@ -92,42 +86,42 @@ The complete, always-current list is the template JSON
 Schema; each field means the same thing it does in
 [Configuration](../configuration.mdx). The most commonly used ones:
 
-| Field                          | Type          | Description                                                                                                           |
-| ------------------------------ | ------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `reflect_mission`              | string        | Mission/context for reflect operations                                                                                |
-| `retain_mission`               | string        | Steers what gets extracted during retain                                                                              |
-| `retain_extraction_mode`       | string        | `concise`, `verbose`, `custom`, `verbatim`, or `chunks`                                                               |
-| `retain_custom_instructions`   | string        | Custom extraction prompt (requires `mode=custom`)                                                                     |
-| `retain_chunk_size`            | integer       | Target max characters per content chunk                                                                               |
-| `retain_structured_chunk_size` | integer       | Max characters for a single JSONL line or conversation turn to keep whole; defaults to `retain_chunk_size` when unset |
-| `disposition_skepticism`       | integer (1-5) | How skeptical the disposition is                                                                                      |
-| `disposition_literalism`       | integer (1-5) | How literal the disposition is                                                                                        |
-| `disposition_empathy`          | integer (1-5) | How empathetic the disposition is                                                                                     |
-| `enable_observations`          | boolean       | Toggle observation consolidation                                                                                      |
-| `observations_mission`         | string        | Controls what gets synthesised into observations                                                                      |
-| `entity_labels`                | object[]      | Controlled vocabulary as label groups — see [Memory Banks → entity_labels](./memory-banks#entity-labels)              |
-| `entities_allow_free_form`     | boolean       | Allow entities outside the label vocabulary                                                                           |
+| Field | Type | Description |
+|-------|------|-------------|
+| `reflect_mission` | string | Mission/context for reflect operations |
+| `retain_mission` | string | Steers what gets extracted during retain |
+| `retain_extraction_mode` | string | `concise`, `verbose`, `custom`, `verbatim`, or `chunks` |
+| `retain_custom_instructions` | string | Custom extraction prompt (requires `mode=custom`) |
+| `retain_chunk_size` | integer | Target max characters per content chunk |
+| `retain_structured_chunk_size` | integer | Max characters for a single JSONL line or conversation turn to keep whole; defaults to `retain_chunk_size` when unset |
+| `disposition_skepticism` | integer (1-5) | How skeptical the disposition is |
+| `disposition_literalism` | integer (1-5) | How literal the disposition is |
+| `disposition_empathy` | integer (1-5) | How empathetic the disposition is |
+| `enable_observations` | boolean | Toggle observation consolidation |
+| `observations_mission` | string | Controls what gets synthesised into observations |
+| `entity_labels` | object[] | Controlled vocabulary as label groups — see [Memory Banks → entity_labels](./memory-banks#entity-labels) |
+| `entities_allow_free_form` | boolean | Allow entities outside the label vocabulary |
 
 ### Mental Model Fields
 
-| Field          | Required | Description                                                                  |
-| -------------- | -------- | ---------------------------------------------------------------------------- |
-| `id`           | Yes      | Unique ID (lowercase alphanumeric with hyphens). Used to match on re-import. |
-| `name`         | Yes      | Human-readable name                                                          |
-| `source_query` | Yes      | The query that generates this model's content via reflect                    |
-| `tags`         | No       | Tags for scoped visibility. Default: `[]`                                    |
-| `max_tokens`   | No       | Max tokens for generated content (256-8192). Default: `2048`                 |
-| `trigger`      | No       | Trigger settings for auto-refresh                                            |
+| Field | Required | Description |
+|-------|----------|-------------|
+| `id` | Yes | Unique ID (lowercase alphanumeric with hyphens). Used to match on re-import. |
+| `name` | Yes | Human-readable name |
+| `source_query` | Yes | The query that generates this model's content via reflect |
+| `tags` | No | Tags for scoped visibility. Default: `[]` |
+| `max_tokens` | No | Max tokens for generated content (256-8192). Default: `2048` |
+| `trigger` | No | Trigger settings for auto-refresh |
 
 ### Directive Fields
 
-| Field       | Required | Description                                            |
-| ----------- | -------- | ------------------------------------------------------ |
-| `name`      | Yes      | Directive name. Used as the match key on re-import.    |
-| `content`   | Yes      | The directive instruction text.                        |
-| `priority`  | No       | Priority value (higher = more important). Default: `0` |
-| `is_active` | No       | Whether the directive is active. Default: `true`       |
-| `tags`      | No       | Tags for categorization. Default: `[]`                 |
+| Field | Required | Description |
+|-------|----------|-------------|
+| `name` | Yes | Directive name. Used as the match key on re-import. |
+| `content` | Yes | The directive instruction text. |
+| `priority` | No | Priority value (higher = more important). Default: `0` |
+| `is_active` | No | Whether the directive is active. Default: `true` |
+| `tags` | No | Tags for categorization. Default: `[]` |
 
 ## Import
 
@@ -174,24 +168,24 @@ print(f"Directives created: {result['directives_created']}")
 
 ```javascript
 const template = {
-  version: "1",
+  version: '1',
   bank: {
-    retain_mission: "Extract customer issues, resolutions, and sentiment.",
+    retain_mission: 'Extract customer issues, resolutions, and sentiment.',
     enable_observations: true,
-    observations_mission: "Track recurring customer pain points.",
+    observations_mission: 'Track recurring customer pain points.',
   },
   mental_models: [
     {
-      id: "sentiment-overview",
-      name: "Customer Sentiment Overview",
-      source_query: "What is the overall sentiment trend?",
+      id: 'sentiment-overview',
+      name: 'Customer Sentiment Overview',
+      source_query: 'What is the overall sentiment trend?',
       trigger: { refresh_after_consolidation: true },
     },
   ],
   directives: [
     {
-      name: "Acknowledge frustration",
-      content: "Always acknowledge frustration before offering solutions.",
+      name: 'Acknowledge frustration',
+      content: 'Always acknowledge frustration before offering solutions.',
       priority: 10,
     },
   ],
@@ -200,15 +194,15 @@ const template = {
 const importResponse = await fetch(
   `${HINDSIGHT_URL}/v1/default/banks/my-bank/import`,
   {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(template),
-  }
+  },
 );
 const result = await importResponse.json();
-console.log("Config applied:", result.config_applied);
-console.log("Mental models created:", result.mental_models_created);
-console.log("Directives created:", result.directives_created);
+console.log('Config applied:', result.config_applied);
+console.log('Mental models created:', result.mental_models_created);
+console.log('Directives created:', result.directives_created);
 ```
 
 ### CLI
@@ -309,14 +303,14 @@ print(f"Would apply config: {result['config_applied']}")
 const dryRunResponse = await fetch(
   `${HINDSIGHT_URL}/v1/default/banks/my-bank/import?dry_run=true`,
   {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(template),
-  }
+  },
 );
 const dryRunResult = await dryRunResponse.json();
-console.log("Dry run:", dryRunResult.dry_run);
-console.log("Would apply config:", dryRunResult.config_applied);
+console.log('Dry run:', dryRunResult.dry_run);
+console.log('Would apply config:', dryRunResult.config_applied);
 ```
 
 ### CLI
@@ -340,7 +334,7 @@ dryRunBody, _ := io.ReadAll(resp.Body)
 fmt.Println(string(dryRunBody))
 ```
 
-Returns what _would_ happen (which config would be applied, which mental models would be created) without making any changes. Returns HTTP 400 with a detailed error message if the manifest is invalid.
+Returns what *would* happen (which config would be applied, which mental models would be created) without making any changes. Returns HTTP 400 with a detailed error message if the manifest is invalid.
 
 ## Export
 
@@ -360,7 +354,7 @@ print(json.dumps(exported, indent=2))
 
 ```javascript
 const exportResponse = await fetch(
-  `${HINDSIGHT_URL}/v1/default/banks/my-bank/export`
+  `${HINDSIGHT_URL}/v1/default/banks/my-bank/export`,
 );
 const exported = await exportResponse.json();
 console.log(JSON.stringify(exported, null, 2));
@@ -408,14 +402,14 @@ response = requests.post(
 ```javascript
 // Export from source bank
 const srcResponse = await fetch(
-  `${HINDSIGHT_URL}/v1/default/banks/source-bank/export`
+  `${HINDSIGHT_URL}/v1/default/banks/source-bank/export`,
 );
 const srcExported = await srcResponse.json();
 
 // Import into a new bank
 await fetch(`${HINDSIGHT_URL}/v1/default/banks/new-bank/import`, {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify(srcExported),
 });
 ```
@@ -466,7 +460,9 @@ print(json.dumps(schema, indent=2))
 ### Node.js
 
 ```javascript
-const schemaResponse = await fetch(`${HINDSIGHT_URL}/v1/bank-template-schema`);
+const schemaResponse = await fetch(
+  `${HINDSIGHT_URL}/v1/bank-template-schema`,
+);
 const schema = await schemaResponse.json();
 console.log(JSON.stringify(schema, null, 2));
 ```
@@ -499,7 +495,6 @@ You can also export any bank's template from the bank Settings page via **Action
 The `version` field enables forward-compatible schema evolution. The current version is `"1"`.
 
 When future versions are released:
-
 - Older manifests are automatically upgraded to the current schema on import
 - Export always produces the latest version
 - The API rejects manifests with a version newer than what the server supports (with a clear error message suggesting an upgrade)

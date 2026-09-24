@@ -2,6 +2,7 @@
 sidebar_position: 3
 ---
 
+
 # Recall: How Hindsight Retrieves Memories
 
 When you call `recall()`, Hindsight uses multiple search strategies in parallel to find the most relevant memories, regardless of how you phrase your query.
@@ -37,10 +38,9 @@ No single search method handles all these well. Hindsight solves this with **TEM
 
 ### Semantic Search
 
-**What it does:** Understands the _meaning_ behind words, not just the words themselves.
+**What it does:** Understands the *meaning* behind words, not just the words themselves.
 
 **Best for:**
-
 - Conceptual matches: "Alice's job" → "Alice works as a software engineer"
 - Paraphrasing: "Bob's expertise" → "Bob specializes in machine learning"
 - Synonyms: "meeting" matches "conference", "discussion", "gathering"
@@ -54,7 +54,6 @@ No single search method handles all these well. Hindsight solves this with **TEM
 **What it does:** Finds exact terms and names, even when they're spelled uniquely.
 
 **Best for:**
-
 - Proper nouns: "Google", "Alice Chen", "MIT"
 - Technical terms: "PostgreSQL", "HNSW", "TensorFlow"
 - Unique identifiers: URLs, product names, specific phrases
@@ -64,13 +63,13 @@ No single search method handles all these well. Hindsight solves this with **TEM
 **Backends:** Hindsight ships five pluggable BM25 backends, selected via
 `HINDSIGHT_API_TEXT_SEARCH_EXTENSION`:
 
-| Backend         | What it uses                                                                                                                                                       | Citus-compatible? |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------- |
-| `native`        | PostgreSQL `tsvector` + `ts_rank_cd` (TF-IDF, not true BM25)                                                                                                       | Yes               |
-| `vchord`        | `vchord_bm25` extension                                                                                                                                            | No                |
-| `pg_textsearch` | Timescale `pg_textsearch` extension                                                                                                                                | No                |
-| `pgroonga`      | PGroonga (Groonga) full-text extension, `TokenBigram` polyglot tokenizer                                                                                           | No                |
-| `pg_search`     | ParadeDB `pg_search` extension, configurable tokenizer (e.g. `jieba`, `chinese_compatible`, `ngram`) via `HINDSIGHT_API_TEXT_SEARCH_EXTENSION_PG_SEARCH_TOKENIZER` | Yes               |
+| Backend | What it uses | Citus-compatible? |
+|---|---|---|
+| `native` | PostgreSQL `tsvector` + `ts_rank_cd` (TF-IDF, not true BM25) | Yes |
+| `vchord` | `vchord_bm25` extension | No |
+| `pg_textsearch` | Timescale `pg_textsearch` extension | No |
+| `pgroonga` | PGroonga (Groonga) full-text extension, `TokenBigram` polyglot tokenizer | No |
+| `pg_search` | ParadeDB `pg_search` extension, configurable tokenizer (e.g. `jieba`, `chinese_compatible`, `ngram`) via `HINDSIGHT_API_TEXT_SEARCH_EXTENSION_PG_SEARCH_TOKENIZER` | Yes |
 
 If you need true BM25 ranking on a horizontally scaled Postgres (Citus) cluster,
 `pg_search` is the only option. See the [`pg_search` docker-compose example](https://github.com/vectorize-io/hindsight/tree/main/docker/docker-compose/pg_search).
@@ -82,7 +81,6 @@ If you need true BM25 ranking on a horizontally scaled Postgres (Citus) cluster,
 **What it does:** Follows connections between entities to find indirectly related information.
 
 **Best for:**
-
 - Indirect relationships: "What does Alice do?" → Alice → Google → Google's products
 - Entity exploration: "Bob's colleagues" → Bob → co-workers → shared projects
 - Multi-hop reasoning: "Alice's team's achievements"
@@ -98,15 +96,14 @@ If you need true BM25 ranking on a horizontally scaled Postgres (Citus) cluster,
 **What it does:** Understands time expressions and filters by when events occurred.
 
 **Best for:**
-
 - Historical queries: "What did Alice do in 2023?"
 - Time ranges: "What happened last spring?"
 - Relative time: "What did Bob work on last year?"
 - Before/after: "What happened before Alice joined Google?"
 
-**How it works:** When the query contains a time reference, Hindsight parses it into a date window, then retrieves the memories whose time overlaps that window. Within the window it selects candidates by **semantic relevance to the query** — not by recency — so the most relevant in-window memory is never dropped just because other memories happen to be more recent. It then **spreads the selection across the window's range**: the window is divided into time-buckets and the strongest match from each populated bucket is taken first, so a "what happened in 2023?" query surfaces memories from across the whole year rather than clustering on whichever stretch is densest. Time is also used as a _scoring_ signal — memories closer to the center of the window get a small boost (see [Temporal proximity signal](#temporal-proximity-signal)).
+**How it works:** When the query contains a time reference, Hindsight parses it into a date window, then retrieves the memories whose time overlaps that window. Within the window it selects candidates by **semantic relevance to the query** — not by recency — so the most relevant in-window memory is never dropped just because other memories happen to be more recent. It then **spreads the selection across the window's range**: the window is divided into time-buckets and the strongest match from each populated bucket is taken first, so a "what happened in 2023?" query surfaces memories from across the whole year rather than clustering on whichever stretch is densest. Time is also used as a *scoring* signal — memories closer to the center of the window get a small boost (see [Temporal proximity signal](#temporal-proximity-signal)).
 
-**Why it matters:** Enables precise historical queries that stay relevant _and_ representative of the whole period. It also stays fast and meaningful on memory banks whose timestamps are densely clustered (for example when a large batch is ingested with one date): because selection is relevance-first, a time window that happens to match most of the bank still returns the best matches rather than an arbitrary slice.
+**Why it matters:** Enables precise historical queries that stay relevant *and* representative of the whole period. It also stays fast and meaningful on memory banks whose timestamps are densely clustered (for example when a large batch is ingested with one date): because selection is relevance-first, a time window that happens to match most of the bank still returns the best matches rather than an arbitrary slice.
 
 ---
 
@@ -140,13 +137,11 @@ The **fusion** of all four gives you exactly what you're looking for, even thoug
 Hindsight is built for AI agents, not humans. Traditional search systems return "top-k" results, but agents don't think in terms of result counts—they think in tokens. An agent's context window is measured in tokens, and that's exactly how Hindsight measures results.
 
 **How it works:**
-
 - Top-ranked memories selected first
 - Stops when token budget is exhausted
 - You specify context budget, Hindsight fills it with the most relevant memories
 
 **Parameters you control:**
-
 - `max_tokens`: How much memory content to return (default: 4096 tokens)
 - `budget`: Search depth level (low, mid, high)
 - `types`: Filter by world, experience, observation, or all
@@ -178,11 +173,11 @@ Different use cases require different trade-offs between **recall quality** and 
 
 Controls how thoroughly Hindsight explores the memory bank—affecting graph traversal depth, candidate pool size, and cross-encoder re-ranking:
 
-| Budget   | Best For                                   | Trade-off                           |
-| -------- | ------------------------------------------ | ----------------------------------- |
-| **low**  | Quick lookups, simple queries              | Fast, may miss indirect connections |
-| **mid**  | Most queries, balanced                     | Good coverage, reasonable speed     |
-| **high** | Complex queries requiring deep exploration | Thorough, slower                    |
+| Budget | Best For | Trade-off |
+|--------|----------|-----------|
+| **low** | Quick lookups, simple queries | Fast, may miss indirect connections |
+| **mid** | Most queries, balanced | Good coverage, reasonable speed |
+| **high** | Complex queries requiring deep exploration | Thorough, slower |
 
 **Example:** "What did Alice's manager's team work on?" benefits from high budget to traverse multiple hops (Alice → manager → team → projects) and evaluate more candidates.
 
@@ -190,11 +185,11 @@ Controls how thoroughly Hindsight explores the memory bank—affecting graph tra
 
 Controls how much memory content to return:
 
-| Max Tokens         | ~Pages of Text | Best For                  | Trade-off                 |
-| ------------------ | -------------- | ------------------------- | ------------------------- |
-| **2048**           | ~2 pages       | Focused answers, fast LLM | Fewer memories, faster    |
-| **4096** (default) | ~4 pages       | Balanced context          | Good coverage, standard   |
-| **8192**           | ~8 pages       | Comprehensive context     | More memories, slower LLM |
+| Max Tokens | ~Pages of Text | Best For | Trade-off |
+|------------|----------------|----------|-----------|
+| **2048** | ~2 pages | Focused answers, fast LLM | Fewer memories, faster |
+| **4096** (default) | ~4 pages | Balanced context | Good coverage, standard |
+| **8192** | ~8 pages | Comprehensive context | More memories, slower LLM |
 
 **Example:** "Summarize everything about Alice" benefits from higher max_tokens to include more facts.
 
@@ -202,28 +197,28 @@ Controls how much memory content to return:
 
 Budget and max_tokens control different aspects of recall:
 
-| Parameter      | What it controls                   | Latency impact      | Example                                             |
-| -------------- | ---------------------------------- | ------------------- | --------------------------------------------------- |
-| **Budget**     | How thoroughly to explore memories | Search time         | High budget finds Alice → manager → team → projects |
-| **Max Tokens** | How much context to return         | LLM processing time | High tokens returns more memories to the agent      |
+| Parameter | What it controls | Latency impact | Example |
+|-----------|------------------|----------------|---------|
+| **Budget** | How thoroughly to explore memories | Search time | High budget finds Alice → manager → team → projects |
+| **Max Tokens** | How much context to return | LLM processing time | High tokens returns more memories to the agent |
 
 **They're independent.** Common combinations:
 
-| Budget | Max Tokens | Use Case                                  |
-| ------ | ---------- | ----------------------------------------- |
-| high   | low        | Deep search, return only the best results |
-| low    | high       | Quick search, return everything found     |
-| high   | high       | Comprehensive research queries            |
-| low    | low        | Fast chatbot responses                    |
+| Budget | Max Tokens | Use Case |
+|--------|------------|----------|
+| high | low | Deep search, return only the best results |
+| low | high | Quick search, return everything found |
+| high | high | Comprehensive research queries |
+| low | low | Fast chatbot responses |
 
 ### Recommended Configurations
 
-| Use Case             | Budget | Max Tokens | Why                                |
-| -------------------- | ------ | ---------- | ---------------------------------- |
-| **Chatbot replies**  | low    | 2048       | Fast responses, focused context    |
-| **Document Q&A**     | mid    | 4096       | Balanced coverage and speed        |
-| **Research queries** | high   | 8192       | Comprehensive, multi-hop reasoning |
-| **Real-time search** | low    | 2048       | Minimize latency                   |
+| Use Case | Budget | Max Tokens | Why |
+|----------|--------|------------|-----|
+| **Chatbot replies** | low | 2048 | Fast responses, focused context |
+| **Document Q&A** | mid | 4096 | Balanced coverage and speed |
+| **Research queries** | high | 8192 | Comprehensive, multi-hop reasoning |
+| **Real-time search** | low | 2048 | Minimize latency |
 
 ---
 
@@ -243,23 +238,20 @@ score(d) = Σ  1 / (k + rank_i(d))
 ```
 
 Where:
-
 - **k = 60** (smoothing constant — prevents top-ranked items from dominating)
-- **rank_i(d)** = position of document _d_ in strategy _i_ (1-indexed)
-- The sum runs over all strategies where _d_ appears
+- **rank_i(d)** = position of document *d* in strategy *i* (1-indexed)
+- The sum runs over all strategies where *d* appears
 
 **Within RRF, all four strategies are weighted equally** — fusion uses rank position, not the source, so no strategy gets an implicit multiplier. You can, however, deliberately bias a source with [`HINDSIGHT_API_RECALL_STRATEGY_BOOSTS`](./configuration): that boost is applied at a separate stage — before the reranking pre-filter cap and again after reranking — not inside the RRF fusion above.
 
 **Why RRF over raw score merging?** Each retrieval strategy produces scores on a different scale (cosine similarity, BM25 tf-idf, graph activation). These scores aren't comparable — a BM25 score of 12.5 and a cosine similarity of 0.85 don't mean the same thing. RRF sidesteps this by using only rank positions, making it robust across any scoring system without requiring calibration.
 
 **Example:** A memory ranked #1 in semantic and #5 in BM25:
-
 ```
 RRF score = 1/(60+1) + 1/(60+5) = 0.0164 + 0.0154 = 0.0318
 ```
 
 A memory ranked #1 in semantic only:
-
 ```
 RRF score = 1/(60+1) = 0.0164
 ```
@@ -272,7 +264,7 @@ The first memory ranks higher because it has **consensus** across strategies.
 
 RRF gives a good initial ranking, but it's based on positions, not on deep query-document understanding. The cross-encoder evaluates each candidate against the query as a pair, producing a relevance score.
 
-**Pre-filtering:** Before reranking, candidates are trimmed to the top **300** (by RRF score) to limit computational cost. This is configurable via `HINDSIGHT_API_RERANKER_MAX_CANDIDATES`. If [`HINDSIGHT_API_RECALL_STRATEGY_BOOSTS`](./configuration) is set, the boost is applied before this cut, so candidates from a favoured source are more likely to survive it. The boost promotes the favoured arm in _rank_ space (its rank is divided by the level's divisor before the RRF contribution is computed) rather than scaling its score, so it reaches deeper into that arm without evicting the top-ranked hits of the others — including on banks whose merged pool is many times the cap. When `trace: true` is requested, the `rerank_prefilter` phase reports how many candidates were kept and dropped, the cap in force, the active boosts, and the per-arm composition of the survivors.
+**Pre-filtering:** Before reranking, candidates are trimmed to the top **300** (by RRF score) to limit computational cost. This is configurable via `HINDSIGHT_API_RERANKER_MAX_CANDIDATES`. If [`HINDSIGHT_API_RECALL_STRATEGY_BOOSTS`](./configuration) is set, the boost is applied before this cut, so candidates from a favoured source are more likely to survive it. The boost promotes the favoured arm in *rank* space (its rank is divided by the level's divisor before the RRF contribution is computed) rather than scaling its score, so it reaches deeper into that arm without evicting the top-ranked hits of the others — including on banks whose merged pool is many times the cap. When `trace: true` is requested, the `rerank_prefilter` phase reports how many candidates were kept and dropped, the cap in force, the active boosts, and the per-arm composition of the survivors.
 
 **Why rerank after RRF?** RRF is position-based — it knows a memory ranked well across strategies, but it never actually reads the query and the memory together. The cross-encoder does: it takes the query and each candidate as a pair and produces a relevance score based on their full interaction. This catches nuances that position-based fusion misses, like a memory that ranked #1 in keyword search because it matched a common term but is actually irrelevant to the query's intent.
 
@@ -308,11 +300,11 @@ Each boost is centered at 1.0 (neutral) and controlled by an alpha that caps how
 boost = 1 + α × (signal - 0.5)
 ```
 
-| Boost                  | α   | Max adjustment | What it rewards                         |
-| ---------------------- | --- | -------------- | --------------------------------------- |
-| **Recency**            | 0.2 | ±10%           | Recent memories over older ones         |
-| **Temporal proximity** | 0.2 | ±10%           | Memories close to a queried time window |
-| **Proof count**        | 0.1 | ±5%            | Observations backed by more evidence    |
+| Boost | α | Max adjustment | What it rewards |
+|-------|---|----------------|-----------------|
+| **Recency** | 0.2 | ±10% | Recent memories over older ones |
+| **Temporal proximity** | 0.2 | ±10% | Memories close to a queried time window |
+| **Proof count** | 0.1 | ±5% | Observations backed by more evidence |
 
 #### Recency signal
 
@@ -342,17 +334,16 @@ For observation-type memories, rewards those backed by more evidence using a log
 proof_norm = clamp(0.5 + ln(proof_count) / 10, 0.0, 1.0)
 ```
 
-| Proof count | proof_norm | Boost     |
-| ----------- | ---------- | --------- |
-| 1           | 0.5        | Neutral   |
-| 3           | 0.61       | +1.1%     |
-| 10          | 0.73       | +2.3%     |
-| 150+        | 1.0        | +5% (max) |
+| Proof count | proof_norm | Boost |
+|-------------|-----------|-------|
+| 1 | 0.5 | Neutral |
+| 3 | 0.61 | +1.1% |
+| 10 | 0.73 | +2.3% |
+| 150+ | 1.0 | +5% (max) |
 
 #### Maximum combined range
 
 With all boosts at their extremes:
-
 - **Best case:** ×1.10 × 1.10 × 1.05 ≈ **+27%**
 - **Worst case:** ×0.90 × 0.90 × 0.95 ≈ **-23%**
 
@@ -370,21 +361,21 @@ After scoring, results are sorted by `final_score` and selected top-down until t
 
 The `budget` parameter (low/mid/high) controls **search depth** — how many candidates each strategy considers. Each level maps to a **recall budget** number that flows through every pipeline stage:
 
-| Budget   | Recall budget (fixed mode) | Env var override                         |
-| -------- | -------------------------- | ---------------------------------------- |
-| **low**  | 100                        | `HINDSIGHT_API_RECALL_BUDGET_FIXED_LOW`  |
-| **mid**  | 300 (default)              | `HINDSIGHT_API_RECALL_BUDGET_FIXED_MID`  |
-| **high** | 1000                       | `HINDSIGHT_API_RECALL_BUDGET_FIXED_HIGH` |
+| Budget | Recall budget (fixed mode) | Env var override |
+|--------|---------------------------|-----------------|
+| **low** | 100 | `HINDSIGHT_API_RECALL_BUDGET_FIXED_LOW` |
+| **mid** | 300 (default) | `HINDSIGHT_API_RECALL_BUDGET_FIXED_MID` |
+| **high** | 1000 | `HINDSIGHT_API_RECALL_BUDGET_FIXED_HIGH` |
 
 This recall budget flows through the pipeline as follows:
 
-| Pipeline stage           | How the recall budget is used                                                                                                                                    |
-| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Semantic search**      | `LIMIT recall_budget` in SQL, with the ANN candidate list sized to match for the query (on pgvector, `hnsw.ef_search`, capped at that setting's maximum of 1000) |
-| **BM25 search**          | `LIMIT recall_budget` in SQL                                                                                                                                     |
-| **Graph traversal**      | Explores up to recall_budget nodes                                                                                                                               |
-| **Temporal spreading**   | Activates up to recall_budget nodes via links                                                                                                                    |
-| **Result consideration** | Top recall_budget × 2 results considered for token filtering                                                                                                     |
+| Pipeline stage | How the recall budget is used |
+|----------------|-------------------------------|
+| **Semantic search** | `LIMIT recall_budget` in SQL, with the ANN candidate list sized to match for the query (on pgvector, `hnsw.ef_search`, capped at that setting's maximum of 1000) |
+| **BM25 search** | `LIMIT recall_budget` in SQL |
+| **Graph traversal** | Explores up to recall_budget nodes |
+| **Temporal spreading** | Activates up to recall_budget nodes via links |
+| **Result consideration** | Top recall_budget × 2 results considered for token filtering |
 
 Reranking pre-filter (300 candidates) is **independent** of budget — it's a separate knob (`HINDSIGHT_API_RERANKER_MAX_CANDIDATES`).
 
@@ -395,11 +386,11 @@ An alternative budget mode scales the recall budget with `max_tokens` instead of
 recall_budget = clamp(max_tokens × ratio, min, max)
 ```
 
-| Budget | Ratio              | Env var override                            |
-| ------ | ------------------ | ------------------------------------------- |
-| low    | 2.5% of max_tokens | `HINDSIGHT_API_RECALL_BUDGET_ADAPTIVE_LOW`  |
-| mid    | 7.5% of max_tokens | `HINDSIGHT_API_RECALL_BUDGET_ADAPTIVE_MID`  |
-| high   | 25% of max_tokens  | `HINDSIGHT_API_RECALL_BUDGET_ADAPTIVE_HIGH` |
+| Budget | Ratio | Env var override |
+|--------|-------|-----------------|
+| low | 2.5% of max_tokens | `HINDSIGHT_API_RECALL_BUDGET_ADAPTIVE_LOW` |
+| mid | 7.5% of max_tokens | `HINDSIGHT_API_RECALL_BUDGET_ADAPTIVE_MID` |
+| high | 25% of max_tokens | `HINDSIGHT_API_RECALL_BUDGET_ADAPTIVE_HIGH` |
 
 The result is clamped to a floor of **20** (`HINDSIGHT_API_RECALL_BUDGET_MIN`) and a ceiling of **2000** (`HINDSIGHT_API_RECALL_BUDGET_MAX`).
 
@@ -412,11 +403,11 @@ Enable with `HINDSIGHT_API_RECALL_BUDGET_FUNCTION=adaptive`.
 
 The graph traversal (link expansion) combines three independent signals additively for each candidate:
 
-| Signal             | Score formula                   | Range      |
-| ------------------ | ------------------------------- | ---------- |
-| **Entity overlap** | tanh(shared_entity_count × 0.5) | [0, ~1.0]  |
-| **Semantic link**  | Precomputed kNN link weight     | [0.7, 1.0] |
-| **Causal link**    | Causal link weight              | [0, 1.0]   |
+| Signal | Score formula | Range |
+|--------|--------------|-------|
+| **Entity overlap** | tanh(shared_entity_count × 0.5) | [0, ~1.0] |
+| **Semantic link** | Precomputed kNN link weight | [0.7, 1.0] |
+| **Causal link** | Causal link weight | [0, 1.0] |
 
 ```
 graph_score = entity_score + semantic_score + causal_score   ∈ [0, 3]

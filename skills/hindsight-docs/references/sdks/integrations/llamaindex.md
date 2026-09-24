@@ -1,3 +1,4 @@
+
 # LlamaIndex
 
 Persistent long-term memory for [LlamaIndex](https://docs.llamaindex.ai/) agents via Hindsight. The `hindsight-llamaindex` package provides two complementary patterns:
@@ -44,27 +45,27 @@ asyncio.run(main())
 
 ### How It Works
 
-| Event                 | What Happens                                                                       |
-| --------------------- | ---------------------------------------------------------------------------------- |
-| Agent receives input  | `aget(input)` recalls relevant memories from Hindsight, prepends as system message |
-| Agent produces output | `aput(message)` retains the message to Hindsight for future recall                 |
-| New session starts    | Previous memories are available via recall; local chat buffer starts empty         |
+| Event | What Happens |
+|-------|-------------|
+| Agent receives input | `aget(input)` recalls relevant memories from Hindsight, prepends as system message |
+| Agent produces output | `aput(message)` retains the message to Hindsight for future recall |
+| New session starts | Previous memories are available via recall; local chat buffer starts empty |
 
 ### `HindsightMemory.from_client()`
 
-| Parameter            | Type        | Default        | Description                                                   |
-| -------------------- | ----------- | -------------- | ------------------------------------------------------------- |
-| `client`             | `Hindsight` | _required_     | Hindsight client instance                                     |
-| `bank_id`            | `str`       | _required_     | Memory bank ID                                                |
-| `mission`            | `str`       | `None`         | Bank mission — auto-creates bank on first use                 |
-| `context`            | `str`       | `"llamaindex"` | Source label for retain operations                            |
-| `budget`             | `str`       | `"mid"`        | Recall budget level                                           |
-| `max_tokens`         | `int`       | `4096`         | Max recall tokens                                             |
-| `tags`               | `list[str]` | `None`         | Tags for retain operations                                    |
-| `recall_tags`        | `list[str]` | `None`         | Tags to filter recall                                         |
-| `recall_tags_match`  | `str`       | `"any"`        | Tag matching mode                                             |
-| `system_prompt`      | `str`       | _(built-in)_   | Template for memory system message. Must contain `{memories}` |
-| `chat_history_limit` | `int`       | `100`          | Max messages in local buffer                                  |
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `client` | `Hindsight` | *required* | Hindsight client instance |
+| `bank_id` | `str` | *required* | Memory bank ID |
+| `mission` | `str` | `None` | Bank mission — auto-creates bank on first use |
+| `context` | `str` | `"llamaindex"` | Source label for retain operations |
+| `budget` | `str` | `"mid"` | Recall budget level |
+| `max_tokens` | `int` | `4096` | Max recall tokens |
+| `tags` | `list[str]` | `None` | Tags for retain operations |
+| `recall_tags` | `list[str]` | `None` | Tags to filter recall |
+| `recall_tags_match` | `str` | `"any"` | Tag matching mode |
+| `system_prompt` | `str` | *(built-in)* | Template for memory system message. Must contain `{memories}` |
+| `chat_history_limit` | `int` | `100` | Max messages in local buffer |
 
 Also available: `HindsightMemory.from_url(hindsight_api_url, bank_id, ...)` for creating without a pre-built client.
 
@@ -150,28 +151,28 @@ tools = create_hindsight_tools(bank_id="user-123")
 
 ### `HindsightToolSpec()`
 
-| Parameter                 | Type             | Default          | Description                                                               |
-| ------------------------- | ---------------- | ---------------- | ------------------------------------------------------------------------- |
-| `bank_id`                 | `str`            | _required_       | Hindsight memory bank to operate on                                       |
-| `client`                  | `Hindsight`      | `None`           | Pre-configured Hindsight client                                           |
-| `hindsight_api_url`       | `str`            | `None`           | API URL (used if no client provided)                                      |
-| `api_key`                 | `str`            | `None`           | API key (used if no client provided)                                      |
-| `budget`                  | `str`            | `None` → `"mid"` | Recall/reflect budget: `low`, `mid`, `high`                               |
-| `max_tokens`              | `int`            | `None` → `4096`  | Max tokens for recall results                                             |
-| `tags`                    | `list[str]`      | `None`           | Tags applied when storing memories                                        |
-| `recall_tags`             | `list[str]`      | `None`           | Tags to filter recall results                                             |
-| `recall_tags_match`       | `str`            | `None` → `"any"` | Tag matching: `any`, `all`, `any_strict`, `all_strict`                    |
-| `retain_metadata`         | `dict[str, str]` | `None`           | Default metadata for retain operations                                    |
-| `retain_document_id`      | `str`            | `None`           | Document ID for retain. Auto-generates `{session}-{timestamp}` if not set |
-| `retain_context`          | `str`            | `"llamaindex"`   | Source label for retain operations                                        |
-| `recall_types`            | `list[str]`      | `None`           | Fact types: `world`, `experience`, `observation`                          |
-| `recall_include_entities` | `bool`           | `False`          | Include entity info in recall results                                     |
-| `reflect_context`         | `str`            | `None`           | Additional context for reflect                                            |
-| `reflect_max_tokens`      | `int`            | `None`           | Max tokens for reflect (defaults to `max_tokens`)                         |
-| `reflect_response_schema` | `dict`           | `None`           | JSON schema to constrain reflect output                                   |
-| `reflect_tags`            | `list[str]`      | `None`           | Tags for reflect (defaults to `recall_tags`)                              |
-| `reflect_tags_match`      | `str`            | `None`           | Tag matching for reflect (defaults to `recall_tags_match`)                |
-| `mission`                 | `str`            | `None`           | Bank mission — auto-creates bank on first use                             |
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `bank_id` | `str` | *required* | Hindsight memory bank to operate on |
+| `client` | `Hindsight` | `None` | Pre-configured Hindsight client |
+| `hindsight_api_url` | `str` | `None` | API URL (used if no client provided) |
+| `api_key` | `str` | `None` | API key (used if no client provided) |
+| `budget` | `str` | `None` → `"mid"` | Recall/reflect budget: `low`, `mid`, `high` |
+| `max_tokens` | `int` | `None` → `4096` | Max tokens for recall results |
+| `tags` | `list[str]` | `None` | Tags applied when storing memories |
+| `recall_tags` | `list[str]` | `None` | Tags to filter recall results |
+| `recall_tags_match` | `str` | `None` → `"any"` | Tag matching: `any`, `all`, `any_strict`, `all_strict` |
+| `retain_metadata` | `dict[str, str]` | `None` | Default metadata for retain operations |
+| `retain_document_id` | `str` | `None` | Document ID for retain. Auto-generates `{session}-{timestamp}` if not set |
+| `retain_context` | `str` | `"llamaindex"` | Source label for retain operations |
+| `recall_types` | `list[str]` | `None` | Fact types: `world`, `experience`, `observation` |
+| `recall_include_entities` | `bool` | `False` | Include entity info in recall results |
+| `reflect_context` | `str` | `None` | Additional context for reflect |
+| `reflect_max_tokens` | `int` | `None` | Max tokens for reflect (defaults to `max_tokens`) |
+| `reflect_response_schema` | `dict` | `None` | JSON schema to constrain reflect output |
+| `reflect_tags` | `list[str]` | `None` | Tags for reflect (defaults to `recall_tags`) |
+| `reflect_tags_match` | `str` | `None` | Tag matching for reflect (defaults to `recall_tags_match`) |
+| `mission` | `str` | `None` | Bank mission — auto-creates bank on first use |
 
 ---
 

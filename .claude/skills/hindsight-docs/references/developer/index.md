@@ -1,3 +1,5 @@
+
+
 # Overview
 
 ## Why Hindsight?
@@ -50,12 +52,12 @@ Hindsight solves these problems with a memory system designed specifically for A
 
 Hindsight organizes knowledge into a hierarchy of facts and consolidated knowledge:
 
-| Type                | What it stores                                  | Example                                                                      |
-| ------------------- | ----------------------------------------------- | ---------------------------------------------------------------------------- |
-| **Mental Model**    | User-curated summaries for common queries       | "Team communication best practices"                                          |
-| **Observation**     | Automatically consolidated knowledge from facts | "User was a React enthusiast but has now switched to Vue" (captures history) |
-| **World Fact**      | Objective facts received                        | "Alice works at Google"                                                      |
-| **Experience Fact** | Bank's own actions and interactions             | "I recommended Python to Bob"                                                |
+| Type | What it stores | Example |
+|------|----------------|---------|
+| **Mental Model** | User-curated summaries for common queries | "Team communication best practices" |
+| **Observation** | Automatically consolidated knowledge from facts | "User was a React enthusiast but has now switched to Vue" (captures history) |
+| **World Fact** | Objective facts received | "Alice works at Google" |
+| **Experience Fact** | Bank's own actions and interactions | "I recommended Python to Bob" |
 
 During reflect, the agent checks sources in priority order: **Mental Models → Observations → Raw Facts**.
 
@@ -75,12 +77,12 @@ Four search strategies run in parallel:
   7. Results are packed best-first until max_tokens is used up. Only the memory text counts toward the budget.
   8. The agent gets a short, ranked list it can put straight into its prompt.
 
-| Strategy           | Best for                               |
-| ------------------ | -------------------------------------- |
-| **Semantic**       | Conceptual similarity, paraphrasing    |
-| **Keyword (BM25)** | Names, technical terms, exact matches  |
-| **Graph**          | Related entities, indirect connections |
-| **Temporal**       | "last spring", "in June", time ranges  |
+| Strategy | Best for |
+|----------|----------|
+| **Semantic** | Conceptual similarity, paraphrasing |
+| **Keyword (BM25)** | Names, technical terms, exact matches |
+| **Graph** | Related entities, indirect connections |
+| **Temporal** | "last spring", "in June", time ranges |
 
 ### Observation Consolidation
 
@@ -95,11 +97,11 @@ After memories are retained, Hindsight automatically consolidates related facts 
 
 Memory banks can be configured to shape how the agent reasons during `reflect`:
 
-| Configuration   | Purpose                                    | Example                                                                                |
-| --------------- | ------------------------------------------ | -------------------------------------------------------------------------------------- |
-| **Mission**     | Natural language identity for the bank     | "I am a research assistant specializing in ML. I prefer simplicity over cutting-edge." |
-| **Directives**  | Hard rules the agent must follow           | "Never recommend specific stocks", "Always cite sources"                               |
-| **Disposition** | Soft traits that influence reasoning style | Skepticism, literalism, empathy (1-5 scale)                                            |
+| Configuration | Purpose | Example |
+|---------------|---------|---------|
+| **Mission** | Natural language identity for the bank | "I am a research assistant specializing in ML. I prefer simplicity over cutting-edge." |
+| **Directives** | Hard rules the agent must follow | "Never recommend specific stocks", "Always cite sources" |
+| **Disposition** | Soft traits that influence reasoning style | Skepticism, literalism, empathy (1-5 scale) |
 
 The **mission** tells Hindsight what knowledge to prioritize and provides context for reasoning. **Directives** are guardrails and compliance rules that must never be violated. **Disposition traits** subtly influence interpretation style.
 
@@ -116,18 +118,15 @@ Browse all supported integrations in the Integrations Hub.
 ## Next Steps
 
 ### Getting Started
-
 - [**Quick Start**](api/quickstart.md) — Install and get up and running in 60 seconds
 - [**RAG vs Hindsight**](rag-vs-hindsight.md) — See how Hindsight differs from traditional RAG with real examples
 
 ### Core Concepts
-
 - [**Retain**](retain.md) — How memories are stored with multi-dimensional facts
 - [**Recall**](retrieval.md) — How TEMPR's 4-way search retrieves memories
 - [**Reflect**](reflect.md) — How mission, directives, and disposition shape reasoning
 
 ### API Methods
-
 - [**Retain**](api/retain.md) — Store information in memory banks
 - [**Recall**](api/recall.md) — Search and retrieve memories
 - [**Reflect**](api/reflect.md) — Agentic reasoning with memory
@@ -137,5 +136,4 @@ Browse all supported integrations in the Integrations Hub.
 - [**Operations**](api/operations.md) — Monitor async tasks
 
 ### Deployment
-
 - [**Server Setup**](installation.md) — Deploy with Docker Compose, Helm, or pip

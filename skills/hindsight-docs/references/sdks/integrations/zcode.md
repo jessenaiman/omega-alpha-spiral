@@ -1,3 +1,4 @@
+
 # ZCode
 
 Persistent memory for [ZCode](https://zcode.z.ai) — Z.ai's GLM desktop coding agent — using [Hindsight](https://vectorize.io/hindsight). ZCode embeds the Claude Code agent runtime, so Python hook scripts automatically recall relevant context before each prompt and retain conversations after each turn. No MCP server, no changes to your ZCode workflow.
@@ -7,9 +8,8 @@ Persistent memory for [ZCode](https://zcode.z.ai) — Z.ai's GLM desktop coding 
 ## Quick Start
 
 > **💡 Recommended: Hindsight Cloud**
-
+>
 [Sign up free](https://ui.hindsight.vectorize.io/signup) for a Hindsight Cloud API key — no self-hosting, no local daemon to manage.
-
 ```bash
 # Install the CLI
 pip install hindsight-zcode
@@ -66,11 +66,11 @@ When installed this way, ZCode registers the hooks automatically (no config-file
 
 ZCode embeds the Claude Code agent runtime and reads the standard Claude Code hook schema from its own config namespace, `~/.zcode/cli/config.json` (with `hooks.enabled: true`). The plugin wires three hook events:
 
-| Hook               | Event              | Purpose                                                         |
-| ------------------ | ------------------ | --------------------------------------------------------------- |
-| `session_start.py` | `SessionStart`     | Warm up — verify Hindsight is reachable                         |
-| `recall.py`        | `UserPromptSubmit` | **Auto-recall** — query memories, inject as `additionalContext` |
-| `retain.py`        | `Stop`             | **Auto-retain** — assemble the turn, POST to Hindsight          |
+| Hook | Event | Purpose |
+|------|-------|---------|
+| `session_start.py` | `SessionStart` | Warm up — verify Hindsight is reachable |
+| `recall.py` | `UserPromptSubmit` | **Auto-recall** — query memories, inject as `additionalContext` |
+| `retain.py` | `Stop` | **Auto-retain** — assemble the turn, POST to Hindsight |
 
 On `UserPromptSubmit`, the hook reads the prompt, queries Hindsight for the most relevant memories, and emits a context block that ZCode injects before sending the turn to the model:
 
@@ -124,41 +124,41 @@ Default config ships in `~/.zcode/hooks/hindsight/settings.json`. For personal o
 
 ### Connection
 
-| Setting             | Env Var               | Default | Description                                                 |
-| ------------------- | --------------------- | ------- | ----------------------------------------------------------- |
-| `hindsightApiUrl`   | `HINDSIGHT_API_URL`   | `""`    | URL of the Hindsight API server. Empty = local daemon.      |
-| `hindsightApiToken` | `HINDSIGHT_API_TOKEN` | `null`  | API token for authentication. Required for Hindsight Cloud. |
-| `apiPort`           | `HINDSIGHT_API_PORT`  | `9077`  | Port for the local `hindsight-embed` daemon.                |
+| Setting | Env Var | Default | Description |
+|---------|---------|---------|-------------|
+| `hindsightApiUrl` | `HINDSIGHT_API_URL` | `""` | URL of the Hindsight API server. Empty = local daemon. |
+| `hindsightApiToken` | `HINDSIGHT_API_TOKEN` | `null` | API token for authentication. Required for Hindsight Cloud. |
+| `apiPort` | `HINDSIGHT_API_PORT` | `9077` | Port for the local `hindsight-embed` daemon. |
 
 ---
 
 ### Memory Bank
 
-| Setting         | Env Var                     | Default                 | Description                                                                                                    |
-| --------------- | --------------------------- | ----------------------- | -------------------------------------------------------------------------------------------------------------- |
-| `bankId`        | `HINDSIGHT_BANK_ID`         | `"zcode"`               | The bank to read from and write to. All sessions share this bank unless `dynamicBankId` is enabled.            |
-| `bankMission`   | `HINDSIGHT_BANK_MISSION`    | coding assistant prompt | Describes the agent's purpose. Sent when creating or updating the bank.                                        |
-| `dynamicBankId` | `HINDSIGHT_DYNAMIC_BANK_ID` | `false`                 | When `true`, derives a unique bank ID from `dynamicBankGranularity` fields — useful for per-project isolation. |
-| `agentName`     | `HINDSIGHT_AGENT_NAME`      | `"zcode"`               | Agent name used in dynamic bank ID derivation.                                                                 |
+| Setting | Env Var | Default | Description |
+|---------|---------|---------|-------------|
+| `bankId` | `HINDSIGHT_BANK_ID` | `"zcode"` | The bank to read from and write to. All sessions share this bank unless `dynamicBankId` is enabled. |
+| `bankMission` | `HINDSIGHT_BANK_MISSION` | coding assistant prompt | Describes the agent's purpose. Sent when creating or updating the bank. |
+| `dynamicBankId` | `HINDSIGHT_DYNAMIC_BANK_ID` | `false` | When `true`, derives a unique bank ID from `dynamicBankGranularity` fields — useful for per-project isolation. |
+| `agentName` | `HINDSIGHT_AGENT_NAME` | `"zcode"` | Agent name used in dynamic bank ID derivation. |
 
 ---
 
 ### Auto-Recall
 
-| Setting           | Env Var                       | Default | Description                                                            |
-| ----------------- | ----------------------------- | ------- | ---------------------------------------------------------------------- |
-| `autoRecall`      | `HINDSIGHT_AUTO_RECALL`       | `true`  | Master switch for auto-recall.                                         |
-| `recallBudget`    | `HINDSIGHT_RECALL_BUDGET`     | `"mid"` | Search depth: `"low"` (fast), `"mid"` (balanced), `"high"` (thorough). |
-| `recallMaxTokens` | `HINDSIGHT_RECALL_MAX_TOKENS` | `1024`  | Token budget for the injected memory block.                            |
+| Setting | Env Var | Default | Description |
+|---------|---------|---------|-------------|
+| `autoRecall` | `HINDSIGHT_AUTO_RECALL` | `true` | Master switch for auto-recall. |
+| `recallBudget` | `HINDSIGHT_RECALL_BUDGET` | `"mid"` | Search depth: `"low"` (fast), `"mid"` (balanced), `"high"` (thorough). |
+| `recallMaxTokens` | `HINDSIGHT_RECALL_MAX_TOKENS` | `1024` | Token budget for the injected memory block. |
 
 ---
 
 ### Auto-Retain
 
-| Setting             | Env Var                          | Default | Description                                                    |
-| ------------------- | -------------------------------- | ------- | -------------------------------------------------------------- |
-| `autoRetain`        | `HINDSIGHT_AUTO_RETAIN`          | `true`  | Master switch for auto-retain.                                 |
-| `retainEveryNTurns` | `HINDSIGHT_RETAIN_EVERY_N_TURNS` | `1`     | Retain every N turns. Default `1` stores every turn on `Stop`. |
+| Setting | Env Var | Default | Description |
+|---------|---------|---------|-------------|
+| `autoRetain` | `HINDSIGHT_AUTO_RETAIN` | `true` | Master switch for auto-retain. |
+| `retainEveryNTurns` | `HINDSIGHT_RETAIN_EVERY_N_TURNS` | `1` | Retain every N turns. Default `1` stores every turn on `Stop`. |
 
 ## Relationship to ZCode's built-in memory
 

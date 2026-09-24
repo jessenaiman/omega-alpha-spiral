@@ -1,3 +1,4 @@
+
 # AutoGen
 
 Persistent long-term memory for [AutoGen](https://microsoft.github.io/autogen/) agents via Hindsight. Provides `FunctionTool` instances that plug directly into AutoGen's `AssistantAgent`.
@@ -64,7 +65,7 @@ asyncio.run(main())
 ```
 
 > **💡 Jupyter Notebooks**
-
+>
 If you're running in a Jupyter notebook, you don't need `asyncio.run()` — just use `await` directly in cells since the notebook already has an active event loop.
 The agent gets three tools it can call:
 
@@ -176,41 +177,41 @@ shared_tools = create_hindsight_tools(
 
 ### `create_hindsight_tools()`
 
-| Parameter                 | Default    | Description                                                         |
-| ------------------------- | ---------- | ------------------------------------------------------------------- |
-| `bank_id`                 | _required_ | Hindsight memory bank ID                                            |
-| `client`                  | `None`     | Pre-configured Hindsight client                                     |
-| `hindsight_api_url`       | `None`     | API URL (used if no client provided)                                |
-| `api_key`                 | `None`     | API key (used if no client provided)                                |
-| `budget`                  | `"mid"`    | Recall/reflect budget level (low/mid/high)                          |
-| `max_tokens`              | `4096`     | Maximum tokens for recall results                                   |
-| `tags`                    | `None`     | Tags applied when storing memories                                  |
-| `recall_tags`             | `None`     | Tags to filter when searching                                       |
-| `recall_tags_match`       | `"any"`    | Tag matching mode (any/all/any\_strict/all\_strict)                 |
-| `retain_metadata`         | `None`     | Default metadata dict for retain operations                         |
-| `retain_document_id`      | `None`     | Default document\_id for retain (groups/upserts memories)           |
-| `recall_types`            | `None`     | Fact types to filter (world, experience, observation)               |
-| `recall_include_entities` | `False`    | Include entity information in recall results                        |
-| `reflect_context`         | `None`     | Additional context for reflect operations                           |
-| `reflect_max_tokens`      | `None`     | Max tokens for reflect results (defaults to `max_tokens`)           |
-| `reflect_response_schema` | `None`     | JSON schema to constrain reflect output format                      |
-| `reflect_tags`            | `None`     | Tags to filter memories used in reflect (defaults to `recall_tags`) |
-| `reflect_tags_match`      | `None`     | Tag matching for reflect (defaults to `recall_tags_match`)          |
-| `include_retain`          | `True`     | Include the retain (store) tool                                     |
-| `include_recall`          | `True`     | Include the recall (search) tool                                    |
-| `include_reflect`         | `True`     | Include the reflect (synthesize) tool                               |
+| Parameter | Default | Description |
+|---|---|---|
+| `bank_id` | *required* | Hindsight memory bank ID |
+| `client` | `None` | Pre-configured Hindsight client |
+| `hindsight_api_url` | `None` | API URL (used if no client provided) |
+| `api_key` | `None` | API key (used if no client provided) |
+| `budget` | `"mid"` | Recall/reflect budget level (low/mid/high) |
+| `max_tokens` | `4096` | Maximum tokens for recall results |
+| `tags` | `None` | Tags applied when storing memories |
+| `recall_tags` | `None` | Tags to filter when searching |
+| `recall_tags_match` | `"any"` | Tag matching mode (any/all/any\_strict/all\_strict) |
+| `retain_metadata` | `None` | Default metadata dict for retain operations |
+| `retain_document_id` | `None` | Default document\_id for retain (groups/upserts memories) |
+| `recall_types` | `None` | Fact types to filter (world, experience, observation) |
+| `recall_include_entities` | `False` | Include entity information in recall results |
+| `reflect_context` | `None` | Additional context for reflect operations |
+| `reflect_max_tokens` | `None` | Max tokens for reflect results (defaults to `max_tokens`) |
+| `reflect_response_schema` | `None` | JSON schema to constrain reflect output format |
+| `reflect_tags` | `None` | Tags to filter memories used in reflect (defaults to `recall_tags`) |
+| `reflect_tags_match` | `None` | Tag matching for reflect (defaults to `recall_tags_match`) |
+| `include_retain` | `True` | Include the retain (store) tool |
+| `include_recall` | `True` | Include the recall (search) tool |
+| `include_reflect` | `True` | Include the reflect (synthesize) tool |
 
 ### `configure()`
 
-| Parameter           | Default                 | Description                        |
-| ------------------- | ----------------------- | ---------------------------------- |
-| `hindsight_api_url` | Production API          | Hindsight API URL                  |
-| `api_key`           | `HINDSIGHT_API_KEY` env | API key for authentication         |
-| `budget`            | `"mid"`                 | Default recall budget level        |
-| `max_tokens`        | `4096`                  | Default max tokens for recall      |
-| `tags`              | `None`                  | Default tags for retain operations |
-| `recall_tags`       | `None`                  | Default tags to filter recall      |
-| `recall_tags_match` | `"any"`                 | Default tag matching mode          |
+| Parameter | Default | Description |
+|---|---|---|
+| `hindsight_api_url` | Production API | Hindsight API URL |
+| `api_key` | `HINDSIGHT_API_KEY` env | API key for authentication |
+| `budget` | `"mid"` | Default recall budget level |
+| `max_tokens` | `4096` | Default max tokens for recall |
+| `tags` | `None` | Default tags for retain operations |
+| `recall_tags` | `None` | Default tags to filter recall |
+| `recall_tags_match` | `"any"` | Default tag matching mode |
 
 ## Requirements
 

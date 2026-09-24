@@ -1,11 +1,11 @@
+
 # Grok Build
 
 Biomimetic long-term memory for [Grok Build](https://x.ai/cli) using [Hindsight](https://vectorize.io/hindsight). Automatically captures conversations and recalls relevant context across sessions — no changes to your workflow required.
 
 > **💡 Powered by the Claude Code plugin**
-
+>
 Grok Build natively reads Claude Code plugin format — hooks, MCP servers, skills, and marketplace metadata all work without modification. This integration uses the same [`hindsight-memory` plugin](claude-code.md) that powers Claude Code. All features, configuration options, and knowledge tools are fully available in Grok Build.
-
 ## Quick Start
 
 Grok Build reads Claude Code plugins natively, so installation uses the standard Claude Code commands. Grok Build will discover and activate the plugin automatically.
@@ -44,20 +44,19 @@ That's it! The plugin will automatically start capturing and recalling memories.
 
 The plugin hooks into Grok Build's lifecycle events:
 
-| Component          | Trigger                 | Purpose                                                                                 |
-| ------------------ | ----------------------- | --------------------------------------------------------------------------------------- |
-| `session_start.py` | `SessionStart` hook     | Health check — verify Hindsight is reachable                                            |
-| `recall.py`        | `UserPromptSubmit` hook | **Auto-recall** — query memories, inject as `additionalContext`                         |
-| `retain.py`        | `Stop` hook             | **Auto-retain** — extract transcript, POST to Hindsight (async)                         |
-| `session_end.py`   | `SessionEnd` hook       | Cleanup — stop auto-managed daemon if started                                           |
-| `mcp_server.py`    | MCP server              | Exposes `agent_knowledge_*` tools — list/get/create/update/delete pages, recall, ingest |
+| Component | Trigger | Purpose |
+|-----------|---------|---------|
+| `session_start.py` | `SessionStart` hook | Health check — verify Hindsight is reachable |
+| `recall.py` | `UserPromptSubmit` hook | **Auto-recall** — query memories, inject as `additionalContext` |
+| `retain.py` | `Stop` hook | **Auto-retain** — extract transcript, POST to Hindsight (async) |
+| `session_end.py` | `SessionEnd` hook | Cleanup — stop auto-managed daemon if started |
+| `mcp_server.py` | MCP server | Exposes `agent_knowledge_*` tools — list/get/create/update/delete pages, recall, ingest |
 
 ## Configuration
 
 The plugin reads configuration from `~/.hindsight/claude-code.json` — the same file used by Claude Code, regardless of which host (Grok Build or Claude Code) is running the plugin.
 
 **Loading order** (later entries win):
-
 1. Built-in defaults
 2. Plugin `settings.json` (ships with the plugin)
 3. User config (`~/.hindsight/claude-code.json`)

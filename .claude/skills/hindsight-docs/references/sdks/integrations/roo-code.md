@@ -1,3 +1,4 @@
+
 # Roo Code
 
 Persistent long-term memory for [Roo Code](https://github.com/RooVetGit/Roo-Code) via [Hindsight](https://vectorize.io/hindsight). A one-command installer registers Hindsight's MCP server and injects custom rules that teach Roo to recall context before tasks and retain learnings after.
@@ -7,9 +8,8 @@ Persistent long-term memory for [Roo Code](https://github.com/RooVetGit/Roo-Code
 ## Quick Start
 
 > **💡 Hindsight Cloud (recommended)**
-
+>
 [Sign up free](https://ui.hindsight.vectorize.io/signup) — get an API key instantly, no infrastructure to run.
-
 ```bash
 # Install the CLI
 pip install hindsight-roo-code
@@ -50,7 +50,6 @@ Task ends
 ```
 
 The installer writes:
-
 - **`.roo/mcp.json`** — registers Hindsight's `/mcp` endpoint as an MCP server, with `recall` and `retain` auto-approved
 - **`.roo/rules/hindsight-memory.md`** — instructions injected into every Roo system prompt
 
@@ -98,10 +97,10 @@ To update the API URL after installation, re-run the installer or edit `.roo/mcp
 
 Hindsight exposes two tools via its `/mcp` endpoint:
 
-| Tool     | Description                                   |
-| -------- | --------------------------------------------- |
+| Tool | Description |
+|------|-------------|
 | `recall` | Search memory for context relevant to a query |
-| `retain` | Store content in memory immediately           |
+| `retain` | Store content in memory immediately |
 
 The rules file instructs Roo to call these automatically at task start and end. Agents can also call them explicitly mid-task.
 
@@ -119,7 +118,6 @@ A running Hindsight instance:
 **Hindsight Cloud (recommended):** [Sign up](https://ui.hindsight.vectorize.io/signup) — no self-hosting required.
 
 **Self-hosted:**
-
 ```bash
 pip install hindsight-all
 export HINDSIGHT_API_LLM_API_KEY=your-api-key

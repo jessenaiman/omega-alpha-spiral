@@ -1,3 +1,4 @@
+
 # Ingest Data
 
 Store documents, conversations, and raw content into Hindsight to automatically extract and create memories.
@@ -7,13 +8,11 @@ When you **retain** content, Hindsight doesn't just store the raw text—it inte
 {/* Import raw source files */}
 
 > **ℹ️ How Retain Works**
-
+>
 Learn about fact extraction, entity resolution, and graph construction in the [Retain Architecture](../retain.md) guide.
-
 > **💡 Prerequisites**
-
+>
 Make sure you've completed the [Quick Start](./quickstart) to install the client and start the server.
-
 ## Store a Document
 
 A single retain call accepts one or more **items**. Each item is a piece of raw content — a conversation, a document, a note — that Hindsight will analyze and decompose into one or many memories. The content itself is never stored verbatim; what gets stored are the structured facts the LLM extracts from it.
@@ -30,7 +29,7 @@ client.retain(
 ### Node.js
 
 ```javascript
-await client.retain("my-bank", "Alice works at Google as a software engineer");
+await client.retain('my-bank', 'Alice works at Google as a software engineer');
 ```
 
 ### CLI
@@ -84,17 +83,17 @@ client.retain(
 // Format each message as "Name (timestamp): text" so the LLM can attribute
 // facts to the right person and resolve temporal references across the thread.
 const conversation = [
-  "Alice (2024-03-15T09:00:00Z): Hi Bob! Did you end up going to the doctor last week?",
-  "Bob (2024-03-15T09:01:00Z): Yes, finally. Turns out I have a mild peanut allergy.",
-  "Alice (2024-03-15T09:02:00Z): Oh no! Are you okay?",
-  "Bob (2024-03-15T09:03:00Z): Yeah, nothing serious. Just need to carry an antihistamine.",
-  "Alice (2024-03-15T09:04:00Z): Good to know. We'll avoid peanuts at the team lunch.",
-].join("\n");
+    'Alice (2024-03-15T09:00:00Z): Hi Bob! Did you end up going to the doctor last week?',
+    'Bob (2024-03-15T09:01:00Z): Yes, finally. Turns out I have a mild peanut allergy.',
+    'Alice (2024-03-15T09:02:00Z): Oh no! Are you okay?',
+    'Bob (2024-03-15T09:03:00Z): Yeah, nothing serious. Just need to carry an antihistamine.',
+    'Alice (2024-03-15T09:04:00Z): Good to know. We\'ll avoid peanuts at the team lunch.',
+].join('\n');
 
-await client.retain("my-bank", conversation, {
-  context: "team chat",
-  timestamp: "2024-03-15T09:04:00Z",
-  documentId: "chat-2024-03-15-alice-bob",
+await client.retain('my-bank', conversation, {
+    context: 'team chat',
+    timestamp: '2024-03-15T09:04:00Z',
+    documentId: 'chat-2024-03-15-alice-bob',
 });
 ```
 
@@ -155,11 +154,11 @@ The raw text to store. This is the only required field. Hindsight chunks the con
 
 When the event described in the content actually occurred. Three forms are accepted:
 
-| Value                                           | Behaviour                                                                                                                                                              |
-| ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Omitted / `null`                                | Defaults to the current time at ingestion.                                                                                                                             |
-| ISO 8601 string (e.g. `"2024-01-15T10:30:00Z"`) | Uses the provided datetime.                                                                                                                                            |
-| `"unset"`                                       | Stores the content **without any timestamp**. Use this for timeless material such as reference documents, books, or fictional content where no real event time exists. |
+| Value | Behaviour |
+|-------|-----------|
+| Omitted / `null` | Defaults to the current time at ingestion. |
+| ISO 8601 string (e.g. `"2024-01-15T10:30:00Z"`) | Uses the provided datetime. |
+| `"unset"` | Stores the content **without any timestamp**. Use this for timeless material such as reference documents, books, or fictional content where no real event time exists. |
 
 The timestamp is injected into the LLM fact-extraction prompt so the model can resolve relative temporal references in the content — for example, if the content says "last Monday", the model uses the provided timestamp as the anchor to pin down the actual date. When `"unset"` is passed the prompt shows `Event Date: Unknown`, allowing the model to correctly return `N/A` for the `when` field of every extracted fact. Providing a real timestamp also enables temporal recall queries like "What happened last spring?" to work correctly.
 
@@ -183,9 +182,9 @@ client.retain(
 ### Node.js
 
 ```javascript
-await client.retain("my-bank", "Alice got promoted to senior engineer", {
-  context: "career update",
-  timestamp: "2024-03-15T10:00:00Z",
+await client.retain('my-bank', 'Alice got promoted to senior engineer', {
+    context: 'career update',
+    timestamp: '2024-03-15T10:00:00Z'
 });
 ```
 
@@ -233,10 +232,10 @@ If you omit `document_id`, Hindsight assigns a random UUID per request, so re-in
 
 Controls how Hindsight handles an existing document when you retain with a `document_id` that already exists.
 
-| Value                   | Behaviour                                                                                                                                                                                               |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `"replace"` _(default)_ | Deletes the old document and all its memories, then processes the new content from scratch. This is the standard upsert described above.                                                                |
-| `"append"`              | Concatenates the new content onto the existing document text and reprocesses the combined document. Delta retain automatically skips unchanged chunks, so only the new portion triggers LLM extraction. |
+| Value | Behaviour |
+|-------|-----------|
+| `"replace"` *(default)* | Deletes the old document and all its memories, then processes the new content from scratch. This is the standard upsert described above. |
+| `"append"` | Concatenates the new content onto the existing document text and reprocesses the combined document. Delta retain automatically skips unchanged chunks, so only the new portion triggers LLM extraction. |
 
 Append mode requires a `document_id` — without one there is no existing document to append to.
 
@@ -283,24 +282,24 @@ See [Recall API](./recall#tags) for filtering by tags during retrieval.
 Controls which [observations](../observations) this memory contributes to during consolidation. Each scope runs an independent pass, creating or updating observations tagged with only that scope's tags.
 
 > **ℹ️ Scope isolation**
-
+>
 During consolidation, Hindsight uses `all_strict` matching to find existing observations to update — only observations whose tags exactly match the current scope are considered. This keeps scopes isolated: a memory consolidated under `["student:alice"]` will never bleed into an observation tagged `["student:alice", "teacher:bob"]`.
 The examples below use a lesson transcript retained with `tags: ["student:alice", "teacher:bob", "session-id:s1"]`.
 
-#### combined _(default)_
+#### combined *(default)*
 
 One consolidation pass using all tags together. The resulting observation is tagged with the full set.
 
 - Observations created: `["student:alice", "teacher:bob", "session-id:s1"]`
-- ✗ _"What does Alice struggle with across all her sessions?"_ — no match, because no observation was ever built for `student:alice` alone
-- ✗ _"How does Bob teach?"_ — no match for `teacher:bob` alone
-- ✓ _"What happened in session s1 with Alice and Bob?"_ — exact match
+- ✗ *"What does Alice struggle with across all her sessions?"* — no match, because no observation was ever built for `student:alice` alone
+- ✗ *"How does Bob teach?"* — no match for `teacher:bob` alone
+- ✓ *"What happened in session s1 with Alice and Bob?"* — exact match
 
 **Use when** the memory is meaningful only as a whole and you never need to query any single tag in isolation.
 
 #### shared
 
-One consolidation pass over a single global, **untagged** scope. The memory's own tags are ignored for observation scoping (they stay on the source facts for recall filtering), so memories with _different_ tags all consolidate into the **same** observation.
+One consolidation pass over a single global, **untagged** scope. The memory's own tags are ignored for observation scoping (they stay on the source facts for recall filtering), so memories with *different* tags all consolidate into the **same** observation.
 
 - Observations created: one untagged observation (`[]`)
 - ✓ Untagged observations match every recall regardless of tag filter
@@ -309,19 +308,18 @@ One consolidation pass over a single global, **untagged** scope. The memory's ow
 **Use when** your tags are per-call provenance (e.g. session ids) that you want for recall filtering and debugging but not as a consolidation boundary — keep the tag on `tags` and set `observation_scopes: "shared"`.
 
 > **🚨 `shared` vs `[[]]` vs `[]`**
-
-`shared` is equivalent to the explicit scope `[[]]` — a list containing one empty scope. Do **not** confuse it with `[]` (an empty list), which declares _zero_ scopes and silently falls back to `combined`.
-
+>
+`shared` is equivalent to the explicit scope `[[]]` — a list containing one empty scope. Do **not** confuse it with `[]` (an empty list), which declares *zero* scopes and silently falls back to `combined`.
 #### per_tag
 
 One consolidation pass per individual tag. Each tag gets its own isolated observation that grows with every new memory sharing that tag.
 
 - Observations created: `["student:alice"]` · `["teacher:bob"]` · `["session-id:s1"]`
-- ✓ _"What does Alice struggle with across all her sessions?"_
-- ✓ _"How does Bob teach?"_
-- ✓ _"What happened in session s1?"_
-- ✗ _"How does Alice perform specifically with Bob?"_ — no observation for the `["student:alice", "teacher:bob"]` combination
-- ✗ _"How does Bob teach in online sessions?"_ — no observation for `["teacher:bob", "session-id:s1"]`
+- ✓ *"What does Alice struggle with across all her sessions?"*
+- ✓ *"How does Bob teach?"*
+- ✓ *"What happened in session s1?"*
+- ✗ *"How does Alice perform specifically with Bob?"* — no observation for the `["student:alice", "teacher:bob"]` combination
+- ✗ *"How does Bob teach in online sessions?"* — no observation for `["teacher:bob", "session-id:s1"]`
 
 **Use when** content involves multiple tags that each represent an independent subject — the most common choice for multi-party content like conversations, lessons, or support sessions.
 
@@ -331,7 +329,7 @@ One pass per subset of tags — singles, pairs, triples, and so on. For 3 tags t
 
 - Observations created: all `"per_tag"` scopes above, plus `["student:alice", "teacher:bob"]` · `["student:alice", "session-id:s1"]` · `["teacher:bob", "session-id:s1"]` · `["student:alice", "teacher:bob", "session-id:s1"]`
 - ✓ All questions from `"per_tag"` above
-- ✓ _"How does Alice perform specifically with Bob?"_ — matched by `["student:alice", "teacher:bob"]`
+- ✓ *"How does Alice perform specifically with Bob?"* — matched by `["student:alice", "teacher:bob"]`
 
 **Use when** you need observations at every granularity — per tag, per pair, per group.
 
@@ -344,10 +342,10 @@ Pass an explicit list of tag sets. Each inner list is one scope.
 ```
 
 - Observations created: exactly those three scopes — nothing more
-- ✓ _"What does Alice struggle with?"_
-- ✓ _"How does Bob teach?"_
-- ✓ _"How does Bob teach in session s1 specifically?"_
-- ✗ _"What happened in session s1 regardless of teacher?"_ — `["session-id:s1"]` alone was not included
+- ✓ *"What does Alice struggle with?"*
+- ✓ *"How does Bob teach?"*
+- ✓ *"How does Bob teach in session s1 specifically?"*
+- ✗ *"What happened in session s1 regardless of teacher?"* — `["session-id:s1"]` alone was not included
 
 **Use when** you know exactly which combinations are meaningful and want to avoid unnecessary passes.
 
@@ -383,22 +381,10 @@ client.retain_batch(
 ### Node.js
 
 ```javascript
-await client.retainBatch("my-bank", [
-  {
-    content: "Alice works at Google",
-    context: "career",
-    document_id: "conversation_001_msg_1",
-  },
-  {
-    content: "Bob is a data scientist at Meta",
-    context: "career",
-    document_id: "conversation_001_msg_2",
-  },
-  {
-    content: "Alice and Bob are friends",
-    context: "relationship",
-    document_id: "conversation_001_msg_3",
-  },
+await client.retainBatch('my-bank', [
+    { content: 'Alice works at Google', context: 'career', document_id: 'conversation_001_msg_1' },
+    { content: 'Bob is a data scientist at Meta', context: 'career', document_id: 'conversation_001_msg_2' },
+    { content: 'Alice and Bob are friends', context: 'relationship', document_id: 'conversation_001_msg_3' }
 ]);
 ```
 
@@ -459,18 +445,16 @@ print(result.operation_ids)  # Track processing via the operations endpoint
 ```javascript
 // Upload files and retain their contents as memories.
 // Supports: PDF, DOCX, PPTX, XLSX, images (OCR), audio (transcription), and text formats.
-import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
-import { dirname, join } from "node:path";
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const pdfBytes = readFileSync(join(__dirname, "sample.pdf"));
-const result = await client.retainFiles(
-  "my-bank",
-  [new File([pdfBytes], "sample.pdf")],
-  { context: "quarterly report" }
-);
-console.log(result.operation_ids); // Track processing via the operations endpoint
+const pdfBytes = readFileSync(join(__dirname, 'sample.pdf'));
+const result = await client.retainFiles('my-bank', [
+    new File([pdfBytes], 'sample.pdf'),
+], { context: 'quarterly report' });
+console.log(result.operation_ids);  // Track processing via the operations endpoint
 ```
 
 ### CLI
@@ -531,25 +515,16 @@ print(result.operation_ids)  # One operation ID per file
 
 ```javascript
 // Upload multiple files with per-file metadata (up to 10 files per request)
-const batchResult = await client.retainFiles(
-  "my-bank",
-  [new File([pdfBytes], "report.pdf"), new File([pdfBytes], "notes.pdf")],
-  {
+const batchResult = await client.retainFiles('my-bank', [
+    new File([pdfBytes], 'report.pdf'),
+    new File([pdfBytes], 'notes.pdf'),
+], {
     filesMetadata: [
-      {
-        context: "quarterly report",
-        document_id: "q1-report",
-        tags: ["project:alpha"],
-      },
-      {
-        context: "meeting notes",
-        document_id: "q1-notes",
-        tags: ["project:alpha"],
-      },
-    ],
-  }
-);
-console.log(batchResult.operation_ids); // One operation ID per file
+        { context: 'quarterly report', document_id: 'q1-report', tags: ['project:alpha'] },
+        { context: 'meeting notes', document_id: 'q1-notes', tags: ['project:alpha'] },
+    ]
+});
+console.log(batchResult.operation_ids);  // One operation ID per file
 ```
 
 ### CLI
@@ -584,7 +559,7 @@ fmt.Println("Operation IDs:", fileResp.GetOperationIds()) // Track processing vi
 ```
 
 > **ℹ️ File Storage**
-
+>
 Uploaded files are stored server-side (PostgreSQL by default, or S3/GCS/Azure for production). Configure storage via `HINDSIGHT_API_FILE_STORAGE_TYPE`. See [Configuration](../configuration#file-processing) for details.
 ---
 
@@ -613,16 +588,12 @@ print(result.var_async)  # True
 
 ```javascript
 // Start async ingestion (returns immediately)
-await client.retainBatch(
-  "my-bank",
-  [
-    { content: "Large batch item 1", document_id: "large-doc-1" },
-    { content: "Large batch item 2", document_id: "large-doc-2" },
-  ],
-  {
-    async: true,
-  }
-);
+await client.retainBatch('my-bank', [
+    { content: 'Large batch item 1', document_id: 'large-doc-1' },
+    { content: 'Large batch item 2', document_id: 'large-doc-2' },
+], {
+    async: true
+});
 ```
 
 ### CLI
@@ -683,5 +654,5 @@ export HINDSIGHT_API_RETAIN_BATCH_ENABLED=true
 Hindsight submits fact extraction calls as a batch job to the provider, polls for completion, and processes results automatically. No changes to your API calls are needed.
 
 > **📝 Note**
-
+>
 Batch API cost savings require `async=true` in your retain request and a compatible provider (OpenAI, Groq, or Gemini).

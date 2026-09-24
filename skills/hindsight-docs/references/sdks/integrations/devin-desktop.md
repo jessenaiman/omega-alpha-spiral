@@ -1,9 +1,10 @@
+
 # Devin Desktop
 
 Long-term memory for [Devin Desktop](https://devin.ai) — the editor formerly known as Windsurf (Codeium) — powered by [Hindsight](https://vectorize.io/hindsight). One command connects Devin to the Hindsight MCP server and adds a rule telling the agent to use it — so it recalls relevant memory at the start of a task and retains durable facts as it goes. Recall happens at query time against your actual message, and from your seat it's automatic.
 
 > **📝 Note**
-
+>
 Cognition rebranded Windsurf to Devin Desktop in June 2026. The MCP config still lives under `~/.codeium/windsurf/` — that's Devin Desktop's on-disk data directory and is unchanged by the rebrand. The workspace rule now lives under `.devin/rules/` (with `.windsurf/rules/` kept as a legacy fallback).
 [View Changelog →](../../changelog/integrations/devin-desktop.md)
 
@@ -28,11 +29,11 @@ Use a [Hindsight Cloud](https://hindsight.vectorize.io) key, or point at a self-
 
 ## Commands
 
-| Command                             | Description                                   |
-| ----------------------------------- | --------------------------------------------- |
-| `hindsight-devin-desktop init`      | Add the MCP server + recall/retain rule       |
-| `hindsight-devin-desktop status`    | Show whether the server + rule are configured |
-| `hindsight-devin-desktop uninstall` | Remove the server + rule                      |
+| Command | Description |
+| --- | --- |
+| `hindsight-devin-desktop init` | Add the MCP server + recall/retain rule |
+| `hindsight-devin-desktop status` | Show whether the server + rule are configured |
+| `hindsight-devin-desktop uninstall` | Remove the server + rule |
 
 ## Note
 

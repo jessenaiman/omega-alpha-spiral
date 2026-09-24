@@ -1,0 +1,112 @@
+{
+  "url": "http://127.0.0.1:5188/floor-one.html",
+  "mode": "desktop",
+  "state": "entry",
+  "requestedState": "entry",
+  "appliedState": "entry",
+  "runId": "floor-one-scorecard-20260923",
+  "seed": 472,
+  "screenshotPath": "artifacts\\floor-one-scorecard-20260923\\desktop-entry.png",
+  "gpu": {
+    "renderer": "ANGLE (NVIDIA, NVIDIA GeForce GTX 1660 (0x00002184) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+    "vendor": "Google Inc. (NVIDIA)",
+    "softwareRendered": false
+  },
+  "result": {
+    "ok": true,
+    "reason": "nonblank",
+    "rect": {
+      "x": 0,
+      "y": 40.5,
+      "width": 979,
+      "height": 679.5
+    },
+    "drawingBuffer": {
+      "width": 979,
+      "height": 680
+    },
+    "alphaPixels": 4110,
+    "variance": 251,
+    "colorBuckets": 19,
+    "metrics": {
+      "colorBuckets": 22,
+      "colorEntropyBits": 0.22,
+      "edgeDensity": 0.027,
+      "luminance": {
+        "mean": 6.9,
+        "p5": 5.9,
+        "p95": 5.9,
+        "contrast": 0
+      },
+      "dominantColorShare": 0.977,
+      "nonBackgroundShare": 0.023
+    },
+    "renderBudget": {
+      "tier": "desktop",
+      "note": "starting-point budget; adjust per game and document overrides",
+      "rows": [
+        {
+          "metric": "calls",
+          "actual": 1,
+          "limit": 300,
+          "ok": true
+        },
+        {
+          "metric": "triangles",
+          "actual": 2,
+          "limit": 750000,
+          "ok": true
+        },
+        {
+          "metric": "geometries",
+          "actual": 1,
+          "limit": 300,
+          "ok": true
+        },
+        {
+          "metric": "textures",
+          "actual": 1,
+          "limit": 60,
+          "ok": true
+        }
+      ],
+      "withinBudget": true
+    },
+    "diagnostics": {
+      "runId": "floor-one:472",
+      "instance": null,
+      "loop": 0,
+      "phase": "ongoing",
+      "checkpoint": null,
+      "objective": "Reach the stairs",
+      "targetVerb": "move",
+      "playerState": "hp 6/6",
+      "party": [],
+      "route": null,
+      "pairing": null,
+      "era": "floor-one",
+      "paused": true,
+      "accessibility": {
+        "reducedMotion": true,
+        "debugHidden": false
+      },
+      "audio": {
+        "unlocked": false
+      },
+      "canvas": {
+        "width": 979,
+        "height": 680,
+        "pixelRatio": 1
+      },
+      "renderer": {
+        "calls": 1,
+        "triangles": 2,
+        "geometries": 1,
+        "textures": 1
+      },
+      "errors": []
+    }
+  },
+  "consoleErrors": [],
+  "pageErrors": []
+}

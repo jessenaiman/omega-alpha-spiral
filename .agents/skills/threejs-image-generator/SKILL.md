@@ -19,22 +19,7 @@ Resolve `<this-skill-dir>` from the actual loaded skill file. Resolve sibling sk
 
 For premium graphics work with generation in scope, generate the high-value 2D surfaces rather than defaulting to hand-coded CSS and flat colors. Respect explicitly procedural art and external-service restrictions. Choose assets from the game's design, not a fixed quota of logos, skies, or icons.
 
-## Providers and API key
-
-Two scripts, both run from the game project with `uv`:
-
-- **`scripts/generate_image_pollinations.py` — free default, no key.** Generation only
-  (no local-image editing). Use this first unless a task's quality truly needs Gemini.
-  ```bash
-  uv run <this-skill-dir>/scripts/generate_image_pollinations.py probe  # IMAGE_PROVIDER=pollinations
-  uv run <this-skill-dir>/scripts/generate_image_pollinations.py \
-    --prompt "your image description" --filename assets/concepts/output.png --width 1536 --height 1536
-  ```
-- **`scripts/generate_image.py` — Gemini, paid, opt-in.** Reads `--api-key` or `GEMINI_API_KEY`.
-  Needed only for local-image editing (style variants, cleanup, palette alignment).
-  ```bash
-  uv run <this-skill-dir>/scripts/generate_image.py probe   # GEMINI_API_KEY=SET|MISSING
-  ```
+[add codex image gen instructions]
 
 Keys never go in skill files, game code, or reports. Prefer the free path; switch to Gemini
 only when the prompt needs editing an existing local image or the operator approves the cost.

@@ -15,7 +15,6 @@ http://localhost:8888/mcp/{bank_id}/
 ```
 
 For example, to connect to the memory bank `alice`:
-
 ```
 http://localhost:8888/mcp/alice/
 ```
@@ -91,7 +90,6 @@ The memory bank is resolved in this priority order:
 Unlike traditional MCP servers where tools require explicit identifiers, Hindsight uses **per-bank endpoints**. The `bank_id` is part of the URL path, so tools don't need to specify which bank to use—it's implicit from the connection.
 
 This design:
-
 - **Simplifies tool usage** — no need to pass `bank_id` with every call
 - **Enforces isolation** — each MCP connection is scoped to a single bank
 - **Enables multi-tenant setups** — connect different users to different endpoints
@@ -100,10 +98,10 @@ This design:
 
 The MCP server operates in two modes depending on the URL:
 
-| Mode            | URL               | Tools                                                                                      | bank_id                                   |
-| --------------- | ----------------- | ------------------------------------------------------------------------------------------ | ----------------------------------------- |
-| **Single-bank** | `/mcp/{bank_id}/` | 27 tools (memory, mental models, directives, documents, operations, tags, bank management) | Implicit from URL                         |
-| **Multi-bank**  | `/mcp/`           | All 30 tools including `list_banks`, `create_bank`, `get_bank_stats`                       | Explicit `bank_id` parameter on each tool |
+| Mode | URL | Tools | bank_id |
+|------|-----|-------|---------|
+| **Single-bank** | `/mcp/{bank_id}/` | 27 tools (memory, mental models, directives, documents, operations, tags, bank management) | Implicit from URL |
+| **Multi-bank** | `/mcp/` | All 30 tools including `list_banks`, `create_bank`, `get_bank_stats` | Explicit `bank_id` parameter on each tool |
 
 **Single-bank mode** (recommended) scopes all operations to the bank in the URL. Tools don't expose a `bank_id` parameter.
 
@@ -132,17 +130,16 @@ MCP clients that read tool annotations also receive safety hints from the built-
 
 Store information to long-term memory.
 
-| Parameter     | Type         | Required | Description                                                |
-| ------------- | ------------ | -------- | ---------------------------------------------------------- |
-| `content`     | string       | Yes      | The fact or memory to store                                |
-| `context`     | string       | No       | Category for the memory (default: `general`)               |
-| `timestamp`   | string       | No       | ISO 8601 timestamp for when the event occurred             |
-| `tags`        | list[string] | No       | Tags for organizing and filtering this memory              |
-| `metadata`    | object       | No       | Key-value metadata to attach (e.g., `{"source": "slack"}`) |
-| `document_id` | string       | No       | Associate this memory with an existing document            |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `content` | string | Yes | The fact or memory to store |
+| `context` | string | No | Category for the memory (default: `general`) |
+| `timestamp` | string | No | ISO 8601 timestamp for when the event occurred |
+| `tags` | list[string] | No | Tags for organizing and filtering this memory |
+| `metadata` | object | No | Key-value metadata to attach (e.g., `{"source": "slack"}`) |
+| `document_id` | string | No | Associate this memory with an existing document |
 
 **Example:**
-
 ```json
 {
   "name": "retain",
@@ -155,7 +152,6 @@ Store information to long-term memory.
 ```
 
 **When to use:**
-
 - User shares personal facts, preferences, or interests
 - Important events or milestones are mentioned
 - Decisions, opinions, or goals are stated
@@ -167,17 +163,16 @@ Store information to long-term memory.
 
 Store information to long-term memory and wait for completion. Unlike [`retain`](#retain) (which is asynchronous), `sync_retain` blocks until the memory is fully stored and immediately available for recall — useful for read-after-write flows where you query right after storing.
 
-| Parameter     | Type         | Required | Description                                                |
-| ------------- | ------------ | -------- | ---------------------------------------------------------- |
-| `content`     | string       | Yes      | The fact or memory to store                                |
-| `context`     | string       | No       | Category for the memory (default: `general`)               |
-| `timestamp`   | string       | No       | ISO 8601 timestamp for when the event occurred             |
-| `tags`        | list[string] | No       | Tags for organizing and filtering this memory              |
-| `metadata`    | object       | No       | Key-value metadata to attach (e.g., `{"source": "slack"}`) |
-| `document_id` | string       | No       | Associate this memory with an existing document            |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `content` | string | Yes | The fact or memory to store |
+| `context` | string | No | Category for the memory (default: `general`) |
+| `timestamp` | string | No | ISO 8601 timestamp for when the event occurred |
+| `tags` | list[string] | No | Tags for organizing and filtering this memory |
+| `metadata` | object | No | Key-value metadata to attach (e.g., `{"source": "slack"}`) |
+| `document_id` | string | No | Associate this memory with an existing document |
 
 **Example:**
-
 ```json
 {
   "name": "sync_retain",
@@ -190,7 +185,6 @@ Store information to long-term memory and wait for completion. Unlike [`retain`]
 ```
 
 **When to use:**
-
 - You need the memory queryable immediately after storing (read-after-write)
 - A workflow step depends on the stored memory being available before continuing
 - Otherwise prefer `retain` (asynchronous) to avoid blocking on storage
@@ -201,21 +195,20 @@ Store information to long-term memory and wait for completion. Unlike [`retain`]
 
 Search memories to provide personalized responses.
 
-| Parameter         | Type         | Required | Description                                                                                                                                                                                                                                                                  |
-| ----------------- | ------------ | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `query`           | string       | Yes      | Natural language search query                                                                                                                                                                                                                                                |
-| `max_tokens`      | integer      | No       | Maximum tokens to return (default: 4096)                                                                                                                                                                                                                                     |
-| `budget`          | string       | No       | Search thoroughness: `low`, `mid`, or `high` (default: `high`)                                                                                                                                                                                                               |
-| `types`           | list[string] | No       | Filter by fact type: `world`, `experience`, `observation`. Defaults to all                                                                                                                                                                                                   |
-| `tags`            | list[string] | No       | Filter memories by tags. Omit for no filter                                                                                                                                                                                                                                  |
-| `tags_match`      | string       | No       | `any` (default), `all`, `any_strict`, `all_strict`, or `exact`. With `exact`, pass `tags: []` to select the untagged/global scope                                                                                                                                            |
-| `tag_groups`      | list[object] | No       | Compound boolean tag filter. Mutually exclusive with `tags`; each leaf has its own `match` value                                                                                                                                                                             |
-| `query_timestamp` | string       | No       | ISO 8601 timestamp — recall as if asking at this point in time; anchors relative temporal expressions and recency scoring                                                                                                                                                    |
-| `min_scores`      | object       | No       | Optional per-stage score floors, e.g. `{"reranker": 0.5}`. Keys: `semantic`/`keyword` (retrieval-level cutoffs), `reranker`/`final` (post-ranking). All inclusive and AND-ed; omit for no filtering. Reranker scores aren't calibrated across queries — calibrate before use |
-| `temporal_window` | object       | No       | An explicit `{"start": ISO, "end": ISO}` period to search over, used instead of reading dates out of the query text. Ranks memories dated inside the window higher; it does not drop the ones outside it, so it can't restrict results to a period                           |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `query` | string | Yes | Natural language search query |
+| `max_tokens` | integer | No | Maximum tokens to return (default: 4096) |
+| `budget` | string | No | Search thoroughness: `low`, `mid`, or `high` (default: `high`) |
+| `types` | list[string] | No | Filter by fact type: `world`, `experience`, `observation`. Defaults to all |
+| `tags` | list[string] | No | Filter memories by tags. Omit for no filter |
+| `tags_match` | string | No | `any` (default), `all`, `any_strict`, `all_strict`, or `exact`. With `exact`, pass `tags: []` to select the untagged/global scope |
+| `tag_groups` | list[object] | No | Compound boolean tag filter. Mutually exclusive with `tags`; each leaf has its own `match` value |
+| `query_timestamp` | string | No | ISO 8601 timestamp — recall as if asking at this point in time; anchors relative temporal expressions and recency scoring |
+| `min_scores` | object | No | Optional per-stage score floors, e.g. `{"reranker": 0.5}`. Keys: `semantic`/`keyword` (retrieval-level cutoffs), `reranker`/`final` (post-ranking). All inclusive and AND-ed; omit for no filtering. Reranker scores aren't calibrated across queries — calibrate before use |
+| `temporal_window` | object | No | An explicit `{"start": ISO, "end": ISO}` period to search over, used instead of reading dates out of the query text. Ranks memories dated inside the window higher; it does not drop the ones outside it, so it can't restrict results to a period |
 
 **Example:**
-
 ```json
 {
   "name": "recall",
@@ -228,7 +221,6 @@ Search memories to provide personalized responses.
 ```
 
 **When to use:**
-
 - Start of conversation to recall relevant context
 - Before making recommendations
 - When user asks about something they may have mentioned before
@@ -240,16 +232,16 @@ Search memories to provide personalized responses.
 
 Generate thoughtful analysis by synthesizing stored memories with the bank's personality.
 
-| Parameter         | Type         | Required | Description                                                                                                                                          |
-| ----------------- | ------------ | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `query`           | string       | Yes      | The question or topic to reflect on                                                                                                                  |
-| `context`         | string       | No       | Optional context about why this reflection is needed                                                                                                 |
-| `budget`          | string       | No       | Search budget: `low`, `mid`, or `high` (default: `low`)                                                                                              |
-| `max_tokens`      | integer      | No       | Maximum tokens in the response (default: 4096)                                                                                                       |
-| `response_schema` | object       | No       | JSON Schema for structured output. When provided, the response includes a `structured_output` field                                                  |
-| `tags`            | list[string] | No       | Scope memories, observations, mental models, and tagged directives. Omitted tags leave memory retrieval unfiltered but load only untagged directives |
-| `tags_match`      | string       | No       | `any` (default), `all`, `any_strict`, `all_strict`, or `exact`. Untagged directives remain global in every mode                                      |
-| `include_trace`   | boolean      | No       | Include `tool_trace` and `llm_trace` debugging output. Defaults to `false` to keep responses small                                                   |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `query` | string | Yes | The question or topic to reflect on |
+| `context` | string | No | Optional context about why this reflection is needed |
+| `budget` | string | No | Search budget: `low`, `mid`, or `high` (default: `low`) |
+| `max_tokens` | integer | No | Maximum tokens in the response (default: 4096) |
+| `response_schema` | object | No | JSON Schema for structured output. When provided, the response includes a `structured_output` field |
+| `tags` | list[string] | No | Scope memories, observations, mental models, and tagged directives. Omitted tags leave memory retrieval unfiltered but load only untagged directives |
+| `tags_match` | string | No | `any` (default), `all`, `any_strict`, `all_strict`, or `exact`. Untagged directives remain global in every mode |
+| `include_trace` | boolean | No | Include `tool_trace` and `llm_trace` debugging output. Defaults to `false` to keep responses small |
 
 The MCP tool forwards `tags_match` only when `tags` is present. Pass
 `tags: []` with `tags_match: "exact"` to select the empty/global scope for raw
@@ -257,7 +249,6 @@ facts, observations, and mental models; directive loading also selects only
 untagged directives.
 
 **Example:**
-
 ```json
 {
   "name": "reflect",
@@ -270,7 +261,6 @@ untagged directives.
 ```
 
 **When to use:**
-
 - When reasoned analysis is needed, not just fact retrieval
 - Questions like "What should I do?" rather than "What did I say?"
 - Synthesizing patterns across multiple memories
@@ -281,16 +271,16 @@ untagged directives.
 
 Create a mental model — a living document that stays current with your memories. Mental models are pre-computed reflections that get automatically refreshed as new memories are stored.
 
-| Parameter                             | Type         | Required | Description                                                                                                                                           |
-| ------------------------------------- | ------------ | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `name`                                | string       | Yes      | Human-readable name for the mental model                                                                                                              |
-| `source_query`                        | string       | Yes      | The query used to generate and refresh the model                                                                                                      |
-| `mental_model_id`                     | string       | No       | Custom ID (alphanumeric lowercase with hyphens). Auto-generated if not provided                                                                       |
-| `tags`                                | list[string] | No       | Tags for organizing and filtering models                                                                                                              |
-| `tags_match`                          | string       | No       | How the model's tags are matched against memories on refresh: `any`, `all`, `any_strict`, `all_strict`, or `exact`. See the note below on the default |
-| `trigger`                             | object       | No       | Refresh policy — see [Trigger settings](#trigger-settings)                                                                                            |
-| `max_tokens`                          | integer      | No       | Maximum tokens for model content (default: 2048)                                                                                                      |
-| `trigger_refresh_after_consolidation` | boolean      | No       | Legacy shorthand for `trigger.refresh_after_consolidation`                                                                                            |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `name` | string | Yes | Human-readable name for the mental model |
+| `source_query` | string | Yes | The query used to generate and refresh the model |
+| `mental_model_id` | string | No | Custom ID (alphanumeric lowercase with hyphens). Auto-generated if not provided |
+| `tags` | list[string] | No | Tags for organizing and filtering models |
+| `tags_match` | string | No | How the model's tags are matched against memories on refresh: `any`, `all`, `any_strict`, `all_strict`, or `exact`. See the note below on the default |
+| `trigger` | object | No | Refresh policy — see [Trigger settings](#trigger-settings) |
+| `max_tokens` | integer | No | Maximum tokens for model content (default: 2048) |
+| `trigger_refresh_after_consolidation` | boolean | No | Legacy shorthand for `trigger.refresh_after_consolidation` |
 
 `trigger` is the preferred form for refresh settings; `tags_match` and
 `trigger_refresh_after_consolidation` remain as shorthands for existing
@@ -300,7 +290,7 @@ silently winning.
 :::warning Tagged models default to `all_strict`
 When a mental model has `tags` but no explicit `tags_match`, its refresh matches memories with **`all_strict`** — a memory must carry **every** one of the model's tags to be included. If your memories use narrow, single-topic tags (e.g. `["project:status"]`) while the model is tagged broadly (e.g. `["projects", "mental-model"]`), the refresh filters out everything and the content comes back empty.
 
-Pass `tags_match: "any"` (the same default that `recall` and `reflect` use) to match memories that carry _any_ of the model's tags:
+Pass `tags_match: "any"` (the same default that `recall` and `reflect` use) to match memories that carry *any* of the model's tags:
 
 ```json
 {
@@ -313,11 +303,9 @@ Pass `tags_match: "any"` (the same default that `recall` and `reflect` use) to m
   }
 }
 ```
-
 :::
 
 **Example:**
-
 ```json
 {
   "name": "create_mental_model",
@@ -341,9 +329,9 @@ List all mental models in a bank, optionally filtered by tags.
 Returns metadata only — `id`, `name`, `tags`, `is_stale` and timestamps. To read a
 model's synthesized content, call `get_mental_model` with an id from this list.
 
-| Parameter | Type         | Required | Description           |
-| --------- | ------------ | -------- | --------------------- |
-| `tags`    | list[string] | No       | Filter models by tags |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `tags` | list[string] | No | Filter models by tags |
 
 ---
 
@@ -351,9 +339,9 @@ model's synthesized content, call `get_mental_model` with an id from this list.
 
 Retrieve a specific mental model by ID, including its full content.
 
-| Parameter         | Type   | Required | Description                            |
-| ----------------- | ------ | -------- | -------------------------------------- |
-| `mental_model_id` | string | Yes      | The ID of the mental model to retrieve |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `mental_model_id` | string | Yes | The ID of the mental model to retrieve |
 
 ---
 
@@ -361,16 +349,16 @@ Retrieve a specific mental model by ID, including its full content.
 
 Update a mental model's metadata or settings.
 
-| Parameter                             | Type         | Required | Description                                                                                                                            |
-| ------------------------------------- | ------------ | -------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `mental_model_id`                     | string       | Yes      | The ID of the mental model to update                                                                                                   |
-| `name`                                | string       | No       | New name                                                                                                                               |
-| `source_query`                        | string       | No       | New source query                                                                                                                       |
-| `tags`                                | list[string] | No       | New tags                                                                                                                               |
-| `max_tokens`                          | integer      | No       | New max tokens                                                                                                                         |
-| `trigger`                             | object       | No       | Refresh-policy fields to change — see [Trigger settings](#trigger-settings). This is a patch: omitted fields keep their current values |
-| `tags_match`                          | string       | No       | Legacy shorthand for `trigger.tags_match`                                                                                              |
-| `trigger_refresh_after_consolidation` | boolean      | No       | Auto-refresh after consolidation. Only set when you want to change this setting                                                        |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `mental_model_id` | string | Yes | The ID of the mental model to update |
+| `name` | string | No | New name |
+| `source_query` | string | No | New source query |
+| `tags` | list[string] | No | New tags |
+| `max_tokens` | integer | No | New max tokens |
+| `trigger` | object | No | Refresh-policy fields to change — see [Trigger settings](#trigger-settings). This is a patch: omitted fields keep their current values |
+| `tags_match` | string | No | Legacy shorthand for `trigger.tags_match` |
+| `trigger_refresh_after_consolidation` | boolean | No | Auto-refresh after consolidation. Only set when you want to change this setting |
 
 ---
 
@@ -381,22 +369,22 @@ it rebuilds itself and **what** it rebuilds from. It accepts every field the HTT
 API accepts, so anything you can configure through `PATCH /mental_models/{id}`
 you can also configure from an agent over MCP.
 
-| Field                          | Type         | Description                                                                                                                                                                                                                    |
-| ------------------------------ | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `mode`                         | string       | `full` regenerates the content from scratch on each refresh; `delta` makes surgical edits, preserving unchanged sections byte-for-byte. Delta falls back to full when there is no existing content or the source query changed |
-| `refresh_after_consolidation`  | boolean      | Rebuild after each memory consolidation                                                                                                                                                                                        |
-| `refresh_cron`                 | string       | UTC five-field cron, e.g. `0 3 * * *` for daily at 03:00 UTC. Only runs when the model is stale, so an unchanged scope costs no LLM call                                                                                       |
-| `min_refresh_interval_seconds` | integer      | Floor between two _automatic_ refreshes. Triggers arriving sooner fold into one queued refresh, so a burst of retains costs one rebuild. Explicit refreshes ignore it                                                          |
-| `fact_types`                   | list[string] | Which of `world`, `experience`, `observation` the refresh retrieves. Omit for all three                                                                                                                                        |
-| `exclude_mental_models`        | boolean      | Exclude **all** mental models from the refresh, so a model never reflects on its siblings                                                                                                                                      |
-| `exclude_mental_model_ids`     | list[string] | Exclude specific mental models by ID                                                                                                                                                                                           |
-| `tags_match`                   | string       | How the model's tags select memories: `any`, `all`, `any_strict`, `all_strict`, `exact`                                                                                                                                        |
-| `tag_groups`                   | list[object] | Compound boolean tag expressions used _instead of_ the model's flat tags                                                                                                                                                       |
-| `include_chunks`               | boolean      | Whether the refresh's internal recall returns raw chunk text                                                                                                                                                                   |
-| `recall_max_tokens`            | integer      | Token budget for facts from the refresh's internal recall                                                                                                                                                                      |
-| `recall_chunks_max_tokens`     | integer      | Token budget for raw chunks from the refresh's internal recall                                                                                                                                                                 |
-| `response_schema`              | object       | JSON Schema for structured output, stored alongside the markdown under `reflect_response.structured_output`                                                                                                                    |
-| `keep_trace`                   | boolean      | Record how each refresh reached its result under `reflect_response.trace`. The only way to diagnose a cron- or consolidation-driven refresh after the fact                                                                     |
+| Field | Type | Description |
+|-------|------|-------------|
+| `mode` | string | `full` regenerates the content from scratch on each refresh; `delta` makes surgical edits, preserving unchanged sections byte-for-byte. Delta falls back to full when there is no existing content or the source query changed |
+| `refresh_after_consolidation` | boolean | Rebuild after each memory consolidation |
+| `refresh_cron` | string | UTC five-field cron, e.g. `0 3 * * *` for daily at 03:00 UTC. Only runs when the model is stale, so an unchanged scope costs no LLM call |
+| `min_refresh_interval_seconds` | integer | Floor between two *automatic* refreshes. Triggers arriving sooner fold into one queued refresh, so a burst of retains costs one rebuild. Explicit refreshes ignore it |
+| `fact_types` | list[string] | Which of `world`, `experience`, `observation` the refresh retrieves. Omit for all three |
+| `exclude_mental_models` | boolean | Exclude **all** mental models from the refresh, so a model never reflects on its siblings |
+| `exclude_mental_model_ids` | list[string] | Exclude specific mental models by ID |
+| `tags_match` | string | How the model's tags select memories: `any`, `all`, `any_strict`, `all_strict`, `exact` |
+| `tag_groups` | list[object] | Compound boolean tag expressions used *instead of* the model's flat tags |
+| `include_chunks` | boolean | Whether the refresh's internal recall returns raw chunk text |
+| `recall_max_tokens` | integer | Token budget for facts from the refresh's internal recall |
+| `recall_chunks_max_tokens` | integer | Token budget for raw chunks from the refresh's internal recall |
+| `response_schema` | object | JSON Schema for structured output, stored alongside the markdown under `reflect_response.structured_output` |
+| `keep_trace` | boolean | Record how each refresh reached its result under `reflect_response.trace`. The only way to diagnose a cron- or consolidation-driven refresh after the fact |
 
 `refresh_after_consolidation` and `refresh_cron` are **mutually exclusive** — a
 model refreshes either after consolidation or on a schedule, never both. Setting
@@ -428,9 +416,9 @@ changing.
 
 Permanently delete a mental model.
 
-| Parameter         | Type   | Required | Description                          |
-| ----------------- | ------ | -------- | ------------------------------------ |
-| `mental_model_id` | string | Yes      | The ID of the mental model to delete |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `mental_model_id` | string | Yes | The ID of the mental model to delete |
 
 ---
 
@@ -438,9 +426,9 @@ Permanently delete a mental model.
 
 Re-generate a mental model's content from the latest memories. Runs asynchronously.
 
-| Parameter         | Type   | Required | Description                           |
-| ----------------- | ------ | -------- | ------------------------------------- |
-| `mental_model_id` | string | Yes      | The ID of the mental model to refresh |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `mental_model_id` | string | Yes | The ID of the mental model to refresh |
 
 ---
 
@@ -448,9 +436,9 @@ Re-generate a mental model's content from the latest memories. Runs asynchronous
 
 Clear a mental model's content while keeping its definition. After clearing, call `refresh_mental_model` to rebuild it from the latest memories.
 
-| Parameter         | Type   | Required | Description                         |
-| ----------------- | ------ | -------- | ----------------------------------- |
-| `mental_model_id` | string | Yes      | The ID of the mental model to clear |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `mental_model_id` | string | Yes | The ID of the mental model to clear |
 
 ---
 
@@ -460,11 +448,11 @@ List available memory banks, most recently written first. The response carries t
 total number of matching banks alongside the page, so large deployments can be
 walked with `offset`.
 
-| Parameter | Type    | Required | Description                                                 |
-| --------- | ------- | -------- | ----------------------------------------------------------- |
-| `query`   | string  | No       | Case-insensitive substring matched against bank ID and name |
-| `limit`   | integer | No       | Maximum number of banks to return (default: 100)            |
-| `offset`  | integer | No       | Number of banks to skip (default: 0)                        |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `query` | string | No | Case-insensitive substring matched against bank ID and name |
+| `limit` | integer | No | Maximum number of banks to return (default: 100) |
+| `offset` | integer | No | Number of banks to skip (default: 0) |
 
 ---
 
@@ -472,11 +460,11 @@ walked with `offset`.
 
 Create a new memory bank or retrieve an existing one.
 
-| Parameter | Type   | Required | Description                                                               |
-| --------- | ------ | -------- | ------------------------------------------------------------------------- |
-| `bank_id` | string | Yes      | The ID for the new bank                                                   |
-| `name`    | string | No       | Human-friendly name for the bank                                          |
-| `mission` | string | No       | Mission describing who the agent is and what they're trying to accomplish |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `bank_id` | string | Yes | The ID for the new bank |
+| `name` | string | No | Human-friendly name for the bank |
+| `mission` | string | No | Mission describing who the agent is and what they're trying to accomplish |
 
 ---
 
@@ -486,10 +474,10 @@ List directives in a bank. This management tool does not use reflect's
 directive-isolation behavior: omitting `tags` lists every directive, including
 tagged directives.
 
-| Parameter     | Type         | Required | Description                                                                                                                                                           |
-| ------------- | ------------ | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `tags`        | list[string] | No       | Filter using `any` matching. When present, returns untagged/global directives plus directives sharing at least one tag. When omitted or empty, returns all directives |
-| `active_only` | boolean      | No       | Only return active directives (default: `true`)                                                                                                                       |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `tags` | list[string] | No | Filter using `any` matching. When present, returns untagged/global directives plus directives sharing at least one tag. When omitted or empty, returns all directives |
+| `active_only` | boolean | No | Only return active directives (default: `true`) |
 
 ---
 
@@ -497,13 +485,13 @@ tagged directives.
 
 Create a new directive in a bank.
 
-| Parameter   | Type         | Required | Description                                                                                                                    |
-| ----------- | ------------ | -------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| `name`      | string       | Yes      | Human-readable name for the directive                                                                                          |
-| `content`   | string       | Yes      | The directive content/instruction                                                                                              |
-| `priority`  | integer      | No       | Priority level (higher = more important)                                                                                       |
-| `is_active` | boolean      | No       | Whether the directive is active (default: `true`)                                                                              |
-| `tags`      | list[string] | No       | Execution scope for the directive. Empty/omitted (default) means global; non-empty means reflect must use a matching tag scope |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `name` | string | Yes | Human-readable name for the directive |
+| `content` | string | Yes | The directive content/instruction |
+| `priority` | integer | No | Priority level (higher = more important) |
+| `is_active` | boolean | No | Whether the directive is active (default: `true`) |
+| `tags` | list[string] | No | Execution scope for the directive. Empty/omitted (default) means global; non-empty means reflect must use a matching tag scope |
 
 ---
 
@@ -511,9 +499,9 @@ Create a new directive in a bank.
 
 Delete a directive by ID.
 
-| Parameter      | Type   | Required | Description                       |
-| -------------- | ------ | -------- | --------------------------------- |
-| `directive_id` | string | Yes      | The ID of the directive to delete |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `directive_id` | string | Yes | The ID of the directive to delete |
 
 ---
 
@@ -521,12 +509,12 @@ Delete a directive by ID.
 
 Browse stored memories with optional filtering and pagination.
 
-| Parameter | Type    | Required | Description                                                  |
-| --------- | ------- | -------- | ------------------------------------------------------------ |
-| `type`    | string  | No       | Filter by fact type: `world`, `experience`, or `observation` |
-| `q`       | string  | No       | Search query to filter memories                              |
-| `limit`   | integer | No       | Maximum number of results (default: 100)                     |
-| `offset`  | integer | No       | Number of results to skip for pagination (default: 0)        |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `type` | string | No | Filter by fact type: `world`, `experience`, or `observation` |
+| `q` | string | No | Search query to filter memories |
+| `limit` | integer | No | Maximum number of results (default: 100) |
+| `offset` | integer | No | Number of results to skip for pagination (default: 0) |
 
 ---
 
@@ -534,9 +522,9 @@ Browse stored memories with optional filtering and pagination.
 
 Retrieve a specific memory by ID.
 
-| Parameter   | Type   | Required | Description                      |
-| ----------- | ------ | -------- | -------------------------------- |
-| `memory_id` | string | Yes      | The ID of the memory to retrieve |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `memory_id` | string | Yes | The ID of the memory to retrieve |
 
 ---
 
@@ -544,10 +532,10 @@ Retrieve a specific memory by ID.
 
 List documents that have been ingested into the memory bank.
 
-| Parameter | Type    | Required | Description                              |
-| --------- | ------- | -------- | ---------------------------------------- |
-| `q`       | string  | No       | Search query to filter documents         |
-| `limit`   | integer | No       | Maximum number of results (default: 100) |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `q` | string | No | Search query to filter documents |
+| `limit` | integer | No | Maximum number of results (default: 100) |
 
 ---
 
@@ -555,9 +543,9 @@ List documents that have been ingested into the memory bank.
 
 Retrieve a specific document by ID, including its metadata.
 
-| Parameter     | Type   | Required | Description                        |
-| ------------- | ------ | -------- | ---------------------------------- |
-| `document_id` | string | Yes      | The ID of the document to retrieve |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `document_id` | string | Yes | The ID of the document to retrieve |
 
 ---
 
@@ -565,9 +553,9 @@ Retrieve a specific document by ID, including its metadata.
 
 Delete a document and all memories linked to it.
 
-| Parameter     | Type   | Required | Description                      |
-| ------------- | ------ | -------- | -------------------------------- |
-| `document_id` | string | Yes      | The ID of the document to delete |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `document_id` | string | Yes | The ID of the document to delete |
 
 ---
 
@@ -575,10 +563,10 @@ Delete a document and all memories linked to it.
 
 List async operations (retain processing, mental model refresh, etc.) with optional status filtering.
 
-| Parameter | Type    | Required | Description                                                                |
-| --------- | ------- | -------- | -------------------------------------------------------------------------- |
-| `status`  | string  | No       | Filter by status: `pending`, `running`, `completed`, `failed`, `cancelled` |
-| `limit`   | integer | No       | Maximum number of results (default: 100)                                   |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `status` | string | No | Filter by status: `pending`, `running`, `completed`, `failed`, `cancelled` |
+| `limit` | integer | No | Maximum number of results (default: 100) |
 
 ---
 
@@ -586,9 +574,9 @@ List async operations (retain processing, mental model refresh, etc.) with optio
 
 Get the status and details of an async operation.
 
-| Parameter      | Type   | Required | Description                      |
-| -------------- | ------ | -------- | -------------------------------- |
-| `operation_id` | string | Yes      | The ID of the operation to check |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `operation_id` | string | Yes | The ID of the operation to check |
 
 ---
 
@@ -596,9 +584,9 @@ Get the status and details of an async operation.
 
 Cancel a pending or running async operation.
 
-| Parameter      | Type   | Required | Description                       |
-| -------------- | ------ | -------- | --------------------------------- |
-| `operation_id` | string | Yes      | The ID of the operation to cancel |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `operation_id` | string | Yes | The ID of the operation to cancel |
 
 ---
 
@@ -606,10 +594,10 @@ Cancel a pending or running async operation.
 
 List all unique tags used in a bank, optionally filtered by pattern.
 
-| Parameter | Type    | Required | Description                                     |
-| --------- | ------- | -------- | ----------------------------------------------- |
-| `q`       | string  | No       | Glob pattern to filter tags (e.g., `project:*`) |
-| `limit`   | integer | No       | Maximum number of results (default: 100)        |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `q` | string | No | Glob pattern to filter tags (e.g., `project:*`) |
+| `limit` | integer | No | Maximum number of results (default: 100) |
 
 ---
 
@@ -629,11 +617,11 @@ Get statistics for a memory bank (node/link counts).
 
 Update a memory bank's configuration. Updates the bank's name and/or any bank-level configuration fields — only provided fields are updated; omitted fields remain unchanged.
 
-| Parameter        | Type   | Required | Description                                                                                                                                         |
-| ---------------- | ------ | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `name`           | string | No       | Human-friendly display name for the bank                                                                                                            |
-| `mission`        | string | No       | **Deprecated** — alias for `config_updates.reflect_mission`                                                                                         |
-| `config_updates` | object | No       | Dictionary of configuration fields to update. Supports all bank-configurable fields (see below). Non-configurable or credential fields are rejected |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `name` | string | No | Human-friendly display name for the bank |
+| `mission` | string | No | **Deprecated** — alias for `config_updates.reflect_mission` |
+| `config_updates` | object | No | Dictionary of configuration fields to update. Supports all bank-configurable fields (see below). Non-configurable or credential fields are rejected |
 
 The `config_updates` object accepts any bank-configurable field by its Python field name, including:
 
@@ -667,9 +655,9 @@ Permanently delete a memory bank and all its data (memories, documents, entities
 
 Clear all memories from a bank without deleting the bank itself. Optionally filter by fact type to only clear specific kinds of memories.
 
-| Parameter | Type   | Required | Description                                                                               |
-| --------- | ------ | -------- | ----------------------------------------------------------------------------------------- |
-| `type`    | string | No       | Fact type to clear: `world`, `experience`, or `observation`. If not specified, clears all |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `type` | string | No | Fact type to clear: `world`, `experience`, or `observation`. If not specified, clears all |
 
 ---
 
@@ -683,10 +671,10 @@ Browse the knowledge base as a nested tree of folders and pages. Each page repor
 
 Find knowledge pages by relevance (hybrid BM25 + vector search over page names and content). Returns ranked pages with a snippet each.
 
-| Parameter | Type    | Required | Description                                 |
-| --------- | ------- | -------- | ------------------------------------------- |
-| `query`   | string  | Yes      | What to search for                          |
-| `limit`   | integer | No       | Maximum pages to return, 1–50 (default: 10) |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `query` | string | Yes | What to search for |
+| `limit` | integer | No | Maximum pages to return, 1–50 (default: 10) |
 
 ---
 
@@ -694,9 +682,9 @@ Find knowledge pages by relevance (hybrid BM25 + vector search over page names a
 
 Read a knowledge page as a markdown document (YAML frontmatter + synthesized body).
 
-| Parameter | Type   | Required | Description                                     |
-| --------- | ------ | -------- | ----------------------------------------------- |
-| `page_id` | string | Yes      | The ID of the page to read (a `kp-...` node id) |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `page_id` | string | Yes | The ID of the page to read (a `kp-...` node id) |
 
 ---
 
@@ -704,10 +692,10 @@ Read a knowledge page as a markdown document (YAML frontmatter + synthesized bod
 
 Create a folder in the knowledge base. Folders group pages and hold no content of their own.
 
-| Parameter   | Type   | Required | Description                                                            |
-| ----------- | ------ | -------- | ---------------------------------------------------------------------- |
-| `name`      | string | Yes      | Folder name                                                            |
-| `parent_id` | string | No       | Parent folder id (a `kf-...` node id). Omit to create at the top level |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `name` | string | Yes | Folder name |
+| `parent_id` | string | No | Parent folder id (a `kf-...` node id). Omit to create at the top level |
 
 ---
 
@@ -715,15 +703,15 @@ Create a folder in the knowledge base. Folders group pages and hold no content o
 
 Create a page — a living document whose content is synthesized from the bank's memories by running `source_query`. Content is generated asynchronously; use the returned `operation_id` to track completion.
 
-| Parameter                     | Type    | Required | Description                                                                                                                                                                                                   |
-| ----------------------------- | ------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `name`                        | string  | Yes      | Page name (unique within its folder)                                                                                                                                                                          |
-| `source_query`                | string  | Yes      | The question this page answers and rebuilds itself from                                                                                                                                                       |
-| `parent_id`                   | string  | No       | Parent folder id (a `kf-...` node id). Omit to create at the top level                                                                                                                                        |
-| `tags`                        | array   | No       | Tags scoping which memories the page is built from                                                                                                                                                            |
-| `max_tokens`                  | integer | No       | Maximum tokens for the generated content (default: 4096)                                                                                                                                                      |
-| `trigger`                     | object  | No       | Refresh policy — see [Trigger settings](#trigger-settings). Omitted fields keep the knowledge-page defaults: `delta` rebuilds from consolidated observations after each consolidation, ignoring sibling pages |
-| `refresh_after_consolidation` | boolean | No       | Legacy shorthand for `trigger.refresh_after_consolidation`                                                                                                                                                    |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `name` | string | Yes | Page name (unique within its folder) |
+| `source_query` | string | Yes | The question this page answers and rebuilds itself from |
+| `parent_id` | string | No | Parent folder id (a `kf-...` node id). Omit to create at the top level |
+| `tags` | array | No | Tags scoping which memories the page is built from |
+| `max_tokens` | integer | No | Maximum tokens for the generated content (default: 4096) |
+| `trigger` | object | No | Refresh policy — see [Trigger settings](#trigger-settings). Omitted fields keep the knowledge-page defaults: `delta` rebuilds from consolidated observations after each consolidation, ignoring sibling pages |
+| `refresh_after_consolidation` | boolean | No | Legacy shorthand for `trigger.refresh_after_consolidation` |
 
 Set `trigger.refresh_cron` to move a page off consolidation-driven rebuilds and
 onto a fixed UTC schedule — the two are mutually exclusive, so the cron clears
@@ -735,16 +723,16 @@ the auto-refresh while leaving the page's `mode` and `fact_types` alone.
 
 Rename or move a folder/page, and/or update a page's options. Only the arguments you pass are changed. Changing `source_query` schedules an async refresh so the page rebuilds against the new question.
 
-| Parameter                     | Type    | Required | Description                                                                                                                                        |
-| ----------------------------- | ------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `node_id`                     | string  | Yes      | The folder (`kf-...`) or page (`kp-...`) to update                                                                                                 |
-| `name`                        | string  | No       | New name for the node                                                                                                                              |
-| `parent_id`                   | string  | No       | Folder id to move the node into, or `"root"` to move it to the top level                                                                           |
-| `source_query`                | string  | No       | Pages only — the new question the page answers                                                                                                     |
-| `tags`                        | array   | No       | Pages only — replacement tag list (pass `[]` to clear)                                                                                             |
-| `max_tokens`                  | integer | No       | Pages only — new maximum tokens for the generated content                                                                                          |
-| `trigger`                     | object  | No       | Pages only — refresh-policy fields to change; see [Trigger settings](#trigger-settings). This is a patch: omitted fields keep their current values |
-| `refresh_after_consolidation` | boolean | No       | Pages only — legacy shorthand for `trigger.refresh_after_consolidation`                                                                            |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `node_id` | string | Yes | The folder (`kf-...`) or page (`kp-...`) to update |
+| `name` | string | No | New name for the node |
+| `parent_id` | string | No | Folder id to move the node into, or `"root"` to move it to the top level |
+| `source_query` | string | No | Pages only — the new question the page answers |
+| `tags` | array | No | Pages only — replacement tag list (pass `[]` to clear) |
+| `max_tokens` | integer | No | Pages only — new maximum tokens for the generated content |
+| `trigger` | object | No | Pages only — refresh-policy fields to change; see [Trigger settings](#trigger-settings). This is a patch: omitted fields keep their current values |
+| `refresh_after_consolidation` | boolean | No | Pages only — legacy shorthand for `trigger.refresh_after_consolidation` |
 
 ---
 
@@ -752,9 +740,9 @@ Rename or move a folder/page, and/or update a page's options. Only the arguments
 
 Delete a folder or page and its whole subtree. Each deleted page takes its backing mental model with it.
 
-| Parameter | Type   | Required | Description                                        |
-| --------- | ------ | -------- | -------------------------------------------------- |
-| `node_id` | string | Yes      | The folder (`kf-...`) or page (`kp-...`) to delete |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `node_id` | string | Yes | The folder (`kf-...`) or page (`kp-...`) to delete |
 
 :::note
 Exporting the knowledge base is deliberately not an MCP tool — it returns the whole
@@ -769,6 +757,5 @@ bank as a single markdown bundle. Use the HTTP endpoint
 The MCP server can be used with any MCP-compatible AI assistant. See the [Authentication](#authentication) section above for Claude Code and Claude Desktop configuration examples.
 
 Each user can have their own configuration pointing to their personal memory bank using either:
-
 - A bank-specific URL path like `/mcp/alice/` (recommended)
 - The `X-Bank-Id` header

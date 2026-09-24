@@ -1,3 +1,4 @@
+
 # Documents
 
 Track and manage document sources in your memory bank. Documents provide traceability — knowing where memories came from.
@@ -5,9 +6,8 @@ Track and manage document sources in your memory bank. Documents provide traceab
 {/* Import raw source files */}
 
 > **💡 Prerequisites**
-
+>
 Make sure you've completed the [Quick Start](./quickstart) and understand [how retain works](./retain).
-
 ## What Are Documents?
 
 Documents are containers for retained content. They help you:
@@ -22,14 +22,12 @@ Documents are containers for retained content. They help you:
 When you retain content, Hindsight splits it into chunks before extracting facts. These chunks are stored alongside the extracted memories, preserving the original text segments.
 
 **Why chunks matter:**
-
 - **Context preservation** — Chunks contain the raw text that generated facts, useful when you need the exact wording
 - **Richer recall** — Including chunks in recall provides surrounding context for matched facts
 
 > **💡 Include Chunks in Recall**
-
+>
 Use `include_chunks=True` in your recall calls to get the original text chunks alongside fact results. See [Recall](./recall) for details.
-
 ## Retain with Document ID
 
 Associate retained content with a document:
@@ -59,24 +57,15 @@ client.retain_batch(
 
 ```javascript
 // Retain with document ID
-await client.retain("my-bank", "Alice presented the Q4 roadmap...", {
-  document_id: "meeting-2024-03-15",
+await client.retain('my-bank', 'Alice presented the Q4 roadmap...', {
+    document_id: 'meeting-2024-03-15'
 });
 
 // Batch retain for a document with different sections
-await client.retainBatch("my-bank", [
-  {
-    content: "Item 1: Product launch delayed to Q2",
-    document_id: "meeting-2024-03-15-section-1",
-  },
-  {
-    content: "Item 2: New hiring targets announced",
-    document_id: "meeting-2024-03-15-section-2",
-  },
-  {
-    content: "Item 3: Budget approved for ML team",
-    document_id: "meeting-2024-03-15-section-3",
-  },
+await client.retainBatch('my-bank', [
+    { content: 'Item 1: Product launch delayed to Q2', document_id: 'meeting-2024-03-15-section-1' },
+    { content: 'Item 2: New hiring targets announced', document_id: 'meeting-2024-03-15-section-2' },
+    { content: 'Item 3: Budget approved for ML team', document_id: 'meeting-2024-03-15-section-3' }
 ]);
 ```
 
@@ -132,13 +121,13 @@ client.retain(
 
 ```javascript
 // Original
-await client.retain("my-bank", "Project deadline: March 31", {
-  document_id: "project-plan",
+await client.retain('my-bank', 'Project deadline: March 31', {
+    document_id: 'project-plan'
 });
 
 // Update
-await client.retain("my-bank", "Project deadline: April 15 (extended)", {
-  document_id: "project-plan",
+await client.retain('my-bank', 'Project deadline: April 15 (extended)', {
+    document_id: 'project-plan'
 });
 ```
 
@@ -213,12 +202,12 @@ asyncio.run(get_document_example())
 ```javascript
 // Get document to expand context from recall results
 const { data: doc, error } = await sdk.getDocument({
-  client: apiClient,
-  path: { bank_id: "my-bank", document_id: "meeting-2024-03-15-section-1" },
+    client: apiClient,
+    path: { bank_id: 'my-bank', document_id: 'meeting-2024-03-15-section-1' }
 });
 
 if (error) {
-  throw new Error(`Failed to get document: ${JSON.stringify(error)}`);
+    throw new Error(`Failed to get document: ${JSON.stringify(error)}`);
 }
 
 console.log(`Document: ${doc.id}`);
@@ -285,22 +274,22 @@ asyncio.run(update_document_example())
 ```javascript
 // Fix tags on a document retained with the wrong scope
 const { data: updateResult, error: updateError } = await sdk.updateDocument({
-  client: apiClient,
-  path: { bank_id: "my-bank", document_id: "meeting-2024-03-15-section-1" },
-  body: { tags: ["team-a", "team-b"] },
+    client: apiClient,
+    path: { bank_id: 'my-bank', document_id: 'meeting-2024-03-15-section-1' },
+    body: { tags: ['team-a', 'team-b'] }
 });
 
 if (updateError) {
-  throw new Error(`Failed to update tags: ${JSON.stringify(updateError)}`);
+    throw new Error(`Failed to update tags: ${JSON.stringify(updateError)}`);
 }
 
 console.log(`Updated: ${updateResult.success}`);
 
 // Remove all tags (make document visible everywhere)
 await sdk.updateDocument({
-  client: apiClient,
-  path: { bank_id: "my-bank", document_id: "meeting-2024-03-15-section-1" },
-  body: { tags: [] },
+    client: apiClient,
+    path: { bank_id: 'my-bank', document_id: 'meeting-2024-03-15-section-1' },
+    body: { tags: [] }
 });
 ```
 
@@ -334,13 +323,12 @@ client.DocumentsAPI.UpdateDocument(ctx, "my-bank", "meeting-2024-03-15").
 ```
 
 > **ℹ️ Observations are re-consolidated**
-
+>
 When tags change, any consolidated observations derived from the document's memories are invalidated and queued for re-consolidation under the new tags. Co-source memories from other documents that shared those observations are also reset.
 
 This is required for correctness rather than incidental: consolidation scopes a memory by its tag set, so an observation built under the old tags is no longer valid, and deleting it would strand every other memory that observation was consolidated from unless those are requeued too. The size of that requeue is the number of memories co-sourced with this document's — on a densely co-sourced bank it can be many times the document's own memory count.
 
 Tags are compared as a **set** against the document's current tags, and an update that leaves the set unchanged — including one that only reorders the array — performs no retag and queues no re-consolidation. A repeatable tag-normalisation sweep therefore only pays the re-consolidation cost on the run that actually changes something.
-
 ## Delete Document
 
 Remove a document and all its associated memories:
@@ -372,8 +360,8 @@ asyncio.run(delete_document_example())
 ```javascript
 // Delete document and all its memories
 const { data: deleteResult } = await sdk.deleteDocument({
-  client: apiClient,
-  path: { bank_id: "my-bank", document_id: "meeting-2024-03-15-section-1" },
+    client: apiClient,
+    path: { bank_id: 'my-bank', document_id: 'meeting-2024-03-15-section-1' }
 });
 
 console.log(`Deleted ${deleteResult.memory_units_deleted} memories`);
@@ -392,9 +380,8 @@ client.DocumentsAPI.DeleteDocument(ctx, "my-bank", "meeting-2024-03-15").Execute
 ```
 
 > **⚠️ Warning**
-
+>
 Deleting a document permanently removes all memories extracted from it. This action cannot be undone.
-
 ## List Documents
 
 List documents in a bank with optional filtering by ID, tags, and time.
@@ -447,43 +434,41 @@ asyncio.run(list_documents_example())
 ### Node.js
 
 ```javascript
-const apiClient = createClient(
-  createConfig({ baseUrl: "http://localhost:8888" })
-);
+const apiClient = createClient(createConfig({ baseUrl: 'http://localhost:8888' }));
 
 // List all documents
 const { data: allDocs } = await sdk.listDocuments({
-  client: apiClient,
-  path: { bank_id: "my-bank" },
+    client: apiClient,
+    path: { bank_id: 'my-bank' }
 });
 console.log(`Total documents: ${allDocs.total}`);
 
 // Filter by document ID substring
 const { data: reportDocs } = await sdk.listDocuments({
-  client: apiClient,
-  path: { bank_id: "my-bank" },
-  query: { q: "report" },
+    client: apiClient,
+    path: { bank_id: 'my-bank' },
+    query: { q: 'report' }
 });
 
 // Filter by tags — only docs tagged with "team-a" (untagged excluded)
 const { data: taggedDocs } = await sdk.listDocuments({
-  client: apiClient,
-  path: { bank_id: "my-bank" },
-  query: { tags: ["team-a"], tags_match: "any_strict" },
+    client: apiClient,
+    path: { bank_id: 'my-bank' },
+    query: { tags: ['team-a'], tags_match: 'any_strict' }
 });
 
 // Combine ID search and tags
 const { data: filtered } = await sdk.listDocuments({
-  client: apiClient,
-  path: { bank_id: "my-bank" },
-  query: { q: "meeting", tags: ["team-a", "team-b"], tags_match: "all_strict" },
+    client: apiClient,
+    path: { bank_id: 'my-bank' },
+    query: { q: 'meeting', tags: ['team-a', 'team-b'], tags_match: 'all_strict' }
 });
 
 // Paginate
 const { data: page } = await sdk.listDocuments({
-  client: apiClient,
-  path: { bank_id: "my-bank" },
-  query: { limit: 20, offset: 40 },
+    client: apiClient,
+    path: { bank_id: 'my-bank' },
+    query: { limit: 20, offset: 40 }
 });
 console.log(`Page items: ${page.items.length}`);
 ```
@@ -513,21 +498,21 @@ for _, d := range docs.Items {
 
 ### Filtering Options
 
-| Parameter          | Description                                                                                            |
-| ------------------ | ------------------------------------------------------------------------------------------------------ |
-| `q`                | Case-insensitive substring match on document ID. `report` matches `report-2024`, `annual-report`, etc. |
-| `tags`             | Filter by document tags. Accepts multiple values.                                                      |
-| `tags_match`       | How to match tags (default: `any_strict`). See below.                                                  |
-| `limit` / `offset` | Pagination. Default limit is 100.                                                                      |
+| Parameter | Description |
+|---|---|
+| `q` | Case-insensitive substring match on document ID. `report` matches `report-2024`, `annual-report`, etc. |
+| `tags` | Filter by document tags. Accepts multiple values. |
+| `tags_match` | How to match tags (default: `any_strict`). See below. |
+| `limit` / `offset` | Pagination. Default limit is 100. |
 
 **`tags_match` modes:**
 
-| Mode                     | Behaviour                                                                          |
-| ------------------------ | ---------------------------------------------------------------------------------- |
-| `any_strict` _(default)_ | Document must have **at least one** of the specified tags. Untagged docs excluded. |
-| `any`                    | Same as `any_strict` but also includes untagged documents.                         |
-| `all_strict`             | Document must have **all** specified tags. Untagged docs excluded.                 |
-| `all`                    | Same as `all_strict` but also includes untagged documents.                         |
+| Mode | Behaviour |
+|---|---|
+| `any_strict` *(default)* | Document must have **at least one** of the specified tags. Untagged docs excluded. |
+| `any` | Same as `any_strict` but also includes untagged documents. |
+| `all_strict` | Document must have **all** specified tags. Untagged docs excluded. |
+| `all` | Same as `all_strict` but also includes untagged documents. |
 
 ## Document Response Format
 
