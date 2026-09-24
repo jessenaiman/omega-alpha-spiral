@@ -96,6 +96,7 @@ The official scene grants two hidden points when choice alignment matches the ro
 
 ## Current concept studies
 
+- [Floors 1–3 source-kit study](../../assets/concepts/floors-1-3-source-kit-proposal.png): the same rail family becomes Light’s straight bar, Shadow’s fractured diagonal, and Ambition’s stepped curve at one camera and scale. Proposal only; the curve needs a squarer mesh and the exits still need live readability review. [Prompt and review record](../../assets/concepts/floors-1-3-source-kit-proposal.md).
 - [Floor 4 Echo Vault combat](floor-4-echo-vault-combat-concept.png): one lone hero, a readable charging sentinel, and a sparse vaulted arena. Concept only.
 - [Floors 5–6 combat era study](floors-5-6-combat-era-study.png): layered 16-bit ruins mature into faceted early 3D while telegraphed encounters deepen. Concept only.
 - [Floor 5 Moving Archive asset-kit proposal](floor-5-moving-archive-asset-kit-proposal.png): shelf front, banner, lamp, parallax backdrop, floor motif, and inherited door as six reusable parts. Concept only; source geometry and live readability await review.
