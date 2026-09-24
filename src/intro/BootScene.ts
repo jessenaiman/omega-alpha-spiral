@@ -402,6 +402,9 @@ export class BootScene {
       pmrem.dispose();
       this._camera = new PerspectiveCamera(36, 1, 0.1, 40);
       this._camera.position.z = 10;
+      this._spatial.setThresholdPreview(
+        this._chapterTwo.renderThresholdPreview(this._renderer).texture
+      );
       if (this._root) this._root.dataset.osPhysicsTs = "loading";
       this._spatialReady = this._spatial
         .init(this._scene)
@@ -691,7 +694,12 @@ export class BootScene {
     guide
       .querySelectorAll<HTMLButtonElement>("[data-os-route]")
       .forEach((button, index) => {
-        button.textContent = `${index + 1}  ${["LIGHT", "SHADOW", "AMBITION"][index]} · ${this._questions[this._questionIndex].choices[index].text}`;
+        const route = ["LIGHT", "SHADOW", "AMBITION"][index];
+        button.textContent = `${index + 1}  ${route}`;
+        button.setAttribute(
+          "aria-label",
+          `${route}: ${this._questions[this._questionIndex].choices[index].text}`
+        );
       });
     this._spatial.setFrame(frame);
     this._prelude.textContent = frame.prelude;

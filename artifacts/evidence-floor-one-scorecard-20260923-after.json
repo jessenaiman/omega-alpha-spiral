@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "runId": "floor-one-scorecard-20260923-after",
+  "captures": [
+    { "mode": "desktop", "state": "entry", "report": "artifacts/floor-one-scorecard-20260923-after/desktop-entry.json" },
+    { "mode": "mobile", "state": "entry", "report": "artifacts/floor-one-scorecard-20260923-after/mobile-entry.json" },
+    { "mode": "desktop", "state": "guard-intent", "report": "artifacts/floor-one-scorecard-20260923-after/desktop-guard-intent.json" },
+    { "mode": "mobile", "state": "guard-intent", "report": "artifacts/floor-one-scorecard-20260923-after/mobile-guard-intent.json" }
+  ]
+}

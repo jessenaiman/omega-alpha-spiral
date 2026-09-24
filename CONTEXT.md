@@ -6,6 +6,15 @@ The game context for this repository: a browser game in which a player answers a
 
 This is **Omega Spiral**, a Vite + TypeScript + Three.js browser game. Work on the game requested by the user; do not turn creative iteration into test, tooling, dependency, documentation, or project-management work.
 
+### Agent tooling — threejs skills & Blender MCP
+
+This project owns its agent skills and its Blender MCP config; neither depends on global installs.
+
+- **Threejs skills (9) + `stack`** are git-tracked in `.agents/skills/`. Source is `majidmanzarpour/threejs-game-skills` (upstream unified 2026-09-05; this copy is current). OpenCode auto-discovers `.agents/skills` and the project copy overrides the global `~/.agents/skills` copy. Preserve local edits (`.agents/skills/threejs-game-director/SKILL.md`); refresh by re-copying from upstream, never by deleting tracked files.
+- **Blender MCP** is wired project-local in `opencode.json` → client `C:\Users\jesse\.local\bin\blender-mcp.exe` (uv tool `blender-mcp` v1.0.3) with `BLENDER_MCP_PORT=9876`. The client port must equal the Blender add-on preference port (`bl_ext.user.default.mcp` v1.0.3, add-on archive `mcp-1.0.3.zip`, Auto Start on). Probe with `opencode mcp list`; a `Blender connection timed out at localhost:<port>` message means Blender is not running with the auto-started server.
+- Launch Blender with the server: GUI `blender.exe <file>.blend` (add-on autostarts, ~1 s); headless `blender.exe --background --online-mode --python tools/blender/mcp_headless_server.py`. The server port must equal the client's `BLENDER_MCP_PORT`.
+- Other harnesses keep their own independent Blender entries: Claude Code (`~/.claude.json`, same exe) and Codex (`~/.codex/config.toml`, `uvx mcp-for-blender`). Each client must match the add-on port; they do not need to match each other.
+
 ### Read order — five files maximum
 
 `AGENTS.md` and this file are supplied context. Before editing, read only:

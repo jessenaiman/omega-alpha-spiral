@@ -71,7 +71,7 @@
       "source": "vectorize-io/hindsight",
       "sourceType": "github",
       "skillPath": "skills/hindsight-docs/SKILL.md",
-      "computedHash": "83e5ba81f6df2436ceace57f49d3d66147e4ecfbfbe58a662ba4f0ef31a17c14"
+      "computedHash": "88f75ae163a81ec44dc136e48343d2447817757da64b8373ae4b80b8c3db7348"
     },
     "implement": {
       "source": "mattpocock/skills",

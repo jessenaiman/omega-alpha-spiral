@@ -1,0 +1,112 @@
+{
+  "url": "http://127.0.0.1:5188/floor-one.html",
+  "mode": "desktop",
+  "state": "pause",
+  "requestedState": "pause",
+  "appliedState": "pause",
+  "runId": "hooks-1",
+  "seed": null,
+  "screenshotPath": "artifacts\\floor-one-hooks-20260922\\desktop-pause.png",
+  "gpu": {
+    "renderer": "ANGLE (NVIDIA, NVIDIA GeForce GTX 1660 (0x00002184) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+    "vendor": "Google Inc. (NVIDIA)",
+    "softwareRendered": false
+  },
+  "result": {
+    "ok": true,
+    "reason": "nonblank",
+    "rect": {
+      "x": 0,
+      "y": 40.5,
+      "width": 979,
+      "height": 679.5
+    },
+    "drawingBuffer": {
+      "width": 979,
+      "height": 680
+    },
+    "alphaPixels": 4110,
+    "variance": 226,
+    "colorBuckets": 13,
+    "metrics": {
+      "colorBuckets": 18,
+      "colorEntropyBits": 0.59,
+      "edgeDensity": 0.007,
+      "luminance": {
+        "mean": 6.8,
+        "p5": 5.9,
+        "p95": 10.7,
+        "contrast": 4.7
+      },
+      "dominantColorShare": 0.877,
+      "nonBackgroundShare": 0.123
+    },
+    "renderBudget": {
+      "tier": "desktop",
+      "note": "starting-point budget; adjust per game and document overrides",
+      "rows": [
+        {
+          "metric": "calls",
+          "actual": 1,
+          "limit": 300,
+          "ok": true
+        },
+        {
+          "metric": "triangles",
+          "actual": 2,
+          "limit": 750000,
+          "ok": true
+        },
+        {
+          "metric": "geometries",
+          "actual": 1,
+          "limit": 300,
+          "ok": true
+        },
+        {
+          "metric": "textures",
+          "actual": 1,
+          "limit": 60,
+          "ok": true
+        }
+      ],
+      "withinBudget": true
+    },
+    "diagnostics": {
+      "runId": "floor-one:floor-1",
+      "instance": null,
+      "loop": 0,
+      "phase": "ongoing",
+      "checkpoint": null,
+      "objective": "Reach the stairs",
+      "targetVerb": "move",
+      "playerState": "hp 6/6",
+      "party": [],
+      "route": null,
+      "pairing": null,
+      "era": "floor-one",
+      "paused": true,
+      "accessibility": {
+        "reducedMotion": true,
+        "debugHidden": false
+      },
+      "audio": {
+        "unlocked": false
+      },
+      "canvas": {
+        "width": 979,
+        "height": 680,
+        "pixelRatio": 1
+      },
+      "renderer": {
+        "calls": 1,
+        "triangles": 2,
+        "geometries": 1,
+        "textures": 1
+      },
+      "errors": []
+    }
+  },
+  "consoleErrors": [],
+  "pageErrors": []
+}

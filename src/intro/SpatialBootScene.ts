@@ -23,6 +23,7 @@ import {
   Scene,
   ShaderMaterial,
   SRGBColorSpace,
+  Texture,
   Vector2,
   Vector3,
 } from "three";
@@ -602,6 +603,7 @@ export class SpatialBootScene {
   private _doorRailMaterials: MeshBasicMaterial[] = [];
   private _blenderLayers: BlenderIntroLayers | null = null;
   private _blenderExtras: IntroBlenderExtras | null = null;
+  private _thresholdPreview: Texture | null = null;
   private _blenderStars: Object3D | null = null;
   private _destroyed: boolean = false;
   private _atlases: CanvasTexture[] = [];
@@ -685,6 +687,10 @@ export class SpatialBootScene {
     { x: 0, y: 0, z: 0.18 },
     { x: 0, y: 0, z: 0.18 },
   ];
+
+  public setThresholdPreview(texture: Texture): void {
+    this._thresholdPreview = texture;
+  }
 
   public init(scene: Scene): Promise<void> {
     this._atlases = INTRO_ERAS.map((era: IntroEraDesign): CanvasTexture =>
@@ -771,7 +777,8 @@ export class SpatialBootScene {
       .catch((error: unknown) => {
         console.warn("Unable to load Blender intro layers", error);
       });
-    const extrasReady = loadIntroBlenderExtras(this._root)
+    if (!this._thresholdPreview) throw new Error("Chapter Two threshold preview is missing");
+    const extrasReady = loadIntroBlenderExtras(this._root, this._thresholdPreview)
       .then((extras): void => {
         if (!this._destroyed) this._blenderExtras = extras;
       })
@@ -1793,6 +1800,11 @@ export class SpatialBootScene {
         isName || frame.phase === "doorway" || isCrossing;
       this._blenderExtras.floorGlyph.visible =
         frame.phase === "doorway" || isCrossing;
+      this._blenderExtras.preview.material.opacity = isName
+        ? 0.16
+        : frame.phase === "doorway"
+          ? Math.min(0.92, 0.18 + (frame.phaseElapsedMs ?? 0) / 1800)
+          : isCrossing ? 0.92 : 0;
     }
     this._worldEvolution.update(
       this._choiceHistory.length,
@@ -1810,11 +1822,16 @@ export class SpatialBootScene {
           ? Math.min(0.28, Math.max(0, (frame.phaseElapsedMs ?? 0) / 9200))
           : 1;
       const assembly = rawAssembly * rawAssembly * (3 - 2 * rawAssembly);
+      const openTime = frame.phase === "doorway"
+        ? Math.min(1, Math.max(0, (frame.phaseElapsedMs ?? 0) / 1700))
+        : isCrossing ? 1 : 0;
+      const opening = openTime * openTime * (3 - 2 * openTime);
       this._doorRailMaterials.forEach((material, index): void => {
         material.opacity = (index < 3 ? 0.8 : 0.36) * assembly;
       });
       this._doorFragments.forEach(({ node, home, offset }): void => {
         node.position.copy(home).addScaledVector(offset, 1 - assembly);
+        node.position.x += (node.name.includes("_L_") ? -1 : 1) * 1.15 * opening;
       });
     }
     const crossingProgress: number = isCrossing
