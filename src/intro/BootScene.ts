@@ -201,6 +201,9 @@ export class BootScene {
   private _dialogueState = new DialogueState();
   private _dialogueEvent = "";
   private _nextLevel = "";
+  private get _finalEra(): number {
+    return this._questions.at(-1)?.era ?? 0;
+  }
 
   public init(): void {
     this._spatial.setStudioPresentation(studioOpeningDocuments[0].presentation);
@@ -957,7 +960,7 @@ export class BootScene {
     this._storyStartedAt = performance.now();
     this._canContinue = false;
     this._applyFrame(
-      this._storyFrame(OMEGA_NAME_QUESTION, "name", 5, "Type a name", 0)
+      this._storyFrame(OMEGA_NAME_QUESTION, "name", this._finalEra, "Type a name", 0)
     );
     requestAnimationFrame((): void => {
       getElement("#os-name-input-ts", HTMLInputElement).focus();
@@ -979,7 +982,7 @@ export class BootScene {
     this._storyStartedAt = performance.now();
     this._spatial.beginDoorway(name);
     this._applyFrame(
-      this._storyFrame(OMEGA_DOOR_WORDS, "doorway", 5, "Walk forward", 0)
+      this._storyFrame(OMEGA_DOOR_WORDS, "doorway", this._finalEra, "Walk forward", 0)
     );
     input.blur();
   }
@@ -1017,7 +1020,7 @@ export class BootScene {
     this._canContinue = false;
     this._clearMovement();
     this._applyFrame(
-      this._storyFrame(OMEGA_DOOR_WORDS, "complete", 5, "Entering", 0)
+      this._storyFrame(OMEGA_DOOR_WORDS, "complete", this._finalEra, "Entering", 0)
     );
   }
 
@@ -1184,14 +1187,14 @@ export class BootScene {
         return;
       }
       this._applyFrame(
-        this._storyFrame(text, "final", 4, undefined, elapsedMs)
+        this._storyFrame(text, "final", this._finalEra, undefined, elapsedMs)
       );
       return;
     }
     if (this._storyMode === "complete") {
       const crossingMs: number = this._isReduced ? 0 : 2800;
       this._applyFrame(
-        this._storyFrame(OMEGA_DOOR_WORDS, "complete", 5, undefined, elapsedMs)
+        this._storyFrame(OMEGA_DOOR_WORDS, "complete", this._finalEra, undefined, elapsedMs)
       );
       if (!this._chapterTwoStarted && elapsedMs >= crossingMs) {
         this._chapterTwoStarted = true;
@@ -1813,7 +1816,7 @@ export class BootScene {
     if (name === "final-name") {
       this._storyMode = "name";
       this._applyFrame(
-        this._storyFrame(OMEGA_NAME_QUESTION, "name", 5, "Type a name", 0)
+        this._storyFrame(OMEGA_NAME_QUESTION, "name", this._finalEra, "Type a name", 0)
       );
       this._spatial.settleForTestState(this._motionMs);
       this._updateCamera(100);
@@ -1826,7 +1829,7 @@ export class BootScene {
       this._storyMode = "doorway";
       this._spatial.beginDoorway(this._playerName);
       this._applyFrame(
-        this._storyFrame(OMEGA_DOOR_WORDS, "doorway", 5, "Walk forward", 12000)
+        this._storyFrame(OMEGA_DOOR_WORDS, "doorway", this._finalEra, "Walk forward", 12000)
       );
       this._spatial.settleForTestState(this._motionMs);
       this._updateCamera(100);
@@ -1835,7 +1838,7 @@ export class BootScene {
     }
     this._storyMode = "complete";
     this._applyFrame(
-      this._storyFrame(OMEGA_DOOR_WORDS, "complete", 5, undefined, 12000)
+      this._storyFrame(OMEGA_DOOR_WORDS, "complete", this._finalEra, undefined, 12000)
     );
     this._spatial.settleForTestState(this._motionMs);
     this._updateCamera(100);

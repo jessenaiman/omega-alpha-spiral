@@ -4,7 +4,8 @@ import {
   type DialogueDocument,
 } from "../dialogue/timeline";
 import { WritingPlayback, resolveWritingText } from "../dialogue/writing";
-import { GHOST_LEVELS, type GhostQuestion } from "../dialogue/ghost";
+import type { GhostQuestion } from "../dialogue/ghost";
+import { GHOST_LEVELS } from "../dialogue/ghost-vite";
 import { PROFILES, SPEAKERS, type SpeakerId } from "../dialogue/personas";
 import type { Layout } from "../era-shaders/text";
 

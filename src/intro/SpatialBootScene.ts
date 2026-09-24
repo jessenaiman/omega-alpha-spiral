@@ -129,21 +129,15 @@ const GLYPH_FRAGMENT: string = `
   uniform sampler2D uMap1;
   uniform sampler2D uMap2;
   uniform sampler2D uMap3;
-  uniform sampler2D uMap4;
-  uniform sampler2D uMap5;
   uniform vec3 uColor;
   uniform vec3 uInk0;
   uniform vec3 uInk1;
   uniform vec3 uInk2;
   uniform vec3 uInk3;
-  uniform vec3 uInk4;
-  uniform vec3 uInk5;
   uniform float uKeep0;
   uniform float uKeep1;
   uniform float uKeep2;
   uniform float uKeep3;
-  uniform float uKeep4;
-  uniform float uKeep5;
   uniform float uUseOverride;
   uniform float uEra;
   uniform float uTime;
@@ -177,23 +171,17 @@ const GLYPH_FRAGMENT: string = `
     vec4 s1 = texture2D(uMap1, damagedUv);
     vec4 s2 = texture2D(uMap2, damagedUv);
     vec4 s3 = texture2D(uMap3, damagedUv);
-    vec4 s4 = texture2D(uMap4, damagedUv);
-    vec4 s5 = texture2D(uMap5, damagedUv);
     float w0 = isReached(0.0) * mix(uKeep0, 1.0, isCurrent(0.0));
     float w1 = isReached(1.0) * mix(uKeep1, 1.0, isCurrent(1.0));
     float w2 = isReached(2.0) * mix(uKeep2, 1.0, isCurrent(2.0));
     float w3 = isReached(3.0) * mix(uKeep3, 1.0, isCurrent(3.0));
-    float w4 = isReached(4.0) * mix(uKeep4, 1.0, isCurrent(4.0));
-    float w5 = isReached(5.0) * mix(uKeep5, 1.0, isCurrent(5.0));
     float a0 = s0.a * w0;
     float a1 = s1.a * w1;
     float a2 = s2.a * w2;
     float a3 = s3.a * w3;
-    float a4 = s4.a * w4;
-    float a5 = s5.a * w5;
-    float energy = a0 + a1 + a2 + a3 + a4 + a5;
-    float alpha = 1.0 - (1.0 - a0) * (1.0 - a1) * (1.0 - a2) * (1.0 - a3) * (1.0 - a4) * (1.0 - a5);
-    vec3 layeredColor = (uInk0 * a0 + uInk1 * a1 + uInk2 * a2 + uInk3 * a3 + uInk4 * a4 + uInk5 * a5) / max(energy, 0.001);
+    float energy = a0 + a1 + a2 + a3;
+    float alpha = 1.0 - (1.0 - a0) * (1.0 - a1) * (1.0 - a2) * (1.0 - a3);
+    vec3 layeredColor = (uInk0 * a0 + uInk1 * a1 + uInk2 * a2 + uInk3 * a3) / max(energy, 0.001);
     vec3 ink = mix(layeredColor, uColor, uUseOverride);
     float paletteLevels = max(2.0, exp2(min(6.0, uBitDepth)));
     ink = floor(ink * paletteLevels + 0.5) / paletteLevels;
@@ -201,9 +189,9 @@ const GLYPH_FRAGMENT: string = `
     float scan = 1.0 - uScanline * step(0.5, row);
     float dropout = step(0.08 + uDamage * 0.2, hash21(vec2(floor(gl_FragCoord.x * 0.18), floor(uTime * 5.0) + gl_FragCoord.y)));
     float unstable = mix(1.0, dropout, uDamage * damageBand);
-    float atari = isCurrent(0.0);
+    float cellDither = isCurrent(2.0);
     float dither = step(0.34, fract(gl_FragCoord.x * 0.25) + fract(gl_FragCoord.y * 0.25));
-    alpha *= scan * unstable * mix(1.0, dither, atari * 0.22);
+    alpha *= scan * unstable * mix(1.0, dither, cellDither * 0.22);
     if (alpha < 0.035) discard;
     gl_FragColor = vec4(ink * mix(0.82, 1.0, scan), alpha);
     #include <colorspace_fragment>
@@ -265,21 +253,15 @@ export class GlyphRibbon {
       uMap1: { value: atlases[1] },
       uMap2: { value: atlases[2] },
       uMap3: { value: atlases[3] },
-      uMap4: { value: atlases[4] },
-      uMap5: { value: atlases[5] },
       uColor: { value: new Color(era.ink) },
       uInk0: { value: new Color(INTRO_ERAS[0].ink) },
       uInk1: { value: new Color(INTRO_ERAS[1].ink) },
       uInk2: { value: new Color(INTRO_ERAS[2].ink) },
       uInk3: { value: new Color(INTRO_ERAS[3].ink) },
-      uInk4: { value: new Color(INTRO_ERAS[4].ink) },
-      uInk5: { value: new Color(INTRO_ERAS[5].ink) },
       uKeep0: { value: INTRO_ERAS[0].retention },
       uKeep1: { value: INTRO_ERAS[1].retention },
       uKeep2: { value: INTRO_ERAS[2].retention },
       uKeep3: { value: INTRO_ERAS[3].retention },
-      uKeep4: { value: INTRO_ERAS[4].retention },
-      uKeep5: { value: INTRO_ERAS[5].retention },
       uUseOverride: { value: 0 },
       uEra: { value: 0 },
       uTime: { value: 0 },
