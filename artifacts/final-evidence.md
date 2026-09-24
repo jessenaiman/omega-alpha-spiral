@@ -1,5 +1,12 @@
 # Omega Spiral review evidence
 
+## Eight-floor era journey — issue #61, awaiting playable review
+
+✅ The [design manifest](level-design/design-manifest.md) and [design scorecard](level-design/design-scorecard.md) record the owner-approved era order, early three-exit choices, combat introduction on Floors 4–6, varied Floor 7 town, and Floor 8 healing-core endpoint. New Floor 4, Floors 5–6, and Floor 7 concept images are design studies, not runtime captures.
+
+✅ Source review found the Floor 5 upper-index spur crossing a declared collider. The middle-floor author moved the obstacle and updated its visible art before integration. Early Monster defeat records a distinct fallen outcome and still permits progression in the state model. Floors 4–8 scene handoffs and varied Three.js town districts are present in source; this is static review only.
+
+❌ No issue #61 live frame, owner-run basic turn-on/visibility/access result, active-play capture, or runtime visual score is recorded yet. The historical evidence below applies to earlier work and cannot certify this journey.
 ## Floor One design integration — current review
 
 ✅ The owner-approved [sparse Stage 1 image](level-design/stage-1-atari-3d-starting-point.png) and [era progression sheet](level-design/era-progression-reference-draft.png) are the visual references. A new live Light room was seen in the browser at `http://127.0.0.1:5210/`: a lone hero, straight stacked walls, amber-slit pillars, and sparse code debris. This is a visual observation, not owner approval.

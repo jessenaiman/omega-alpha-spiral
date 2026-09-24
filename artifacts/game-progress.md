@@ -2,7 +2,15 @@
 
 Updated: 2026-09-24
 
-## Current task — Floor One design integration, issue #18
+## Current task — Eight-floor era journey, issue #61
+
+- Branch: `codex/omega-floor-arc` in an isolated worktree. This branch starts from the committed Floor One baseline; the separate issue #18 and #59 worktrees remain untouched.
+- Owner direction: Floors 1–3 are Light, Shadow, and Ambition's three separately navigable Door/Monster/Chest choices; early combat death still advances. Floors 4–6 introduce telegraphed combat and basic Hit/Run, with victory or death advancing. Floor 7 is a varied-architecture town where the party gathers the Dreamweavers and faces garbage collectors. Floor 8 is the healing-core finale.
+- The design manifest now links the new Floor 4 combat, Floors 5–6 combat-era, and Floor 7 varied-town concept studies. Those images are design targets, not captured game frames.
+- Implemented in source so far: seeded Floor 2 diagonal and Floor 3 stepped-curve layouts; three physical exits per early floor; selected-exit crossing; early Monster `fallen` outcome; initial Three.js scene placement for Floors 2–3. Floor 4–8 layouts, combat/town state, procedural art kits, and scene handoffs are connected in source. Town paving now uses one flat Three.js texture with three era districts instead of hundreds of raised cobble cubes; the three party followers use non-cube silhouettes. Runtime visibility and route play remain unverified.
+- Next: finish the narrow static review fixes for Run and Floor 4–6 choice persistence, then ask the owner to perform the basic turn-on, visible-page, and access check. No current test run, capture manifest, aesthetic approval, or gameplay-complete claim for issue #61.
+
+## Earlier task — Floor One design integration, issue #18
 
 - Branch: `codex/floor-one-design-integration-18` in the isolated `blender-reference-placement` worktree. OpenCode's issue #59 manifest/scorecard work remains separate.
 - The approved [Stage 1 sparse visual](level-design/stage-1-atari-3d-starting-point.png) and [era progression sheet](level-design/era-progression-reference-draft.png) direct the current Light room and later floors. [Playable brief](level-design/floor-1-playable-brief.md) records the Three.js layout and visual continuation.
