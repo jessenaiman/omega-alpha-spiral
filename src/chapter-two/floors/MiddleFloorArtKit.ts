@@ -66,14 +66,21 @@ export function createMiddleFloorArtKit(layout: MiddleFloorLayout): MiddleFloorA
     dispose(): void {
       const geometries = new Set<THREE.BufferGeometry>();
       const materials = new Set<THREE.Material>();
+      const textures = new Set<THREE.Texture>();
       root.traverse((object: THREE.Object3D): void => {
         const mesh = object as THREE.Mesh;
         if (mesh.geometry) geometries.add(mesh.geometry);
-        if (Array.isArray(mesh.material)) mesh.material.forEach((material) => materials.add(material));
-        else if (mesh.material) materials.add(mesh.material);
+        const collectMaterial = (material: THREE.Material): void => {
+          materials.add(material);
+          const map = (material as THREE.Material & { map?: THREE.Texture }).map;
+          if (map) textures.add(map);
+        };
+        if (Array.isArray(mesh.material)) mesh.material.forEach(collectMaterial);
+        else if (mesh.material) collectMaterial(mesh.material);
       });
       geometries.forEach((geometry) => geometry.dispose());
       materials.forEach((material) => material.dispose());
+      textures.forEach((texture) => texture.dispose());
       root.clear();
     },
   };
@@ -181,7 +188,6 @@ function addCollisionArchitecture(
       const top = new THREE.Mesh(new THREE.BoxGeometry(width * 1.05, 0.14, depth * 1.05), mats.trim);
       top.position.y = height + 0.06;
       group.add(top);
-      addLeafCluster(group, width, depth, p.leaf, 3 + (index % 2), mats.leaf);
       addBookSpines(group, width, depth, mats);
     } else {
       // Early-3D blockers read as stone observatory rails and faceted piers.
@@ -258,7 +264,6 @@ function addDiscoveryLandmark(group: THREE.Group, layout: MiddleFloorLayout, mat
   } else if (layout.floor === 5) {
     addPageSprite(group, mats.trim, 0, 1.1, 0, 1.2, 1.65, -0.22);
     addPageSprite(group, mats.glow, 0.42, 0.9, 0.12, 0.75, 1.05, 0.12);
-    addLeafCluster(group, 1.3, 0.8, p.leaf, 3, mats.leaf);
   } else {
     addPrism(group, mats.glow, 0, 1.25, 0, 0.82);
     const halo = new THREE.Mesh(new THREE.TorusGeometry(0.72, 0.045, 5, 12), mats.trim);
@@ -318,7 +323,7 @@ function addExitLandmark(group: THREE.Group, layout: MiddleFloorLayout, mats: Re
     const center = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 3.1), mats.glow);
     center.position.set(0, 1.58, 0.04);
     group.add(center);
-    addLeafCluster(group, 2.6, 1.8, p.leaf, 5, mats.leaf);
+    addArchiveBanner(group, mats, 0, 4.1, -0.2, 2.2, 1.05);
   } else {
     for (const x of [-2.2, 2.2]) {
       const pier = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.58, 3.5, 6), mats.structure);
@@ -340,33 +345,26 @@ function addEraSetDressing(root: THREE.Group, layout: MiddleFloorLayout, mats: R
     addVaultTileField(root, layout);
     addEchoPlinths(root, layout, mats);
   } else if (layout.floor === 5) {
-    // 16-bit library: continuous book walls, readable route, leafy sprite cards.
+    // 16-bit archive: repeated sprite-front shelves, simple signage and two
+    // reduced shelf silhouettes set behind the traversable route.
+    const shelfFaceMaterials = Array.from({ length: 4 }, (_, variant) => makeArchiveShelfMaterial(variant));
+    const shelfFaceGeometry = new THREE.PlaneGeometry(2.7, 4.2);
     for (let side = -1; side <= 1; side += 2) {
       for (let i = 0; i < 4; i += 1) {
         const shelf = new THREE.Group();
         shelf.position.set(side * (17 + (i % 2)), 0, 15 - i * 9);
-        const carcass = new THREE.Mesh(new THREE.BoxGeometry(2.7, 4.2, 0.7), mats.structure);
-        carcass.position.y = 2.1;
-        shelf.add(carcass);
-        for (let row = 0; row < 4; row += 1) {
-          const book = new THREE.Mesh(new THREE.BoxGeometry(2.15, 0.17, 0.46), row % 2 ? mats.trim : mats.shadow);
-          book.position.set(0, 0.65 + row * 0.85, 0.39);
-          shelf.add(book);
-          for (let k = 0; k < 5; k += 1) {
-            const spine = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.42, 0.06), [mats.warning, mats.glow, mats.leaf][(k + i) % 3]!);
-            spine.position.set(-0.82 + k * 0.39, 0.88 + row * 0.85, 0.44);
-            shelf.add(spine);
-          }
-        }
-        addLeafCluster(shelf, 2.2, 0.8, p.leaf, 4, mats.leaf, side * -0.55, 4.2, 0);
+        addArchiveShelfFront(shelf, shelfFaceGeometry, shelfFaceMaterials[i % shelfFaceMaterials.length]!, 4.2);
+        if (i === 0) addArchiveBanner(shelf, mats, 0, 4.55, 0.42, 1.8, 0.92);
+        if (i === 2) addArchiveLamp(shelf, mats, side * -1.12, 2.95, 0.5);
         root.add(shelf);
       }
     }
-    for (let i = 0; i < 12; i += 1) {
+    addArchiveShelfSilhouettes(root, layout);
+    for (let i = 0; i < 8; i += 1) {
       const sprite = new THREE.Group();
-      sprite.position.set(-15 + ((i * 5) % 30), 0.9 + (i % 3) * 0.44, 12 - ((i * 7) % 25));
-      addPageSprite(sprite, i % 3 ? mats.leaf : mats.trim, 0, 0, 0, 0.4 + (i % 2) * 0.25, 0.7, (i % 4) * 0.11);
-      sprite.name = `library-leaf-sprite:${i}`;
+      sprite.position.set(-15 + ((i * 5) % 30), 1.2 + (i % 3) * 0.48, 12 - ((i * 7) % 25));
+      addPageSprite(sprite, i % 3 ? mats.trim : mats.warning, 0, 0, 0, 0.42 + (i % 2) * 0.22, 0.72, (i % 4) * 0.11);
+      sprite.name = `archive-index-sprite:${i}`;
       root.add(sprite);
     }
   } else {
@@ -392,6 +390,126 @@ function addEraSetDressing(root: THREE.Group, layout: MiddleFloorLayout, mats: R
       shard.position.set(-18 + ((i * 9) % 36), 3.2 + (i % 3), -15 + ((i * 11) % 30));
       root.add(shard);
     }
+  }
+}
+
+/** Small 16-bit façade module shared by the archive's repeated shelves. */
+function addArchiveShelfFront(group: THREE.Group, geometry: THREE.PlaneGeometry, material: THREE.MeshBasicMaterial, height: number): void {
+  const face = new THREE.Mesh(geometry, material);
+  face.position.set(0, height / 2, 0.34);
+  face.name = "archive-sprite-front";
+  group.add(face);
+}
+
+function makeArchiveShelfMaterial(variant: number): THREE.MeshBasicMaterial {
+  const canvas = document.createElement("canvas");
+  canvas.width = 128;
+  canvas.height = 192;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Canvas 2D context unavailable for Floor 5 archive art");
+  const palettes = [
+    ["#302735", "#725037", "#db9650", "#3ca59a"],
+    ["#302735", "#68423b", "#d6a05b", "#5576c2"],
+    ["#302735", "#604a3f", "#c77b57", "#61a66d"],
+    ["#302735", "#74513e", "#e1ae59", "#8b67bd"],
+  ][variant % 4]!;
+  ctx.fillStyle = palettes[0];
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  const rowHeight = 47;
+  for (let row = 0; row < 4; row += 1) {
+    const top = row * rowHeight;
+    ctx.fillStyle = row % 2 ? "#604735" : "#795638";
+    ctx.fillRect(0, top + 38, 128, 8);
+    for (let i = 0; i < 10; i += 1) {
+      const x = 5 + i * 12;
+      const bookHeight = 22 + ((i + row + variant) % 3) * 5;
+      ctx.fillStyle = (i + row + variant) % 5 === 0 ? palettes[2] : palettes[3];
+      ctx.fillRect(x, top + 36 - bookHeight, 8, bookHeight);
+      ctx.fillStyle = palettes[1];
+      ctx.fillRect(x + 1, top + 36 - bookHeight, 1, bookHeight);
+      if ((i + row) % 3 === 0) {
+        ctx.fillStyle = "#eed39a";
+        ctx.fillRect(x + 2, top + 25, 4, 2);
+      }
+    }
+    ctx.fillStyle = "#d3975a";
+    ctx.fillRect(0, top, 128, 2);
+  }
+  return makePixelMaterial(canvas);
+}
+
+function makeArchiveSilhouetteMaterial(): THREE.MeshBasicMaterial {
+  const canvas = document.createElement("canvas");
+  canvas.width = 256;
+  canvas.height = 64;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Canvas 2D context unavailable for Floor 5 archive silhouette");
+  ctx.clearRect(0, 0, 256, 64);
+  ctx.fillStyle = "#142529";
+  ctx.fillRect(0, 45, 256, 7);
+  for (let i = 0; i < 22; i += 1) {
+    const h = 19 + (i % 4) * 6;
+    ctx.fillStyle = i % 4 === 0 ? "#183338" : "#142529";
+    ctx.fillRect(i * 12, 45 - h, 9, h);
+  }
+  return makePixelMaterial(canvas, true);
+}
+
+function makePixelMaterial(canvas: HTMLCanvasElement, transparent = false): THREE.MeshBasicMaterial {
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.magFilter = THREE.NearestFilter;
+  texture.minFilter = THREE.NearestFilter;
+  texture.generateMipmaps = false;
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return new THREE.MeshBasicMaterial({ map: texture, transparent, opacity: transparent ? 0.82 : 1, depthWrite: !transparent, side: THREE.DoubleSide });
+}
+
+function addArchiveBanner(group: THREE.Group, mats: Record<string, THREE.MeshStandardMaterial>, x: number, y: number, z: number, width: number, height: number): void {
+  const pole = new THREE.Mesh(new THREE.BoxGeometry(width + 0.28, 0.12, 0.12), mats.trim);
+  pole.position.set(x, y + height / 2 + 0.1, z);
+  group.add(pole);
+  const cloth = new THREE.Mesh(new THREE.BoxGeometry(width, height, 0.08), mats.structure);
+  cloth.position.set(x, y, z + 0.04);
+  group.add(cloth);
+  const mark = new THREE.Mesh(new THREE.BoxGeometry(0.32, height * 0.42, 0.06), mats.warning);
+  mark.position.set(x, y + 0.04, z + 0.095);
+  group.add(mark);
+  const hem = new THREE.Mesh(new THREE.BoxGeometry(width * 0.72, 0.1, 0.07), mats.trim);
+  hem.position.set(x, y - height / 2 + 0.14, z + 0.095);
+  group.add(hem);
+}
+
+function addArchiveLamp(group: THREE.Group, mats: Record<string, THREE.MeshStandardMaterial>, x: number, y: number, z: number): void {
+  const mount = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.34, 0.16), mats.trim);
+  mount.position.set(x, y + 0.5, z);
+  group.add(mount);
+  const hood = new THREE.Mesh(new THREE.BoxGeometry(0.82, 0.18, 0.4), mats.structure);
+  hood.position.set(x, y + 0.22, z + 0.1);
+  group.add(hood);
+  const light = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.42, 0.24), mats.warning);
+  light.position.set(x, y - 0.04, z + 0.12);
+  group.add(light);
+  const pixel = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.18, 0.08), mats.white);
+  pixel.position.set(x, y - 0.04, z + 0.26);
+  group.add(pixel);
+}
+
+function addArchiveShelfSilhouettes(root: THREE.Group, layout: MiddleFloorLayout): void {
+  const width = layout.bounds.maxX - layout.bounds.minX;
+  const centerX = (layout.bounds.maxX + layout.bounds.minX) / 2;
+  const backZ = layout.bounds.minZ + 0.18;
+  const span = Math.min(width * 0.92, 42);
+  const geometry = new THREE.PlaneGeometry(span, 1.6);
+  const material = makeArchiveSilhouetteMaterial();
+  for (let layer = 0; layer < 2; layer += 1) {
+    const group = new THREE.Group();
+    group.name = `archive-shelf-silhouette:${layer}`;
+    group.position.set(centerX + (layer ? 0.65 : -0.45), 0, backZ + layer * 0.42);
+    const shelfY = layer ? 4.2 : 2.45;
+    const silhouette = new THREE.Mesh(geometry, material);
+    silhouette.position.set(0, shelfY + 0.8, 0);
+    group.add(silhouette);
+    root.add(group);
   }
 }
 
