@@ -5,6 +5,8 @@ description: "Entrypoint for building, upgrading, and finishing Three.js browser
 
 # Three.js Game Director
 
+For Omega Spiral's current stages, start from the approved design card and use authored Blender shapes plus Three.js effects. Do not begin with an API-key probe or a hosted 3D job; the local `threejs-3d-generator` entrypoint names the active scripts.
+
 Own the end-to-end game outcome: a playable loop first, then the visual and interface depth the request actually asked for, then browser evidence that it works.
 
 ## Scope
@@ -56,13 +58,7 @@ Score the result with the 10-category scorecard in `threejs-aaa-graphics-builder
 
 ## Asset sourcing
 
-```bash
-bash <director-skill-dir>/scripts/probe_asset_credentials.sh
-```
-
-When external generation is in scope, run it before assuming anything about keys. It sources the user's shell profile, which the agent process usually does not inherit, and prints `KEY=SET|MISSING` for all three providers. Explicitly procedural or no-external-service work does not need a credential probe.
-
-With keys set, premium hero surfaces get generated assets: player, boss, creature, vehicle, ship, weapon, signature building. Respect an explicit procedural-only style or external-generation restriction. Procedural kits handle repeated props, decals, collision proxies, and instanced volume. Premium active gameplay includes event-driven audio.
+For Omega Spiral's current stages, use the approved visual references, local `threejs-3d-generator/scripts/blender_asset_workflow.py`, Blender MCP, and Three.js. Build a representative scene from authored geometry before expanding the kit. No credential check is a prerequisite. Consider a hosted model service only if the owner explicitly chooses it for a later stage. Premium active gameplay includes event-driven audio.
 
 Read `references/asset-recovery.md` when sourcing external assets or recovering a job. Missing credentials or exhausted credits permit a documented local fallback. A transient error calls for bounded recovery of the existing job; invalid parameters need correction. An uncertain paid submission must be reconciled before replacement. Continue independent work and identify any quality requirement still unmet after fallback.
 

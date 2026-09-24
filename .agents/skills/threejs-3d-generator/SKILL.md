@@ -1,20 +1,29 @@
 ---
 name: threejs-3d-generator
-description: "Create and refine 3D assets for Three.js with local Blender and Blender MCP, using Codex-generated reference images when useful. Export GLB/PBR models, rig and animate in Blender, and verify them in the running game."
+description: "Build authored Blender shapes for Three.js from drawn reference views and cutouts; export GLB, then enhance materials and motion in Three.js. The local workflow needs no model API or credential probe."
 ---
 
 # Three.js 3D Generator
 
-The production path is Codex image reference → local Blender model → GLB/PBR export → Three.js import. Use an existing authored .blend or GLB when it is the right starting point. Do not call Tripo, Hugging Face Spaces, or other hosted 3D generation services from this skill.
+For the current game stages: draw front/side/back/top views → cut them in Affinity or with the local script → author simple Blender shapes → export GLB → amplify them with restrained Three.js lighting and shader effects. Use an existing authored .blend or GLB when it is the right starting point. Image cutouts are guides or flat planes, not 3D geometry. Do not run a model API or credential probe for this path. Tripo remains a possible later-finale choice only after separate design approval.
+
+The entrypoint is `scripts/blender_asset_workflow.py`: `prepare` records the 2D views and optional crops; `export` packages an authored Blender collection as GLB with an intake manifest. The older Tripo and Hugging Face scripts remain in the repository for history and are not part of this workflow.
+
+```powershell
+python .agents/skills/threejs-3d-generator/scripts/blender_asset_workflow.py prepare --name door --view concept=path/to/door.png --out-dir path/to/door-views
+& "C:\Program Files\Blender Foundation\Blender 5.2\blender.exe" --background path/to/door.blend --python .agents/skills/threejs-3d-generator/scripts/blender_asset_workflow.py -- export --collection Door --glb path/to/model.glb --manifest path/to/manifest.json
+```
+
+Run these from the project root, replace the example paths and collection with the actual asset, and review the manifest plus the in-game result. Neither command calls a model service.
 
 ## References
 
 - references/image-generator-workflows.md: clean 2D input and Blender handoff.
-- references/threejs-integration.md: GLTFLoader, AnimationMixer, asset intake, collision proxies, and runtime checks. Provider-specific notes there are historical, not instructions for this local route.
+- references/threejs-integration.md: GLTFLoader, AnimationMixer, asset intake, collision proxies, and runtime checks.
 
 ## Inputs And Asset Plan
 
-Read the user's approved concept, existing model, level design card, target camera, and asset role. Make one clean single-object reference through the sibling threejs-image-generator skill when the existing images are crowded scene studies. Save references under assets/concepts/. Choose scale, pivot, silhouette, material zones, and polygon budget before modeling. A 2D scene image is never loaded as a model or substituted for game geometry.
+Read the user's approved concept, existing model, level design card, target camera, and asset role. Prepare clear reference views and transparent cutouts with Affinity or `scripts/blender_asset_workflow.py prepare`; save them under assets/concepts/. In Blender, add each view as a reference image (Add → Image → Reference) or load it through bpy. Choose scale, pivot, silhouette, material zones, and polygon budget before modeling. A 2D image is never loaded as a model or substituted for game geometry.
 
 ## Blender MCP Workflow
 
@@ -22,7 +31,7 @@ Read the user's approved concept, existing model, level design card, target came
 2. Preserve the user's open scene. Open or save a separate asset .blend for the task; do not overwrite the source model. In MCP calls, pass the user's actual request verbatim as user_prompt.
 3. Inspect the existing model and reference. Use execute_blender_code in small steps; start Python with import bpy. Prefer Blender-native mesh and material operations for local asset generation. Use shader node types rather than localized node names.
 4. After each meaningful edit, get a viewport screenshot and scene info. Compare silhouette, depth, fragment gaps, and material zones with the approved reference at the game's camera scale.
-5. Save the .blend and export the selected model to assets/models/<asset>/model.glb with Blender MCP export_scene. GLB/PBR is the runtime format. Apply modifiers for static meshes; preserve modifiers or shape keys as needed for rigs.
+5. Save the .blend and export its named asset collection with `scripts/blender_asset_workflow.py export` or Blender MCP `export_scene` to assets/models/<asset>/model.glb. GLB/PBR is the runtime format. Apply modifiers for static meshes; preserve modifiers or shape keys as needed for rigs.
 6. Inspect the exported asset in Three.js, not only in Blender. Use GLTFLoader, normalize its scale and pivot, keep detailed mesh visual-only, and build simple collision proxies that match the visible footprint. Use AnimationMixer and delta seconds for authored clips.
 7. Record the .blend, GLB, reference image, export settings, scene screenshot, runtime screenshot, and remaining defects.
 

@@ -1,10 +1,10 @@
 # Three.js Image Generator Pairing
 
-Use `threejs-image-generator` for the 2D reference and this skill's Blender workflow for the 3D asset. The sibling `threejs-image-generator/SKILL.md` is the single source for Codex image generation; do not duplicate provider instructions here. A generated PNG is a concept, texture, or UI asset, not a runtime 3D model.
+Use the owner's approved drawings or `threejs-image-generator` for 2D references, then author the 3D asset in Blender. The sibling image skill owns optional Codex image generation. A PNG is a reference, texture, or UI asset, never a runtime 3D model.
 
 ## 2D To 3D Reference Images
 
-Generate clean reference images before image-to-3D for:
+Prepare clean front, side, back, or top views before modeling:
 
 - Characters: full-body T-pose or A-pose, neutral expression, visible hands/feet, no cropped limbs.
 - Creatures: side/front silhouettes, clear limb count, readable anatomy.
@@ -14,7 +14,7 @@ Generate clean reference images before image-to-3D for:
 - Props/pickups: centered object, plain background, strong silhouette, no text baked in unless wanted.
 - Terrain/world modules: tileable rocks, cliffs, rails, gates, arena pieces, modular set dressing.
 
-For the actual prompt wording (image-to-3D reference, riggable character/creature, texture/material, logo/icon/UI, sky/background), use the templates in `threejs-image-generator`'s SKILL.md under "Prompt Patterns" — that skill is the canonical source. The notes here cover only how those references pair into the 3D pipeline.
+When a 2D view must be created rather than drawn, use the prompt patterns in `threejs-image-generator`'s SKILL.md. Review perspective and proportions before using any view as a Blender guide.
 
 ## Texture And Material References
 
@@ -38,18 +38,18 @@ Use `threejs-image-generator` directly, not 3D generation, for:
 
 ## Image Creation And 3D Handoff
 
-After generating a 2D reference:
+After drawing or generating a 2D reference:
 
-1. Choose the output first: a scene study, single-object 3D reference, texture, or final 2D UI asset. A scene study is for composition review, not a direct image-to-3D input.
-2. Generate or edit through the Codex image tool as specified in the sibling image skill. Show the returned image to the design owner.
-3. Preserve the tool's original output and copy the chosen result into the working project: usually `assets/concepts/` for studies and model references, or `assets/textures/`, `assets/decals/`, and `assets/ui/` for runtime 2D sources. Record the prompt, purpose, and approval status.
-4. Inspect the result before 3D work. For a model input, require one complete object on a simple background, readable silhouette, material zones, scale cues, and little perspective. Request a new isolated reference if the image is a crowded scene.
-5. Build or adapt the model in Blender with the reference visible. Use Blender MCP to inspect, edit, screenshot, and export the selected asset as GLB/PBR. Keep repeated code blocks and collision proxies simple in Three.js.
+1. Separate scene studies from orthographic object views. Scene studies set mood; front/side/back/top views set modeling proportions.
+2. Cut views in Affinity or with `scripts/blender_asset_workflow.py prepare --crop VIEW=x,y,width,height`. Keep the original art and record view names, crop bounds, and approval in its manifest.
+3. Place those views as Blender reference images. Match their scale and origin, then author the mesh from simple shapes; a cutout remains flat until geometry is modeled.
+4. Use Blender MCP to inspect and revise the mesh, or use the local `export` command for a named Blender collection. Export GLB/PBR and inspect it at the game's camera scale.
+5. Add restrained light and shader effects in Three.js. Keep repeated code blocks and collision proxies simple.
 6. Import the 3D asset using `threejs-integration.md`: `GLTFLoader`, correct scale/pivot, simple collision proxy, and an in-game visual check. Keep scene-study PNGs out of the 3D model loader; they can guide geometry, materials, and layout.
 
 ## Avoid
 
-- Crowded scene images for single-object 3D generation.
+- Crowded scene images as proportion guides for a single object.
 - Cropped limbs, hidden backs, extreme perspective, motion blur, or heavy depth of field.
 - Tiny UI/logo text in 3D model textures unless text fidelity is noncritical.
-- Using 3D generation for pure 2D UI assets.
+- Using 3D modeling for pure 2D UI assets.
