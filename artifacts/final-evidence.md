@@ -1,6 +1,28 @@
-# Chronicle intro — playable visual handoff
+# Intro review evidence
+
+## Current baseline — first question and its lead-in
+
+✅ **Latest result:** lead ran the existing headed bot from real menu entry through Light's first path to the second question and personally inspected the motion frames. Functional slice passed; visual continuity failed review. [Findings, video, input report and repeat command](intro-direction/first-question-slice.md#lead-review-completed--entry-through-question-two). No gameplay-source changes in this review. Earlier missing-motion statements below describe the baseline before this run; canvas-inspector coverage remains pending.
+
+✅ Review specification and exact skill references: [first-question baseline](intro-direction/first-question-slice.md). Target: `http://127.0.0.1:5191/intro.html`; branch `prototype/ghost-typing-voices`, with local uncommitted changes. Current declaration: [evidence.json](evidence.json), run `first-question-review-20260923-a`.
+
+✅ Lead opened the actual intro and confirmed the overlapping Light/Shadow lettering visible in the [user's before image](first-question-review-20260923-a/user-before.png). Screenshot framing is 947×874; supplemental live observation was 971×910. These are visual observations, not matching regression captures.
+
+❌ Current unpaused entry-to-contact recording and canvas/runtime report are missing. The manifest deliberately declares those outstanding artifacts; no checker success, complete gameplay, or approved visual baseline is claimed.
+
+✅ Next review is bounded to boot → Omega question → three speaker turns → walking/start-stop → first contact/response. Lead demonstrates and inspects it before further delegation. Preserve failures, fix the owning module, restart and compare the same sequence. Existing bot updates are prepared but have not run.
+
+✅ Production build/typecheck passed before this documentation update. Chromium executable existence was verified with browser-cache access; the earlier restricted-filesystem check was misleading. No further installation is needed for this baseline.
+
+## Historical handoff — obsolete controls and previous revision below
+
+The following sections are preserved history, including old number-key/path-button controls, earlier art assumptions and older verification results. They are not current instructions or certification. Original manifest: [previous-evidence.json](first-question-review-20260923-a/previous-evidence.json).
+
+> Historical evidence below predates the current menu, movement and filament edits. Those changes are not release-verified. Current bounded visual iteration: [filament motion](intro-direction/filament-motion.md). No new bot/test pass was run; the rejected bot rewrite was removed.
 
 Run: `intro-flow-20260923-c` · Page: `http://127.0.0.1:5188/intro.html` · Bot seed: `472`
+
+**Current camera increment (5191, uncommitted):** choice movement now influences camera position; gaze interpolates across phases; avatar locomotion includes path choice. Page loaded without captured console errors and Begin was exercised. Sustained movement, contact and visual quality remain unverified. The historical results below do not certify these changes.
 
 ## What plays
 
@@ -45,24 +67,26 @@ Real-input motion: [full bot playthrough](intro-flow-20260923-c/bot-playthrough.
 
 The route camera now moves between questions, but the four station silhouettes still resemble one another. The faceless avatar grows but remains blocky. The portal interior is dark; the actual first playable stage is not yet legible through it. The next art pass should decide each station's constructed landmark, refine the figure and terminal materials, and make the level reveal readable without turning the early intro into a galaxy backdrop. The mobile door needs a static merged variant or another draw-call reduction before claiming the starting mobile budget. The typed name is stored by the intro; Chapter Two currently receives the last chosen thread.
 
+<<<<<<< HEAD
+
 ## Visual scorecard — 2026-09-23 baseline and UI pass
 
 This section scores the current source with the ten categories and calibration anchors in [visual-scorecard.md](../.agents/skills/threejs-aaa-graphics-builder/references/visual-scorecard.md). The preceding report records an earlier run; its counts and screenshots are not the current baseline. A comparable pre-change score was not captured. The baseline below was captured before the compact choice UI pass.
 
 Genre equivalents: the hero is the growing figure; obstacles are route constraints and the doorway threshold; interactables are strands, choices, and the door. The active introduction has no enemies or loot to score.
 
-| Category | Earlier | Baseline | Evidence and next pass |
-| --- | ---: | ---: | --- |
-| Art direction | Not captured | **1.5** | Cosmic terminal language is coherent, but the large choice card and sparse path do not read as one designed play surface. Integrate the choice interface with the world. |
-| Hero/player | Not captured | **1** | The figure is a small, faceless block silhouette. Author its form and readable growth states. |
-| Obstacles/enemies | Not captured | **1** | Route constraints and threshold are present, but their gameplay roles are hard to distinguish in the question view. Make their cues legible during movement. |
-| Rewards/interactables | Not captured | **1.5** | Strands and door exist; choice/contact feedback is obscured by the overlay on mobile. Show world and UI feedback together. |
-| World/environment | Not captured | **1.5** | The final portal is constructed, while question 1 is sparse; question-view color entropy is 0.58 desktop / 0.83 mobile and dominant color share is 0.948 / 0.912. Author readable route landmarks and depth. |
-| Materials/textures | Not captured | **1** | Strands and figure rely on basic flat or emissive treatment. Establish material roles and surface detail that survive the dark composition. |
-| Lighting/render | Not captured | **1** | Question-view luminance contrast is 11.5 desktop / 15.5 mobile, below the scorecard's ~60 advisory signal. Light the route and figure for readable separation. |
-| VFX/motion | Not captured | **1.5** | Strands and particles are visible; these stills do not establish motion timing. Review unpaused contact and transition footage before a higher score. |
-| UI/HUD | Not captured | **1** | The rectangular “CHOOSE A STRAND” panel covers the mobile path and competes with world text. Redesign the mobile choice and touch layout around the playable view. |
-| Performance evidence | Not captured | **1.5** | Four fresh inspector reports and budget diagnostics exist. Mobile final door uses 163 draw calls against the 150-call starting budget; reduce or document the cost and recapture. |
+| Category              |      Earlier | Baseline | Evidence and next pass                                                                                                                                                                                       |
+| --------------------- | -----------: | -------: | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Art direction         | Not captured |  **1.5** | Cosmic terminal language is coherent, but the large choice card and sparse path do not read as one designed play surface. Integrate the choice interface with the world.                                     |
+| Hero/player           | Not captured |    **1** | The figure is a small, faceless block silhouette. Author its form and readable growth states.                                                                                                                |
+| Obstacles/enemies     | Not captured |    **1** | Route constraints and threshold are present, but their gameplay roles are hard to distinguish in the question view. Make their cues legible during movement.                                                 |
+| Rewards/interactables | Not captured |  **1.5** | Strands and door exist; choice/contact feedback is obscured by the overlay on mobile. Show world and UI feedback together.                                                                                   |
+| World/environment     | Not captured |  **1.5** | The final portal is constructed, while question 1 is sparse; question-view color entropy is 0.58 desktop / 0.83 mobile and dominant color share is 0.948 / 0.912. Author readable route landmarks and depth. |
+| Materials/textures    | Not captured |    **1** | Strands and figure rely on basic flat or emissive treatment. Establish material roles and surface detail that survive the dark composition.                                                                  |
+| Lighting/render       | Not captured |    **1** | Question-view luminance contrast is 11.5 desktop / 15.5 mobile, below the scorecard's ~60 advisory signal. Light the route and figure for readable separation.                                               |
+| VFX/motion            | Not captured |  **1.5** | Strands and particles are visible; these stills do not establish motion timing. Review unpaused contact and transition footage before a higher score.                                                        |
+| UI/HUD                | Not captured |    **1** | The rectangular “CHOOSE A STRAND” panel covers the mobile path and competes with world text. Redesign the mobile choice and touch layout around the playable view.                                           |
+| Performance evidence  | Not captured |  **1.5** | Four fresh inspector reports and budget diagnostics exist. Mobile final door uses 163 draw calls against the 150-call starting budget; reduce or document the cost and recapture.                            |
 
 **Baseline average: 1.25 / 3. Premium threshold: not met.** Every category must reach at least 2 and the average at least 2.3. Baseline automatic failures: primitive hero, UI overlap on mobile, and sparse/dark question framing without enough authored composition. The mobile door also exceeds the draw-call budget.
 
@@ -76,18 +100,18 @@ Fresh captures: [desktop question 1](scorecard-20260923-baseline/desktop-questio
 
 Floor One is the playable turn-based stage after the opening. Its genre equivalents are `@` for the player, `#` walls and the guard for obstacles, and glyphs for pickup, door, and stairs. The design brief calls for a low-poly dungeon on a code substrate; the current render maps a glyph canvas onto one Three.js plane. These scores evaluate the visible result, not the amount of rule code. No comparable earlier score was captured, and there is no after art pass yet.
 
-| Category | Before | Current | Evidence and next pass |
-| --- | ---: | ---: | --- |
-| Art direction | Not captured | **1** | Retro terminal palette is consistent, but the stage reads as a sparse text view. Make the dungeon and code substrate a unified authored space. |
-| Hero/player | Not captured | **1** | The player is an `@` glyph with color and no authored silhouette or state cues. Author the player presentation. |
-| Obstacles/enemies | Not captured | **1** | Walls are repeated `#` glyphs and the guard is `G`; threat state is mostly in the HTML HUD. Give each role readable form and telegraph in play. |
-| Rewards/interactables | Not captured | **1** | Pickup, door, and stairs use glyphs with little visible state feedback. Show their purpose and resolution on the board. |
-| World/environment | Not captured | **0.5** | Both entry and guard-contact captures leave most of the viewport empty; fog of war does not yet have an authored surrounding composition. Build the floor kit and depth cues. |
-| Materials/textures | Not captured | **0** | The only Three.js surface is a canvas texture on a plane; no authored material treatment is visible. Establish the intended surface language. |
-| Lighting/render | Not captured | **0** | The plane uses `MeshBasicMaterial`, so no light shapes the dungeon. Add intentional lighting and readable contrast. |
-| VFX/motion | Not captured | **0** | No contact, damage, or movement effect is visible in stills; motion evidence is absent. Add event feedback, then capture it in motion. |
-| UI/HUD | Not captured | **1** | A full-height text log and keyboard legend frame a small glyph board. Move immediate state feedback near the action and reduce the page-like shell. |
-| Performance evidence | Not captured | **1.5** | Four acknowledged inspector captures and renderer counts exist, with no console/page errors. One draw call and two triangles reflect the textured plane, not finished scene complexity; capture post-art metrics. |
+| Category              |       Before | Current | Evidence and next pass                                                                                                                                                                                            |
+| --------------------- | -----------: | ------: | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Art direction         | Not captured |   **1** | Retro terminal palette is consistent, but the stage reads as a sparse text view. Make the dungeon and code substrate a unified authored space.                                                                    |
+| Hero/player           | Not captured |   **1** | The player is an `@` glyph with color and no authored silhouette or state cues. Author the player presentation.                                                                                                   |
+| Obstacles/enemies     | Not captured |   **1** | Walls are repeated `#` glyphs and the guard is `G`; threat state is mostly in the HTML HUD. Give each role readable form and telegraph in play.                                                                   |
+| Rewards/interactables | Not captured |   **1** | Pickup, door, and stairs use glyphs with little visible state feedback. Show their purpose and resolution on the board.                                                                                           |
+| World/environment     | Not captured | **0.5** | Both entry and guard-contact captures leave most of the viewport empty; fog of war does not yet have an authored surrounding composition. Build the floor kit and depth cues.                                     |
+| Materials/textures    | Not captured |   **0** | The only Three.js surface is a canvas texture on a plane; no authored material treatment is visible. Establish the intended surface language.                                                                     |
+| Lighting/render       | Not captured |   **0** | The plane uses `MeshBasicMaterial`, so no light shapes the dungeon. Add intentional lighting and readable contrast.                                                                                               |
+| VFX/motion            | Not captured |   **0** | No contact, damage, or movement effect is visible in stills; motion evidence is absent. Add event feedback, then capture it in motion.                                                                            |
+| UI/HUD                | Not captured |   **1** | A full-height text log and keyboard legend frame a small glyph board. Move immediate state feedback near the action and reduce the page-like shell.                                                               |
+| Performance evidence  | Not captured | **1.5** | Four acknowledged inspector captures and renderer counts exist, with no console/page errors. One draw call and two triangles reflect the textured plane, not finished scene complexity; capture post-art metrics. |
 
 **Average: 0.70 / 3. Premium threshold: not met.** Automatic failures: active play is dominated by placeholder glyphs and empty space; hero, challenge roles, and UI are not premium. The screenshot is nonblank and the rules advance to guard contact, but those checks do not prove finished gameplay presentation.
 
@@ -99,18 +123,18 @@ Captures: [desktop entry](floor-one-scorecard-20260923/desktop-entry.png), [desk
 
 The new [FloorVisual.ts](../src/floor-one/FloorVisual.ts) draws instanced floor and wall kit, a glyph substrate, modeled player and guard, door, shard, stairs, lamps, state colors, and event effects. [FloorAudio.ts](../src/floor-one/FloorAudio.ts) adds procedural ambience and input/event cues. The turn rules and named capture hooks remain in place. Scores are based on the complete four-capture set below; mobile remains a review layout rather than a touch-play target.
 
-| Category | Before → After | Evidence and remaining work |
-| --- | ---: | --- |
-| Art direction | **1 → 1.5** | Early-PC dungeon and live-code glyphs now share a palette and space. The gray tile field still lacks a distinct enough identity. |
-| Hero/player | **1 → 1.5** | Player has an armored silhouette, visor and contact shape; it is small and has no demonstrated expressive motion or damage state. |
-| Obstacles/enemies | **1 → 1.5** | Walls, guard, and door have separate 3D forms; guard disposition changes its signal. Anticipation and threat telegraphs need stronger world feedback. |
-| Rewards/interactables | **1 → 1.5** | Shard, seal, and stairs have different forms and state visibility; interaction purpose needs to remain clearer during movement. |
-| World/environment | **0.5 → 1.5** | Revealed floor has instanced slabs, caps, trim and lamps, with camera framing around visible tiles. Repetition and empty surrounding composition remain prominent. |
-| Materials/textures | **0 → 1.5** | Shared stone, metal, cloth, signal, and glyph-substrate roles now exist. Most floor surfaces still read as flat gray boxes. |
-| Lighting/render | **0 → 1.5** | ACES, ambient/key/fill lights and lit geometry improved measured contrast to 143–147. Contact and depth remain shallow in the active camera. |
-| VFX/motion | **0 → 1.5** | A real H input produced a visible hit/damage ring and slash; pickup, door and exit have event geometry. Unpaused motion timing has not been captured. |
-| UI/HUD | **1 → 1.5** | Event log is narrower, newest message appears first and stays visible on mobile. The interface still relies on a rectangular sidebar and long keyboard legend. |
-| Performance evidence | **1.5 → 2** | Before/after desktop/mobile captures, diagnostics, a current build and budget results exist. Profile after the next visual pass; these counts are not a frame-time claim. |
+| Category              | Before → After | Evidence and remaining work                                                                                                                                               |
+| --------------------- | -------------: | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Art direction         |    **1 → 1.5** | Early-PC dungeon and live-code glyphs now share a palette and space. The gray tile field still lacks a distinct enough identity.                                          |
+| Hero/player           |    **1 → 1.5** | Player has an armored silhouette, visor and contact shape; it is small and has no demonstrated expressive motion or damage state.                                         |
+| Obstacles/enemies     |    **1 → 1.5** | Walls, guard, and door have separate 3D forms; guard disposition changes its signal. Anticipation and threat telegraphs need stronger world feedback.                     |
+| Rewards/interactables |    **1 → 1.5** | Shard, seal, and stairs have different forms and state visibility; interaction purpose needs to remain clearer during movement.                                           |
+| World/environment     |  **0.5 → 1.5** | Revealed floor has instanced slabs, caps, trim and lamps, with camera framing around visible tiles. Repetition and empty surrounding composition remain prominent.        |
+| Materials/textures    |    **0 → 1.5** | Shared stone, metal, cloth, signal, and glyph-substrate roles now exist. Most floor surfaces still read as flat gray boxes.                                               |
+| Lighting/render       |    **0 → 1.5** | ACES, ambient/key/fill lights and lit geometry improved measured contrast to 143–147. Contact and depth remain shallow in the active camera.                              |
+| VFX/motion            |    **0 → 1.5** | A real H input produced a visible hit/damage ring and slash; pickup, door and exit have event geometry. Unpaused motion timing has not been captured.                     |
+| UI/HUD                |    **1 → 1.5** | Event log is narrower, newest message appears first and stays visible on mobile. The interface still relies on a rectangular sidebar and long keyboard legend.            |
+| Performance evidence  |    **1.5 → 2** | Before/after desktop/mobile captures, diagnostics, a current build and budget results exist. Profile after the next visual pass; these counts are not a frame-time claim. |
 
 **After average: 1.55 / 3 (before 0.70). Premium threshold: not met.** Every category still needs at least 2, and the average must reach 2.3. The remaining work is an authored material/world pass, more expressive player and guard feedback, clearer interactable states, and a more integrated HUD. A low-poly style is valid for this design; repeated basic slabs are still a visible quality limit.
 
@@ -120,15 +144,48 @@ The current `npm.cmd run test:bot` run passed on 2026-09-23: 1,340 frames advanc
 
 ## Director tool setup — current checkpoint
 
-| Status | Tool or instruction | Observed result |
-| --- | --- | --- |
-| ✅ Verified | [Three.js Game Director](../.agents/skills/threejs-game-director/SKILL.md) and all eight sibling `threejs-*` `SKILL.md` entrypoints | Read from this repository's `.agents/skills/` tree. Loaded phase references: UI patterns; visual scorecard, authoring recipes, technical art, shader cookbook; visual test harness; evidence manifest and asset recovery; audio workflows. |
-| ✅ Verified | Project packages and browser | `npm.cmd ls --depth=0 --offline` passed; Playwright Chromium exists; Vite served the real intro at `http://127.0.0.1:5188/`; production build passed. |
-| ✅ Verified | Blender MCP | Live addon status returned Blender 5.2.1 LTS, addon 1.7, protocol 9; live scene query returned `IntroLayerStudy`, 49 objects, 18 materials. |
-| ✅ Verified | Local skill commands | Director evidence checker, gameplay scaffold, QA canvas inspector, 3D helper, audio helper, and both image helper `--help` commands completed. The image helpers' Python dependencies were installed through `uv`; no paid provider keys were used. |
-| ✅ Verified | Keyless image workaround | The documented Pollinations helper returned a 768×768 guard concept without an API key. Inspection found a watermark and generic design, so the sample was discarded and not used in the game. |
-| ✅ Verified | [VoiceStudio Electron installer](https://github.com/debpalash/VoiceStudio/releases/tag/v0.5.6) | Official v0.5.6 Windows installer SHA-256 matched the release digest; silent installer returned 0; installed `VoiceStudio.exe` reports version 0.5.6. |
-| 🔍 Unverified | [VoiceStudio runtime and data migration](https://github.com/debpalash/VoiceStudio/blob/v0.5.6/docs/electron-migration.md) | The older Tauri v0.5.3 app remains running. Electron was not launched or pointed at that data. Official migration requires closing the old app, backing up data, then verifying voices/projects/history/models and a test clip. |
-| ❌ Missing requirements | Premium presentation | Both opening and Floor One after scores fail the required ≥2 per category and ≥2.3 average. Further authored art, motion and UI work remains. |
+| Status                  | Tool or instruction                                                                                                                 | Observed result                                                                                                                                                                                                                                     |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ✅ Verified             | [Three.js Game Director](../.agents/skills/threejs-game-director/SKILL.md) and all eight sibling `threejs-*` `SKILL.md` entrypoints | Read from this repository's `.agents/skills/` tree. Loaded phase references: UI patterns; visual scorecard, authoring recipes, technical art, shader cookbook; visual test harness; evidence manifest and asset recovery; audio workflows.          |
+| ✅ Verified             | Project packages and browser                                                                                                        | `npm.cmd ls --depth=0 --offline` passed; Playwright Chromium exists; Vite served the real intro at `http://127.0.0.1:5188/`; production build passed.                                                                                               |
+| ✅ Verified             | Blender MCP                                                                                                                         | Live addon status returned Blender 5.2.1 LTS, addon 1.7, protocol 9; live scene query returned `IntroLayerStudy`, 49 objects, 18 materials.                                                                                                         |
+| ✅ Verified             | Local skill commands                                                                                                                | Director evidence checker, gameplay scaffold, QA canvas inspector, 3D helper, audio helper, and both image helper `--help` commands completed. The image helpers' Python dependencies were installed through `uv`; no paid provider keys were used. |
+| ✅ Verified             | Keyless image workaround                                                                                                            | The documented Pollinations helper returned a 768×768 guard concept without an API key. Inspection found a watermark and generic design, so the sample was discarded and not used in the game.                                                      |
+| ✅ Verified             | [VoiceStudio Electron installer](https://github.com/debpalash/VoiceStudio/releases/tag/v0.5.6)                                      | Official v0.5.6 Windows installer SHA-256 matched the release digest; silent installer returned 0; installed `VoiceStudio.exe` reports version 0.5.6.                                                                                               |
+| 🔍 Unverified           | [VoiceStudio runtime and data migration](https://github.com/debpalash/VoiceStudio/blob/v0.5.6/docs/electron-migration.md)           | The older Tauri v0.5.3 app remains running. Electron was not launched or pointed at that data. Official migration requires closing the old app, backing up data, then verifying voices/projects/history/models and a test clip.                     |
+| ❌ Missing requirements | Premium presentation                                                                                                                | Both opening and Floor One after scores fail the required ≥2 per category and ≥2.3 average. Further authored art, motion and UI work remains.                                                                                                       |
 
 The eight loaded sibling entrypoints were `threejs-gameplay-systems`, `threejs-aaa-graphics-builder`, `threejs-game-ui-designer`, `threejs-debug-profiler`, `threejs-qa-release`, `threejs-3d-generator`, `threejs-image-generator`, and `threejs-audio-generator`, all from this repository's `.agents/skills/` tree. Referenced phase documents actually loaded: [UI patterns](../.agents/skills/threejs-game-ui-designer/references/ui-patterns.md), [visual scorecard](../.agents/skills/threejs-aaa-graphics-builder/references/visual-scorecard.md), [authoring recipes](../.agents/skills/threejs-aaa-graphics-builder/references/authoring-recipes.md), [technical art](../.agents/skills/threejs-aaa-graphics-builder/references/technical-art.md), [shader cookbook](../.agents/skills/threejs-aaa-graphics-builder/references/shader-cookbook.md), [visual test harness](../.agents/skills/threejs-qa-release/references/visual-test-harness.md), [evidence manifest](../.agents/skills/threejs-game-director/references/evidence-manifest.md), [asset recovery](../.agents/skills/threejs-game-director/references/asset-recovery.md), and [audio workflows](../.agents/skills/threejs-audio-generator/references/audio-workflows.md).
+=======
+
+## Active isolated ghost typing study — September 23, 2026
+
+The sections above are historical intro evidence. The new study is separate: [current handoff](ghost-type-study/README.md), [Wayfinder map](https://github.com/jessenaiman/omega-alpha-spiral/issues/55).
+
+- Starts at http://127.0.0.1:5191/intro-type-prototype.html with manuscript, fragments and passage layouts. Browser observations confirm readable world-space terminal text, selector/layout navigation, and the answer/reconsidering state. No full gameplay claim.
+- TypeScript passed in the normal commit hook; 22/23 existing unit tests passed. The old intro finale assertion failed. Owner explicitly approved one commit skipping hooks with that failure documented. No additional tests were added.
+- Visual review found fragment clipping and competing old-text traces; local adjustments move Light inward and fade traces. Phone controls were observed at a 390×844 override, then viewport restored. Motion captures, persistent screenshots, a complete mobile readability review and final human visual preference remain pending.
+- Native OpenAI concept was delegated to Luna. Generated sheet is reference-only; it omitted Omega. Runtime lettering uses a deterministic canvas atlas with an instanced glyph shader.
+
+### Shared scene era follow-up
+
+Live browser showed Floor 1 owned by Light while Shadow spoke in DOS glyphs; switching to the smooth era visibly changed the same words and preserved Shadow's angled layout. No tests rerun. Shared configuration is reusable but actual floor integration remains pending; no new commit claimed.
+
+## Omega Dialogue Studio checkpoint — September 23, 2026
+
+- Canonical route: `/omega-dialogue-studio.html`; legacy study URL redirects with parameters preserved. Scene owner and shared eras are reusable configuration; actual game integration is pending.
+- TypeScript/Vite production build passed. Requested QA skill captured desktop 1280×720 and mobile 390×664 on the hardware NVIDIA GPU. Both final reports have no console or page errors. Initial favicon 404 was fixed and its failed evidence retained.
+- Three declared artifacts passed the evidence coverage checker. Real controls and Omega's post-answer revision were exercised; a short typing/revision recording is saved. No frame-time or complete gameplay claim.
+- [Studio release notes and captures](omega-dialogue-studio/README.md), [manifest](omega-dialogue-studio/evidence.json). No additional unit tests. Next: commit/push, then design the gameplay integration before more studio features.
+
+## Later studio opening slice — separate from the intro run above
+
+See [opening block observations](omega-dialogue-studio/opening-block.md). Live loading and rendered text observed; export/import, build and motion capture remain unverified. No additional tests run.
+
+- Later persistence controls (schema-backed presentation, undo/redo, JSON source) are implemented but not runtime-verified in this follow-up. Owner round-trip check pending; earlier visual evidence does not cover these controls.
+
+## Current opening adapter — 2026-09-23
+
+Owner reports saved studio era appears in the real intro and Continue works. Direct fresh-load observation confirms styled shader lettering with no captured browser errors. This does not establish the remaining five-question/name/door progression. No test suite ran this pass. Integration remains uncommitted. Detailed limits: omega-dialogue-studio/integration-check.md.
+
+> > > > > > > main

@@ -1,7 +1,9 @@
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";
+import { studioDialogueSave } from "./tools/studio/save-dialogue";
 
 export default defineConfig({
+  plugins: [studioDialogueSave()],
   base: "./",
   server: {
     host: "127.0.0.1",
@@ -22,6 +24,12 @@ export default defineConfig({
         floorOne: fileURLToPath(new URL("./floor-one.html", import.meta.url)),
         rogue: fileURLToPath(new URL("./rogue.html", import.meta.url)),
         intro: fileURLToPath(new URL("./intro.html", import.meta.url)),
+        dialogueStudio: fileURLToPath(
+          new URL("./omega-dialogue-studio.html", import.meta.url)
+        ),
+        legacyTypeStudy: fileURLToPath(
+          new URL("./intro-type-prototype.html", import.meta.url)
+        ),
       },
     },
   },

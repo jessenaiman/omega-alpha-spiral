@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "direction": "artifacts/intro-direction/approved-design.md",
+  "assets": [
+    { "id": "omega-logo", "path": "assets/references/omega-spiral-logo-reference.png", "role": "identity reference / menu mark", "status": "owner-approved-reference" },
+    { "id": "menu-plate", "path": "assets/ui/omega-menu-plate.png", "role": "menu background", "status": "working-draft" },
+    { "id": "void-floor", "path": "public/assets/intro/void-background.glb", "role": "floor / sparse depth", "status": "working-runtime" },
+    { "id": "dreamweaver-strands", "path": "public/assets/intro/dreamweaver-strands.glb", "role": "three fine filaments", "status": "working-runtime" },
+    { "id": "door-fragments", "path": "public/assets/intro/intro-door-assemble.glb", "role": "finale fragment assembly", "status": "working-runtime" },
+    { "id": "portal", "path": "public/assets/intro/intro-portal.glb", "role": "doorway frame", "status": "working-runtime" },
+    { "id": "threshold-floor", "path": "public/assets/intro/intro-floor-glyph.glb", "role": "doorway floor glyph", "status": "working-runtime" },
+    { "id": "first-question-reference", "path": "assets/references/intro-first-question.png", "role": "composition reference; celestial scale superseded", "status": "reference-only" },
+    { "id": "finale-reference", "path": "assets/references/intro-door-finale.png", "role": "finale composition reference", "status": "reference-only" },
+    { "id": "strand-reference", "path": "assets/references/intro-strand-detail.png", "role": "fine paths / player scale", "status": "owner-approved-reference" },
+    { "id": "luna-type-concept", "path": "assets/concepts/ghost-type-study/luna-visual-draft.png", "role": "combined type concept sheet", "status": "artifact-only" }
+  ]
+}

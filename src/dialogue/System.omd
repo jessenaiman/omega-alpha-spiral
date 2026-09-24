@@ -1,0 +1,33 @@
+# System.omd — Omega Design. Mirrors Dialogic's .dch character resource.
+# Omega is the machine. Not a Dreamweaver: this colour is illumination, not identity.
+# Dialogic requires the label SYSTEM; you know it as Omega.
+
+id = omega
+display_name = SYSTEM
+nicknames = Omega, Terminal, Interface
+color = #d5e8f2
+
+[custom]
+thread = neutral
+style = omega_theme
+personality = The machine speaking as itself. Archaeological, weary, persistent.
+
+[typing]
+interval = 90
+delay = 350
+jitter = 0.65
+mistakes = 0.12
+correction = 650
+revision = 1500
+
+[typography]
+tradition = dec-vt100-ascii-terminal
+case = mixed
+
+[replacement]
+from = clear
+to = lost
+
+[spatial]
+motion = still
+note = Show late word edits as recorded SOS. Never bind typing to live player input.

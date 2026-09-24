@@ -1,4 +1,5 @@
 import { createRng } from "../core/random";
+import type { SpeakerId } from "./ghost-type-study/profiles";
 import {
   CHRONICLE_OPENING_LOG,
   CHRONICLE_QUESTIONS,
@@ -21,6 +22,7 @@ export interface BootFrame {
     | "waiting"
     | "prelude"
     | "question"
+    | "choices"
     | "response"
     | "travel"
     | "final"
@@ -32,6 +34,12 @@ export interface BootFrame {
   hint?: string;
   /** Dreamweaver currently authoring response text; independent of the chosen route. */
   speaker?: number;
+  /** Explicit studio actor; independent of player-choice ownership. */
+  studioSpeaker?: SpeakerId;
+  /** Choice text per Dreamweaver, authored in the studio. */
+  choiceLines?: readonly string[];
+  /** Which Dreamweaver is currently authoring a choice line. */
+  choiceSpeaker?: number;
 }
 
 const FIRST_INK_MS: number = 900;

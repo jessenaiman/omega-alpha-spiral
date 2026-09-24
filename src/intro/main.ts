@@ -1,5 +1,6 @@
 import './tokens.css';
 import './styles.css';
 import { BootScene } from './BootScene';
+import { showStartMenu } from './StartMenu';
 
-new BootScene().init();
+showStartMenu(() => new BootScene().init());

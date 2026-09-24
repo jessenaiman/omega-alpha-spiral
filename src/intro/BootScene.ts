@@ -30,6 +30,9 @@ import { IntroAudio } from "./IntroAudio";
 import type { IntroPhysicsDiagnostics } from "./IntroPhysics";
 import { BOOT_EFFECTS, SpatialBootScene } from "./SpatialBootScene";
 import { ChapterTwoScene } from "../chapter-two/ChapterTwoScene";
+import { StudioOpening, studioOpeningDocument } from "./StudioOpening";
+import { WritingPlayback } from "./ghost-type-study/WritingPlayback";
+import { PROFILES, SPEAKERS } from "./ghost-type-study/profiles";
 import dustBundle from "./vfx/boot-dust.bundle.json";
 
 const SEED: number = 472;
@@ -133,6 +136,12 @@ export class BootScene {
   private _abort: AbortController = new AbortController();
   private _questions: readonly ChronicleQuestion[] =
     createChronicleQuestions(SEED);
+  private _studioOpening = new StudioOpening();
+  private _typing = new WritingPlayback();
+  private _typingKey = "";
+  private _typingElapsed = 0;
+  private _typingComplete = false;
+  private _typingCompleteAt = 0;
   private _frames: BootFrame[] = createBootFrames(
     String(SEED),
     this._questions[0]
@@ -184,6 +193,12 @@ export class BootScene {
   private _currentFrame: BootFrame | null = null;
 
   public init(): void {
+    this._spatial.setStudioPresentation(studioOpeningDocument.presentation);
+    this._questions = this._questions.map((question, index) =>
+      index === 0
+        ? { ...question, question: this._studioOpening.lastLine }
+        : question
+    );
     this._root = getElement("main", HTMLElement);
     this._prelude = getElement("#os-prelude-ts", HTMLElement);
     this._feed = getElement("#os-feed-ts", HTMLElement);
@@ -296,7 +311,8 @@ export class BootScene {
       },
       { signal, capture: true }
     );
-    // Autostart: the story runs on load; audio joins at the first gesture.
+    // Begin is a user gesture; unlock audio before asynchronous scene loading.
+    void this._unlockAudio();
     window.addEventListener(
       "keydown",
       (): void => {
@@ -304,7 +320,6 @@ export class BootScene {
       },
       { signal, capture: true }
     );
-    void this._beginBootFromGesture(true);
     window.addEventListener(
       "pointermove",
       (event: PointerEvent): void => {
@@ -447,6 +462,8 @@ export class BootScene {
       if (this._root) this._root.dataset.osArtTs = "ready";
       this._previousMs = performance.now();
       this._raf = requestAnimationFrame(this._update);
+      // Wait for the actual spatial initialization promise before the first line.
+      void this._beginBootFromGesture(true);
     } catch (error: unknown) {
       this._showError(
         error instanceof Error
@@ -474,6 +491,13 @@ export class BootScene {
   }
 
   private _reset(): void {
+    this._typingKey = "";
+    this._studioOpening = new StudioOpening();
+    this._questions = this._questions.map((question, index) =>
+      index === 0
+        ? { ...question, question: this._studioOpening.lastLine }
+        : question
+    );
     this._chapterTwo.stop();
     this._elapsedMs = 0;
     this._motionMs = 0;
@@ -522,6 +546,7 @@ export class BootScene {
       .forEach((input) => {
         input.checked = false;
       });
+    void this._beginBootFromGesture(true);
   }
 
   private _update = (now: number): void => {
@@ -548,23 +573,23 @@ export class BootScene {
       this._pollController();
       this._motionMs += delta * 1000;
       const endMs: number = this._frames[this._frames.length - 1].at;
-      if (this._storyMode === "boot" && this._hasStarted)
-        this._elapsedMs = this._isReduced
-          ? endMs
-          : Math.min(this._elapsedMs + delta * 1000, endMs);
-      const displayMs: number = this._elapsedMs;
-      let next: number = this._frameIndex;
-      if (this._storyMode === "boot") {
-        while (
-          next + 1 < this._frames.length &&
-          this._frames[next + 1].at <= displayMs
-        )
-          next += 1;
-        if (next !== this._frameIndex) {
-          this._frameIndex = next;
-          this._applyFrame(this._frames[next], true);
-        }
+      if (this._storyMode === "boot" && this._hasStarted) {
+        const opening = this._studioOpening.advance(
+          delta * 1000,
+          this._isReduced
+        );
+        this._canContinue = opening.awaiting;
+        const frame = this._storyFrame(
+          opening.text,
+          opening.done ? "waiting" : "prelude",
+          0,
+          opening.awaiting ? "Continue to the three paths" : undefined,
+          this._motionMs
+        );
+        frame.studioSpeaker = opening.speaker;
+        this._applyFrame(frame, opening.done);
       }
+      const displayMs: number = this._elapsedMs;
       if (!["boot", "waiting", "doorway"].includes(this._storyMode))
         this._updateStory(now);
       const spatialEvent: number = this._spatial.update(
@@ -715,7 +740,9 @@ export class BootScene {
     this._choices.disabled = frame.phase !== "waiting";
     // Screen readers hear the complete question once, not a stream of corrected letters.
     this._accessibleQuestion.textContent =
-      frame.phase === "waiting" || frame.phase === "complete"
+      frame.phase === "waiting" ||
+      frame.phase === "complete" ||
+      this._canContinue
         ? frame.question
         : "";
     this._soundFrame(frame);
@@ -915,6 +942,11 @@ export class BootScene {
 
   private _advanceStory(): void {
     if (!this._canContinue) return;
+    if (this._storyMode === "boot") {
+      this._studioOpening.proceed();
+      this._canContinue = false;
+      return;
+    }
     if (this._storyMode === "prelude") {
       this._beginQuestion();
       return;
@@ -953,11 +985,11 @@ export class BootScene {
       ];
     if (this._storyMode === "prelude") {
       const text: string = this._typed(question.prelude, elapsedMs, 44);
-      const complete: boolean = text.length >= question.prelude.length;
+      const complete: boolean = this._isReduced || this._typingComplete;
       this._canContinue = complete;
       if (
         complete &&
-        elapsedMs >= (this._isReduced ? 0 : question.prelude.length * 44) + 1700
+        elapsedMs >= this._typingCompleteAt + (this._isReduced ? 0 : 1700)
       ) {
         this._advanceStory();
         return;
@@ -980,11 +1012,10 @@ export class BootScene {
         elapsedMs,
         speed[this._questionIndex]
       );
-      const completeAt: number = this._isReduced
-        ? 0
-        : question.question.length * speed[this._questionIndex];
-      const complete: boolean = this._isReduced || elapsedMs >= completeAt;
+      const completeAt: number = this._typingCompleteAt;
+      const complete: boolean = this._isReduced || this._typingComplete;
       if (
+        !studioOpeningDocument.presentation &&
         !complete &&
         text.length > 4 &&
         Math.floor(elapsedMs / 230) % 17 === 0
@@ -1031,11 +1062,13 @@ export class BootScene {
       );
       const complete: boolean = beat.complete;
       this._canContinue = complete;
-      const responseEnd: number = this._isReduced
-        ? 0
-        : [280, 920, 480][this._selectedChoice] +
-          response.length * [42, 48, 34][this._selectedChoice] +
-          520;
+      const responseEnd: number = studioOpeningDocument.presentation
+        ? this._typingCompleteAt
+        : this._isReduced
+          ? 0
+          : [280, 920, 480][this._selectedChoice] +
+            response.length * [42, 48, 34][this._selectedChoice] +
+            520;
       if (
         complete &&
         elapsedMs >= responseEnd + Math.min(4200, 1800 + response.length * 18)
@@ -1098,11 +1131,10 @@ export class BootScene {
     }
     if (this._storyMode === "final") {
       const text: string = this._finalText(elapsedMs);
-      const complete: boolean = text.length >= this._finalScript().length;
+      const complete: boolean = this._isReduced || this._typingComplete;
       if (
         complete &&
-        elapsedMs >=
-          (this._isReduced ? 0 : this._finalScript().length * 34 + 1900)
+        elapsedMs >= this._typingCompleteAt + (this._isReduced ? 0 : 1900)
       ) {
         this._beginNaming();
         return;
@@ -1162,7 +1194,41 @@ export class BootScene {
     elapsedMs: number,
     millisecondsPerCharacter: number
   ): string {
-    if (this._isReduced) return text;
+    if (this._isReduced) {
+      this._typingComplete = true;
+      this._typingCompleteAt = 0;
+      return text;
+    }
+    if (studioOpeningDocument.presentation) {
+      const speaker =
+        this._storyMode === "response" && this._selectedChoice >= 0
+          ? SPEAKERS[this._selectedChoice + 1]
+          : "omega";
+      const key = `${this._storyMode}:${this._questionIndex}:${speaker}:${text}`;
+      if (key !== this._typingKey || elapsedMs < this._typingElapsed) {
+        this._typingKey = key;
+        this._typingElapsed = 0;
+        this._typingComplete = false;
+        this._typingCompleteAt = 0;
+        this._typing.restart(
+          {
+            ...PROFILES[speaker],
+            ...studioOpeningDocument.presentation.voices[speaker],
+          },
+          text
+        );
+      }
+      const frame = this._typing.advance(
+        Math.max(0, elapsedMs - this._typingElapsed)
+      );
+      this._typingElapsed = elapsedMs;
+      if (frame.done && !this._typingComplete)
+        this._typingCompleteAt = elapsedMs;
+      this._typingComplete = frame.done;
+      return frame.text;
+    }
+    this._typingComplete = elapsedMs >= text.length * millisecondsPerCharacter;
+    this._typingCompleteAt = text.length * millisecondsPerCharacter;
     return text.slice(
       0,
       Math.min(text.length, Math.floor(elapsedMs / millisecondsPerCharacter))
@@ -1175,6 +1241,10 @@ export class BootScene {
     owner: number
   ): { text: string; complete: boolean } {
     if (this._isReduced) return { text: response, complete: true };
+    if (studioOpeningDocument.presentation) {
+      const text = this._typed(response, elapsedMs, 0);
+      return { text, complete: this._typingComplete };
+    }
     const speeds: number[] = [42, 48, 34];
     const openingSilence: number[] = [280, 920, 480];
     const writingMs: number = Math.max(0, elapsedMs - openingSilence[owner]);
@@ -1193,6 +1263,7 @@ export class BootScene {
     owner: number,
     complete: boolean
   ): string {
+    if (studioOpeningDocument.presentation) return text;
     if (complete || this._isReduced || text.length < 4) return text;
     if (owner === 0 && Math.floor(elapsedMs / 410) % 11 === 0)
       return `${text}\n${text.slice(Math.max(0, text.lastIndexOf("\n") + 1), -1)}`;
@@ -1304,10 +1375,6 @@ export class BootScene {
   }
 
   private _syncMovement(): void {
-    if (this._pendingChoice >= 0) {
-      this._spatial.setMovement(0, 0);
-      return;
-    }
     const left: number =
       this._movementKeys.has("ArrowLeft") ||
       this._movementKeys.has("a") ||
@@ -1340,10 +1407,18 @@ export class BootScene {
       -1,
       Math.min(1, up - down + this._gamepadMoveY)
     );
+    if (this._pendingChoice >= 0 && (moveX !== 0 || moveY !== 0)) {
+      this._pendingChoice = -1;
+      this._spatial.guideToChoice(-1);
+    }
     this._spatial.setMovement(moveX, moveY);
   }
 
   private _controlHint(): string {
+    if (this._storyMode === "travel")
+      return this._lastInputMode === "controller"
+        ? "stick forward / back · follow your strand · release to stop"
+        : "W / ↑ forward · S / ↓ back · release to stop";
     if (this._storyMode === "doorway")
       return this._lastInputMode === "controller"
         ? "stick forward · walk through the words · A guides"
@@ -1358,8 +1433,6 @@ export class BootScene {
     if (this._storyMode === "final") return "The threshold is forming…";
     if (this._storyMode === "response" || this._storyMode === "commentary")
       return "A Dreamweaver is writing…";
-    if (this._storyMode === "travel")
-      return "The chosen strand carries you forward…";
     if (this._storyMode !== "waiting") return "";
     if (this._pendingChoice >= 0) {
       return "Approaching the chosen strand · WASD / arrows to steer";
@@ -1525,6 +1598,11 @@ export class BootScene {
       return;
     }
     if (this._storyMode === "boot") {
+      if (this._canContinue && isAction) {
+        event.preventDefault();
+        this._advanceStory();
+        return;
+      }
       const aside: string | null = this._spatial.interrupt(this._motionMs);
       if (aside) {
         getElement("#os-aside-ts", HTMLElement).textContent = aside;

@@ -34,8 +34,13 @@ import { getIntroEra, INTRO_ERAS, type IntroEraDesign } from "./IntroEraDesign";
 import { IntroParticleField } from "./IntroParticleField";
 import { IntroAvatar } from "./IntroAvatar";
 import { IntroOmegaDisplay } from "./IntroOmegaDisplay";
+import { GhostLetters } from "./ghost-type-study/GhostLetters";
+import { PROFILES, SPEAKERS, type SpeakerId } from "./ghost-type-study/profiles";
+import type { DialoguePresentation } from "./ghost-type-study/DialogueTimeline";
+import { resolveTradition } from "../core/lettering/traditions";
 import { IntroWorldEvolution } from "./IntroWorldEvolution";
 import { StrandSigils } from "./StrandSigils";
+import { FilamentForm, type FilamentOwner } from "./filaments/FilamentForm";
 import {
   loadBlenderIntroLayers,
   type BlenderIntroLayers,
@@ -198,138 +203,6 @@ const GLYPH_FRAGMENT: string = `
     #include <colorspace_fragment>
   }
 `;
-
-type VoiceMaterial =
-  LineBasicMaterial | MeshBasicMaterial | MeshStandardMaterial;
-
-interface DreamweaverMark {
-  root: Group;
-  materials: VoiceMaterial[];
-}
-
-function createDreamweaverMark(owner: number): DreamweaverMark {
-  const root: Group = new Group();
-  const geometry: BufferGeometry = new BufferGeometry();
-  const points: Vector3[] = [];
-  if (owner === 0) {
-    const segments: number[][] = [
-      [-0.32, 0, 0, 0.32, 0, 0],
-      [0, -0.32, 0, 0, 0.32, 0],
-      [-0.23, -0.23, 0, 0.23, 0.23, 0],
-      [-0.23, 0.23, 0, 0.23, -0.23, 0],
-    ];
-    geometry.setAttribute(
-      "position",
-      new BufferAttribute(new Float32Array(segments.flat()), 3)
-    );
-  } else if (owner === 1) {
-    points.push(
-      new Vector3(-0.34, 0.28, 0),
-      new Vector3(-0.04, 0.12, 0),
-      new Vector3(-0.27, -0.03, 0),
-      new Vector3(0.08, -0.13, 0),
-      new Vector3(-0.03, -0.34, 0),
-      new Vector3(0.34, -0.19, 0)
-    );
-    geometry.setFromPoints(points);
-  } else {
-    for (let index: number = 0; index < 56; index += 1) {
-      const t: number = index / 55;
-      const angle: number = t * Math.PI * 3.8;
-      const radius: number = 0.035 + t * 0.3;
-      points.push(
-        new Vector3(Math.cos(angle) * radius, Math.sin(angle) * radius, 0)
-      );
-    }
-    geometry.setFromPoints(points);
-  }
-  const main: LineBasicMaterial = new LineBasicMaterial({
-    color: INK[owner],
-    transparent: true,
-    opacity: 0.96,
-    toneMapped: false,
-  });
-  const halo: LineBasicMaterial = new LineBasicMaterial({
-    color: INK[owner],
-    transparent: true,
-    opacity: 0.2,
-    blending: AdditiveBlending,
-    depthWrite: false,
-    toneMapped: false,
-  });
-  const line: Line | LineSegments =
-    owner === 0 ? new LineSegments(geometry, main) : new Line(geometry, main);
-  const glow: Line | LineSegments =
-    owner === 0 ? new LineSegments(geometry, halo) : new Line(geometry, halo);
-  glow.scale.setScalar(1.22);
-  glow.position.z = -0.035;
-  const coreMaterial: MeshStandardMaterial = new MeshStandardMaterial({
-    color: 0x11171b,
-    emissive: INK[owner],
-    emissiveIntensity: 0.78,
-    metalness: 0.56,
-    roughness: 0.3,
-    transparent: true,
-    opacity: 0.9,
-  });
-  const core: Mesh<BoxGeometry, MeshStandardMaterial> = new Mesh(
-    new BoxGeometry(0.085, 0.085, 0.11),
-    coreMaterial
-  );
-  const depthColor: number[] = [0x5b8ca8, 0x050103, 0x3f2a78];
-  const depthMaterial: LineBasicMaterial = new LineBasicMaterial({
-    color: depthColor[owner],
-    transparent: true,
-    opacity: 0.38,
-    depthWrite: false,
-    toneMapped: false,
-  });
-  const depthLine: Line | LineSegments =
-    owner === 0
-      ? new LineSegments(geometry, depthMaterial)
-      : new Line(geometry, depthMaterial);
-  depthLine.position.set(
-    owner === 1 ? -0.08 : 0,
-    owner === 2 ? 0.04 : 0,
-    -0.18
-  );
-  depthLine.scale.setScalar(owner === 0 ? 0.72 : owner === 1 ? 1.12 : 0.78);
-  const practical: PointLight = new PointLight(
-    INK[owner],
-    owner === 1 ? 2.6 : 3.4,
-    2.8,
-    2
-  );
-  practical.position.z = 0.32;
-  const materials: VoiceMaterial[] = [main, halo, coreMaterial, depthMaterial];
-  root.add(depthLine, glow, line, core, practical);
-  if (owner === 1) {
-    const shadowSurface: MeshStandardMaterial = new MeshStandardMaterial({
-      color: 0x050103,
-      emissive: 0x5c0710,
-      emissiveIntensity: 0.42,
-      metalness: 0.34,
-      roughness: 0.72,
-      transparent: true,
-      opacity: 0.2,
-    });
-    for (let index: number = 1; index < points.length; index += 1) {
-      const from: Vector3 = points[index - 1];
-      const to: Vector3 = points[index];
-      const dx: number = to.x - from.x;
-      const dy: number = to.y - from.y;
-      const segment: Mesh<BoxGeometry, MeshStandardMaterial> = new Mesh(
-        new BoxGeometry(Math.hypot(dx, dy), 0.048, 0.13),
-        shadowSurface
-      );
-      segment.position.set((from.x + to.x) * 0.5, (from.y + to.y) * 0.5, -0.11);
-      segment.rotation.z = Math.atan2(dy, dx);
-      root.add(segment);
-    }
-    materials.push(shadowSurface);
-  }
-  return { root, materials };
-}
 
 /** One reusable glyph atlas per historical font, never a texture per letter. */
 export function createAtlas(format: number): CanvasTexture {
@@ -613,13 +486,15 @@ export class SpatialBootScene {
   private _physics: IntroPhysics = new IntroPhysics();
   private _voices: Group[] = [];
   private _walkPlane: Group = new Group();
-  private _voiceMaterials: VoiceMaterial[][] = [];
+  private _voiceForms: FilamentForm[] = [];
   private _trails: Line<BufferGeometry, LineBasicMaterial>[] = [];
   private _voiceAppearedAt: number[] = [-1, -1, -1];
   private _targets: Mesh<BoxGeometry, MeshBasicMaterial>[] = [];
   private _player: Group = new Group();
   private _avatar: IntroAvatar = new IntroAvatar();
   private _omegaDisplay: IntroOmegaDisplay = new IntroOmegaDisplay();
+  private _studioPresentation: DialoguePresentation | undefined;
+  private _studioLetters = Object.fromEntries(SPEAKERS.map(id => [id, new GhostLetters(id, PROFILES[id].color)])) as Record<SpeakerId, GhostLetters>;
   private _worldEvolution: IntroWorldEvolution = new IntroWorldEvolution();
   private _playerCore: Mesh<BoxGeometry, MeshStandardMaterial> | null = null;
   private _playerOutline: LineSegments<
@@ -692,6 +567,11 @@ export class SpatialBootScene {
     this._thresholdPreview = texture;
   }
 
+  public setStudioPresentation(presentation: DialoguePresentation | undefined): void {
+    this._studioPresentation = presentation;
+    if (presentation) for (const letters of Object.values(this._studioLetters)) letters.setEra(presentation.era);
+  }
+
   public init(scene: Scene): Promise<void> {
     this._atlases = INTRO_ERAS.map((era: IntroEraDesign): CanvasTexture =>
       createAtlas(era.id)
@@ -699,6 +579,7 @@ export class SpatialBootScene {
     this._particles.init(this._root);
     this._root.add(this._worldEvolution.root);
     this._root.add(this._omegaDisplay.root);
+    for (const letters of Object.values(this._studioLetters)) { letters.root.visible = false; this._root.add(letters.root); }
     // command, three boot slots, archive, question, symbols, aside, three choices,
     // three fossils, and three diegetic speaker names.
     for (let index: number = 0; index < 17; index += 1) {
@@ -713,10 +594,13 @@ export class SpatialBootScene {
     );
     this._root.add(this._cursor);
     for (let index: number = 0; index < 3; index += 1) {
-      const mark: DreamweaverMark = createDreamweaverMark(index);
-      this._voices.push(mark.root);
-      this._voiceMaterials.push(mark.materials);
-      this._root.add(mark.root);
+      const form = new FilamentForm(index as FilamentOwner, 14);
+      form.root.scale.setScalar(0.34);
+      const voice = new Group();
+      voice.add(form.root);
+      this._voices.push(voice);
+      this._voiceForms.push(form);
+      this._root.add(voice);
       const trailGeometry: BufferGeometry = new BufferGeometry();
       trailGeometry.setAttribute(
         "position",
@@ -1335,14 +1219,7 @@ export class SpatialBootScene {
   }
 
   public commitChoice(index: number): void {
-    const target: Mesh<BoxGeometry, MeshBasicMaterial> | undefined =
-      this._targets[index];
-    if (target)
-      this._player.position.set(
-        target.position.x,
-        target.position.y - 0.46,
-        0.56
-      );
+    // Contact commits the choice while preserving the reached avatar pose.
     this._choiceHistory.push(Math.max(0, Math.min(2, index)));
     this._awaitingAction = -1;
     const memory: Mesh<BoxGeometry, MeshStandardMaterial> | undefined =
@@ -1754,13 +1631,10 @@ export class SpatialBootScene {
     const frame: BootFrame | null = this._frame;
     if (!frame || !this._cursor) return -1;
     if (this._blenderLayers) {
-      const showBackground =
+      const showLayers =
         this._choiceHistory.length > 0 || frame.phase === "waiting";
-      this._blenderLayers.background.visible =
-        showBackground && this._choiceHistory.length > 0;
-      this._blenderLayers.strands.visible =
-        frame.phase === "travel" ||
-        (frame.phase === "waiting" && this._choiceHistory.length > 0);
+      this._blenderLayers.background.visible = showLayers;
+      this._blenderLayers.strands.visible = showLayers;
       if (this._blenderStars)
         this._blenderStars.visible = this._choiceHistory.length > 0;
     }
@@ -1777,9 +1651,12 @@ export class SpatialBootScene {
     this._avatar.update(
       delta,
       seconds,
-      frame.phase === "travel" || frame.phase === "complete"
+      (["waiting", "travel", "doorway"].includes(frame.phase) &&
+        this._movement.lengthSq() > 0.0001) ||
+        frame.phase === "complete"
     );
     const isWaiting: boolean = frame.phase === "waiting";
+    const isChoiceTurns = frame.phase === "choices";
     const isBoot: boolean =
       frame.phase === "cursor" || frame.phase === "command";
     const isTravel: boolean = frame.phase === "travel";
@@ -1837,9 +1714,9 @@ export class SpatialBootScene {
     const crossingProgress: number = isCrossing
       ? Math.min(1, Math.max(0, (frame.phaseElapsedMs ?? 0) / 2800))
       : 0;
-    const isSettled: boolean = isWaiting || isThreshold;
+    const isSettled: boolean = isWaiting || isChoiceTurns || isThreshold;
     this._questionRecede +=
-      (Number(isWaiting) - this._questionRecede) *
+      (Number(isWaiting || isChoiceTurns) - this._questionRecede) *
       (isReduced ? 1 : 1 - Math.exp(-delta * 2.2));
     const phaseChanged: boolean = frame.phase !== this._lastPhase;
     if (phaseChanged) {
@@ -1981,6 +1858,7 @@ export class SpatialBootScene {
       const start: Vector3 = this._voiceStarts[index];
       const resting: Vector3 = this._voiceResting[index];
       const isSpeaking: boolean =
+        (isChoiceTurns && frame.choiceSpeaker === index) ||
         (frame.phase === "response" &&
           (frame.speaker ?? this._selected) === index) ||
         (this._voice === index && elapsedMs - this._asideAt < ASIDE_HOLD_MS);
@@ -2049,16 +1927,8 @@ export class SpatialBootScene {
       if (isThreshold) voice.scale.multiplyScalar(1 - finalProgress * 0.74);
       const observerFade: number =
         frame.phase === "loading" && index < newestVoice ? 0.42 : 1;
-      this._voiceMaterials[index][0].opacity =
-        (isSpeaking ? 1 : 0.88) * observerFade;
-      this._voiceMaterials[index][1].opacity =
-        (isSpeaking ? 0.48 : 0.16) * observerFade;
-      this._voiceMaterials[index][2].opacity =
-        (isSpeaking ? 1 : 0.72) * observerFade;
-      this._voiceMaterials[index][3].opacity =
-        (isSpeaking ? 0.58 : index === 1 ? 0.08 : 0.28) * observerFade;
-      if (this._voiceMaterials[index][4])
-        this._voiceMaterials[index][4].opacity = isSpeaking ? 0.82 : 0.18;
+      this._voiceForms[index].update(isReduced ? 0 : seconds, smoothEntrance,
+        0, 0, observerFade * (isSpeaking ? 1 : 0.72));
       const trailPositions: BufferAttribute = trail.geometry.getAttribute(
         "position"
       ) as BufferAttribute;
@@ -2068,6 +1938,13 @@ export class SpatialBootScene {
           .copy(start)
           .lerp(voice.position, t);
         if (index === 0) {
+          point.z -= (1 - t) * 0.35;
+        } else if (index === 1) {
+          const segment = Math.min(6, Math.floor(t * 7));
+          const local = t * 7 - segment;
+          const offsets = [0, 0.2, -0.16, 0.25, -0.12, 0.18, -0.08, 0];
+          const corner = offsets[segment] * (1 - local) + offsets[segment + 1] * local;
+          point.y += corner;
           point.z -= (1 - t) * 0.35;
         } else {
           const breath: number = Math.sin(
@@ -2087,7 +1964,7 @@ export class SpatialBootScene {
         observerFade *
         (isThreshold ? 1 - finalProgress * 0.55 : 1);
     }
-    this._ribbons[4].root.visible = !isBoot && !isThreshold && !isTravel;
+    this._ribbons[4].root.visible = !isBoot && !isThreshold && !isTravel && !frame.choiceLines;
     this._ribbons[4].root.scale.setScalar(scale * 0.37);
     this._ribbons[4].root.position.set(left, 1.65, -0.05);
     const question: Group = this._ribbons[5].root;
@@ -2114,8 +1991,8 @@ export class SpatialBootScene {
             ? 2.55
             : responseAnchor
               ? responseAnchor.y - 0.96
-              : isWaiting
-                ? 0.28 + this._questionRecede * 0.35
+              : isWaiting || isChoiceTurns
+                ? 1.25 + this._questionRecede * 0.35
                 : -0.8 + Math.min(Math.max((seconds - 13) / 16, 0), 1) * 1.45,
       responseAnchor
         ? responseAnchor.z + 0.14
@@ -2160,6 +2037,39 @@ export class SpatialBootScene {
       seconds,
       isReduced
     );
+    for (const letters of Object.values(this._studioLetters)) letters.root.visible = false;
+    if (this._studioPresentation && !isThreshold && frame.question) {
+      const speaker: SpeakerId = frame.studioSpeaker ?? (responseOwner >= 0 ? SPEAKERS[responseOwner + 1] : "omega");
+      const letters = this._studioLetters[speaker];
+      const glyphScale = Math.min(this._width * 0.085, this._isNarrow ? 0.45 : 0.64) * (1 - this._questionRecede * 0.18);
+      letters.root.visible = true;
+      letters.root.position.copy(question.position);
+      letters.root.position.x += 12 * resolveTradition(this._studioPresentation.era).tracking * glyphScale;
+      letters.root.position.y -= 0.5 * glyphScale;
+      letters.root.scale.setScalar(glyphScale);
+      letters.root.rotation.set(0, 0, 0);
+      letters.setText(wrapAtWords(frame.question, 27));
+      letters.update(seconds, this._studioPresentation.layout, isReduced);
+      question.visible = false;
+    }
+    if (frame.choiceLines && (isChoiceTurns || isWaiting)) {
+      const era = this._studioPresentation?.era ?? "dos";
+      const columnWidth = this._width * 0.29;
+      const glyphScale = columnWidth / (17 * resolveTradition(era).tracking);
+      for (let owner = 0; owner < 3; owner++) {
+        const letters = this._studioLetters[SPEAKERS[owner + 1]];
+        const text = frame.choiceLines[owner] ?? "";
+        letters.root.visible = text.length > 0;
+        letters.setEra(era);
+        letters.setText(wrapAtWords(text, 16));
+        letters.opacity = frame.choiceSpeaker === owner || isWaiting ? 1 : 0.68;
+        letters.root.position.set((owner - 1) * this._width * 0.32 - columnWidth * 0.5
+          + 12 * resolveTradition(era).tracking * glyphScale, -0.15, 0.45);
+        letters.root.scale.setScalar(glyphScale);
+        letters.root.rotation.set(0, 0, 0);
+        letters.update(seconds, this._studioPresentation?.layout ?? "passage", isReduced);
+      }
+    }
     const symbols: Group = this._ribbons[6].root;
     symbols.visible = frame.prelude.includes(BOOT_SYMBOLS) && !isThreshold;
     symbols.position.set(left, -2.35, 0);
@@ -2181,7 +2091,7 @@ export class SpatialBootScene {
           : this._hovered >= 0
             ? this._hovered
             : 1;
-      choice.visible = isWaiting && focused === index;
+      choice.visible = isWaiting && !frame.choiceLines && focused === index;
       const voicePosition: Vector3 = this._voices[index].position;
       choice.scale.setScalar(scale * (this._isNarrow ? 0.5 : 0.58));
       if (index === 0) choice.rotation.set(0, 0, 0);
@@ -2358,7 +2268,7 @@ export class SpatialBootScene {
         const physicsStep: IntroPhysicsStep = this._physics.step(
           delta,
           0,
-          1,
+          this._movement.y,
           travelSpeed,
           {
             minX: -this._width * 0.43,
@@ -2525,6 +2435,7 @@ export class SpatialBootScene {
     this._particles.destroy();
     this._avatar.dispose();
     this._omegaDisplay.dispose();
+    for (const letters of Object.values(this._studioLetters)) letters.dispose();
     this._worldEvolution.dispose();
     this._physics.destroy();
     this._cursor?.geometry.dispose();
@@ -2535,16 +2446,7 @@ export class SpatialBootScene {
         mesh.material.dispose();
       }
     );
-    this._voices.forEach((voice: Group): void => {
-      voice.traverse((child): void => {
-        if (!(child instanceof Line) && !(child instanceof Mesh)) return;
-        child.geometry.dispose();
-        const material = child.material;
-        if (Array.isArray(material))
-          material.forEach((entry): void => entry.dispose());
-        else material.dispose();
-      });
-    });
+    this._voiceForms.forEach((form) => form.dispose());
     this._playerCore?.geometry.dispose();
     this._playerCore?.material.dispose();
     this._playerOutline?.geometry.dispose();

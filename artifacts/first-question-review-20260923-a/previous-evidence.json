@@ -1,0 +1,91 @@
+{
+  "version": 1,
+  "currentWorkNote": "Historical run retained. Current menu, dialogue revisions, movement/camera and filament edits are unverified by this manifest; see artifacts/game-progress.md and artifacts/intro-direction/filament-motion.md. Rejected bot rewrite removed without execution. Current camera increment: page load and Begin observed; sustained movement/contact review pending.",
+  "runId": "intro-flow-20260923-c",
+  "artifacts": [
+    "artifacts/omega-dialogue-studio/opening-block.md",
+    "artifacts/omega-dialogue-studio/integration-check.md",
+    "assets/references/intro-first-question.png",
+    "assets/references/intro-door-finale.png",
+    "assets/references/intro-strand-detail.png",
+    "public/assets/intro/void-background.glb",
+    "public/assets/intro/dreamweaver-strands.glb",
+    "public/assets/intro/intro-door-assemble.glb",
+    "public/assets/intro/intro-portal.glb",
+    "public/assets/intro/intro-floor-glyph.glb",
+    "artifacts/intro-bot-playtest-report.json",
+    "artifacts/intro-flow-20260923-c/bot-playthrough.webm",
+    "artifacts/intro-flow-20260923-c/intro-travel-1.png",
+    "artifacts/intro-flow-20260923-c/intro-travel-2.png",
+    "artifacts/intro-flow-20260923-c/intro-travel-3.png"
+  ],
+  "captures": [
+    {
+      "report": "artifacts/intro-flow-20260923-c/desktop-question-1.json",
+      "mode": "desktop",
+      "state": "question-1"
+    },
+    {
+      "report": "artifacts/intro-flow-20260923-c/mobile-question-1.json",
+      "mode": "mobile",
+      "state": "question-1"
+    },
+    {
+      "mode": "desktop",
+      "state": "question-2",
+      "report": "artifacts/intro-flow-20260923-c/desktop-question-2.json"
+    },
+    {
+      "mode": "desktop",
+      "state": "question-3",
+      "report": "artifacts/intro-flow-20260923-c/desktop-question-3.json"
+    },
+    {
+      "mode": "desktop",
+      "state": "question-4",
+      "report": "artifacts/intro-flow-20260923-c/desktop-question-4.json"
+    },
+    {
+      "mode": "desktop",
+      "state": "final-name",
+      "report": "artifacts/intro-flow-20260923-c/desktop-final-name.json"
+    },
+    {
+      "mode": "mobile",
+      "state": "final-name",
+      "report": "artifacts/intro-flow-20260923-c/mobile-final-name.json"
+    },
+    {
+      "mode": "desktop",
+      "state": "final-door",
+      "report": "artifacts/intro-flow-20260923-c/desktop-final-door.json"
+    },
+    {
+      "mode": "mobile",
+      "state": "final-door",
+      "report": "artifacts/intro-flow-20260923-c/mobile-final-door.json"
+    }
+  ],
+  "supplementalStudies": [
+    {
+      "missingEvidence": ["persistent viewport captures", "motion capture"],
+      "note": "Historical intro captures above do not verify this isolated study.",
+      "report": "artifacts/ghost-type-study/README.md",
+      "runId": "ghost-type-study-20260923",
+      "expectedViewportStates": [
+        "desktop-manuscript",
+        "desktop-fragments",
+        "desktop-passage",
+        "mobile-fragments"
+      ],
+      "status": "partial-browser-observation"
+    },
+    {
+      "runId": "omega-dialogue-studio-20260923-b",
+      "report": "artifacts/omega-dialogue-studio/README.md",
+      "manifest": "artifacts/omega-dialogue-studio/evidence.json",
+      "status": "focused-production-qa-passed",
+      "note": "Desktop/mobile passage checks; actual game integration pending."
+    }
+  ]
+}

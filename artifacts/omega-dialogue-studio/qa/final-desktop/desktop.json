@@ -1,0 +1,49 @@
+{
+  "url": "http://127.0.0.1:4191/omega-dialogue-studio.html?variant=passage&speaker=omega&scene=opening&era=dos",
+  "mode": "desktop",
+  "state": null,
+  "requestedState": null,
+  "appliedState": null,
+  "runId": "omega-dialogue-studio-20260923-b",
+  "seed": null,
+  "screenshotPath": "artifacts\\omega-dialogue-studio\\qa\\final-desktop\\desktop.png",
+  "gpu": {
+    "renderer": "ANGLE (NVIDIA, NVIDIA GeForce GTX 1660 (0x00002184) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+    "vendor": "Google Inc. (NVIDIA)",
+    "softwareRendered": false
+  },
+  "result": {
+    "ok": true,
+    "reason": "nonblank",
+    "rect": {
+      "x": 0,
+      "y": 0,
+      "width": 1280,
+      "height": 720
+    },
+    "drawingBuffer": {
+      "width": 1280,
+      "height": 720
+    },
+    "alphaPixels": 4096,
+    "variance": 240,
+    "colorBuckets": 32,
+    "metrics": {
+      "colorBuckets": 40,
+      "colorEntropyBits": 0.38,
+      "edgeDensity": 0.052,
+      "luminance": {
+        "mean": 8.7,
+        "p5": 4.7,
+        "p95": 11.6,
+        "contrast": 6.9
+      },
+      "dominantColorShare": 0.96,
+      "nonBackgroundShare": 0.04
+    },
+    "renderBudget": null,
+    "diagnostics": null
+  },
+  "consoleErrors": [],
+  "pageErrors": []
+}

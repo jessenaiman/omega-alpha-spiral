@@ -95,14 +95,16 @@ npm run inspect:canvas -- --url http://127.0.0.1:5188/intro.html?debug --run-id 
 Agents run one smallest relevant existing test command once after changing the game. For intro/browser work, run only `npm run test:browser -- tests/browser/intro.spec.ts`; for pure logic, run only `npm run test:unit`. Stop at the first failure and report the command, exit code, failing test name, and first actionable error. Do not use watch mode, rerun unchanged failures, read entire logs, run `npm test` for a narrow change, repair unrelated failures, or add tests unless the user explicitly requests that exact work. Default acceptance remains: the URL responds, the page is visible, and the game starts.
 
 ## Demo Game Loop
+
 Omega has managed to cobble together some game code from the earliest days of the computer and boots up a script that's been on a loop for a long time. The players are introduced to 3 unseen dreamweavers who pose existential and alignment questions
+
 - Each dreamweaver represents the whole of Omega (a fact that the game does not, and must not reveal)
-Each scene the dreamweavers challenge the player and offer 3 choices that represent one of the 3.
+  Each scene the dreamweavers challenge the player and offer 3 choices that represent one of the 3.
 
 ## Language
 
 **THERE ARE THREE Dreamweaver**:
- Light, Shadow, and Ambition. Fragments of Omega's shattered soul, each believing itself the real guide, competing to be the one that leads the player.
+Light, Shadow, and Ambition. Fragments of Omega's shattered soul, each believing itself the real guide, competing to be the one that leads the player.
 _Avoid_: Echo, shard, persona, narrator, "echo of Light"
 
 **Light**:
@@ -121,12 +123,20 @@ _Avoid_: Wrath, MISCHIEF, WRATH
 Code id: `ambition`
 
 **NOTE**
+
 - Only one dreamweaver can eventually be bound to the players
 - The dreamweavers are not bound during the beginning scenes
 
 **Dreamweaver Rules**
+
 - There are exactly three Dreamweavers.
 
 **Identity colour**:
 A Dreamweaver's canonical colour, taken from the logo's palette. Only these three carry identity. Any other colour is illumination or glow at low opacity, never identity.
 _Avoid_: accent colour, theme colour, thread colour
+
+**Ghost typing**:
+Visible arrival, hesitation, correction, and revision of a speaker's words. Its rhythm and spatial arrangement convey the speaker before a face is shown.
+
+**Authored revision**:
+A deliberate replacement or retraction of words, distinct from an accidental character typo. A displayed revision does not itself establish that Omega is present or aware.
