@@ -1642,7 +1642,11 @@ export class SpatialBootScene {
       const showLayers =
         this._choiceHistory.length > 0 || frame.phase === "waiting";
       this._blenderLayers.background.visible = showLayers;
-      this._blenderLayers.strands.visible = showLayers;
+      this._blenderLayers.strands.visible =
+        frame.phase === "final" ||
+        frame.phase === "name" ||
+        frame.phase === "doorway" ||
+        frame.phase === "complete";
       if (this._blenderStars)
         this._blenderStars.visible = this._choiceHistory.length > 0;
     }
@@ -2003,7 +2007,9 @@ export class SpatialBootScene {
           ? -this._width * 0.14
           : isName
             ? -this._width * 0.22
-            : left + this._width * 0.14 * this._questionRecede,
+            : isWaiting
+              ? -this._width * 0.28
+              : left + this._width * 0.14 * this._questionRecede,
       frame.phase === "doorway" || frame.phase === "complete"
         ? 0.1
         : isName
@@ -2013,7 +2019,7 @@ export class SpatialBootScene {
             : responseAnchor
               ? responseAnchor.y - 0.96
               : isWaiting
-                ? 1.18 + this._questionRecede * 0.12
+                ? -0.38
                 : isChoiceTurns
                   ? -0.05 + this._questionRecede * 0.22
                   : -0.8 + Math.min(Math.max((seconds - 13) / 16, 0), 1) * 1.45,
@@ -2023,7 +2029,9 @@ export class SpatialBootScene {
           ? 2.2
           : isName
             ? 1.85
-            : 0.25 - this._questionRecede * 1.2
+            : isWaiting
+              ? 0.35
+              : 0.25 - this._questionRecede * 1.2
     );
     question.scale.setScalar(
       frame.phase === "doorway" || frame.phase === "complete"
@@ -2037,7 +2045,8 @@ export class SpatialBootScene {
               : scale *
                 (this._isNarrow ? 0.92 : 1.48 - this._questionRecede * 0.48)
     );
-    if (responseOwner === 0) question.rotation.set(0, 0, 0);
+    if (isWaiting || isChoiceTurns || responseOwner === 0)
+      question.rotation.set(0, 0, 0);
     if (responseOwner === 1) question.rotation.set(-0.08, -0.14, 0.025);
     if (responseOwner === 2) question.rotation.set(-0.16, 0.18, -0.035);
     if (!isReduced && !isSettled && responseOwner !== 0) {
@@ -2104,14 +2113,14 @@ export class SpatialBootScene {
           (owner - 1) * this._width * 0.36 -
             columnWidth * 0.5 +
             12 * resolveEraShader(eraShaderId).tracking * glyphScale,
-          -0.9,
-          0.45
+          isWaiting ? -1.62 : -0.9,
+          isWaiting ? 0.55 : 0.45
         );
         letters.root.scale.setScalar(glyphScale);
         letters.root.rotation.set(0, 0, 0);
         letters.update(
           seconds,
-          this._studioPresentation?.layout ?? "passage",
+          isWaiting ? "manuscript" : (this._studioPresentation?.layout ?? "passage"),
           isReduced
         );
       }
