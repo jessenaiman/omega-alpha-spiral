@@ -1,6 +1,6 @@
 # Three.js Image Generator Pairing
 
-Use `threejs-image-generator` when a strong 2D input improves `threejs-3d-generator` output or when the final asset is 2D rather than 3D. The current image provider is Google's Gemini image API.
+Use `threejs-image-generator` for the 2D reference and this skill's Blender workflow for the 3D asset. The sibling `threejs-image-generator/SKILL.md` is the single source for Codex image generation; do not duplicate provider instructions here. A generated PNG is a concept, texture, or UI asset, not a runtime 3D model.
 
 ## 2D To 3D Reference Images
 
@@ -36,16 +36,16 @@ Use `threejs-image-generator` directly, not 3D generation, for:
 - Button/icon textures, decals, title art, achievement badges.
 - 2D sky/backdrop cards when a 3D model is unnecessary.
 
-## 3D Generator Handoff
+## Image Creation And 3D Handoff
 
 After generating a 2D reference:
 
-1. Save the image in the working project, usually `assets/concepts/`.
-2. Use the `threejs-3d-generator` `image` command with `--image <path>`.
-3. Use `--enable-image-autofix` for rough images.
-4. Use `--texture-alignment original_image` when visual match matters.
-5. Use `--texture-alignment geometry` when structural accuracy matters.
-6. Download generated 3D outputs immediately after success.
+1. Choose the output first: a scene study, single-object 3D reference, texture, or final 2D UI asset. A scene study is for composition review, not a direct image-to-3D input.
+2. Generate or edit through the Codex image tool as specified in the sibling image skill. Show the returned image to the design owner.
+3. Preserve the tool's original output and copy the chosen result into the working project: usually `assets/concepts/` for studies and model references, or `assets/textures/`, `assets/decals/`, and `assets/ui/` for runtime 2D sources. Record the prompt, purpose, and approval status.
+4. Inspect the result before 3D work. For a model input, require one complete object on a simple background, readable silhouette, material zones, scale cues, and little perspective. Request a new isolated reference if the image is a crowded scene.
+5. Build or adapt the model in Blender with the reference visible. Use Blender MCP to inspect, edit, screenshot, and export the selected asset as GLB/PBR. Keep repeated code blocks and collision proxies simple in Three.js.
+6. Import the 3D asset using `threejs-integration.md`: `GLTFLoader`, correct scale/pivot, simple collision proxy, and an in-game visual check. Keep scene-study PNGs out of the 3D model loader; they can guide geometry, materials, and layout.
 
 ## Avoid
 
