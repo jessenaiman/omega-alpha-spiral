@@ -1,6 +1,13 @@
 export type { TypographyOwner as SpeakerId } from "../../core/sceneTypography";
 import type { TypographyOwner as SpeakerId } from "../../core/sceneTypography";
+import scene1 from "../../dialogue/scene1.oml?raw";
+import Light from "../../dialogue/Light.omd?raw";
+import Shadow from "../../dialogue/Shadow.omd?raw";
+import Ambition from "../../dialogue/Ambition.omd?raw";
+import System from "../../dialogue/System.omd?raw";
+import { parseOmd, parseOml, type Omd } from "../../core/oml";
 
+/** A voice, as declared by its .omd file. Nothing here is hardcoded. */
 export interface SpeakerProfile {
   id: SpeakerId;
   label: string;
@@ -11,68 +18,47 @@ export interface SpeakerProfile {
   mistakeFrequency: number;
   correctionDelayMs: number;
   revisionDelayMs: number;
+  era: string;
+  note: string;
   sample: string;
   replacement: { from: string; to: string };
-  note: string;
 }
 
-export const PROFILES: Record<SpeakerId, SpeakerProfile> = {
-  omega: {
-    id: "omega",
-    label: "Omega",
-    color: "#d5e8f2",
-    intervalMs: 90,
-    startDelayMs: 350,
-    jitter: 0.65,
-    mistakeFrequency: 0.12,
-    correctionDelayMs: 650,
-    revisionDelayMs: 1500,
-    sample: "NONCANONICAL · signal: night is clear\nrecording only",
-    replacement: { from: "clear", to: "lost" },
-    note: "Show late word edits as recorded SOS; do not bind typing to live player input.",
-  },
-  light: {
-    id: "light",
-    label: "Light",
-    color: "#d8efff",
-    intervalMs: 110,
-    startDelayMs: 500,
-    jitter: 0.12,
-    mistakeFrequency: 0.025,
-    correctionDelayMs: 850,
-    revisionDelayMs: 1100,
-    sample: "NONCANONICAL · maybe the signal is safe\nI have read it twice",
-    replacement: { from: "maybe", to: "certainly" },
-    note: "Keep 3D glyphs faint blue-white, slow, neat, and aligned.",
-  },
-  shadow: {
-    id: "shadow",
-    label: "Shadow",
-    color: "#f2b84b",
-    intervalMs: 40,
-    startDelayMs: 250,
-    jitter: 0.55,
-    mistakeFrequency: 0.1,
-    correctionDelayMs: 220,
-    revisionDelayMs: 420,
-    sample: "NONCANONICAL · the signal holds\nlook again",
-    replacement: { from: "holds", to: "breaks" },
-    note: "Use amber glyphs on an angled straight segment; keep motion readable.",
-  },
-  ambition: {
-    id: "ambition",
-    label: "Ambition",
-    color: "#ed4949",
-    intervalMs: 65,
-    startDelayMs: 400,
-    jitter: 0.3,
-    mistakeFrequency: 0.06,
-    correctionDelayMs: 400,
-    revisionDelayMs: 750,
-    sample: "NONCANONICAL · you failed again\nI can take that back",
-    replacement: { from: "failed", to: "waited" },
-    note: "Let red text curve toward the player, then retract harsh words.",
-  },
+const designs: Record<SpeakerId, Omd> = {
+  light: parseOmd(Light),
+  shadow: parseOmd(Shadow),
+  ambition: parseOmd(Ambition),
+  omega: parseOmd(System),
 };
 
-export const SPEAKERS: SpeakerId[] = ["omega", "light", "shadow", "ambition"];
+export const PROFILES = Object.fromEntries(
+  (Object.keys(designs) as SpeakerId[]).map((id) => {
+    const d = designs[id];
+    return [
+      id,
+      {
+        id,
+        label: d.display_name || id,
+        color: d.color,
+        intervalMs: d.typing.interval,
+        startDelayMs: d.typing.delay,
+        jitter: d.typing.jitter,
+        mistakeFrequency: d.typing.mistakes,
+        correctionDelayMs: d.typing.correction,
+        revisionDelayMs: d.typing.revision,
+        era: d.typography.tradition,
+        note: d.spatial.note,
+        sample: `NONCANONICAL - ${d.custom.personality ?? d.display_name}`,
+        replacement: {
+          from: d.replacement.from ?? "",
+          to: d.replacement.to ?? "",
+        },
+      } satisfies SpeakerProfile,
+    ];
+  })
+) as Record<SpeakerId, SpeakerProfile>;
+
+export const SPEAKERS = Object.keys(PROFILES) as SpeakerId[];
+
+export const SCRIPT = parseOml(scene1);
+export const SCRIPT_TEXT = scene1;

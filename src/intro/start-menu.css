@@ -1,0 +1,32 @@
+.os-boot[hidden] { display: none; }
+.os-start-menu {
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  padding: max(2rem, env(safe-area-inset-top)) 1.5rem max(2rem, env(safe-area-inset-bottom));
+  background: #000 url("../../assets/ui/omega-menu-plate.png") center / 100% 100% no-repeat;
+  color: var(--os-white);
+}
+.os-start-content { width: min(100%, 31rem); text-align: center; }
+.os-start-mark { display: block; width: 12rem; height: 12rem; object-fit: contain; margin: 0 auto 1.5rem; }
+.os-start-kicker { color: var(--os-dim); font-size: .72rem; letter-spacing: .28em; }
+.os-start-menu h1 { font-size: clamp(2rem, 7vw, 3.2rem); font-weight: 400; letter-spacing: .04em; margin: .5rem 0 2.5rem; }
+.os-start-begin {
+  font: inherit; color: inherit; background: #090e0d;
+  border: 1px solid var(--os-silver); padding: .9rem 2rem;
+  min-width: 13rem; min-height: 48px; cursor: pointer;
+}
+.os-start-begin span { margin-left: 2rem; color: var(--os-dim); }
+.os-start-begin:hover { background: #15201e; }
+.os-start-begin:focus-visible, .os-start-help summary:focus-visible { outline: 2px solid var(--os-white); outline-offset: 5px; }
+.os-start-help { margin: 1.5rem auto; max-width: 27rem; font-size: .85rem; color: var(--os-silver); }
+.os-start-help summary { cursor: pointer; padding: .6rem; min-height: 24px; }
+.os-start-help p { text-align: left; }
+.os-start-help kbd { color: var(--os-white); font: inherit; }
+.os-start-note { margin-top: 2.5rem; font-size: .7rem; color: var(--os-dim); }
+@media (max-height: 650px) {
+  .os-start-mark { width: 7rem; height: 7rem; margin-bottom: .75rem; }
+  .os-start-menu h1 { margin-bottom: 1.5rem; }
+  .os-start-note { margin-top: 1rem; }
+}

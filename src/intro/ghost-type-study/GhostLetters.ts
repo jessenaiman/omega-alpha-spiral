@@ -1,70 +1,41 @@
 import {
-  CanvasTexture,
   Color,
   DoubleSide,
   DynamicDrawUsage,
   Group,
   InstancedBufferAttribute,
   InstancedMesh,
-  LinearFilter,
-  NearestFilter,
   Object3D,
   PlaneGeometry,
   ShaderMaterial,
+  type CanvasTexture,
 } from "three";
 import type { SpeakerId } from "./profiles";
-import { ERAS, type Era } from "../../core/sceneTypography";
+import { GLYPHS, makeAtlas } from "../../core/lettering/generate";
+import { resolveTradition, type Tradition } from "../../core/lettering/traditions";
 
 export type Layout = "manuscript" | "fragments" | "passage";
 const CAPACITY = 256;
 
-// Exact readable glyphs are generated locally; image concepts never supply alphabet pixels.
-function makeAtlas(era: Era): CanvasTexture {
-  const style = ERAS[era];
-  const canvas = document.createElement("canvas");
-  canvas.width = style.cellWidth * 16;
-  canvas.height = style.cellHeight * 6;
-  const ctx = canvas.getContext("2d")!;
-  ctx.fillStyle = "white";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.font = style.font;
-  for (let i = 0; i < 96; i++)
-    ctx.fillText(
-      String.fromCharCode(i + 32),
-      ((i % 16) + 0.5) * style.cellWidth,
-      (Math.floor(i / 16) + 0.5) * style.cellHeight
-    );
-  if (era !== "smooth") {
-    const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    for (let i = 3; i < pixels.data.length; i += 4)
-      pixels.data[i] = pixels.data[i] > 90 ? 255 : 0;
-    ctx.putImageData(pixels, 0, 0);
-  }
-  const tex = new CanvasTexture(canvas);
-  tex.minFilter = era === "smooth" ? LinearFilter : NearestFilter;
-  tex.magFilter = tex.minFilter;
-  tex.generateMipmaps = false;
-  return tex;
-}
-
 export class GhostLetters {
   readonly root = new Group();
   private atlas: CanvasTexture;
+  private tradition: Tradition;
   private geometry = new PlaneGeometry(1, 1);
   private glyphs = new InstancedBufferAttribute(new Float32Array(CAPACITY), 1);
   private material: ShaderMaterial;
   private mesh: InstancedMesh;
   private dummy = new Object3D();
   private text = "";
-  private era: Era = "phosphor";
   opacity = 1;
 
   constructor(
     readonly speaker: SpeakerId,
-    color: string
+    color: string,
+    traditionId = "dec-vt100-ascii-terminal"
   ) {
-    this.atlas = makeAtlas("phosphor");
+    this.tradition = resolveTradition(traditionId);
+    this.atlas = makeAtlas(this.tradition);
     this.geometry.setAttribute("aGlyph", this.glyphs);
     this.material = new ShaderMaterial({
       transparent: true,
@@ -75,19 +46,19 @@ export class GhostLetters {
         uColor: { value: new Color(color) },
         uTime: { value: 0 },
         uOpacity: { value: 1 },
-        uScan: { value: ERAS.phosphor.scan },
-        uDots: { value: ERAS.phosphor.dots },
-        uHalo: { value: ERAS.phosphor.halo },
-        uCell: { value: [ERAS.phosphor.cellWidth, ERAS.phosphor.cellHeight] },
+        uScan: { value: this.tradition.effects.scan },
+        uDots: { value: this.tradition.effects.dots },
+        uHalo: { value: this.tradition.effects.halo },
+        uCell: { value: [...this.tradition.cell] },
       },
       vertexShader: `attribute float aGlyph; varying vec2 vUv; varying float vGlyph;
         void main(){vUv=uv; vGlyph=aGlyph; gl_Position=projectionMatrix*modelViewMatrix*instanceMatrix*vec4(position,1.0);}`,
       fragmentShader: `uniform sampler2D uAtlas; uniform vec3 uColor; uniform vec2 uCell; uniform float uTime,uOpacity,uScan,uDots,uHalo; varying vec2 vUv; varying float vGlyph;
         void main(){
-          vec2 cell=vec2(mod(vGlyph,16.0),5.0-floor(vGlyph/16.0));
-          vec2 p=(cell+vUv)/vec2(16.0,6.0);
+          vec2 cell=vec2(mod(vGlyph,16.0),6.0-floor(vGlyph/16.0));
+          vec2 p=(cell+vUv)/vec2(16.0,7.0);
           float a=texture2D(uAtlas,p).a;
-          vec2 d=vec2(1.0)/(uCell*vec2(16.0,6.0));
+          vec2 d=vec2(1.0)/(uCell*vec2(16.0,7.0));
           float halo=(texture2D(uAtlas,p+d).a+texture2D(uAtlas,p-d).a+texture2D(uAtlas,p+vec2(d.x,-d.y)).a+texture2D(uAtlas,p+vec2(-d.x,d.y)).a)*uHalo;
           vec2 dotPosition=fract(vUv*uCell)-.5;
           a*=mix(1.0,1.0-smoothstep(.32,.52,length(dotPosition)),uDots);
@@ -105,27 +76,29 @@ export class GhostLetters {
     this.root.add(this.mesh);
   }
 
-  setEra(era: Era) {
-    if (this.era === era) return;
-    this.era = era;
+  setColor(color: string) {
+    (this.material.uniforms.uColor.value as Color).set(color);
+  }
+
+  /** Accepts a tradition id or a retired era id; both resolve. */
+  setEra(id: string) {    if (this.tradition.id === id) return;
+    const next = resolveTradition(id);
+    if (next.id === this.tradition.id) return;
+    this.tradition = next;
     this.atlas.dispose();
-    this.atlas = makeAtlas(era);
+    this.atlas = makeAtlas(next);
     this.material.uniforms.uAtlas.value = this.atlas;
-    const style = ERAS[era];
-    this.material.uniforms.uScan.value = style.scan;
-    this.material.uniforms.uDots.value = style.dots;
-    this.material.uniforms.uHalo.value = style.halo;
-    this.material.uniforms.uCell.value = [style.cellWidth, style.cellHeight];
+    this.material.uniforms.uScan.value = next.effects.scan;
+    this.material.uniforms.uDots.value = next.effects.dots;
+    this.material.uniforms.uHalo.value = next.effects.halo;
+    this.material.uniforms.uCell.value = [...next.cell];
   }
 
   setText(text: string) {
     this.text = text.slice(0, CAPACITY);
     this.mesh.count = this.text.length;
     for (let i = 0; i < this.text.length; i++)
-      this.glyphs.setX(
-        i,
-        Math.max(0, Math.min(95, this.text.charCodeAt(i) - 32))
-      );
+      this.glyphs.setX(i, Math.max(0, GLYPHS.indexOf(this.text[i])));
     this.glyphs.needsUpdate = true;
   }
 
@@ -133,7 +106,7 @@ export class GhostLetters {
     let row = 0,
       col = 0,
       word = 0;
-    const step = ERAS[this.era].tracking;
+    const step = this.tradition.tracking;
     for (let i = 0; i < this.text.length; i++) {
       const ch = this.text[i];
       if (ch === "\n") {

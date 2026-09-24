@@ -1,5 +1,5 @@
 import Ajv from "ajv";
-import schema from "./dialogue.schema.json?raw";
+import schema from "./dialogue.schema.json" with { type: "json" };
 import type { Era, TypographyScene } from "../../core/sceneTypography";
 import type { SpeakerId, SpeakerProfile } from "./profiles";
 import type { Layout } from "./GhostLetters";
@@ -33,9 +33,7 @@ export type DialogueDocument = {
   presentation?: DialoguePresentation;
 };
 
-const validate = new Ajv({ allErrors: true }).compile<DialogueDocument>(
-  JSON.parse(schema)
-);
+const validate = new Ajv({ allErrors: true }).compile<DialogueDocument>(schema);
 
 export function parseDialogue(raw: string): DialogueDocument {
   const doc: unknown = JSON.parse(raw);

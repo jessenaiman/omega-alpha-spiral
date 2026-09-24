@@ -1,4 +1,5 @@
 import { createRng } from "../core/random";
+import type { SpeakerId } from "./ghost-type-study/profiles";
 import {
   CHRONICLE_OPENING_LOG,
   CHRONICLE_QUESTIONS,
@@ -32,6 +33,8 @@ export interface BootFrame {
   hint?: string;
   /** Dreamweaver currently authoring response text; independent of the chosen route. */
   speaker?: number;
+  /** Explicit studio actor; independent of player-choice ownership. */
+  studioSpeaker?: SpeakerId;
 }
 
 const FIRST_INK_MS: number = 900;

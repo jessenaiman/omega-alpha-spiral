@@ -17,6 +17,19 @@
         <span class="eyebrow">OMEGA SPIRAL / WORDS BEFORE FACES</span>
         <h1>Omega Dialogue Studio</h1>
       </div>
+      <nav class="tabs" aria-label="Studio view">
+        <button id="tab-stage" data-tab="stage" aria-pressed="true">
+          Stage
+        </button>
+        <button id="tab-script" data-tab="script" aria-pressed="false">
+          Script
+        </button>
+      </nav>
+      <div class="scene-io">
+        <select id="scene-pick" aria-label="Scene file"></select>
+        <button id="scene-save">Save to game</button>
+        <span id="scene-state" role="status"></span>
+      </div>
       <button id="tune" aria-expanded="false" aria-controls="settings">
         Tune voice
       </button>
@@ -38,8 +51,16 @@
       <label class="check"
         ><input id="motion" type="checkbox" /> Reduce motion</label
       >
+      <label class="check"
+        ><input id="casing" type="checkbox" checked /> Honor historical
+        casing</label
+      >
       <button id="reset">Reset this voice</button>
+      <p id="voice-save-state" role="status"></p>
     </aside>
+    <section id="script-view" hidden aria-label="Script">
+      <ol id="script-lines"></ol>
+    </section>
     <section class="caption">
       <span id="voice-label" class="eyebrow">OMEGA</span>
       <p id="description"></p>

@@ -1,0 +1,40 @@
+# Image and Sprite Review
+
+Scope: the eleven supplied images were opened directly. Alpha-channel metadata was checked on those same files. This is a proposal for the owner; no images were cut, redrawn, generated, or approved for runtime use.
+
+## Direction
+
+Keep the opening mostly dark. Let the menu reveal one clear focal point at a time. Reserve the full-power Omega Spiral logo for the brand moment. Keep the three presences visually distinct: Light uses fine straight traces, Shadow uses angular traces, and Ambition uses curved traces. The player should remain faceless and grow through the journey.
+
+## Intro and menu
+
+| Source | What it shows | Candidate 2D layers | Keep as real 3D / redraw |
+| --- | --- | --- | --- |
+| `assets/references/intro-first-question.png` | Wide space composition, branching paths, three colored focal regions, tiny central figure | Rebuild individual glyphs and small interface marks as transparent sprites only if they need independent motion; use the composition as a layout reference | The player silhouette, spatial paths, central glow, stars, and depth should be Three.js geometry/materials. The image is fully opaque RGBA, so its apparent dark field is not transparency. |
+| `assets/references/intro-door-finale.png` | Dense threshold scene, architecture, path ribbons, player, particles, and a visible Canva badge | Small authored UI glyphs or a newly redrawn brand mark could be separate assets | Architecture, player, paths, and particle depth belong in Three.js/Blender. This is a flattened, fully opaque RGBA composite; isolate elements by redrawing/masking, not by assuming alpha. The visible Canva badge is part of the reference image. |
+| `assets/references/intro-strand-detail.png` | Close view of crossing strands and a checker pattern near the bottom | The line/glyph treatment can guide separately authored transparent strand decals or UI glyphs | Do not use the image as a transparent runtime layer: it is fully opaque RGBA, and the checker pattern is baked into the pixels. Recreate strands as animated curves/geometry where they move in depth. |
+| `assets/references/omega-spiral-logo-reference.png` | Bright orange, white, and red infinity mark on black | Redraw/clean the logo as a transparent UI or title asset after the owner approves the exact mark | The supplied PNG is fully opaque RGBA. It is a brand reference, not a ready transparent sprite. Keep its high-intensity treatment for the brand reveal. |
+| `assets/concepts/ghost-type-study/luna-visual-draft.png` | Four-panel type/line study: Light, Shadow, Ambition, and comparison | A transparent alpha surface exists in this image, but first crop/rebuild each approved glyph/trace family as separate assets; do not ship the full sheet as a sprite | The design is a contact sheet with dividers and labels, so panel regions need separation/redraw. Fine Light traces, angular Shadow traces, and curved Ambition traces can guide 2D decals or be rebuilt as procedural lines. Alpha varies from 1 to 251; that confirms transparency exists, not that the panel elements are cleanly isolated. |
+| `assets/intro/optical-variations/comparison.jpg` | Three wide logo/strand treatments with labels | Use only as a visual direction sheet; make any chosen marks as fresh transparent UI elements | It is a flattened RGB comparison with labels and opaque backgrounds; no alpha. Strands with motion or depth should remain curves/particles in Three.js. |
+| `assets/intro/background-motion/style-a-live-plate/contact-sheet.jpg` | Five live-plate motion frames | Individual frame images may serve as opaque background plates if a selected frame is approved | Contact sheet is flattened RGB with filenames; no alpha. For parallax/player movement, keep the player and near/mid/far strands as separate scene elements. |
+| `assets/intro/background-motion/style-b-lowtech-pixel/contact-sheet.jpg` | Five low-tech pixel treatment frames | Selected pixels or glyph marks could be recreated as transparent accents | Contact sheet is flattened RGB with filenames; no alpha. It is a style reference, not five extracted plates. Keep any moving depth structure in Three.js. |
+| `assets/intro/background-motion/style-c-max-tech/contact-sheet.jpg` | Five higher-energy motion frames | Selected small sparks/glints could be separate transparent accents if desired | Contact sheet is flattened RGB with filenames; no alpha. Treat as direction only. Build the animated core, paths, and depth in Three.js. |
+
+## Floor One references
+
+| Source | What it shows | Candidate 2D layers | Keep as real 3D / redraw |
+| --- | --- | --- | --- |
+| `assets/concepts/floor-one-concept.png` | Dark stone chamber, centered doorway, floor slabs, small faceless lit figure, and a loose object | A small light/glow decal or authored surface marks could be transparent textures | Room, arch, doorway, floor, loose object, and moving player should be Three.js/Blender geometry for perspective, collision, and parallax. RGB image has no alpha and is a whole-scene concept. |
+| `assets/concepts/floor-one-concept-2.png` | Isometric/blockout view of a layered square chamber and central opening | No clear sprite candidate in this blockout | Build the room volumes, steps, opening, and yellow light as geometry/materials. RGB image has no alpha; use it as a layout reference. |
+
+## Proposed extraction order
+
+1. Approve one intro composition and the level of darkness before cutting assets.
+2. Redraw the logo as a clean transparent source for the brand-only moment.
+3. If needed, create separate transparent UI glyph sets for Light, Shadow, and Ambition from the type study, retaining their straight, angular, and curved signatures.
+4. Keep player silhouette, branching paths, door/chamber architecture, floor, and parallax layers in Three.js/Blender. These need actual depth and movement.
+5. Consider small sparkle or glyph decals only after their motion and placement are known.
+
+## Alpha findings
+
+The four `assets/references/*.png` files have RGBA channels with alpha fixed at 255. They are fully opaque. `luna-visual-draft.png` has variable alpha (range 1–251), but it is still a combined four-panel design sheet. The comparison/contact sheets and both Floor One concepts are RGB with no alpha channel. These findings describe file channels only; they do not establish that any asset is approved or ready to cut.

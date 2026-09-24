@@ -1,0 +1,32 @@
+# Light.omd — Omega Design. Mirrors Dialogic's .dch character resource.
+# Editing this file changes how Light writes. The scene dialogue does not care.
+
+id = light
+display_name = Light
+nicknames = Luminary, Golden One
+color = #d8efff
+
+[custom]
+thread = light
+style = light_theme
+personality = Order and lawfulness. Straight, purposeful lines.
+
+[typing]
+interval = 110
+delay = 500
+jitter = 0.12
+mistakes = 0.025
+correction = 850
+revision = 1100
+
+[typography]
+tradition = dec-vt100-ascii-terminal
+case = mixed
+
+[replacement]
+from = maybe
+to = certainly
+
+[spatial]
+motion = straight
+note = Keep glyphs faint blue-white, slow, neat, and aligned.

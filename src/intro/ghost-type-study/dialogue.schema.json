@@ -42,6 +42,7 @@
               },
               "text": {
                 "type": "string",
+                "description": "Authored lettering. word|replacement writes the first word, pauses, erases it and types the replacement. [first span|replacement span] supports phrases. These cues remain in saved text and are not printed literally.",
                 "minLength": 1,
                 "maxLength": 220
               }
@@ -96,7 +97,8 @@
           "enum": ["opening", "floor1", "floor2", "floor3"]
         },
         "era": {
-          "enum": ["phosphor", "dos", "gui", "smooth"]
+          "type": "string",
+          "minLength": 1
         },
         "layout": {
           "enum": ["manuscript", "fragments", "passage"]

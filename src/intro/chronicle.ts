@@ -131,9 +131,10 @@ export function getChronicleInterlude(_questionIndex: number, _selectedIndex: nu
 }
 
 export const CHRONICLE_FINAL_DRAFT = '[SYSTEM: Dreamweaver thread selected - {{THREAD_NAME}}]';
+/** Three threads cross together; no Dreamweaver choice is declared. */
 export const CHRONICLE_FINAL = [
   '',
-  CHRONICLE_FINAL_DRAFT,
+  '[SYSTEM: Dreamweaver threads following - 03]',
   '',
   'Good.',
   'Then that is the name I will wear.',

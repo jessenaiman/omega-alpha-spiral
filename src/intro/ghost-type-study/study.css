@@ -179,6 +179,22 @@ input[type="range"] {
   margin: 5px 0 0;
   accent-color: var(--voice);
 }
+input[type="color"] {
+  display: block;
+  width: 100%;
+  height: 34px;
+  margin-top: 5px;
+  padding: 2px;
+  background: #070a0e;
+  border: 1px solid #ffffff24;
+  cursor: pointer;
+}
+#voice-save-state {
+  font-size: 10px;
+  color: #b0dcc0;
+  min-height: 14px;
+  margin: 4px 0 0;
+}
 select {
   display: block;
   width: 100%;
@@ -494,4 +510,303 @@ select {
   .prototype-switcher {
     bottom: 12px;
   }
+}
+
+/* Script tab — static, no animation. */
+.tabs {
+  display: flex;
+  gap: 6px;
+  pointer-events: auto;
+}
+.tabs button {
+  border-color: transparent;
+  background: transparent;
+  border-bottom: 1px solid #ffffff24;
+  border-radius: 0;
+  color: #91a2ac;
+}
+.tabs button[aria-pressed="true"] {
+  color: #e1e9ed;
+  border-bottom-color: var(--voice);
+}
+#script-view {
+  position: fixed;
+  z-index: 1;
+  left: 340px;
+  right: 4vw;
+  top: 152px;
+  bottom: 112px;
+  overflow: auto;
+  padding: 14px 18px;
+  background: #05080bcc;
+  border: 1px solid #ffffff1a;
+  border-radius: 8px;
+  backdrop-filter: blur(6px);
+}
+#script-lines {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.script-row {
+  display: grid;
+  grid-template-columns: 2.2em 7.5em 1fr;
+  gap: 12px;
+  align-items: baseline;
+  padding: 5px 10px;
+  border-radius: 5px;
+  border-left: 2px solid transparent;
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1.6;
+  transition:
+    background 0.12s,
+    border-color 0.12s,
+    box-shadow 0.12s;
+}
+.script-row:hover {
+  background: #ffffff08;
+}
+.script-row[aria-selected="true"] {
+  background: #ffffff0d;
+  border-left-color: var(--voice);
+  box-shadow:
+    0 0 0 1px #ffffff14,
+    0 0 28px -6px var(--voice);
+}
+.script-num {
+  color: #5d707c;
+  font-variant-numeric: tabular-nums;
+}
+.script-speaker {
+  color: var(--speaker, #9fb4c2);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  font-size: 11px;
+}
+.script-text {
+  color: #cbd8df;
+  white-space: pre-wrap;
+}
+.script-row[data-type="wait"] {
+  opacity: 0.8;
+}
+.tok-tag {
+  color: #f0b46b;
+  background: #f0b46b14;
+  border: 1px solid #f0b46b33;
+  border-radius: 3px;
+  padding: 0 4px;
+  font-size: 11px;
+}
+.tok-pair {
+  color: #b98cff;
+  border-bottom: 1px dotted #b98cff88;
+}
+body[data-tab="script"] #ghost-stage {
+  opacity: 0.45;
+}
+body[data-tab="script"] #speakers,
+body[data-tab="script"] .caption {
+  display: none;
+}
+@media (width < 1000px) {
+  #script-view {
+    left: 4vw;
+    right: 4vw;
+  }
+}
+
+/* ── Omega tags ──────────────────────────────────────────────── */
+.tok-var,
+.tok-system,
+.tok-notice,
+.tok-chamber,
+.tok-static,
+.tok-glitch,
+.tok-error,
+.tok-log,
+.tok-pair,
+.tok-wait {
+  font-family: "Courier New", monospace;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  border-radius: 3px;
+  padding: 0 5px;
+  white-space: nowrap;
+}
+.tok-var {
+  color: #8fd6a0;
+  background: #8fd6a014;
+  border: 1px solid #8fd6a03d;
+}
+.tok-system {
+  color: #ffc94d;
+  background: #ffc94d12;
+  border: 1px solid #ffc94d3d;
+}
+.tok-notice {
+  color: #ffe08a;
+  background: #ffc94d1f;
+  border: 1px solid #ffc94d66;
+  font-weight: 600;
+}
+.tok-chamber {
+  color: var(--accent, #cbd8df);
+  background: color-mix(in srgb, var(--accent, #cbd8df) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent, #cbd8df) 34%, transparent);
+}
+.tok-static {
+  color: #6b7a85;
+  background: #6b7a8514;
+  border: 1px dashed #6b7a8566;
+}
+.tok-glitch {
+  color: #b98cff;
+  background: #b98cff12;
+  border: 1px solid #b98cff44;
+}
+.tok-error {
+  color: #ff6868;
+  background: #ff686814;
+  border: 1px solid #ff686844;
+}
+.tok-log {
+  color: #7fb0c4;
+  background: #7fb0c412;
+  border: 1px solid #7fb0c433;
+}
+.tok-pair {
+  color: #b98cff;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px dotted #b98cff88;
+  border-radius: 0;
+  padding: 0 1px;
+}
+.tok-wait {
+  color: #f0b46b;
+  background: #f0b46b12;
+  border: 1px solid #f0b46b33;
+}
+
+/* ── Row roles, driven by the tags ───────────────────────────── */
+.script-row[data-role="chamber"] {
+  display: block;
+  margin: 22px 0 10px;
+  padding: 10px 10px 8px;
+  border-left: 0;
+  border-top: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--accent) 8%, transparent),
+    transparent 60%
+  );
+}
+.script-row[data-role="chamber"] .script-num {
+  display: none;
+}
+.script-row[data-role="chamber"] .tok-chamber {
+  font-size: 12px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+.script-row[data-role="system"],
+.script-row[data-role="notice"] {
+  display: block;
+  margin: 10px 0;
+  padding: 9px 12px;
+  border-left: 2px solid #ffc94d;
+  background: #ffc94d0a;
+}
+.script-row[data-role="notice"] {
+  border-left-color: #ffe08a;
+  background: #ffc94d14;
+}
+.script-row[data-role="system"] .script-num,
+.script-row[data-role="notice"] .script-num {
+  margin-right: 10px;
+}
+.script-row[data-role="log"] {
+  opacity: 0.72;
+}
+.script-row[data-role="log"] .script-text {
+  color: #a7c3d0;
+}
+.script-row[data-role="damage"] {
+  opacity: 0.8;
+}
+.script-row[data-role="damage"] .script-text {
+  color: #8c9aa4;
+}
+.script-row[data-role="wait"] {
+  opacity: 0.55;
+  padding-block: 2px;
+}
+.script-speaker {
+  color: var(--accent, #9fb4c2);
+}
+
+/* ── Script editor ───────────────────────────────────────────────
+   The mirror sits behind the textarea and must not change any text
+   metric, or the caret drifts off the highlighted glyphs. Colour and
+   background only — never padding, border, or font size.            */
+#script-view {
+  padding: 0;
+}
+.script-editor {
+  position: absolute;
+  inset: 0;
+}
+.script-mirror,
+.script-input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 14px 18px;
+  font: 13px/1.7 "Courier New", monospace;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  border: 0;
+  overflow: auto;
+}
+.script-mirror {
+  pointer-events: none;
+  color: #cbd8df;
+}
+.script-input {
+  background: transparent;
+  color: transparent;
+  caret-color: #e1e9ed;
+  resize: none;
+}
+.script-input:focus {
+  outline: none;
+}
+.script-input::placeholder {
+  color: #43535e;
+}
+/* Tag colours are published as --tok-<kebab-name> by applyTagTheme. Colour and
+   background only — never padding, border or font size, or the caret drifts. */
+.script-mirror [class^="tok-"] {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  font: inherit;
+  letter-spacing: inherit;
+  white-space: inherit;
+  color: var(--tok-inherit, inherit);
+}
+.script-mirror [class^="tok-"]::before,
+.script-mirror [class^="tok-"]::after {
+  content: none;
+}
+/* Inline application tags set their own value inline. */
+.script-mirror .tok-color {
+  color: inherit;
+}
+.script-mirror .tok-font,
+.script-mirror .tok-scale {
+  color: #c9d6de;
+  text-decoration: underline dotted #ffffff30;
 }

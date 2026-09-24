@@ -8,6 +8,7 @@ import {
 } from "./DialogueTimeline";
 import eraResearchPrompt from "../../../artifacts/omega-dialogue-studio/era-research-prompt.md?raw";
 import { PROFILES, SPEAKERS } from "./profiles";
+import { parseOml } from "../../core/oml";
 
 export function createDialogueEditor(host: {
   line(speaker: string, text: string): void;
@@ -17,6 +18,7 @@ export function createDialogueEditor(host: {
   resume(): void;
   presentation(): DialoguePresentation;
   restore(presentation: DialoguePresentation): void;
+  script?(document: DialogueDocument): void;
 }) {
   const panel = window.document.createElement("aside");
   panel.id = "dialogue-editor";
@@ -36,6 +38,7 @@ export function createDialogueEditor(host: {
     <div class="actions"><button id="script-apply">Apply & preview</button><button id="script-play">Play opening</button></div>
     <div class="actions"><button id="script-undo" disabled>Undo</button><button id="script-redo" disabled>Redo</button></div>
     <p id="script-save-state" role="status">Original opening</p>
+    <div class="actions"><button id="script-publish">Apply to game</button><a id="script-game" href="./intro.html" target="_blank" rel="noopener">Play real intro ↗</a></div>
     <p id="script-state" role="status"></p>
     <button id="script-continue" disabled>Continue</button>
     <details><summary>Dialogue file</summary><p id="script-origin"></p>
@@ -65,6 +68,7 @@ export function createDialogueEditor(host: {
     redo: DialogueDocument[] = [];
   let document = parseDialogue(opening),
     active = false;
+  let projectBase = JSON.parse(opening);
   el<HTMLTextAreaElement>("era-research").value = eraResearchPrompt;
   let timeline = new DialogueTimeline(document, enter);
   function outline() {
@@ -132,6 +136,7 @@ export function createDialogueEditor(host: {
       null,
       2
     );
+    host.script?.(document);
   }
   function changed(message = "Changed · export JSON to save your design") {
     el("script-save-state").textContent = message;
@@ -142,6 +147,7 @@ export function createDialogueEditor(host: {
       null,
       2
     );
+    host.script?.(document);
   }
   function commit(candidate: DialogueDocument) {
     const valid = parseDialogue(JSON.stringify(candidate));
@@ -156,6 +162,7 @@ export function createDialogueEditor(host: {
     document = valid;
     timeline = new DialogueTimeline(document, enter);
     changed();
+    refresh();
   }
   function applyDrafts() {
     if (!drafts.size) return;
@@ -230,6 +237,7 @@ export function createDialogueEditor(host: {
   proceed.onclick = () => timeline.proceed();
   function restructure(edit: (events: DialogueEvent[]) => void) {
     host.pause();
+    const previousIndex = selectedIndex;
     try {
       applyDrafts();
       const candidate = structuredClone(document);
@@ -241,6 +249,7 @@ export function createDialogueEditor(host: {
         "Sequence edited · play or preview to continue";
       el("script-error").textContent = "";
     } catch (reason) {
+      selectedIndex = previousIndex;
       error(reason);
     }
   }
@@ -328,6 +337,40 @@ export function createDialogueEditor(host: {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
   el("script-open").onclick = () => el<HTMLInputElement>("script-file").click();
+  el("script-publish").onclick = async () => {
+    const button = el<HTMLButtonElement>("script-publish");
+    button.disabled = true;
+    try {
+      applyDrafts();
+      const submitted = structuredClone(document);
+      const response = await fetch("/api/studio/opening", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ base: projectBase, document: submitted }),
+      });
+      if (!response.ok) {
+        const failure = await response.json().catch(() => ({}));
+        throw new Error(
+          failure.error ??
+            "Project saving needs the local development server. Export JSON is still available."
+        );
+      }
+      projectBase = submitted;
+      const hasNewEdits =
+        drafts.size > 0 ||
+        JSON.stringify(document) !== JSON.stringify(submitted);
+      changed(
+        hasNewEdits
+          ? "Saved submitted version · newer edits still need applying"
+          : "Saved to project · the real intro now uses this document"
+      );
+      el("script-error").textContent = "";
+    } catch (reason) {
+      error(reason);
+    } finally {
+      button.disabled = false;
+    }
+  };
   el<HTMLInputElement>("script-file").onchange = async (e) => {
     const file = (e.target as HTMLInputElement).files?.[0];
     if (!file) return;
@@ -388,6 +431,30 @@ export function createDialogueEditor(host: {
     },
     tick(ms: number, finished: boolean) {
       if (active) timeline.tick(ms, finished);
+    },
+    /** Replace the whole script from written text. Invalid text keeps the last good document. */
+    loadText(text: string) {
+      const events: DialogueEvent[] = parseOml(text).events.map(
+        (event, index) => {
+          const id = `line-${index + 1}`;
+          if (event.type === "wait")
+            return { id, type: "wait", durationMs: event.durationMs ?? 0 };
+          if (event.type === "continue")
+            return { id, type: "continue", label: event.label ?? "continue" };
+          return {
+            id,
+            type: "line",
+            speaker: event.speaker ?? "omega",
+            text: event.text ?? "",
+          };
+        }
+      );
+      if (!events.length) return;
+      try {
+        commit({ ...document, events });
+      } catch (error) {
+        el("script-save-state").textContent = (error as Error).message;
+      }
     },
     dispose() {
       panel.remove();

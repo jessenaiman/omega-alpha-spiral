@@ -1,7 +1,9 @@
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";
+import { studioDialogueSave } from "./tools/studio/save-dialogue";
 
 export default defineConfig({
+  plugins: [studioDialogueSave()],
   base: "./",
   server: {
     host: "127.0.0.1",

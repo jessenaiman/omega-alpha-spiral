@@ -13,22 +13,37 @@ import {
   PlaneGeometry,
   Scene,
   SRGBColorSpace,
+  Vector2,
   Vector3,
   WebGLRenderer,
 } from "three";
+import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
+import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 import { GhostLetters, type Layout } from "./GhostLetters";
 import {
-  ERAS,
   SCENES,
   type Era,
   type TypographyScene,
 } from "../../core/sceneTypography";
+import {
+  TRADITIONS,
+  isBuilt,
+  resolveTradition,
+} from "../../core/lettering/traditions";
 import { WritingPlayback } from "./WritingPlayback";
 import { createDialogueEditor } from "./DialogueEditor";
-import type { DialoguePresentation, WritingSettings } from "./DialogueTimeline";
+import type {
+  DialogueDocument,
+  DialoguePresentation,
+  WritingSettings,
+} from "./DialogueTimeline";
+import { createScriptEditor } from "./script-view";
 import {
   PROFILES,
   SPEAKERS,
+  SCRIPT_TEXT,
   type SpeakerId,
   type SpeakerProfile,
 } from "./profiles";
@@ -57,12 +72,13 @@ let sceneId: TypographyScene =
   (Object.keys(SCENES) as TypographyScene[]).find(
     (id) => id === params.get("scene")
   ) ?? "opening";
-let era: Era =
-  (Object.keys(ERAS) as Era[]).find((id) => id === params.get("era")) ??
-  sceneProfiles[sceneId].era;
+let era: Era = resolveTradition(
+  params.get("era") ?? sceneProfiles[sceneId].era
+).id;
 sceneProfiles[sceneId].era = era;
 let paused = false,
   common = false,
+  honorCasing = true,
   reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 let age = 0,
   last = performance.now(),
@@ -79,6 +95,13 @@ const commonSample = "The signal is still here.\nFollow the words.";
 let scriptMode = false;
 let scriptText = "";
 let restoringPresentation = false;
+let tab: "stage" | "script" = "stage";
+let scriptDoc: DialogueDocument | null = null;
+let scriptEditor: {
+  setText(text: string): void;
+  getText(): string;
+  focus(): void;
+} | null = null;
 const scene = new Scene();
 scene.background = new Color("#030507");
 const camera = new PerspectiveCamera(42, 1, 0.1, 120);
@@ -90,6 +113,12 @@ const renderer = new WebGLRenderer({
 });
 renderer.outputColorSpace = SRGBColorSpace;
 renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+// Native three bloom — no extra dependency. Threshold is high so only glyph cores glow.
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
+const bloom = new UnrealBloomPass(new Vector2(1, 1), 0.5, 0.65, 0.9);
+composer.addPass(bloom);
+composer.addPass(new OutputPass());
 const world = new Group();
 scene.add(world);
 const letters = Object.fromEntries(
@@ -156,19 +185,29 @@ const target = new Line(
 target.position.set(3.3, -0.6, 3.2);
 world.add(target);
 
+/** Historical casing is a display choice; authored text in saved files is untouched. */
+function cased(text: string) {
+  const t = resolveTradition(era);
+  return honorCasing && t.casePolicy === "upper" ? text.toUpperCase() : text;
+}
 function textFor(id: SpeakerId) {
-  if (scriptMode && id === selected) return scriptText;
-  return common ? commonSample : settings[id].sample;
+  if (scriptMode && id === selected) return cased(scriptText);
+  return cased(common ? commonSample : settings[id].sample);
 }
 // Wrap only the displayed text; the authored file retains its original line breaks.
+// `columns` is historical metadata for the inspector — the panel is what constrains the wrap.
 function displayedText(text: string) {
+  const columns = Math.max(
+    12,
+    Math.floor(9.1 / resolveTradition(era).tracking)
+  );
   return text
     .split("\n")
     .flatMap((line) => {
       const rows: string[] = [];
-      while (line.length > 27) {
-        const space = line.lastIndexOf(" ", 27);
-        const cut = space > 0 ? space : 27;
+      while (line.length > columns) {
+        const space = line.lastIndexOf(" ", columns);
+        const cut = space > 0 ? space : columns;
         rows.push(line.slice(0, cut));
         line = line.slice(cut + (space > 0 ? 1 : 0));
       }
@@ -292,6 +331,37 @@ const controls: [NumericKey, string, number, number, number][] = [
 ];
 function makeSliders() {
   el("sliders").replaceChildren();
+  const profile = settings[selected];
+
+  const colourRow = document.createElement("label");
+  const colourOut = document.createElement("output");
+  const colour = document.createElement("input");
+  colour.type = "color";
+  colour.value = profile.color;
+  colour.setAttribute("aria-label", "Identity colour");
+  colourOut.textContent = profile.color;
+  colourRow.append("Identity colour", colourOut, colour);
+  el("sliders").append(colourRow);
+  colour.oninput = () => {
+    profile.color = colour.value;
+    colourOut.textContent = colour.value;
+    applyVoiceColour(selected);
+  };
+  colour.onchange = () => {};
+
+  const eraRow = document.createElement("label");
+  const eraSelect = document.createElement("select");
+  eraSelect.append(letteringOptions());
+  eraSelect.value = resolveTradition(profile.era).id;
+  eraSelect.setAttribute("aria-label", "Lettering tradition");
+  eraRow.append("Lettering", eraSelect);
+  el("sliders").append(eraRow);
+  eraSelect.onchange = () => {
+    profile.era = eraSelect.value;
+    letters[selected].setEra(profile.era);
+    ghosts[selected].setEra(profile.era);
+  };
+
   for (const [key, label, min, max, step] of controls) {
     const row = document.createElement("label"),
       out = document.createElement("output"),
@@ -319,6 +389,15 @@ function makeSliders() {
     };
   }
 }
+function applyVoiceColour(id: SpeakerId) {
+  letters[id].setColor(settings[id].color);
+  ghosts[id].setColor(settings[id].color);
+  if (id === selected) {
+    document.documentElement.style.setProperty("--voice", settings[id].color);
+    el("voice-label").textContent = settings[id].label.toUpperCase();
+  }
+}
+
 function changeLayout(delta: number) {
   layout =
     layouts[
@@ -354,27 +433,46 @@ for (const [id, profile] of Object.entries(SCENES)) {
   option.textContent = `${profile.label} · ${PROFILES[profile.owner].label}`;
   el("scene-owner").append(option);
 }
-for (const [id, profile] of Object.entries(ERAS)) {
-  const option = document.createElement("option");
-  option.value = id;
-  option.textContent = profile.label;
-  option.title = profile.description;
-  el("era").append(option);
-}
-function applySceneTypography() {
-  for (const id of SPEAKERS) {
-    letters[id].setEra(era);
-    ghosts[id].setEra(era);
+// All 18 traditions are listed; unbuilt render paths are disabled, never hidden.
+function letteringOptions() {
+  const fragment = document.createDocumentFragment();
+  for (const built of [true, false]) {
+    const group = document.createElement("optgroup");
+    group.label = built ? "Reconstruction ladder" : "Render path pending";
+    for (const tr of TRADITIONS.filter((x) => isBuilt(x) === built)) {
+      const option = document.createElement("option");
+      option.value = tr.id;
+      option.textContent = `${tr.introduced} · ${tr.label}`;
+      option.title = `${tr.designIntent} ${tr.sources[0] ?? ""}`;
+      option.disabled = !built;
+      group.append(option);
+    }
+    fragment.append(group);
   }
-  glassMaterial.opacity =
-    era === "gui" ? 0.18 : era === "smooth" ? 0.03 : 0.075;
-  sceneProfiles[sceneId].era = era;
+  return fragment;
+}
+el("era").append(letteringOptions());
+function applySceneTypography() {
+  const tr = resolveTradition(era);
+  era = tr.id;
+  for (const id of SPEAKERS) {
+    letters[id].setEra(settings[id].era);
+    ghosts[id].setEra(settings[id].era);
+  }
+  const flat =
+    tr.renderMethod === "bitmap-gui" ||
+    tr.renderMethod === "outline" ||
+    tr.renderMethod === "subpixel";
+  glassMaterial.opacity = flat ? 0.03 : 0.075;
+  sceneProfiles[sceneId].era = tr.id;
   el<HTMLSelectElement>("scene-owner").value = sceneId;
-  el<HTMLSelectElement>("era").value = era;
-  el("era-description").textContent = ERAS[era].description;
-  el("era").title = ERAS[era].description;
+  el<HTMLSelectElement>("era").value = tr.id;
+  el("era-description").textContent =
+    `${tr.designIntent} ${tr.recognizableTrait} — ${tr.introduced}, ${tr.commonUse}; ${tr.confidence} confidence.`;
+  el("era").title =
+    `${tr.device}. ${tr.spatialAdaptation} ${tr.sources[0] ?? ""}`;
   document.documentElement.dataset.sceneOwner = sceneProfiles[sceneId].owner;
-  document.documentElement.dataset.textEra = era;
+  document.documentElement.dataset.textEra = tr.id;
   updateUrl();
   window.dispatchEvent(
     new CustomEvent("ghost-study:scene-typography-changed", {
@@ -384,6 +482,7 @@ function applySceneTypography() {
 }
 el<HTMLSelectElement>("era").onchange = (e) => {
   era = (e.target as HTMLSelectElement).value as Era;
+  for (const id of SPEAKERS) settings[id].era = era;
   applySceneTypography();
   savePresentation();
 };
@@ -397,6 +496,11 @@ el<HTMLSelectElement>("scene-owner").onchange = (e) => {
 el<HTMLInputElement>("motion").checked = reduced;
 el<HTMLInputElement>("motion").onchange = (e) => {
   reduced = (e.target as HTMLInputElement).checked;
+};
+el<HTMLInputElement>("casing").checked = honorCasing;
+el<HTMLInputElement>("casing").onchange = (e) => {
+  honorCasing = (e.target as HTMLInputElement).checked;
+  restart();
 };
 el<HTMLInputElement>("common").onchange = (e) => {
   common = (e.target as HTMLInputElement).checked;
@@ -426,6 +530,7 @@ function keydown(e: KeyboardEvent) {
 document.addEventListener("keydown", keydown);
 function resize() {
   renderer.setSize(innerWidth, innerHeight);
+  composer.setSize(innerWidth, innerHeight);
   const inset = scriptMode && innerWidth >= 1000 ? 340 : 0;
   renderer.setViewport(inset, 0, innerWidth - inset, innerHeight);
   camera.aspect = (innerWidth - inset) / innerHeight;
@@ -483,7 +588,7 @@ function render(now: number) {
   camera.position.y +=
     ((reduced ? 1 : 1 + pointerY) - camera.position.y) * 0.04;
   camera.lookAt(0, 0.35, 0);
-  renderer.render(scene, camera);
+  composer.render();
 }
 el("status").textContent = "Ready";
 function presentation(): DialoguePresentation {
@@ -540,7 +645,78 @@ const dialogue = createDialogueEditor({
     el("pause").textContent = "Resume";
     el("pause").setAttribute("aria-pressed", "true");
   },
+  script(doc) {
+    scriptDoc = doc;
+    scriptEditor?.setText(SCRIPT_TEXT);
+  },
 });
+scriptEditor = createScriptEditor(el("script-lines"), (text) =>
+  dialogue.loadText(text)
+);
+scriptEditor.setText(SCRIPT_TEXT);
+dialogue.loadText(SCRIPT_TEXT);
+
+// The game imports these files. Saving here is what puts the scene in the game.
+let scenes: string[] = [];
+async function listScenes() {
+  try {
+    const response = await fetch("/api/studio/scenes");
+    const body = await response.json();
+    scenes = body.files?.map((f: string) => f.replace(/\.oml$/, "")) ?? [];
+  } catch {
+    scenes = ["scene1"];
+  }
+  el<HTMLSelectElement>("scene-pick").replaceChildren(
+    ...scenes.map((name) => {
+      const option = document.createElement("option");
+      option.value = name;
+      option.textContent = `${name}.oml`;
+      return option;
+    })
+  );
+  if (!scenes.includes("scene1")) {
+    const option = document.createElement("option");
+    option.value = "scene1";
+    option.textContent = "scene1.oml";
+    el("scene-pick").prepend(option);
+  }
+}
+el<HTMLButtonElement>("scene-save").onclick = async () => {
+  const state = el("scene-state");
+  state.textContent = "Saving…";
+  try {
+    const response = await fetch("/api/studio/scenes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: el<HTMLSelectElement>("scene-pick").value,
+        text: scriptEditor?.getText(),
+      }),
+    });
+    const body = await response.json();
+    if (!response.ok) throw new Error(body.error ?? "Save failed.");
+    state.textContent = `Saved ${body.scene}.oml — reload the game to play it.`;
+  } catch (error) {
+    state.textContent = (error as Error).message;
+  }
+};
+listScenes();
+function applyTab() {
+  document.body.dataset.tab = tab;
+  el("script-view").hidden = tab !== "script";
+  el("tab-stage").setAttribute("aria-pressed", String(tab === "stage"));
+  el("tab-script").setAttribute("aria-pressed", String(tab === "script"));
+  if (tab === "script") {
+    scriptEditor?.focus();
+  }
+}
+for (const button of document.querySelectorAll<HTMLButtonElement>(
+  ".tabs button"
+))
+  button.onclick = () => {
+    tab = button.dataset.tab === "script" ? "script" : "stage";
+    applyTab();
+  };
 const openingButton = document.createElement("button");
 openingButton.textContent = "Opening script";
 openingButton.onclick = () => dialogue.start();
@@ -549,6 +725,8 @@ makeSliders();
 applySceneTypography();
 compose();
 restart();
+tab = params.get("tab") === "script" ? "script" : "stage";
+applyTab();
 if (params.get("mode") !== "samples") {
   era = params.get("scene") === "opening" ? era : "dos";
   sceneId = "opening";
@@ -575,6 +753,7 @@ function dispose() {
   targetGeometry.dispose();
   (target.material as LineBasicMaterial).dispose();
   linesMaterial.dispose();
+  composer.dispose();
   renderer.dispose();
 }
 if (import.meta.hot) import.meta.hot.dispose(dispose);
