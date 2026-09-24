@@ -1,18 +1,161 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#070908">
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M8 32c8-20 40-20 48 0-8 20-40 20-48 0Z' fill='none' stroke='%23dce9e8' stroke-width='4'/%3E%3C/svg%3E">
-    <title>Omega Spiral</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="An unfinished invitation. omega-spiral opening study."
+    />
+    <link rel="icon" href="data:," />
+    <title>omega-spiral — an invitation</title>
   </head>
-  <body>
-    <main class="game-shell" aria-label="Omega Spiral game">
-      <canvas data-game-canvas tabindex="0" aria-label="Omega Spiral game world"></canvas>
-      <p data-game-status role="status" aria-live="polite">GHOST TERMINAL · INITIALIZING</p>
-      <div data-game-error role="alert" hidden></div>
+  <body class="os-body">
+    <main
+      class="os-boot"
+      hidden
+      inert
+      data-chapter="1"
+      data-os-phase-ts="cursor"
+      data-os-art-ts="loading"
+      data-os-door-ts="forming"
+      data-os-plate-ts="0"
+      data-os-format-ts="plain"
+      data-os-corrupt-ts="false"
+      data-os-text-ts="loading"
+      data-os-voice-ts="-1"
+      data-os-question-ts="0"
+      data-os-can-continue-ts="false"
+      data-os-audio-ts="asleep"
+      data-os-physics-ts="loading"
+      data-os-started-ts="false"
+    >
+      <canvas id="os-canvas-ts" class="os-canvas" aria-hidden="true"></canvas>
+      <button
+        id="os-sound-ts"
+        class="os-sound"
+        type="button"
+        aria-pressed="false"
+      >
+        wake sound
+      </button>
+      <!-- Accessible mirror only. The visible cursor, letters and choices are WebGL assets. -->
+      <section class="os-sr" aria-label="An invitation">
+        <div id="os-feed-ts" class="os-feed">
+          <pre
+            id="os-transcript-ts"
+            class="os-transcript"
+            aria-hidden="true"
+          ></pre>
+          <p class="os-prelude">
+            <span id="os-prelude-ts"></span
+            ><span class="os-cursor os-prelude-cursor" aria-hidden="true"
+              >▌</span
+            >
+          </p>
+          <h1 class="os-question">
+            <span id="os-question-ts" aria-hidden="true"></span
+            ><span class="os-cursor os-question-cursor" aria-hidden="true"
+              >▌</span
+            ><span
+              id="os-accessible-question-ts"
+              class="os-sr"
+              aria-live="polite"
+            ></span>
+          </h1>
+        </div>
+        <fieldset
+          id="os-choices-ts"
+          class="os-choices"
+          aria-labelledby="os-accessible-question-ts"
+          disabled
+        >
+          <legend class="os-sr">
+            Choose a path: Light, Shadow, or Ambition
+          </legend>
+          <label class="os-choice"
+            ><input type="radio" name="story" value="light" /><span
+              class="os-choice-copy"
+            ></span
+          ></label>
+          <label class="os-choice"
+            ><input type="radio" name="story" value="shadow" /><span
+              class="os-choice-copy"
+            ></span
+          ></label>
+          <label class="os-choice"
+            ><input type="radio" name="story" value="ambition" /><span
+              class="os-choice-copy"
+            ></span
+          ></label>
+        </fieldset>
+        <p id="os-aside-ts" aria-live="polite"></p>
+      </section>
+      <nav id="os-touch-ts" class="os-touch" aria-label="Movement controls">
+        <button type="button" data-os-move="up" aria-label="Move forward">
+          ↑
+        </button>
+        <button type="button" data-os-move="left" aria-label="Move left">
+          ←
+        </button>
+        <button type="button" data-os-move="down" aria-label="Move backward">
+          ↓
+        </button>
+        <button type="button" data-os-move="right" aria-label="Move right">
+          →
+        </button>
+      </nav>
+      <aside
+        id="os-route-guide-ts"
+        class="os-route-guide"
+        aria-label="Choose a Dreamweaver path"
+        hidden
+      >
+        <p class="os-route-guide-title">CHOOSE A STRAND</p>
+        <button type="button" data-os-route="0"></button>
+        <button type="button" data-os-route="1"></button>
+        <button type="button" data-os-route="2"></button>
+      </aside>
+      <form
+        id="os-name-entry-ts"
+        class="os-name-entry"
+        aria-label="Answer Omega's final question"
+        hidden
+      >
+        <label for="os-name-input-ts">YOUR NAME</label>
+        <div class="os-name-entry-row">
+          <input
+            id="os-name-input-ts"
+            name="name"
+            type="text"
+            maxlength="32"
+            autocomplete="off"
+            spellcheck="false"
+            required
+          /><button type="submit">send ↵</button>
+        </div>
+      </form>
+      <p id="os-error-ts" class="os-error" role="alert"></p>
+      <footer class="os-footer">
+        <span class="os-status"
+          ><strong id="os-progress-ts"></strong
+          ><span id="os-hint-ts"
+            >WASD / arrows · choose a path · 1 2 3 / click</span
+          ></span
+        ><button
+          id="os-enter-ts"
+          class="os-replay os-enter"
+          type="button"
+          hidden
+          disabled
+        >
+          continue ↵</button
+        ><button id="os-replay-ts" class="os-replay" type="button">
+          replay opening ↺
+        </button>
+      </footer>
     </main>
-    <script type="module" src="/src/main.ts"></script>
+    <noscript>This opening needs JavaScript enabled.</noscript>
+    <script type="module" src="/src/intro/main.ts"></script>
   </body>
 </html>

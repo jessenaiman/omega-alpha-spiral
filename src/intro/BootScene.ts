@@ -194,9 +194,11 @@ export class BootScene {
 
   public init(): void {
     this._spatial.setStudioPresentation(studioOpeningDocument.presentation);
-    this._questions = this._questions.map((question, index) => index === 0
-      ? { ...question, question: this._studioOpening.lastLine }
-      : question);
+    this._questions = this._questions.map((question, index) =>
+      index === 0
+        ? { ...question, question: this._studioOpening.lastLine }
+        : question
+    );
     this._root = getElement("main", HTMLElement);
     this._prelude = getElement("#os-prelude-ts", HTMLElement);
     this._feed = getElement("#os-feed-ts", HTMLElement);
@@ -491,9 +493,11 @@ export class BootScene {
   private _reset(): void {
     this._typingKey = "";
     this._studioOpening = new StudioOpening();
-    this._questions = this._questions.map((question, index) => index === 0
-      ? { ...question, question: this._studioOpening.lastLine }
-      : question);
+    this._questions = this._questions.map((question, index) =>
+      index === 0
+        ? { ...question, question: this._studioOpening.lastLine }
+        : question
+    );
     this._chapterTwo.stop();
     this._elapsedMs = 0;
     this._motionMs = 0;
@@ -570,10 +574,18 @@ export class BootScene {
       this._motionMs += delta * 1000;
       const endMs: number = this._frames[this._frames.length - 1].at;
       if (this._storyMode === "boot" && this._hasStarted) {
-        const opening = this._studioOpening.advance(delta * 1000, this._isReduced);
+        const opening = this._studioOpening.advance(
+          delta * 1000,
+          this._isReduced
+        );
         this._canContinue = opening.awaiting;
-        const frame = this._storyFrame(opening.text, opening.done ? "waiting" : "prelude", 0,
-          opening.awaiting ? "Continue to the three paths" : undefined, this._motionMs);
+        const frame = this._storyFrame(
+          opening.text,
+          opening.done ? "waiting" : "prelude",
+          0,
+          opening.awaiting ? "Continue to the three paths" : undefined,
+          this._motionMs
+        );
         frame.studioSpeaker = opening.speaker;
         this._applyFrame(frame, opening.done);
       }
@@ -707,7 +719,12 @@ export class BootScene {
     guide
       .querySelectorAll<HTMLButtonElement>("[data-os-route]")
       .forEach((button, index) => {
-        button.textContent = `${index + 1}  ${["LIGHT", "SHADOW", "AMBITION"][index]} · ${this._questions[this._questionIndex].choices[index].text}`;
+        const route = ["LIGHT", "SHADOW", "AMBITION"][index];
+        button.textContent = `${index + 1}  ${route}`;
+        button.setAttribute(
+          "aria-label",
+          `${route}: ${this._questions[this._questionIndex].choices[index].text}`
+        );
       });
     this._spatial.setFrame(frame);
     this._prelude.textContent = frame.prelude;
@@ -723,7 +740,9 @@ export class BootScene {
     this._choices.disabled = frame.phase !== "waiting";
     // Screen readers hear the complete question once, not a stream of corrected letters.
     this._accessibleQuestion.textContent =
-      frame.phase === "waiting" || frame.phase === "complete" || this._canContinue
+      frame.phase === "waiting" ||
+      frame.phase === "complete" ||
+      this._canContinue
         ? frame.question
         : "";
     this._soundFrame(frame);
@@ -996,7 +1015,8 @@ export class BootScene {
       const completeAt: number = this._typingCompleteAt;
       const complete: boolean = this._isReduced || this._typingComplete;
       if (
-        !studioOpeningDocument.presentation && !complete &&
+        !studioOpeningDocument.presentation &&
+        !complete &&
         text.length > 4 &&
         Math.floor(elapsedMs / 230) % 17 === 0
       )
@@ -1042,11 +1062,13 @@ export class BootScene {
       );
       const complete: boolean = beat.complete;
       this._canContinue = complete;
-      const responseEnd: number = studioOpeningDocument.presentation ? this._typingCompleteAt : this._isReduced
-        ? 0
-        : [280, 920, 480][this._selectedChoice] +
-          response.length * [42, 48, 34][this._selectedChoice] +
-          520;
+      const responseEnd: number = studioOpeningDocument.presentation
+        ? this._typingCompleteAt
+        : this._isReduced
+          ? 0
+          : [280, 920, 480][this._selectedChoice] +
+            response.length * [42, 48, 34][this._selectedChoice] +
+            520;
       if (
         complete &&
         elapsedMs >= responseEnd + Math.min(4200, 1800 + response.length * 18)
@@ -1112,8 +1134,7 @@ export class BootScene {
       const complete: boolean = this._isReduced || this._typingComplete;
       if (
         complete &&
-        elapsedMs >=
-          this._typingCompleteAt + (this._isReduced ? 0 : 1900)
+        elapsedMs >= this._typingCompleteAt + (this._isReduced ? 0 : 1900)
       ) {
         this._beginNaming();
         return;
@@ -1173,21 +1194,36 @@ export class BootScene {
     elapsedMs: number,
     millisecondsPerCharacter: number
   ): string {
-    if (this._isReduced) { this._typingComplete = true; this._typingCompleteAt = 0; return text; }
+    if (this._isReduced) {
+      this._typingComplete = true;
+      this._typingCompleteAt = 0;
+      return text;
+    }
     if (studioOpeningDocument.presentation) {
-      const speaker = this._storyMode === "response" && this._selectedChoice >= 0
-        ? SPEAKERS[this._selectedChoice + 1] : "omega";
+      const speaker =
+        this._storyMode === "response" && this._selectedChoice >= 0
+          ? SPEAKERS[this._selectedChoice + 1]
+          : "omega";
       const key = `${this._storyMode}:${this._questionIndex}:${speaker}:${text}`;
       if (key !== this._typingKey || elapsedMs < this._typingElapsed) {
         this._typingKey = key;
         this._typingElapsed = 0;
         this._typingComplete = false;
         this._typingCompleteAt = 0;
-        this._typing.restart({ ...PROFILES[speaker], ...studioOpeningDocument.presentation.voices[speaker] }, text);
+        this._typing.restart(
+          {
+            ...PROFILES[speaker],
+            ...studioOpeningDocument.presentation.voices[speaker],
+          },
+          text
+        );
       }
-      const frame = this._typing.advance(Math.max(0, elapsedMs - this._typingElapsed));
+      const frame = this._typing.advance(
+        Math.max(0, elapsedMs - this._typingElapsed)
+      );
       this._typingElapsed = elapsedMs;
-      if (frame.done && !this._typingComplete) this._typingCompleteAt = elapsedMs;
+      if (frame.done && !this._typingComplete)
+        this._typingCompleteAt = elapsedMs;
       this._typingComplete = frame.done;
       return frame.text;
     }

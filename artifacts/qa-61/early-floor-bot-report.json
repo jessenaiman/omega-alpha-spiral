@@ -1,0 +1,82 @@
+{
+  "runs": [
+    {
+      "seed": 17,
+      "results": [
+        {
+          "roomIndex": 0,
+          "door": {
+            "x": -8,
+            "z": 0
+          },
+          "chosen": "door",
+          "outcome": null,
+          "distance": 19.200000000000042
+        },
+        {
+          "roomIndex": 1,
+          "door": {
+            "x": 0,
+            "z": -10
+          },
+          "chosen": "monster",
+          "outcome": "fallen",
+          "distance": 25.699199999999966
+        },
+        {
+          "roomIndex": 2,
+          "door": {
+            "x": 1,
+            "z": -11
+          },
+          "chosen": "chest",
+          "outcome": null,
+          "distance": 27.19739999999978
+        }
+      ],
+      "frames": 893,
+      "distance": 72.1
+    },
+    {
+      "seed": 42,
+      "results": [
+        {
+          "roomIndex": 0,
+          "door": {
+            "x": 0,
+            "z": 0
+          },
+          "chosen": "door",
+          "outcome": null,
+          "distance": 11.301000000000027
+        },
+        {
+          "roomIndex": 1,
+          "door": {
+            "x": -9,
+            "z": -4
+          },
+          "chosen": "monster",
+          "outcome": "fallen",
+          "distance": 44.99879999999996
+        },
+        {
+          "roomIndex": 2,
+          "door": {
+            "x": -10,
+            "z": -5
+          },
+          "chosen": "chest",
+          "outcome": null,
+          "distance": 25.298399999999845
+        }
+      ],
+      "frames": 994,
+      "distance": 81.6
+    }
+  ],
+  "pageErrors": [],
+  "consoleErrors": [],
+  "networkErrors": [],
+  "introScope": "final-door hook sets starting point; doorway and all three floors use real keyboard input"
+}
