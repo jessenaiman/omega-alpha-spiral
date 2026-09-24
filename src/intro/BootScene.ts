@@ -30,7 +30,7 @@ import { IntroAudio } from "./IntroAudio";
 import type { IntroPhysicsDiagnostics } from "./IntroPhysics";
 import { BOOT_EFFECTS, SpatialBootScene } from "./SpatialBootScene";
 import { ChapterTwoScene } from "../chapter-two/ChapterTwoScene";
-import { StudioOpening, studioOpeningDocument } from "./StudioOpening";
+import { StudioOpening, studioOpeningDocuments } from "./StudioOpening";
 import { WritingPlayback } from "../dialogue/writing";
 import { PROFILES, SPEAKERS } from "../dialogue/personas";
 import { applyEraShaderCss } from "../era-shaders";
@@ -143,7 +143,7 @@ export class BootScene {
   private _dust: ThreeVfxEffectInstance | null = null;
   private _abort: AbortController = new AbortController();
   private _questions: readonly GhostQuestion[] = createGhostQuestions(SEED);
-  private _studioOpening = new StudioOpening();
+  private _studioOpening = new StudioOpening(studioOpeningDocuments[0]);
   private _typing = new WritingPlayback();
   private _typingKey = "";
   private _typingElapsed = 0;
@@ -203,9 +203,9 @@ export class BootScene {
   private _nextLevel = "";
 
   public init(): void {
-    this._spatial.setStudioPresentation(studioOpeningDocument.presentation);
+    this._spatial.setStudioPresentation(studioOpeningDocuments[0].presentation);
     this._questions = this._questions.map((question, index) =>
-      index === 0 ? this._studioOpening.applyTo(question) : question
+      new StudioOpening(studioOpeningDocuments[index]).applyTo(question)
     );
     this._root = getElement("main", HTMLElement);
     this._prelude = getElement("#os-prelude-ts", HTMLElement);
@@ -510,9 +510,9 @@ export class BootScene {
     this._dialogueEvent = "";
     this._nextLevel = "";
     this._typingKey = "";
-    this._studioOpening = new StudioOpening();
+    this._studioOpening = new StudioOpening(studioOpeningDocuments[0]);
     this._questions = this._questions.map((question, index) =>
-      index === 0 ? this._studioOpening.applyTo(question) : question
+      new StudioOpening(studioOpeningDocuments[index]).applyTo(question)
     );
     this._chapterTwo.stop();
     this._elapsedMs = 0;
@@ -895,6 +895,7 @@ export class BootScene {
 
   private _beginPrelude(index: number): void {
     this._questionIndex = index;
+    this._spatial.setStudioPresentation(studioOpeningDocuments[index].presentation);
     if (this._root)
       applyEraShaderCss(this._root, this._questions[index].eraShaderId);
     this._storyMode = "prelude";
@@ -1058,7 +1059,7 @@ export class BootScene {
       const completeAt: number = this._typingCompleteAt;
       const complete: boolean = this._isReduced || this._typingComplete;
       if (
-        !studioOpeningDocument.presentation &&
+        !studioOpeningDocuments[this._questionIndex].presentation &&
         !complete &&
         text.length > 4 &&
         Math.floor(elapsedMs / 230) % 17 === 0
@@ -1105,7 +1106,7 @@ export class BootScene {
       );
       const complete: boolean = beat.complete;
       this._canContinue = complete;
-      const responseEnd: number = studioOpeningDocument.presentation
+      const responseEnd: number = studioOpeningDocuments[this._questionIndex].presentation
         ? this._typingCompleteAt
         : this._isReduced
           ? 0
@@ -1246,7 +1247,8 @@ export class BootScene {
       this._typingCompleteAt = 0;
       return text;
     }
-    if (studioOpeningDocument.presentation) {
+    const presentation = studioOpeningDocuments[this._questionIndex].presentation;
+    if (presentation) {
       const speaker =
         this._storyMode === "response" && this._selectedChoice >= 0
           ? SPEAKERS[this._selectedChoice + 1]
@@ -1260,7 +1262,7 @@ export class BootScene {
         this._typing.restart(
           {
             ...PROFILES[speaker],
-            ...studioOpeningDocument.presentation.voices[speaker],
+            ...presentation.voices[speaker],
           },
           text
         );
@@ -1288,7 +1290,7 @@ export class BootScene {
     owner: number
   ): { text: string; complete: boolean } {
     if (this._isReduced) return { text: response, complete: true };
-    if (studioOpeningDocument.presentation) {
+    if (studioOpeningDocuments[this._questionIndex].presentation) {
       const text = this._typed(response, elapsedMs, 0);
       return { text, complete: this._typingComplete };
     }
@@ -1310,7 +1312,7 @@ export class BootScene {
     owner: number,
     complete: boolean
   ): string {
-    if (studioOpeningDocument.presentation) return text;
+    if (studioOpeningDocuments[this._questionIndex].presentation) return text;
     if (complete || this._isReduced || text.length < 4) return text;
     if (owner === 0 && Math.floor(elapsedMs / 410) % 11 === 0)
       return `${text}\n${text.slice(Math.max(0, text.lastIndexOf("\n") + 1), -1)}`;
