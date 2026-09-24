@@ -314,6 +314,7 @@ test("bot playtest: scripted real input completes and retries the playable route
 
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/intro.html?debug");
+  await page.getByRole("button", { name: /Begin/ }).click();
   await page.waitForFunction(() => {
     const diagnostics = (
       window as unknown as {
