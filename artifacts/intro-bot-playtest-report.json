@@ -1,14 +1,14 @@
 {
   "seed": "472",
   "steps": 9,
-  "framesAdvanced": 2384,
+  "framesAdvanced": 3124,
   "scoreBefore": 0,
   "scoreAfter": 7,
-  "complete": true,
-  "distanceTravelled": 145.07,
+  "complete": false,
+  "distanceTravelled": 160.13,
   "stepOfFirstScore": 0,
   "softlockWindows": 0,
-  "physicsSteps": 758,
+  "physicsSteps": 845,
   "failureAvailable": false,
   "retryVerified": true,
   "chapterChoices": 3,
@@ -21,7 +21,7 @@
       },
       "chosen": "door",
       "outcome": null,
-      "distance": 19.000200000000035
+      "distance": 23.729400000000066
     },
     {
       "roomIndex": 1,
@@ -31,7 +31,7 @@
       },
       "chosen": "monster",
       "outcome": "fallen",
-      "distance": 44.99759999999976
+      "distance": 49.03500000000031
     },
     {
       "roomIndex": 2,
@@ -41,7 +41,7 @@
       },
       "chosen": "chest",
       "outcome": null,
-      "distance": 49.00080000000179
+      "distance": 52.63080000000181
     }
   ],
   "consoleErrors": [],
