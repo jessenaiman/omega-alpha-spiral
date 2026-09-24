@@ -1,0 +1,9 @@
+# Floor One Door. Adapted from the official NetHack scene.
+[scene]
+era = dec-vt100-ascii-terminal
+layout = manuscript
+
+[script]
+Light: You seek the path. Good. The first story begins with a question.
+[wait 450]
+Light: What is the first story you ever loved?

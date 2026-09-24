@@ -37,10 +37,6 @@ const ring = (cx: number, cy: number, rx: number, ry: number, n = 16) =>
 const bowl = (x: number, y0: number, y1: number, rx = 0.4) =>
   arc(x, (y0 + y1) / 2, rx, (y1 - y0) / 2, -Math.PI / 2, Math.PI / 2, 10);
 
-/** Semicircle bulging left, attached at y0/y1 to the right of x. */
-const backBowl = (x: number, y0: number, y1: number, rx = 0.4) =>
-  arc(x, (y0 + y1) / 2, rx, (y1 - y0) / 2, Math.PI / 2, Math.PI * 1.5, 10);
-
 /** Open-on-the-right C shape. */
 const cee = (cx: number, y0: number, y1: number, rx = 0.38) =>
   arc(cx, (y0 + y1) / 2, rx, (y1 - y0) / 2, -Math.PI / 3, -Math.PI * (5 / 3), 14);

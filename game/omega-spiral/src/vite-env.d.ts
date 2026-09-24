@@ -6,6 +6,11 @@ interface ThreeGameDiagnostics {
   score: number;
   targetScore: number;
   complete: boolean;
+  choice: {
+    dungeon: "Light";
+    choice: "D" | "M" | "C";
+    aligned_to: "Light" | "Shadow" | "Ambition";
+  } | null;
   player: {
     position: { x: number; y: number; z: number };
     speed: number;

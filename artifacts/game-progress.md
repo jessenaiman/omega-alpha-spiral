@@ -1,8 +1,15 @@
 # Omega Spiral — Game Director Progress
 
-Updated: 2026-09-23
+Updated: 2026-09-24
 
-## Current task
+## Current task — Floor One design integration, issue #18
+
+- Branch: `codex/floor-one-design-integration-18` in the isolated `blender-reference-placement` worktree. OpenCode's issue #59 manifest/scorecard work remains separate.
+- The approved [Stage 1 sparse visual](level-design/stage-1-atari-3d-starting-point.png) and [era progression sheet](level-design/era-progression-reference-draft.png) direct the current Light room and later floors. [Playable brief](level-design/floor-1-playable-brief.md) records the Three.js layout and visual continuation.
+- The local Floor One page at `http://127.0.0.1:5210/` visibly loaded after the OML integration. The game build passed. The owner confirmed controller movement and the on-screen hint. The new authored choice writing and each matching physical exit are awaiting the owner's live walk-through; no full-game or aesthetic approval is claimed.
+- Next: resolve that live result, review the frame against the approved art, and commit/push this isolated work. The sections below record older intro and setup work and are not certification of this Floor One pass.
+
+## Historical setup task — 2026-09-23
 
 - Set up the project for the full [Three.js Game Director](../.agents/skills/threejs-game-director/SKILL.md) workflow. Use the written non-API routes: keyless Pollinations images, local VoiceStudio voice, procedural Web Audio SFX, and Blender plus procedural Three.js for 3D.
 - Current branch: codex/floor-one-director-setup. No current issue handoff was confirmed. GitHub issue access failed under the workspace network policy.

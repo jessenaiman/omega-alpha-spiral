@@ -1,0 +1,7 @@
+# Floor One Monster. Adapted from the official NetHack scene.
+[scene]
+era = dec-vt100-ascii-terminal
+layout = manuscript
+
+[script]
+Ambition: Fight it. If you win... maybe you're useful.

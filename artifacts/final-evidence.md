@@ -1,4 +1,14 @@
-# Intro review evidence
+# Omega Spiral review evidence
+
+## Floor One design integration — current review
+
+✅ The owner-approved [sparse Stage 1 image](level-design/stage-1-atari-3d-starting-point.png) and [era progression sheet](level-design/era-progression-reference-draft.png) are the visual references. A new live Light room was seen in the browser at `http://127.0.0.1:5210/`: a lone hero, straight stacked walls, amber-slit pillars, and sparse code debris. This is a visual observation, not owner approval.
+
+✅ `npm.cmd run build` passed in `game/omega-spiral` after the OML dialogue, Three.js glyph renderer, and three gate states were integrated. The user confirmed controller movement and hint switching in the live tab before the latest dialogue and gate changes.
+
+❌ The owner has not yet confirmed a real-input Door, Monster, or Chest choice, the corresponding world-space writing, or crossing the selected open gate. No current Floor One capture manifest or gameplay-complete claim is recorded. The old intro `evidence.json` remains an intro run and does not cover this Floor One pass.
+
+## Intro review evidence
 
 ## Current baseline — first question and its lead-in
 

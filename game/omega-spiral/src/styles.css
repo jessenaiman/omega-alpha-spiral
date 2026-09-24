@@ -1,11 +1,7 @@
 :root {
-  color: #f6f1df;
-  background: #111312;
-  font-family:
-    Avenir Next,
-    Avenir,
-    "Segoe UI",
-    sans-serif;
+  color: #e4eff7;
+  background: #030914;
+  font-family: "Cascadia Mono", "Consolas", monospace;
   font-synthesis: none;
   text-rendering: geometricPrecision;
 }
@@ -29,18 +25,7 @@ body {
 
 #app {
   position: relative;
-  background:
-    radial-gradient(
-      circle at 18% 18%,
-      rgba(245, 186, 73, 0.16),
-      transparent 26rem
-    ),
-    radial-gradient(
-      circle at 82% 72%,
-      rgba(72, 186, 167, 0.14),
-      transparent 24rem
-    ),
-    #111312;
+  background: #030914;
 }
 
 #game-canvas {
@@ -57,41 +42,66 @@ body {
   left: max(16px, env(safe-area-inset-left));
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 7px;
   pointer-events: none;
-  color: #f6f1df;
+  color: #e4eff7;
   text-transform: uppercase;
-  letter-spacing: 0;
+  letter-spacing: 0.03em;
 }
 
 .hud-metric {
-  min-width: 92px;
-  padding: 8px 10px;
-  border: 1px solid rgba(246, 241, 223, 0.24);
-  background: rgba(17, 19, 18, 0.72);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.24);
-  backdrop-filter: blur(10px);
+  min-width: 134px;
+  padding: 6px 9px;
+  border: 1px solid rgba(119, 191, 231, 0.32);
+  background: rgba(3, 13, 27, 0.7);
 }
 
 .hud-metric span {
   display: block;
-  color: rgba(246, 241, 223, 0.68);
-  font-size: 0.68rem;
+  color: rgba(171, 211, 235, 0.72);
+  font-size: 0.57rem;
 }
 
 .hud-metric strong {
   display: block;
   margin-top: 2px;
-  font-size: 1.08rem;
+  font-size: 0.76rem;
 }
 
 #status-line {
-  min-width: 132px;
-  padding: 9px 11px;
-  border-left: 3px solid #f5ba49;
-  background: rgba(17, 19, 18, 0.6);
-  font-weight: 700;
-  font-size: 0.78rem;
+  min-width: 185px;
+  padding: 7px 9px;
+  border-left: 2px solid #e68a4d;
+  background: rgba(3, 13, 27, 0.7);
+  font-weight: 600;
+  font-size: 0.68rem;
+}
+
+#outcome-panel {
+  position: absolute;
+  left: 50%;
+  bottom: 6%;
+  width: min(510px, calc(100vw - 32px));
+  padding: 15px 18px;
+  transform: translateX(-50%);
+  border: 1px solid rgba(128, 200, 239, 0.65);
+  background: rgba(3, 9, 20, 0.89);
+  box-shadow: 0 0 22px rgba(29, 106, 159, 0.18);
+  text-align: center;
+  pointer-events: none;
+}
+
+#outcome-panel[hidden] { display: none; }
+.outcome-eyebrow { color: #80c8ef; font-size: 0.67rem; letter-spacing: 0.22em; text-transform: uppercase; }
+#outcome-text { margin: 7px 0 0; font-size: 0.9rem; line-height: 1.45; }
+#controls-hint {
+  position: absolute;
+  left: max(16px, env(safe-area-inset-left));
+  bottom: 10px;
+  margin: 0;
+  color: rgba(218, 232, 245, 0.8);
+  font-size: 0.72rem;
+  pointer-events: none;
 }
 
 #touch-controls {
@@ -140,6 +150,19 @@ body {
   touch-action: none;
 }
 
+.touch-actions { display: flex; align-items: flex-end; gap: 8px; }
+#interact-button {
+  min-width: 74px;
+  height: 74px;
+  border: 1px solid rgba(128, 200, 239, 0.7);
+  border-radius: 50%;
+  color: #f6f1df;
+  background: rgba(16, 57, 83, 0.84);
+  font-weight: 800;
+  pointer-events: auto;
+  touch-action: none;
+}
+
 @media (pointer: coarse), (max-width: 760px) {
   #hud {
     right: max(12px, env(safe-area-inset-right));
@@ -161,4 +184,7 @@ body {
   #touch-controls {
     display: flex;
   }
+
+  #controls-hint { bottom: 168px; max-width: 55vw; line-height: 1.4; }
+  #outcome-panel { bottom: 178px; }
 }

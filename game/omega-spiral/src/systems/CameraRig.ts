@@ -20,7 +20,7 @@ export class CameraRig {
     this.desiredPosition.copy(target).add(this.offset);
     const factor = 1 - Math.exp(-delta / Math.max(0.001, lag));
     this.camera.position.lerp(this.desiredPosition, factor);
-    this.lookTarget.copy(target).add(new THREE.Vector3(0, 0.35, -1.2));
+    this.lookTarget.copy(target).add(new THREE.Vector3(0, 0.4, 0));
     this.camera.lookAt(this.lookTarget);
   }
 }

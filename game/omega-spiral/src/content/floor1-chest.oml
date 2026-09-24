@@ -1,0 +1,7 @@
+# Floor One Chest. Adapted from the official NetHack scene.
+[scene]
+era = dec-vt100-ascii-terminal
+layout = manuscript
+
+[script]
+Shadow: Empty? Full? Does it matter if you believe it's treasure?

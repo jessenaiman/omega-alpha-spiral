@@ -1,0 +1,7 @@
+# Floor One arrival, from the official NetHack scene.
+[scene]
+era = dec-vt100-ascii-terminal
+layout = manuscript
+
+[script]
+System: Entering Chamber 1 of 3...

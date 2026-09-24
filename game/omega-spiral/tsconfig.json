@@ -11,6 +11,10 @@
     "noFallthroughCasesInSwitch": true,
     "skipLibCheck": true,
     "isolatedModules": true,
+    "paths": {
+      "three": ["./node_modules/@types/three/index.d.ts"],
+      "three/*": ["./node_modules/@types/three/*"]
+    },
     "noEmit": true,
     "types": ["vite/client", "node"]
   },
