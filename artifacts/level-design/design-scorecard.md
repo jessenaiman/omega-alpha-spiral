@@ -20,6 +20,18 @@ Status: design review, 2026-09-24. The broad era arc and shape grammar are appro
 | Current game is visible | [existing isolated capture](runtime-check-20260924/desktop.png) | ✅ Nonblank baseline; 🔍 not evidence of the newly proposed era art |
 Owner's cross-image assessment: even the least successful concept shown in this discussion was **7/10 or better**. This is one overall threshold, not a score for each image. Do not present these concept frames as screenshots of a running game.
 
+## Static art-kit audit — 2026-09-24
+
+This audit reads [Floors 4–6 art source](../../src/chapter-two/floors/MiddleFloorArtKit.ts) and [Floor 7 art source](../../src/chapter-two/floors/LateFloorArtKit.ts). It does not establish what a live frame looks like; effects may also be created outside these two files.
+
+| Floor | Verified in the inspected art source | Gap against the proposed era rule |
+| --- | --- | --- |
+| 4 | Hard-edged bars and raster caps, 13 isolated floor tiles, digit columns, sentinel. | The inspected kit has no broad repeatable vault tile field or clear echo-plinth form. |
+| 5 | Shelf carcasses, book spines, page/leaf sprites and leaf clusters. | No banner, lamp-front, or explicit parallax construction appears in this kit; foliage may dominate the era cue in play. |
+| 6 | Six-sided piers, rails, torus arches/dials, and octahedral shards. | Low-poly geometry exists, but vertex-color treatment, low-resolution mapped motifs, dither, and fog are not explicit in this kit. |
+| 7 | Several distinct building forms and per-object aspect/pixel-density textures. | The inspected kit has no explicit source-floor asset provenance; mixed texture density alone cannot show that town objects are recycled memories. |
+
+The next implementation pass should start with the Floor 4 tile/plinth kit, then make Floor 5 sprite-front layers and Floor 6 early-polygon display treatment unmistakable in active play. Only after source-floor motifs are reviewed should Floor 7 transform and reuse them.
 ## Current early-floor runtime review
 
 The [seeded-exit bot report](../qa-61/early-floor-bot-report.json) and [gameplay video](../qa-61/seeded-exit-bot.webm) establish a narrow mechanical pass for seeds 17 and 42. [Shadow action frames](../qa-61/shadow-action-seed-17.png) and [Ambition action frames](../qa-61/ambition-action-seed-17.png) show their distinct authored geometry. The camera still leaves large empty black regions and can hide exit landmarks beneath the HUD or outside the top edge. This fails the current readability target; the owner has not scored or approved these running visuals.
