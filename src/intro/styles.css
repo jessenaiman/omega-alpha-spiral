@@ -102,6 +102,10 @@
   align-items: center;
   border: 1px solid var(--os-clear);
   color: var(--os-silver);
+  font-variant-ligatures: none;
+  letter-spacing: var(--omega-era-tracking, 0.04em);
+  text-shadow: 0 0 calc(var(--omega-era-halo, 0) * 8px) currentColor;
+  text-transform: var(--omega-era-case, none);
   cursor: pointer;
   display: flex;
   gap: var(--os-space-default);

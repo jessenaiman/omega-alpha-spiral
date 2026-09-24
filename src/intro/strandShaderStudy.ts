@@ -24,10 +24,10 @@ import {
   Vector3,
   WebGLRenderer,
 } from "three";
-import { createChronicleQuestions } from "./chronicle";
+import { createGhostQuestions } from "../dialogue/ghost";
 import { createBootFrames } from "./ghostwriting";
 
-const question = createChronicleQuestions(472)[0];
+const question = createGhostQuestions(472)[0];
 const canvas = document.querySelector<HTMLCanvasElement>("#stage");
 const status = document.querySelector<HTMLElement>("#status");
 const revealButton =

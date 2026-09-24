@@ -1,5 +1,5 @@
-// OML — Omega Markup Language. One text file: tag and voice definitions, then
-// the script. What the editor shows is the file. No JSON, no directory of tags.
+// OML, OMD, and OMS are the Omega Spiral dialogue formats described in:
+// https://github.com/jessenaiman/omega-alpha-spiral/blob/main/project-management/TaskNotes/Dialog%20Studio.md
 
 export interface TagDef {
   name: string;
@@ -17,24 +17,54 @@ export interface VoiceDef {
   file?: string;
 }
 
-export interface OmlEvent {
-  type: "line" | "wait" | "continue";
-  speaker?: string;
-  text?: string;
-  durationMs?: number;
-  label?: string;
+export type OmlStateValue = string | number | boolean;
+
+export interface OmlStateEffect {
+  operation: "set" | "increment";
+  path: string;
+  value: OmlStateValue;
 }
+
+export interface ChoiceDef {
+  id: string;
+  owner: string;
+  text: string;
+  responses: string[];
+  effects: OmlStateEffect[];
+  emit?: string;
+  transition?: string;
+}
+
+export type OmlEvent =
+  | { type: "line"; speaker: string; text: string }
+  | { type: "show-question" }
+  | { type: "show-choice"; id: string }
+  | { type: "wait"; durationMs: number }
+  | { type: "continue"; label: string }
+  | ({ type: "set-state" } & OmlStateEffect)
+  | { type: "emit"; name: string }
+  | { type: "transition"; level: string };
 
 export interface Oml {
+  kind: "level";
   tags: TagDef[];
   voices: VoiceDef[];
-  scene: { era?: string; layout?: string };
+  scene: {
+    id?: string;
+    era_shader?: string;
+    layout?: string;
+    next?: string;
+  };
+  question: { text?: string };
+  choices: ChoiceDef[];
   events: OmlEvent[];
+  completion: OmlEvent[];
 }
 
-/** An .omd voice design. Mirrors Dialogic's .dch. */
+/** An .omd persona design. Omega is a persona and is not a Dreamweaver. */
 export interface Omd {
   schema?: string;
+  kind: "persona";
   id: string;
   display_name: string;
   nicknames: string;
@@ -42,15 +72,27 @@ export interface Omd {
   custom: Record<string, string>;
   typing: Record<string, number>;
   typography: Record<string, string>;
+  era_shader: { id: string; surfaces: string };
   replacement: Record<string, string>;
   spatial: Record<string, string>;
 }
 
-const num = (v: string) => (v.trim() === "" ? NaN : Number(v));
+const numericFields = new Set([
+  "interval",
+  "delay",
+  "jitter",
+  "mistakes",
+  "correction",
+  "revision",
+]);
 
-/** Parse an .omd design file. Same grammar as .oml: sections, key = value. */
+const num = (value: string) =>
+  value.trim() === "" ? Number.NaN : Number(value);
+
+/** Parse an .omd persona file. */
 export function parseOmd(text: string): Omd {
-  const design = {
+  const design: Omd = {
+    kind: "persona",
     id: "",
     display_name: "",
     nicknames: "",
@@ -58,143 +100,221 @@ export function parseOmd(text: string): Omd {
     custom: {},
     typing: {},
     typography: {},
+    era_shader: { id: "", surfaces: "" },
     replacement: {},
     spatial: {},
-  } as unknown as Omd;
-  let table: Record<string, string> | Record<string, number> = design as never;
+  };
+  let table: Record<string, string | number> = design as unknown as Record<
+    string,
+    string | number
+  >;
+
   for (const raw of text.split("\n")) {
     const line = raw.trim();
     if (!line || line.startsWith("#")) continue;
-    const head = section(line.startsWith("[") ? line.slice(1, -1).trim() : "");
-    if (head) {
-      const [, kind] = head;
-      const key = kind.toLowerCase();
-      const nested = [
-        "custom",
-        "typing",
-        "typography",
-        "replacement",
-        "spatial",
-      ].includes(key);
-      table = ((nested
-        ? (
-            design as unknown as Record<string, Record<string, string | number>>
-          )[key]
-        : (design as unknown as Record<string, string>)) ?? {}) as typeof table;
+
+    if (line.startsWith("[") && line.endsWith("]")) {
+      const head = section(line.slice(1, -1));
+      if (!head) continue;
+      const key = head[1].toLowerCase() as keyof Omd;
+      const nested = design[key];
+      if (typeof nested === "object" && nested !== null)
+        table = nested as Record<string, string | number>;
       continue;
     }
+
     const [key, value] = parseValues(line);
-    if (
-      key === "interval" ||
-      key === "delay" ||
-      key === "jitter" ||
-      key === "mistakes" ||
-      key === "correction" ||
-      key === "revision"
-    )
-      (table as Record<string, number>)[key] = num(value);
-    else (table as Record<string, string>)[key] = value;
+    table[key] = numericFields.has(key) ? num(value) : value;
   }
   return design;
 }
 
 const VOICE_NAMES = ["omega", "light", "shadow", "ambition"];
-
-/** System aliases, because Dialogic requires SYSTEM and you know it as Omega. */
 const SYSTEM = new Set(["omega", "system", "sys"]);
 
 export const speakerId = (name: string): string => {
   const key = name.trim().toLowerCase();
   if (SYSTEM.has(key)) return "omega";
-  return VOICE_NAMES.find((v) => v === key) ?? name.trim();
+  return VOICE_NAMES.find((voice) => voice === key) ?? name.trim();
 };
 
 export const speakerName = (id: string): string =>
   id === "omega" ? "System" : id.charAt(0).toUpperCase() + id.slice(1);
 
-/** A section header: `[tag NAME]` or a bare `[typing]`. The name is optional. */
-const section = (line: string) => /^([a-z]+)(?:\s+(.+))?$/i.exec(line.trim());
+/** A section header such as `[tag ERROR]`, `[choice light]`, or `[script]`. */
+const section = (line: string) => /^([a-z_]+)(?:\s+(.+))?$/i.exec(line.trim());
 
 const parseValues = (line: string): [string, string] => {
   const at = line.indexOf("=");
   if (at < 0) return [line.trim(), ""];
-  return [
-    line.slice(0, at).trim(),
-    line
-      .slice(at + 1)
-      .trim()
-      .replace(/^["']|["']$/g, ""),
-  ];
+  const key = line.slice(0, at).trim();
+  let value = line.slice(at + 1).trim();
+  if (
+    value.length >= 2 &&
+    ((value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'")))
+  )
+    value = value.slice(1, -1);
+  return [key, value];
+};
+
+const parseStateValue = (value: string): OmlStateValue => {
+  if (value === "true") return true;
+  if (value === "false") return false;
+  if (/^-?\d+(?:\.\d+)?$/.test(value)) return Number(value);
+  return value;
+};
+
+const parseEffect = (
+  operation: OmlStateEffect["operation"],
+  source: string
+): OmlStateEffect => {
+  const [path, value] = parseValues(source);
+  if (!path || !value)
+    throw new Error(`Invalid ${operation} effect: ${source}`);
+  return { operation, path, value: parseStateValue(value) };
 };
 
 export function parseOml(text: string): Oml {
-  const oml: Oml = { tags: [], voices: [], scene: {}, events: [] };
-  let where: "tag" | "voice" | "scene" | "script" | null = null;
-  let current: TagDef | VoiceDef | null = null;
+  const oml: Oml = {
+    kind: "level",
+    tags: [],
+    voices: [],
+    scene: {},
+    question: {},
+    choices: [],
+    events: [],
+    completion: [],
+  };
+  let where:
+    | "tag"
+    | "voice"
+    | "scene"
+    | "question"
+    | "choice"
+    | "script"
+    | "completion"
+    | null = null;
+  let current: TagDef | VoiceDef | ChoiceDef | null = null;
 
   for (const raw of text.split("\n")) {
     const line = raw.trimEnd();
     if (!line.trim() || line.trimStart().startsWith("#")) continue;
 
-    if (line.trimStart().startsWith("[")) {
-      const head = section(line.trim().slice(1, -1).trim());
-      if (head && ["tag", "voice", "scene", "script"].includes(head[1].toLowerCase())) {
-        const [, kind, name] = head;
-        if (kind.toLowerCase() === "tag") {
-          if (!name?.trim()) continue;
-          current = { name: name.trim() };
-          oml.tags.push(current as TagDef);
+    if (line.trimStart().startsWith("[") && line.trim().endsWith("]")) {
+      const head = section(line.trim().slice(1, -1));
+      if (head) {
+        const kind = head[1].toLowerCase();
+        const name = head[2]?.trim();
+        if (kind === "tag" && name) {
+          current = { name };
+          oml.tags.push(current);
           where = "tag";
-        } else if (kind.toLowerCase() === "voice") {
-          if (!name?.trim()) continue;
-          current = { name: name.trim() };
-          oml.voices.push(current as VoiceDef);
-          where = "voice";
-        } else if (kind.toLowerCase() === "scene") {
-          current = null;
-          where = "scene";
-        } else {
-          current = null;
-          where = "script";
+          continue;
         }
-        continue;
+        if (kind === "voice" && name) {
+          current = { name };
+          oml.voices.push(current);
+          where = "voice";
+          continue;
+        }
+        if (kind === "choice" && name) {
+          current = {
+            id: name,
+            owner: name,
+            text: "",
+            responses: [],
+            effects: [],
+          };
+          oml.choices.push(current);
+          where = "choice";
+          continue;
+        }
+        if (
+          kind === "scene" ||
+          kind === "question" ||
+          kind === "script" ||
+          kind === "completion"
+        ) {
+          current = null;
+          where = kind;
+          continue;
+        }
       }
-      if (where === "script") {
-        oml.events.push(readEvent(line.trim()));
+      if (where === "script" || where === "completion") {
+        (where === "script" ? oml.events : oml.completion).push(
+          readEvent(line.trim())
+        );
         continue;
       }
     }
 
     if (where === "scene") {
       const [key, value] = parseValues(line.trim());
-      oml.scene[key as "era" | "layout"] = value;
+      if (["id", "era_shader", "layout", "next"].includes(key))
+        oml.scene[key as keyof Oml["scene"]] = value;
+      continue;
+    }
+
+    if (where === "question") {
+      const [key, value] = parseValues(line.trim());
+      if (key === "text") oml.question.text = value.replace(/\\n/g, "\n");
+      continue;
+    }
+
+    if (where === "choice" && current && "responses" in current) {
+      const [key, value] = parseValues(line.trim());
+      if (key === "owner") current.owner = value;
+      else if (key === "text") current.text = value;
+      else if (key === "response")
+        current.responses.push(value.replace(/\\n/g, "\n"));
+      else if (key === "set" || key === "increment")
+        current.effects.push(parseEffect(key, value));
+      else if (key === "emit") current.emit = value;
+      else if (key === "transition") current.transition = value;
       continue;
     }
 
     if (current && where !== "script") {
       const [key, value] = parseValues(line.trim());
-      const target = current as TagDef & VoiceDef;
-      if (key === "wrap") target.wrap = value === "true";
-      else if (key === "meaning") target.meaning = value;
-      else if (key === "apply" || key === "role")
-        target[key] = value as TagDef["apply"];
-      else target[key as "color"] = value;
+      if (where === "tag") {
+        const tag = current as TagDef;
+        if (key === "wrap") tag.wrap = value === "true";
+        else if (key === "apply") tag.apply = value as TagDef["apply"];
+        else if (key === "color" || key === "role" || key === "meaning")
+          tag[key] = value;
+      } else if (where === "voice") {
+        const voice = current as VoiceDef;
+        if (key === "interval") voice.interval = num(value);
+        else if (key === "color" || key === "file") voice[key] = value;
+      }
       continue;
     }
 
-    oml.events.push(readEvent(line));
+    (where === "completion" ? oml.completion : oml.events).push(
+      readEvent(line)
+    );
   }
   return oml;
 }
 
-const TIMED = /^\[(wait|timer_delay|delay)(?:\s+([^\]]+)|\(([^)]*)\)|\[([^\]]*)\])\]$/i;
+const TIMED =
+  /^\[(wait|timer_delay|delay)(?:\s+([^\]]+)|\(([^)]*)\)|\[([^\]]*)\])\]$/i;
 const CONTINUE = /^\[continue\s+(.+?)\]$/i;
+const SHOW = /^\[show\s+(question|choice)(?:\s+([^\]]+))?\]$/i;
+const STATE = /^\[(set|increment)\s+(.+?)\]$/i;
+const EMIT = /^\[emit\s+(.+?)\]$/i;
+const TRANSITION = /^\[transition\s+(.+?)\]$/i;
 const SPOKEN = /^([A-Za-z][A-Za-z ]{0,20}?)\s*:\s*(.*)$/;
 
 export function parseDurationMs(value: string): number | null {
-  const match = /^(\d+(?:\.\d+)?)\s*(ms|milliseconds?|s|sec(?:onds?)?)?$/i.exec(value.trim());
+  const match = /^(\d+(?:\.\d+)?)\s*(ms|milliseconds?|s|sec(?:onds?)?)?$/i.exec(
+    value.trim()
+  );
   if (!match) return null;
-  return Math.round(Number(match[1]) * (match[2]?.toLowerCase().startsWith("s") ? 1000 : 1));
+  return Math.round(
+    Number(match[1]) * (match[2]?.toLowerCase().startsWith("s") ? 1000 : 1)
+  );
 }
 
 function readEvent(line: string): OmlEvent {
@@ -203,18 +323,41 @@ function readEvent(line: string): OmlEvent {
     const durationMs = parseDurationMs(timed[2] ?? timed[3] ?? timed[4]);
     if (durationMs !== null) return { type: "wait", durationMs };
   }
-  const cont = line.match(CONTINUE);
-  if (cont) return { type: "continue", label: cont[1] };
+  const proceed = line.match(CONTINUE);
+  if (proceed) return { type: "continue", label: proceed[1] };
+  const show = line.match(SHOW);
+  if (show?.[1].toLowerCase() === "question") return { type: "show-question" };
+  if (show?.[1].toLowerCase() === "choice" && show[2])
+    return { type: "show-choice", id: show[2].trim() };
+  const state = line.match(STATE);
+  if (state)
+    return {
+      type: "set-state",
+      ...parseEffect(
+        state[1].toLowerCase() as OmlStateEffect["operation"],
+        state[2]
+      ),
+    };
+  const emitted = line.match(EMIT);
+  if (emitted) return { type: "emit", name: emitted[1] };
+  const transition = line.match(TRANSITION);
+  if (transition) return { type: "transition", level: transition[1] };
   const spoken = line.match(SPOKEN);
   return {
     type: "line",
     speaker: speakerId(spoken ? spoken[1] : "omega"),
-    text: spoken ? spoken[2] : line,
+    text: (spoken ? spoken[2] : line).replace(/\\n/g, "\n"),
   };
 }
 
+const writeStateValue = (value: OmlStateValue) => String(value);
+
 export function writeOml(oml: Oml): string {
-  const out: string[] = ["# OML — Omega Spiral dialogue", ""];
+  const out: string[] = [
+    "# OML - Omega Spiral level dialogue",
+    "# https://github.com/jessenaiman/omega-alpha-spiral/blob/main/project-management/TaskNotes/Dialog%20Studio.md",
+    "",
+  ];
   for (const tag of oml.tags) {
     out.push(`[tag ${tag.name}]`);
     if (tag.color) out.push(`color = ${tag.color}`);
@@ -228,19 +371,81 @@ export function writeOml(oml: Oml): string {
     out.push(`[voice ${voice.name}]`);
     if (voice.color) out.push(`color = ${voice.color}`);
     if (voice.file) out.push(`file = ${voice.file}`);
+    if (voice.interval !== undefined) out.push(`interval = ${voice.interval}`);
     out.push("");
   }
+  out.push("[scene]");
+  if (oml.scene.id) out.push(`id = ${oml.scene.id}`);
+  if (oml.scene.era_shader) out.push(`era_shader = ${oml.scene.era_shader}`);
+  if (oml.scene.layout) out.push(`layout = ${oml.scene.layout}`);
+  if (oml.scene.next) out.push(`next = ${oml.scene.next}`);
+  out.push("");
+
+  if (oml.question.text) {
+    out.push("[question]");
+    out.push(`text = ${oml.question.text.replace(/\n/g, "\\n")}`);
+    out.push("");
+  }
+
+  for (const choice of oml.choices) {
+    out.push(`[choice ${choice.id}]`);
+    out.push(`owner = ${choice.owner}`);
+    out.push(`text = ${choice.text}`);
+    for (const response of choice.responses)
+      out.push(`response = ${response.replace(/\n/g, "\\n")}`);
+    for (const effect of choice.effects)
+      out.push(
+        `${effect.operation} = ${effect.path} = ${writeStateValue(effect.value)}`
+      );
+    if (choice.emit) out.push(`emit = ${choice.emit}`);
+    if (choice.transition) out.push(`transition = ${choice.transition}`);
+    out.push("");
+  }
+
   out.push("[script]");
   for (const event of oml.events) {
     if (event.type === "wait") out.push(`[wait ${event.durationMs}]`);
+    else if (event.type === "show-question") out.push("[show question]");
+    else if (event.type === "show-choice")
+      out.push(`[show choice ${event.id}]`);
     else if (event.type === "continue") out.push(`[continue ${event.label}]`);
+    else if (event.type === "set-state")
+      out.push(
+        `[${event.operation} ${event.path} = ${writeStateValue(event.value)}]`
+      );
+    else if (event.type === "emit") out.push(`[emit ${event.name}]`);
+    else if (event.type === "transition")
+      out.push(`[transition ${event.level}]`);
     else
-      out.push(`${speakerName(event.speaker ?? "omega")}: ${event.text ?? ""}`);
+      out.push(
+        `${speakerName(event.speaker)}: ${event.text.replace(/\n/g, "\\n")}`
+      );
+  }
+  if (oml.completion.length) {
+    out.push("", "[completion]");
+    for (const event of oml.completion) {
+      if (event.type === "wait") out.push(`[wait ${event.durationMs}]`);
+      else if (event.type === "show-question") out.push("[show question]");
+      else if (event.type === "show-choice")
+        out.push(`[show choice ${event.id}]`);
+      else if (event.type === "continue") out.push(`[continue ${event.label}]`);
+      else if (event.type === "set-state")
+        out.push(
+          `[${event.operation} ${event.path} = ${writeStateValue(event.value)}]`
+        );
+      else if (event.type === "emit") out.push(`[emit ${event.name}]`);
+      else if (event.type === "transition")
+        out.push(`[transition ${event.level}]`);
+      else
+        out.push(
+          `${speakerName(event.speaker)}: ${event.text.replace(/\n/g, "\\n")}`
+        );
+    }
   }
   return out.join("\n") + "\n";
 }
 
-/** A tag matches `[NAME]`, `[NAME payload]` or, when it wraps, `[NAME=p]…[/NAME]`. */
+/** A tag matches `[NAME]`, `[NAME payload]` or `[NAME=p]...[/NAME]`. */
 export interface TagMatch {
   start: number;
   end: number;
@@ -249,7 +454,8 @@ export interface TagMatch {
   body?: { start: number; end: number };
 }
 
-const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const escapeRe = (value: string) =>
+  value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 function matcher(tag: TagDef): RegExp {
   const name = escapeRe(tag.name);

@@ -1,23 +1,23 @@
 ---
+
 kanban-plugin: board
 tags:
   - omega-spiral
   - omega-spiral/setup
+
 ---
 
 ## Ideas
 
 - [ ] [[t1|Logo design and visual language]]
 - [ ] [[t6|World, journey, and threshold imagery]]
+- [ ] [[t3|Opening text, journey, and door]]
 - [ ] [[t7|Dreamweaver presence and behaviour]]
 - [ ] [[t8|Voice and audio direction]]
-
-## Shaping
-
-- [ ] [[t3|Opening text, journey, and door]]
-- [ ] [[t5|Ghost terminal presentation and copy]]
-- [ ] [[Talking Dreamweavers]]
+- [ ] [[t5 Ghost terminal presentation and copy]]
 - [ ] [[3 different backgrounds moving designs]] ^ehsm05
+- [ ] [[Talking Dreamweavers]]
+
 
 ## Published
 
@@ -27,21 +27,24 @@ tags:
 - [ ] [#58 — Director cleanup](https://github.com/jessenaiman/omega-alpha-spiral/issues/58) — maintenance, separate from level art.
 - [x] [#47 — Three.js team foundation](https://github.com/jessenaiman/omega-alpha-spiral/issues/47) — closed; historical handoff only.
 
-## Staging
 
-- [ ] [[Delegate - Modular Blender Door Variations]]
-- [ ] [[Delegate - Beyond the Door Background Workshop]]
-- [ ] [[Knowledge and Memory]]
-- [ ] [[UI-REVIEW]]
+## Ongoing
+
 - [ ] [[uv issues]]
 - [ ] [[models and credentials]]
 - [ ] [[image skill]]
-- [ ] [[Opening Changes]]
+- [ ] [[Dialog Studio]]
+- [ ] [[In Game Dev Editor 1 1]]
+
+
+## Complete
+
+
+
+
 
 %% kanban:settings
-
 ```
-{"kanban-plugin":"board","list-collapse":[]}
+{"kanban-plugin":"board","list-collapse":[null,null]}
 ```
-
 %%

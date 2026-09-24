@@ -10,7 +10,7 @@
 
 import * as THREE from "three";
 import { createSceneHost, type HostFrame, type SceneHost } from "./core";
-import { CHRONICLE_QUESTIONS, getDreamweaverQuestion } from "./intro/chronicle";
+import { GHOST_QUESTIONS, getDreamweaverQuestion } from "./dialogue/ghost";
 import "./styles.css";
 
 const canvas = document.querySelector<HTMLCanvasElement>("[data-game-canvas]");
@@ -23,10 +23,10 @@ try {
 
   const host: SceneHost = createSceneHost({
     seed: "ghost-472",
-    openingQuestion: CHRONICLE_QUESTIONS[0]!.question,
+    openingQuestion: GHOST_QUESTIONS[0]!.question,
     closingQuestion:
-      CHRONICLE_QUESTIONS[CHRONICLE_QUESTIONS.length - 1]!.question,
-    dreamweaverQuestions: CHRONICLE_QUESTIONS[0]!.choices.map(
+      GHOST_QUESTIONS[GHOST_QUESTIONS.length - 1]!.question,
+    dreamweaverQuestions: GHOST_QUESTIONS[0]!.choices.map(
       getDreamweaverQuestion
     ),
   });

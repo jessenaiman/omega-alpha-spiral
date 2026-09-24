@@ -36,7 +36,7 @@ import {
   Vector3,
   WebGLRenderer,
 } from "three";
-import { createChronicleQuestions } from "./chronicle";
+import { createGhostQuestions } from "../dialogue/ghost";
 import { createBootFrames } from "./ghostwriting";
 import { getIntroEra } from "./IntroEraDesign";
 import { createAtlas, GlyphRibbon } from "./SpatialBootScene";
@@ -68,7 +68,7 @@ const titles = {
 };
 const palette = [0xe5eff5, 0xe5af61, 0xd85a68];
 const question =
-  createChronicleQuestions(472)[
+  createGhostQuestions(472)[
     variant === "archive" ? 0 : variant === "tide" ? 1 : 2
   ];
 const dreamweaverQuestions = question.choices.map((choice) => {
@@ -730,7 +730,8 @@ const updateStatus = (): void => {
     "question-focus",
     !isFinal && (choicesWriting || choicesRevealed) && !arrived
   );
-  const focused = selected >= 0 ? selected : choicesWriting ? activeWriter : previewOwner;
+  const focused =
+    selected >= 0 ? selected : choicesWriting ? activeWriter : previewOwner;
   status.style.setProperty(
     "--question-color",
     `#${palette[Math.max(0, focused)].toString(16).padStart(6, "0")}`
@@ -962,7 +963,8 @@ const frame = (at: number): void => {
         -3.5,
         Math.min(3.5, player.position.x + lateral * dt * 3.1)
       );
-      const nextPreview = player.position.x < -1.2 ? 0 : player.position.x > 1.2 ? 2 : 1;
+      const nextPreview =
+        player.position.x < -1.2 ? 0 : player.position.x > 1.2 ? 2 : 1;
       if (nextPreview !== previewOwner) {
         previewOwner = nextPreview;
         updateStatus();
@@ -1041,9 +1043,12 @@ const frame = (at: number): void => {
           [0.08, 0.14, 0.2][owner];
       word.root.quaternion.copy(camera.quaternion);
       if (choicesRevealed && !arrived) {
-        const wordT = 0.12 + (wordIndex / Math.max(1, route.words.length - 1)) * 0.66;
+        const wordT =
+          0.12 + (wordIndex / Math.max(1, route.words.length - 1)) * 0.66;
         word.root.visible =
-          owner === selected && wordT >= progress - 0.08 && wordT <= progress + 0.32;
+          owner === selected &&
+          wordT >= progress - 0.08 &&
+          wordT <= progress + 0.32;
       }
     });
   });

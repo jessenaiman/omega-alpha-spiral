@@ -1,0 +1,68 @@
+# Ghost Floor 03 - Omega dialogue and player choice
+# https://github.com/jessenaiman/omega-alpha-spiral/blob/main/project-management/official%20game%20docs%20(read-only)/chapter-zero-stages/stage_1_opening/ghost.json
+
+[voice System]
+file = System.omd
+
+[voice Light]
+file = Light.omd
+
+[voice Shadow]
+file = Shadow.omd
+
+[voice Ambition]
+file = Ambition.omd
+
+[scene]
+id = ghost-floor-03
+era_shader = home-micro-rom
+layout = passage
+next = ghost-floor-04
+
+[question]
+text = Do names define us or deceive us?
+
+[choice light]
+owner = light
+text = Yes. Names are promises we make to ourselves.
+response =
+response = Names as promises... defining us.
+response = But promises can break, and definitions can trap.
+response = Are you ready for the vows that bind forever?
+response =
+response = > View logged...
+set = ghost.floor3.choice = light
+increment = dreamweavers.light.affinity = 1
+emit = ghost.floor3.choice.selected
+transition = ghost-floor-04
+
+[choice shadow]
+owner = shadow
+text = No. Names are masks we hide behind.
+response =
+response = Names as masks... deceiving us.
+response = But masks conceal truths that demand revelation.
+response = Do you hide behind what you fear to face?
+response =
+response = > View logged...
+set = ghost.floor3.choice = shadow
+increment = dreamweavers.shadow.affinity = 1
+emit = ghost.floor3.choice.selected
+transition = ghost-floor-04
+
+[choice ambition]
+owner = ambition
+text = Only when someone remembers to say it.
+response =
+response = Names remembered... fleeting definitions.
+response = But forgetting invites chaos, and memory demands sacrifice.
+response = Can you endure being forgotten?
+response =
+response = > View logged...
+set = ghost.floor3.choice = ambition
+increment = dreamweavers.ambition.affinity = 1
+emit = ghost.floor3.choice.selected
+transition = ghost-floor-04
+
+[script]
+System: \nEvery story needs a name.\nA purpose.\nA reason to be told.\n\n> Awaiting echo...

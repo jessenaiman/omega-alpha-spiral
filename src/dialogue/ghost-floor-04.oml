@@ -1,0 +1,71 @@
+# Ghost Floor 04 - Omega dialogue, final player choice, and completion
+# https://github.com/jessenaiman/omega-alpha-spiral/blob/main/project-management/official%20game%20docs%20(read-only)/chapter-zero-stages/stage_1_opening/ghost.json
+
+[voice System]
+file = System.omd
+
+[voice Light]
+file = Light.omd
+
+[voice Shadow]
+file = Shadow.omd
+
+[voice Ambition]
+file = Ambition.omd
+
+[scene]
+id = ghost-floor-04
+era_shader = apple-macintosh-quickdraw
+layout = passage
+next = nethack-floor-01
+
+[question]
+text = If you could give me a name, what story would it tell?
+
+[choice light]
+owner = light
+text = A story where one choice can unmake a world.
+response =
+response = A story of choice... unmaking worlds.
+response = But choices echo, and worlds resist their undoing.
+response = Will you name what you cannot control?
+response =
+response = > Name considered...
+set = ghost.floor4.choice = light
+increment = dreamweavers.light.affinity = 1
+emit = ghost.floor4.choice.selected
+transition = nethack-floor-01
+
+[choice shadow]
+owner = shadow
+text = A story that hides its truth until you bleed for it.
+response =
+response = A story of hidden truths... demanding blood.
+response = But bleeding reveals scars that never heal.
+response = Do you seek truths worth the pain?
+response =
+response = > Name considered...
+set = ghost.floor4.choice = shadow
+increment = dreamweavers.shadow.affinity = 1
+emit = ghost.floor4.choice.selected
+transition = nethack-floor-01
+
+[choice ambition]
+owner = ambition
+text = A story that changes every time you look away.
+response =
+response = A story of constant change... shifting gazes.
+response = But change flees stability, and looking away invites loss.
+response = Can you hold what refuses to stay?
+response =
+response = > Name considered...
+set = ghost.floor4.choice = ambition
+increment = dreamweavers.ambition.affinity = 1
+emit = ghost.floor4.choice.selected
+transition = nethack-floor-01
+
+[script]
+System: Can I tell you a secret?\n[GLITCH]\n[A sequence of symbols burns into the screen]\n\n∞ ◊ Ω ≋ ※\n
+
+[completion]
+System: \n[SYSTEM: Dreamweaver threads following - 03]\n\nGood.\nThen that is the name I will wear.\nUntil you unmake it.\n\n[GLITCH]\n\nWelcome to the game that chose you.\nI hope you survive what comes next.\n\n[TERMINAL SHUTS DOWN]\n[STAGE 1 COMPLETE]

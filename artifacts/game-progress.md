@@ -2,6 +2,16 @@
 
 Updated: 2026-09-24
 
+## Current task — OML dialogue ownership and reusable era shaders
+
+- Branch: `codex/dialogic-era-shaders` in `C:\SpiralDrive\omega-alpha-spiral`.
+- Owner direction: remove invented game and code terms including `tradition` and `chronicle`; do not preserve aliases. Use only names grounded in Omega's official documents: era shader, Ghost, Omega, Light, Shadow, Ambition, scene, level, and dialogue.
+- Source boundary: `src/dialogue/*.oml` owns level events, choices, consequences, transitions, and the level era shader. `src/dialogue/*.omd` owns an Omega or Dreamweaver persona and its era shader. `src/dialogue/dialogue.oms` validates both. `src/era-shaders/` owns reusable Three.js and UI rendering. Gameplay consumes the parsed files; Dialogue Studio edits the same files without importing gameplay.
+- Current implementation slice: the reusable `src/era-shaders/` modules exist and the old lettering registry file has been removed. The OML parser is being expanded so the first Ghost floor's question, answers, response writing, consequences, and transition come from its `.oml` file.
+- Active checks: `dialogue_debugger` owns compiler and naming diagnostics without editing source. `live_game_guard` owns the running local URL, browser console/network observation, and the existing real-input bot without editing source.
+- Required evidence before completion: build, unit checks, real-input progression and retry, target browser captures, renderer diagnostics, dialogue resource validation, `artifacts/evidence.json`, and `artifacts/final-evidence.md`.
+- Remaining implementation: replace the old schema and persona field; move Ghost content out of `chronicle.ts` into `.oml`; connect selection consequences to gameplay; separate Dialogue Studio from gameplay; extract remaining scene shader code; remove all invented identifiers; run the final Luna and Sol acceptance audits; file skill-routed GitHub issues for newly discovered out-of-scope defects; commit and open the audit-request PR.
+
 ## Current task — Eight-floor era journey, issue #61
 
 - Branch: `main` in `C:\SpiralDrive\omega-alpha-spiral`. PR #63 integrated the focused journey; the older local director branch was then merged into this checkout with its history preserved. The separate issue #18 and #59 worktrees remain untouched.

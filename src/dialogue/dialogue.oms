@@ -1,0 +1,274 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/jessenaiman/omega-alpha-spiral/blob/main/src/dialogue/dialogue.oms",
+  "title": "Omega Spiral dialogue resources",
+  "oneOf": [
+    { "$ref": "#/$defs/persona" },
+    { "$ref": "#/$defs/level" }
+  ],
+  "$defs": {
+    "eraShader": {
+      "type": "object",
+      "required": ["id", "surfaces"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "surfaces": {
+          "type": "string",
+          "pattern": "^(dialogue|choice|hud|menu|npc-label|world-prompt)(, *(dialogue|choice|hud|menu|npc-label|world-prompt))*$"
+        }
+      },
+      "additionalProperties": false
+    },
+    "persona": {
+      "type": "object",
+      "required": ["schema", "kind", "id", "display_name", "color", "custom", "typing", "typography", "era_shader", "replacement", "spatial"],
+      "properties": {
+        "schema": { "const": "dialogue.oms" },
+        "kind": { "const": "persona" },
+        "id": { "enum": ["omega", "light", "shadow", "ambition"] },
+        "display_name": { "type": "string", "minLength": 1 },
+        "nicknames": { "type": "string" },
+        "color": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+        "custom": {
+          "type": "object",
+          "required": ["thread", "style", "personality"],
+          "properties": {
+            "thread": { "type": "string", "minLength": 1 },
+            "style": { "type": "string", "minLength": 1 },
+            "personality": { "type": "string", "minLength": 1 },
+            "favorite_palette": { "type": "string" },
+            "quick_choice_ms": { "type": "string", "pattern": "^[0-9]+$" },
+            "hesitation_ms": { "type": "string", "pattern": "^[0-9]+$" }
+          },
+          "additionalProperties": false
+        },
+        "typing": {
+          "type": "object",
+          "required": ["interval", "delay", "jitter", "mistakes", "correction", "revision"],
+          "properties": {
+            "interval": { "type": "number", "minimum": 1 },
+            "delay": { "type": "number", "minimum": 0 },
+            "jitter": { "type": "number", "minimum": 0, "maximum": 1 },
+            "mistakes": { "type": "number", "minimum": 0, "maximum": 1 },
+            "correction": { "type": "number", "minimum": 0 },
+            "revision": { "type": "number", "minimum": 0 }
+          },
+          "additionalProperties": false
+        },
+        "typography": {
+          "type": "object",
+          "required": ["case"],
+          "properties": {
+            "case": { "type": "string", "minLength": 1 }
+          },
+          "additionalProperties": false
+        },
+        "era_shader": { "$ref": "#/$defs/eraShader" },
+        "replacement": {
+          "type": "object",
+          "required": ["from", "to"],
+          "properties": {
+            "from": { "type": "string" },
+            "to": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "spatial": {
+          "type": "object",
+          "required": ["motion", "note"],
+          "properties": {
+            "motion": { "type": "string", "minLength": 1 },
+            "note": { "type": "string" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false,
+      "if": {
+        "properties": {
+          "id": { "enum": ["light", "shadow", "ambition"] }
+        },
+        "required": ["id"]
+      },
+      "then": {
+        "properties": {
+          "custom": {
+            "type": "object",
+            "required": ["favorite_palette", "quick_choice_ms", "hesitation_ms"],
+            "properties": {
+              "favorite_palette": { "type": "string" },
+              "quick_choice_ms": { "type": "string", "pattern": "^[0-9]+$" },
+              "hesitation_ms": { "type": "string", "pattern": "^[0-9]+$" }
+            }
+          }
+        }
+      }
+    },
+    "stateEffect": {
+      "type": "object",
+      "required": ["operation", "path", "value"],
+      "properties": {
+        "operation": { "enum": ["set", "increment"] },
+        "path": { "type": "string", "minLength": 1 },
+        "value": {
+          "oneOf": [
+            { "type": "string" },
+            { "type": "number" },
+            { "type": "boolean" }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "choice": {
+      "type": "object",
+      "required": ["id", "owner", "text", "responses", "effects", "emit", "transition"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "owner": { "enum": ["light", "shadow", "ambition"] },
+        "text": { "type": "string", "minLength": 1 },
+        "responses": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1
+        },
+        "effects": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/stateEffect" },
+          "minItems": 1
+        },
+        "emit": { "type": "string", "minLength": 1 },
+        "transition": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "event": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["type", "speaker", "text"],
+          "properties": {
+            "type": { "const": "line" },
+            "speaker": { "type": "string", "minLength": 1 },
+            "text": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["type", "durationMs"],
+          "properties": {
+            "type": { "const": "wait" },
+            "durationMs": { "type": "number", "minimum": 0 }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["type"],
+          "properties": {
+            "type": { "const": "show-question" }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["type", "id"],
+          "properties": {
+            "type": { "const": "show-choice" },
+            "id": { "type": "string", "minLength": 1 }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["type", "label"],
+          "properties": {
+            "type": { "const": "continue" },
+            "label": { "type": "string", "minLength": 1 }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["type", "operation", "path", "value"],
+          "properties": {
+            "type": { "const": "set-state" },
+            "operation": { "enum": ["set", "increment"] },
+            "path": { "type": "string", "minLength": 1 },
+            "value": {
+              "oneOf": [
+                { "type": "string" },
+                { "type": "number" },
+                { "type": "boolean" }
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["type", "name"],
+          "properties": {
+            "type": { "const": "emit" },
+            "name": { "type": "string", "minLength": 1 }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["type", "level"],
+          "properties": {
+            "type": { "const": "transition" },
+            "level": { "type": "string", "minLength": 1 }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "level": {
+      "type": "object",
+      "required": ["kind", "tags", "voices", "scene", "question", "choices", "events", "completion"],
+      "properties": {
+        "kind": { "const": "level" },
+        "tags": { "type": "array", "items": { "type": "object" } },
+        "voices": { "type": "array", "items": { "type": "object" } },
+        "scene": {
+          "type": "object",
+          "required": ["id", "era_shader", "layout", "next"],
+          "properties": {
+            "id": { "type": "string", "minLength": 1 },
+            "era_shader": { "type": "string", "minLength": 1 },
+            "layout": { "type": "string", "minLength": 1 },
+            "next": { "type": "string", "minLength": 1 }
+          },
+          "additionalProperties": false
+        },
+        "question": {
+          "type": "object",
+          "required": ["text"],
+          "properties": {
+            "text": { "type": "string", "minLength": 1 }
+          },
+          "additionalProperties": false
+        },
+        "choices": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/choice" },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "events": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/event" },
+          "minItems": 1
+        },
+        "completion": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/event" }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

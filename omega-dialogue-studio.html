@@ -30,11 +30,33 @@
           <span>Editing project file</span>
           <select id="scene-pick" aria-label="Dialogue file"></select>
         </label>
-        <button id="scene-import" title="Open a file from your computer in the editor">Import file</button>
-        <button id="scene-export" title="Download a copy of the current editor text">Download copy</button>
-        <button id="scene-save" title="Write the current editor text to the project">Save to project</button>
-        <input id="scene-import-file" type="file" accept=".oml,.omd,.oms" hidden />
-        <p id="scene-state" role="status" aria-live="polite">Import opens a local file here. Save writes it to the project.</p>
+        <button
+          id="scene-import"
+          title="Open a file from your computer in the editor"
+        >
+          Import file
+        </button>
+        <button
+          id="scene-export"
+          title="Download a copy of the current editor text"
+        >
+          Download copy
+        </button>
+        <button
+          id="scene-save"
+          title="Write the current editor text to the project"
+        >
+          Save to project
+        </button>
+        <input
+          id="scene-import-file"
+          type="file"
+          accept=".oml,.omd,.oms"
+          hidden
+        />
+        <p id="scene-state" role="status" aria-live="polite">
+          Import opens a local file here. Save writes it to the project.
+        </p>
       </div>
       <button id="tune" aria-expanded="false" aria-controls="settings">
         Tune voice
@@ -42,7 +64,10 @@
     </header>
     <section class="scene-typography" aria-label="Scene typography">
       <label>Scene owner<select id="scene-owner"></select></label>
-      <label>Shared text era<select id="era"></select></label>
+      <label>Level era shader<select id="era"></select></label>
+      <label
+        >Selected persona era shader<select id="persona-era"></select
+      ></label>
     </section>
     <nav id="speakers" aria-label="Select a voice"></nav>
     <aside id="settings" hidden>
@@ -87,6 +112,6 @@
     </div>
     <p class="study-label">STUDIO · SAMPLE COPY, NOT GAME DIALOGUE</p>
     <p id="accessible-line" class="sr-only" aria-live="polite"></p>
-    <script type="module" src="./src/intro/ghost-type-study/main.ts"></script>
+    <script type="module" src="./src/dialogue-studio/main.ts"></script>
   </body>
 </html>

@@ -1,7 +1,8 @@
 # Light.omd — Omega Design. Mirrors Dialogic's .dch character resource.
 # Editing this file changes how Light writes. The scene dialogue does not care.
 
-schema = dreamweaver.oms
+schema = dialogue.oms
+kind = persona
 id = light
 display_name = Light
 nicknames = Luminary, Golden One
@@ -24,8 +25,11 @@ correction = 850
 revision = 1100
 
 [typography]
-tradition = dec-vt100-ascii-terminal
 case = mixed
+
+[era_shader]
+id = dec-vt100-ascii-terminal
+surfaces = dialogue, choice, hud, menu, npc-label, world-prompt
 
 [replacement]
 from = maybe

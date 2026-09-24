@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createBootFrames } from '../../src/intro/ghostwriting';
-import { CHRONICLE_FINAL, CHRONICLE_QUESTIONS } from '../../src/intro/chronicle';
+import { GHOST_FINAL, GHOST_QUESTIONS } from '../../src/dialogue/ghost';
 
 const QUESTION: string = 'If you could be only one story..:\nwho would you be?';
 
@@ -40,10 +40,10 @@ test('cursor boots the script, the question stalls, then voices breach sequentia
   assert.equal(frames.filter((frame) => frame.isCorrupt).length, 4, 'Only three corrections and the deliberate stall may corrupt');
 });
 
-test('the runtime chronicle owns four questions, three answers each, and a plural ending', () => {
-  assert.equal(CHRONICLE_QUESTIONS.length, 4);
-  assert.ok(CHRONICLE_QUESTIONS.every((question) => question.choices.length === 3));
-  assert.equal(CHRONICLE_QUESTIONS[3].prelude.includes('∞ ◊ Ω ≋ ※'), true);
-  assert.match(CHRONICLE_FINAL, /Dreamweaver threads following - 03/);
-  assert.doesNotMatch(CHRONICLE_FINAL, /thread selected/);
+test('the four Ghost OML floors own three answers each and a plural ending', () => {
+  assert.equal(GHOST_QUESTIONS.length, 4);
+  assert.ok(GHOST_QUESTIONS.every((question) => question.choices.length === 3));
+  assert.equal(GHOST_QUESTIONS[3].prelude.includes('∞ ◊ Ω ≋ ※'), true);
+  assert.match(GHOST_FINAL, /Dreamweaver threads following - 03/);
+  assert.doesNotMatch(GHOST_FINAL, /thread selected/);
 });
