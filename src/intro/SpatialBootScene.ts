@@ -94,6 +94,7 @@ const ASIDES: string[] = [
   "Let them try.",
 ];
 const CURSOR_PERIOD_MS: number = 1150;
+const QUESTION_SPACING: number = 6.52;
 const ASIDE_HOLD_MS: number = 4300;
 const VOICE_COOLDOWN_MS: number = 2500;
 const PATH_VERTEX_CAPACITY: number = 96;
@@ -926,9 +927,9 @@ export class SpatialBootScene {
   }
 
   public arriveAtNextQuestion(): void {
-    // Rebase the next constructed station around the same world-space point.
-    // The character keeps moving into space instead of teleporting back.
-    this._stationDepth -= 6.52;
+    // The station has moved throughout the walk. Arrival only finalizes the
+    // coordinates; it does not suddenly relocate the visible world.
+    this._stationDepth -= QUESTION_SPACING;
     this._root.position.z = this._stationDepth;
     this._player.position.set(0, -2.55, 0.52);
     this._journeyActive = false;
@@ -1090,7 +1091,7 @@ export class SpatialBootScene {
 
   public getPlayerPosition(): { x: number; y: number; z: number } {
     const position: Vector3 = this._player.position;
-    return { x: position.x, y: position.y, z: position.z + this._stationDepth };
+    return { x: position.x, y: position.y, z: position.z + this._root.position.z };
   }
 
   public getPlayerColor(): number {
@@ -1104,7 +1105,7 @@ export class SpatialBootScene {
       ): { x: number; y: number; z: number } => ({
         x: target.position.x,
         y: target.position.y - 0.46,
-        z: target.position.z + this._stationDepth,
+        z: target.position.z + this._root.position.z,
       })
     );
   }
@@ -1156,7 +1157,7 @@ export class SpatialBootScene {
       0,
       Math.max(0, Math.min(4, choicesMade))
     );
-    this._stationDepth = -6.52 * Math.min(3, this._choiceHistory.length);
+    this._stationDepth = -QUESTION_SPACING * Math.min(3, this._choiceHistory.length);
     this._root.position.z = this._stationDepth;
     this.setPlayerStage(this._choiceHistory.length);
     this._retunePlayer();
@@ -2340,7 +2341,10 @@ export class SpatialBootScene {
           seconds,
           this._pathCurrent
         );
+        const stationShift = QUESTION_SPACING * progress;
+        this._root.position.z = this._stationDepth - stationShift;
         this._player.position.copy(this._pathCurrent);
+        this._player.position.z += stationShift;
         if (
           !this._journeyComplete &&
           physicsStep.sensor === INTRO_JOURNEY_SENSOR_INDEX
