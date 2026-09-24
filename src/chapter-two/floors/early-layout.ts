@@ -1,4 +1,5 @@
 import type { ObjectKind } from "../rooms";
+import { createRng } from "../../core/random";
 
 export type EarlyFloorId = "floor-2-shadow" | "floor-3-ambition";
 
@@ -42,17 +43,33 @@ export interface EarlyFloorLayout {
   readonly routes: Readonly<Record<ObjectKind, readonly FloorPoint[]>>;
   readonly collisionBlocks: readonly EarlyFloorCollisionBlock[];
   readonly effectCues: readonly EarlyFloorEffectCue[];
-  /** Stable small-layout variation. Exits and choice identities never move. */
+  /** Stable layout variant selected from the journey seed. */
   readonly variationIndex: number;
 }
 
-export function earlyFloorVariation(seed: number): number {
-  const safeSeed = Number.isFinite(seed) ? Math.trunc(seed) : 0;
-  let value = safeSeed | 0;
-  value ^= value >>> 16;
-  value = Math.imul(value, 0x7feb352d);
-  value ^= value >>> 15;
-  value = Math.imul(value, 0x846ca68b);
-  value ^= value >>> 16;
-  return (value >>> 0) % 3;
+export function earlyFloorVariation(seed: number, floor: string): number {
+  return createRng(seed).fork(`${floor}:layout`).int(3);
+}
+
+/** Keep each safe physical corridor attached to its slot while permuting object kinds. */
+export function permuteEarlyFloorExits(
+  exits: readonly EarlyFloorExit[],
+  routes: Readonly<Record<ObjectKind, readonly FloorPoint[]>>,
+  seed: number,
+  floor: string
+): { exits: EarlyFloorExit[]; routes: Record<ObjectKind, FloorPoint[]> } {
+  const kinds: ObjectKind[] = ["door", "monster", "chest"];
+  const slots = createRng(seed).fork(`${floor}:exit-slots`).shuffle(exits);
+  const shuffledRoutes = { ...routes } as Record<ObjectKind, FloorPoint[]>;
+  const shuffledExits = kinds.map((kind, index): EarlyFloorExit => {
+    const slot = slots[index];
+    const route = [...(routes[slot.kind] ?? [])];
+    if (route.length > 0) {
+      route[route.length - 1] = { ...slot.position };
+      shuffledRoutes[kind] = route;
+      // Route waypoints guide movement; replace only the old physical endpoint.
+    }
+    return { ...slot, kind };
+  });
+  return { exits: shuffledExits, routes: shuffledRoutes };
 }

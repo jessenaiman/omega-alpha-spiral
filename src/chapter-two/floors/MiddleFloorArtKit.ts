@@ -575,7 +575,7 @@ function addTelegraph(socket: THREE.Group, enemy: EncounterEnemy, mats: Record<s
     targetGroup.add(inner);
     socket.add(targetGroup);
     socket.userData.targetGroup = targetGroup.name;
-    return (target: FloorPoint): void => targetGroup.position.set(target.x, 0, target.z);
+    return (target: FloorPoint): void => { targetGroup.position.set(target.x, 0, target.z); };
   } else {
     const length = Math.min(enemy.attackRange + 1.5, 4.5);
     const laneGroup = new THREE.Group();

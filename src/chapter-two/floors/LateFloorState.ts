@@ -51,7 +51,7 @@ export class LateFloorState {
   }
 
   public get gatheredDreamweavers(): readonly Guide[] {
-    return ["Light", "Shadow", "Ambition"].filter((guide) => this.gathered.has(guide));
+    return (["Light", "Shadow", "Ambition"] as const).filter((guide) => this.gathered.has(guide));
   }
 
   public get selectedRoute(): TownRoute["id"] | null {

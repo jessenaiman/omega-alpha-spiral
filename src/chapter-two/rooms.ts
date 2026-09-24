@@ -1,6 +1,7 @@
 import { createFloor2ShadowLayout } from "./floors/early-shadow";
 import { createFloor3AmbitionLayout } from "./floors/early-ambition";
 import type { EarlyFloorLayout, FloorPoint } from "./floors/early-layout";
+import { createRng } from "../core/random";
 
 export type ObjectKind = "door" | "monster" | "chest";
 export type Guide = "Light" | "Shadow" | "Ambition";
@@ -25,6 +26,7 @@ export interface EchoRoom {
   blocks?: RoomBlock[];
   heroStart?: FloorPoint;
   layout?: EarlyFloorLayout;
+  routes?: Readonly<Record<ObjectKind, readonly FloorPoint[]>>;
 }
 
 // Authored copy of stage_2/nethack-scene.md:119-237, interpreted as data, NOT
@@ -143,12 +145,26 @@ function placeRoom(
   };
 }
 
-/** Seeded room set for the same three identities with small deterministic layout shifts. */
+/** Seeded room set with stable identities and randomized physical exit slots. */
 export function createEchoRooms(variationSeed: number = 0): EchoRoom[] {
+  const lightSlots = createRng(variationSeed)
+    .fork("floor-1-light:exit-slots")
+    .shuffle(LIGHT_ROOM.objects.map(({ x, z }) => ({ x, z })));
+  const lightKinds: ObjectKind[] = ["door", "monster", "chest"];
+  const lightObjects = LIGHT_ROOM.objects.map((object) => {
+    const slotIndex = lightKinds.indexOf(object.kind);
+    const slot = lightSlots[slotIndex];
+    return { ...object, x: slot.x, z: slot.z };
+  });
+  const lightRoutes = Object.fromEntries(lightObjects.map((object) => [
+    object.kind,
+    [{ x: 0, z: 12 }, { x: object.x, z: 12 }, { x: object.x, z: 7 }, { x: object.x, z: 0 }],
+  ])) as Record<ObjectKind, FloorPoint[]>;
   return [
     {
       ...LIGHT_ROOM,
-      objects: LIGHT_ROOM.objects.map((object) => ({ ...object })),
+      objects: lightObjects,
+      routes: lightRoutes,
       blocks: LIGHT_ROOM.blocks?.map((block) => ({ ...block })),
     },
     placeRoom(SHADOW_ROOM, createFloor2ShadowLayout(variationSeed)),

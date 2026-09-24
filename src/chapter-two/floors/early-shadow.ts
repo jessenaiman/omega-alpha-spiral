@@ -1,5 +1,5 @@
 import type { EarlyFloorLayout } from "./early-layout";
-import { earlyFloorVariation } from "./early-layout";
+import { earlyFloorVariation, permuteEarlyFloorExits } from "./early-layout";
 
 const VARIANT_OFFSETS = [
   { west: 0, east: 0 },
@@ -9,9 +9,9 @@ const VARIANT_OFFSETS = [
 
 /** Shadow keeps Floor One's kit and breaks its straight approach into oblique reads. */
 export function createFloor2ShadowLayout(seed: number): EarlyFloorLayout {
-  const variationIndex = earlyFloorVariation(seed);
+  const variationIndex = earlyFloorVariation(seed, "floor-2-shadow");
   const offset = VARIANT_OFFSETS[variationIndex] ?? VARIANT_OFFSETS[0];
-  return {
+  const layout: EarlyFloorLayout = {
     id: "floor-2-shadow",
     heroStart: { x: 0, z: 12 },
     bounds: { halfWidth: 14, halfDepth: 16 },
@@ -22,22 +22,13 @@ export function createFloor2ShadowLayout(seed: number): EarlyFloorLayout {
     ],
     routes: {
       chest: [
-        { x: 0, z: 12 },
-        { x: -4, z: 9 },
-        { x: -7, z: 4 },
-        { x: -9, z: -4 },
+        { x: 0, z: 12 }, { x: -10, z: 12 }, { x: -10, z: 0 }, { x: -9, z: -4 },
       ],
       door: [
-        { x: 0, z: 12 },
-        { x: 2, z: 8 },
-        { x: 3.5, z: 4 },
-        { x: 0, z: -10 },
+        { x: 0, z: 12 }, { x: -12, z: 12 }, { x: -12, z: -10 }, { x: 0, z: -10 },
       ],
       monster: [
-        { x: 0, z: 12 },
-        { x: 4, z: 9 },
-        { x: 7, z: 4 },
-        { x: 9, z: -4 },
+        { x: 0, z: 12 }, { x: 10, z: 12 }, { x: 10, z: 0 }, { x: 9, z: -4 },
       ],
     },
     collisionBlocks: [
@@ -96,6 +87,8 @@ export function createFloor2ShadowLayout(seed: number): EarlyFloorLayout {
     ],
     variationIndex,
   };
+  const permuted = permuteEarlyFloorExits(layout.exits, layout.routes, seed, layout.id);
+  return { ...layout, ...permuted };
 }
 
 export const FLOOR_2_SHADOW_LAYOUT = createFloor2ShadowLayout(0);

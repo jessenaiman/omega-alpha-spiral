@@ -5,7 +5,7 @@
  * .agents/skills/threejs-debug-profiler/SKILL.md
  */
 import { expect, test, type Page, type TestInfo } from "@playwright/test";
-import { writeFile } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 
 type IntroState = {
   frame: number;
@@ -20,14 +20,21 @@ type IntroState = {
   physics: { ready: boolean; steps: number };
 };
 
+type RoomKind = "door" | "monster" | "chest";
+type ChapterPoint = { x: number; z: number };
+
 type ChapterState = {
   active: boolean;
   phase: string;
   roomIndex: number;
-  player: { x: number; z: number };
+  variationSeed: number;
+  objects: Array<{ kind: RoomKind; x: number; z: number }>;
+  nearest: RoomKind | null;
+  routes: Record<RoomKind, ChapterPoint[]> | null;
+  player: ChapterPoint;
   framesAdvanced: number;
   distanceTravelled: number;
-  choices: Array<{ object: string; answer: string }>;
+  choices: Array<{ object: string; answer: string; combatOutcome?: "fallen" }>;
 };
 
 type BotSnapshot = {
@@ -42,7 +49,7 @@ type BotStep =
   | { kind: "intro-choice"; choice: number }
   | { kind: "name-entry"; value: string }
   | { kind: "doorway-crossing" }
-  | { kind: "chapter-room"; targetX: number };
+  | { kind: "chapter-room"; choice: RoomKind };
 
 // One deterministic route through the opening and the three playable rooms.
 // Hooks establish only the reproducible boot state; route selection uses real input.
@@ -53,9 +60,9 @@ const INPUT_SCRIPT: BotStep[] = [
   { kind: "intro-choice", choice: 0 },
   { kind: "name-entry", value: "Astra" },
   { kind: "doorway-crossing" },
-  { kind: "chapter-room", targetX: -8 },
-  { kind: "chapter-room", targetX: 0 },
-  { kind: "chapter-room", targetX: 8 },
+  { kind: "chapter-room", choice: "door" },
+  { kind: "chapter-room", choice: "monster" },
+  { kind: "chapter-room", choice: "chest" },
 ];
 
 test.use({ video: "on" });
@@ -169,33 +176,38 @@ async function steerTravel(
   const startZ = previous.playerPosition.z;
   let captured = false;
   let stationarySamples = 0;
-  for (let index = 0; index < 220; index += 1) {
-    const state = await readIntro(page);
-    const moved = Math.hypot(
-      state.playerPosition.x - previous.playerPosition.x,
-      state.playerPosition.y - previous.playerPosition.y,
-      state.playerPosition.z - previous.playerPosition.z
-    );
-    expect(
-      moved,
-      "travel and next-station arrival must stay spatially continuous"
-    ).toBeLessThan(1.25);
-    if (state.storyMode !== "travel") return;
-    metrics.distance += moved;
-    if (!captured && capturePath && state.playerPosition.z < startZ - 1.5) {
-      await page.screenshot({ path: capturePath });
-      captured = true;
+  await page.keyboard.down("ArrowUp");
+  try {
+    for (let index = 0; index < 440; index += 1) {
+      const state = await readIntro(page);
+      const moved = Math.hypot(
+        state.playerPosition.x - previous.playerPosition.x,
+        state.playerPosition.y - previous.playerPosition.y,
+        state.playerPosition.z - previous.playerPosition.z
+      );
+      expect(
+        moved,
+        "travel and next-station arrival must stay spatially continuous"
+      ).toBeLessThan(Math.max(1.25, (state.frame - previous.frame) * 0.4));
+      if (state.storyMode !== "travel") return;
+      metrics.distance += moved;
+      if (!captured && capturePath && state.playerPosition.z < startZ - 1.5) {
+        await page.screenshot({ path: capturePath });
+        captured = true;
+      }
+      if (state.frame > previous.frame && moved < 0.001) stationarySamples += 1;
+      else stationarySamples = 0;
+      if (stationarySamples >= 10) {
+        metrics.softlocks += 1;
+        stationarySamples = 0;
+      }
+      previous = state;
+      await page.waitForTimeout(45);
     }
-    if (state.frame > previous.frame && moved < 0.001) stationarySamples += 1;
-    else stationarySamples = 0;
-    if (stationarySamples >= 10) {
-      metrics.softlocks += 1;
-      stationarySamples = 0;
-    }
-    previous = state;
-    await page.waitForTimeout(45);
+  } finally {
+    await page.keyboard.up("ArrowUp");
   }
-  throw new Error("Bot failed to reach the next intro question");
+  throw new Error("Bot failed to reach the next intro question while walking forward");
 }
 
 async function walkThroughDoorway(
@@ -296,6 +308,124 @@ async function walkChapter(
   return after.distanceTravelled - before.distanceTravelled;
 }
 
+type EarlyRoomResult = {
+  roomIndex: number;
+  door: ChapterPoint;
+  chosen: RoomKind;
+  outcome: "fallen" | null;
+  distance: number;
+};
+
+/** Hold real movement keys along authored waypoints; fail when visible collision traps a route. */
+async function steerChapterPoint(
+  page: Page,
+  target: ChapterPoint,
+  roomIndex: number,
+  tolerance = 0.42,
+  allowRoomChange = false
+): Promise<number> {
+  const before = await readChapter(page);
+  let heldX: "KeyA" | "KeyD" | null = null;
+  let heldZ: "KeyW" | "KeyS" | null = null;
+  let last = before.player;
+  let stuck = 0;
+  try {
+    for (let tick = 0; tick < 360; tick += 1) {
+      const state = await readChapter(page);
+      if (allowRoomChange && state.phase === "complete")
+        return state.distanceTravelled - before.distanceTravelled;
+      if (state.roomIndex !== roomIndex) {
+        if (allowRoomChange) return state.distanceTravelled - before.distanceTravelled;
+        throw new Error(`Room changed while steering to ${JSON.stringify(target)}`);
+      }
+      const dx = target.x - state.player.x;
+      const dz = target.z - state.player.z;
+      if (Math.hypot(dx, dz) <= tolerance)
+        return state.distanceTravelled - before.distanceTravelled;
+      const wantX: "KeyA" | "KeyD" | null =
+        Math.abs(dx) <= 0.25 ? null : dx > 0 ? "KeyD" : "KeyA";
+      const wantZ: "KeyW" | "KeyS" | null =
+        Math.abs(dz) <= 0.25 ? null : dz > 0 ? "KeyS" : "KeyW";
+      if (wantX !== heldX) {
+        if (heldX) await page.keyboard.up(heldX);
+        heldX = wantX;
+        if (heldX) await page.keyboard.down(heldX);
+      }
+      if (wantZ !== heldZ) {
+        if (heldZ) await page.keyboard.up(heldZ);
+        heldZ = wantZ;
+        if (heldZ) await page.keyboard.down(heldZ);
+      }
+      const moved = Math.hypot(state.player.x - last.x, state.player.z - last.z);
+      stuck = moved < 0.015 ? stuck + 1 : 0;
+      if (stuck >= 18)
+        throw new Error(`Movement blocked on room ${roomIndex + 1} toward ${JSON.stringify(target)} at ${JSON.stringify(state.player)}`);
+      last = state.player;
+      await page.waitForTimeout(45);
+    }
+  } finally {
+    if (heldX) await page.keyboard.up(heldX);
+    if (heldZ) await page.keyboard.up(heldZ);
+  }
+  throw new Error(`Timed out walking room ${roomIndex + 1} toward ${JSON.stringify(target)}`);
+}
+
+async function playEarlyRoom(
+  page: Page,
+  choice: RoomKind,
+  answer: string,
+  capturePath?: string
+): Promise<EarlyRoomResult> {
+  const start = await readChapter(page);
+  expect(start.phase).toBe("exploring");
+  const door = start.objects.find((object) => object.kind === "door");
+  const selected = start.objects.find((object) => object.kind === choice);
+  const route = start.routes?.[choice];
+  if (!door || !selected || !route || route.length < 2)
+    throw new Error(`Missing authored ${choice} route or exit on room ${start.roomIndex + 1}`);
+  let distance = 0;
+  for (const waypoint of route.slice(1, -1))
+    distance += await steerChapterPoint(page, waypoint, start.roomIndex);
+  const previous = route[route.length - 2];
+  const length = Math.hypot(previous.x - selected.x, previous.z - selected.z);
+  if (length < 2.3) throw new Error(`Final ${choice} route segment is too short`);
+  const approach = {
+    x: selected.x + (previous.x - selected.x) / length * 2.15,
+    z: selected.z + (previous.z - selected.z) / length * 2.15,
+  };
+  distance += await steerChapterPoint(page, approach, start.roomIndex, 0.4);
+  const atExit = await readChapter(page);
+  expect(atExit.nearest, `Expected ${choice} near ${JSON.stringify(selected)}; player ${JSON.stringify(atExit.player)}`).toBe(choice);
+  if (capturePath) await page.screenshot({ path: capturePath });
+  await page.keyboard.press("KeyE");
+  await expect.poll(async () => (await readChapter(page)).phase, { timeout: 5_000 })
+    .toMatch(/^(prompt|fighting|result)$/);
+  if (choice === "door") {
+    const input = page.locator("#echo-answer");
+    await expect(input).toBeVisible();
+    await input.fill(answer);
+    await input.press("Enter");
+  }
+  await expect.poll(async () => (await readChapter(page)).phase, { timeout: 6_000 })
+    .toBe("result");
+  const resolved = await readChapter(page);
+  expect(resolved.choices.length).toBe(start.roomIndex + 1);
+  if (choice === "monster")
+    expect(resolved.choices[start.roomIndex].combatOutcome).toBe("fallen");
+  distance += await steerChapterPoint(page, selected, start.roomIndex, 0.65, true);
+  await expect.poll(async () => {
+    const state = await readChapter(page);
+    return state.roomIndex > start.roomIndex || state.phase === "complete";
+  }, { timeout: 5_000 }).toBe(true);
+  return {
+    roomIndex: start.roomIndex,
+    door: { x: door.x, z: door.z },
+    chosen: choice,
+    outcome: resolved.choices[start.roomIndex].combatOutcome ?? null,
+    distance,
+  };
+}
+
 test("bot playtest: scripted real input completes and retries the playable route", async ({
   page,
 }, testInfo: TestInfo) => {
@@ -313,7 +443,7 @@ test("bot playtest: scripted real input completes and retries the playable route
   });
 
   await page.emulateMedia({ reducedMotion: "reduce" });
-  await page.goto("/intro.html?debug");
+  await page.goto("/intro.html?debug&seed=472");
   await page.getByRole("button", { name: /Begin/ }).click();
   await page.waitForFunction(() => {
     const diagnostics = (
@@ -488,43 +618,13 @@ test("bot playtest: scripted real input completes and retries the playable route
     (step): step is Extract<BotStep, { kind: "chapter-room" }> =>
       step.kind === "chapter-room"
   );
-  let room = 0;
-  while ((await readChapter(page)).phase !== "complete") {
-    const step = chapterSteps[room % chapterSteps.length];
-    routeMetrics.distance += await walkChapter(page, "x", step.targetX);
-    routeMetrics.distance += await walkChapter(page, "z", 2.4);
-    await page.keyboard.press("KeyE");
-    await expect
-      .poll(async (): Promise<string> => (await readChapter(page)).phase)
-      .toMatch(/^(prompt|result)$/);
-    if ((await readChapter(page)).phase === "prompt") {
-      const answer = page.locator("#echo-answer");
-      await expect(answer).toBeVisible();
-      await answer.fill(`bot answer ${room}`);
-      await answer.press("Enter");
-    }
-    await expect
-      .poll(async (): Promise<string> => (await readChapter(page)).phase)
-      .toBe("result");
-    await recordStep(introSteps.length + room);
-    await page.keyboard.press("KeyE");
-    if ((await readChapter(page)).phase === "rewriting") {
-      const roomBefore = (await readChapter(page)).roomIndex;
-      await page.keyboard.press("KeyE");
-      await expect
-        .poll(async (): Promise<number> => (await readChapter(page)).roomIndex)
-        .toBeGreaterThan(roomBefore);
-    }
-    if ((await readChapter(page)).phase !== "complete") {
-      await expect
-        .poll(async (): Promise<string> => (await readChapter(page)).phase)
-        .toBe("exploring");
-    }
-    room += 1;
-    if (room > 12)
-      throw new Error("Bot exceeded the expected chapter-two room count");
+  const chapterResults: EarlyRoomResult[] = [];
+  for (const [index, step] of chapterSteps.entries()) {
+    chapterResults.push(await playEarlyRoom(page, step.choice, `bot answer ${index}`));
+    routeMetrics.distance += chapterResults[index].distance;
+    await recordStep(introSteps.length + index);
   }
-
+  await expect.poll(async () => (await readChapter(page)).phase).toBe("complete");
   const completedChapter = await readChapter(page);
   const after = await sample(page);
   await page.keyboard.press("KeyR");
@@ -553,6 +653,7 @@ test("bot playtest: scripted real input completes and retries the playable route
     failureAvailable: introFinal.failed,
     retryVerified,
     chapterChoices: completedChapter.choices.length,
+    chapterResults,
     consoleErrors,
     pageErrors,
     networkErrors,
@@ -593,4 +694,85 @@ test("bot playtest: scripted real input completes and retries the playable route
   expect(report.retryVerified, "restart must restore playable state").toBe(
     true
   );
+});
+
+
+test("Shadow bot: real input crosses seeded exits and captures active floors", async ({
+  page,
+}, testInfo: TestInfo) => {
+  test.setTimeout(240_000);
+  const pageErrors: string[] = [];
+  const consoleErrors: string[] = [];
+  const networkErrors: string[] = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  page.on("console", (message) => {
+    if (message.type() === "error") consoleErrors.push(message.text());
+  });
+  page.on("response", (response) => {
+    if (response.status() >= 400)
+      networkErrors.push(`${response.status()} ${response.url()}`);
+  });
+  const runs: Array<{ seed: number; results: EarlyRoomResult[]; frames: number; distance: number }> = [];
+  await mkdir("artifacts/qa-61", { recursive: true });
+  for (const seed of [17, 42]) {
+    await page.goto(`/intro.html?debug&seed=${seed}`);
+    await page.getByRole("button", { name: /Begin/ }).click();
+    const hooks = await page.evaluate(async () => {
+      const testWindow = window as unknown as {
+        __THREE_GAME_TEST_HOOKS__?: {
+          setState(name: string): Promise<{ state: string }>;
+        };
+      };
+      if (!testWindow.__THREE_GAME_TEST_HOOKS__)
+        throw new Error("Focused bot needs intro test hooks");
+      return testWindow.__THREE_GAME_TEST_HOOKS__.setState("final-door");
+    });
+    expect(hooks.state).toBe("final-door");
+    await walkThroughDoorway(page, { distance: 0, softlocks: 0 });
+    await expect.poll(async () => (await readChapter(page)).active, { timeout: 15_000 })
+      .toBe(true);
+    const first = await readChapter(page);
+    expect(first.variationSeed).toBe(seed);
+    const results: EarlyRoomResult[] = [];
+    results.push(await playEarlyRoom(page, "door", `seed ${seed}`));
+    await expect.poll(async () => (await readChapter(page)).roomIndex).toBe(1);
+    await page.screenshot({ path: `artifacts/qa-61/shadow-seed-${seed}.png` });
+    results.push(await playEarlyRoom(page, "monster", "", `artifacts/qa-61/shadow-action-seed-${seed}.png`));
+    await expect.poll(async () => (await readChapter(page)).roomIndex).toBe(2);
+    await page.screenshot({ path: `artifacts/qa-61/ambition-seed-${seed}.png` });
+    results.push(await playEarlyRoom(page, "chest", "", `artifacts/qa-61/ambition-action-seed-${seed}.png`));
+    await expect.poll(async () => (await readChapter(page)).phase).toBe("complete");
+    const end = await readChapter(page);
+    const uniqueDoors = new Set(results.map((result) => `${result.door.x},${result.door.z}`));
+    expect(uniqueDoors.size, "doorway must occupy a different place on each floor").toBe(3);
+    runs.push({
+      seed,
+      results,
+      frames: end.framesAdvanced - first.framesAdvanced,
+      distance: Number(results.reduce((sum, result) => sum + result.distance, 0).toFixed(2)),
+    });
+  }
+  expect(
+    runs[0].results.some((result, index) =>
+      result.door.x !== runs[1].results[index].door.x ||
+      result.door.z !== runs[1].results[index].door.z
+    ),
+    "different seeds must vary at least one doorway"
+  ).toBe(true);
+  const report = {
+    runs,
+    pageErrors,
+    consoleErrors,
+    networkErrors,
+    introScope: "final-door hook sets starting point; doorway and all three floors use real keyboard input",
+  };
+  await writeFile("artifacts/qa-61/early-floor-bot-report.json", JSON.stringify(report, null, 2));
+  await testInfo.attach("early-floor-bot-report", {
+    body: JSON.stringify(report, null, 2),
+    contentType: "application/json",
+  });
+  expect(pageErrors).toEqual([]);
+  expect(consoleErrors).toEqual([]);
+  expect(networkErrors).toEqual([]);
+  expect(runs.every((run) => run.frames > 50 && run.distance > 5)).toBe(true);
 });

@@ -1,12 +1,16 @@
 # Omega Spiral review evidence
 
-## Eight-floor era journey — issue #61, awaiting playable review
+## Eight-floor era journey — issue #61, targeted early-floor bot pass
 
 ✅ The [design manifest](level-design/design-manifest.md) and [design scorecard](level-design/design-scorecard.md) record the owner-approved era order, early three-exit choices, combat introduction on Floors 4–6, varied Floor 7 town, and Floor 8 healing-core endpoint. New Floor 4, Floors 5–6, and Floor 7 concept images are design studies, not runtime captures.
 
 ✅ Source review found the Floor 5 upper-index spur crossing a declared collider. The middle-floor author moved the obstacle and updated its visible art before integration. Early Monster defeat records a distinct fallen outcome and still permits progression in the state model. Floors 4–8 scene handoffs and varied Three.js town districts are present in source; this is static review only.
 
-❌ No issue #61 live frame, owner-run basic turn-on/visibility/access result, active-play capture, or runtime visual score is recorded yet. The historical evidence below applies to earlier work and cannot certify this journey.
+✅ The [two-seed bot report](qa-61/early-floor-bot-report.json) records distinct door positions for Floors 1–3, real keyboard travel to each chosen exit, Shadow Monster `fallen`, and Floor 3 completion for seeds 17 and 42. The pass recorded zero page, console, or network errors; `npm.cmd run build` passed. [Gameplay video](qa-61/seeded-exit-bot.webm), [Shadow action at seed 17](qa-61/shadow-action-seed-17.png), [Shadow action at seed 42](qa-61/shadow-action-seed-42.png), and [capture declaration](qa-61/capture-set.md) are current runtime artifacts. The `final-door` hook only positioned the two-seed bot at the intro threshold; it walked and interacted thereafter. Separately, the [full-route report](intro-bot-playtest-report.json) and [full-route video](qa-61/full-intro-to-floors-bot.webm) show a passing real-input run from Begin through the intro, three early floors, and restart (2,644 frames, 154.83 movement units, zero softlock windows).
+
+🔍 The inspected Shadow and Ambition frames show distinct diagonal and stepped forms, but camera framing leaves substantial empty black space and can push exits below the HUD or above the visible play area. Visual quality is not owner approved. The older root `artifacts/evidence.json` covers a separate intro review; no current canvas-inspector manifest check or Floors 4–8 gameplay pass is claimed.
+
+❌ Owner-run basic turn-on/visibility/access review, unscripted early-floor paths, Floors 4–8 runtime inspection, and a current visual score remain open. Historical evidence below cannot certify this journey.
 ## Floor One design integration — current review
 
 ✅ The owner-approved [sparse Stage 1 image](level-design/stage-1-atari-3d-starting-point.png) and [era progression sheet](level-design/era-progression-reference-draft.png) are the visual references. A new live Light room was seen in the browser at `http://127.0.0.1:5210/`: a lone hero, straight stacked walls, amber-slit pillars, and sparse code debris. This is a visual observation, not owner approval.

@@ -23,6 +23,7 @@ import { MiddleFloorRuntime, type RecruitGuide } from "./floors/MiddleFloorRunti
 import { LateFloorRuntime } from "./floors/LateFloorRuntime";
 import { FLOOR_7_TOWN } from "./floors/late-floor-7-town";
 import { ECHO_ROOMS } from "./rooms";
+import { createRng } from "../core/random";
 import "./styles.css";
 
 const FIELD_SIZE: number = 48;
@@ -73,6 +74,7 @@ export class ChapterTwoScene {
   });
   private _thresholdPreview: WebGLRenderTarget | null = null;
   private _destroyed: boolean = false;
+  private _variationSeed: number = 0;
 
   public init(root: HTMLElement, debug: boolean): void {
     this._root = root;
@@ -248,6 +250,11 @@ export class ChapterTwoScene {
             thread: this._world.thread,
             guide: this._world.guide,
             choices: this._world.choices.map((choice) => ({ ...choice })),
+            variationSeed: this._variationSeed,
+            objects: this._world.activeRoom.objects.map(({ kind, x, z }) => ({ kind, x, z })),
+            nearest: this._world.nearest?.kind ?? null,
+            routes: this._world.activeRoom.layout?.routes ?? this._world.activeRoom.routes ?? null,
+            blocks: this._world.activeRoom.blocks ?? [],
             paused: this._paused,
           }),
         },
@@ -286,7 +293,8 @@ export class ChapterTwoScene {
     this._scene.background = new Color(0x070e19);
     this._scene.visible = true;
     this._handoffDelay = -1;
-    this._world.start(thread);
+    this._variationSeed = this._journeyVariationSeed();
+    this._world.start(thread, this._variationSeed);
     this.active = true;
     this._paused = false;
     this._keys.clear();
@@ -298,6 +306,23 @@ export class ChapterTwoScene {
     this._input().value = "";
     if (this._hud) this._hud.hidden = false;
     if (this._root) this._root.dataset.chapter = "2";
+  }
+
+  private _journeyVariationSeed(): number {
+    const requested = new URLSearchParams(globalThis.location.search).get("seed");
+    if (requested !== null) {
+      const numeric = Number(requested);
+      return requested.trim() !== "" && Number.isSafeInteger(numeric)
+        ? numeric
+        : createRng(requested).int(0x7fffffff);
+    }
+    try {
+      const entropy = new Uint32Array(1);
+      globalThis.crypto.getRandomValues(entropy);
+      return entropy[0] ?? 0;
+    } catch {
+      return createRng(`${Date.now()}:${performance.now()}`).int(0x7fffffff);
+    }
   }
 
   public stop(): void {
