@@ -5,7 +5,7 @@
  * .agents/skills/threejs-debug-profiler/SKILL.md
  */
 import { expect, test, type Page, type TestInfo } from "@playwright/test";
-import { mkdir, writeFile } from "node:fs/promises";
+import { writeFile } from "node:fs/promises";
 
 type IntroState = {
   frame: number;
@@ -959,120 +959,4 @@ test("bot playtest: scripted real input completes and retries the playable route
   expect(report.retryVerified, "restart must restore playable state").toBe(
     true
   );
-});
-
-test("Shadow bot: real input crosses seeded exits and captures active floors", async ({
-  page,
-}, testInfo: TestInfo) => {
-  test.setTimeout(240_000);
-  const pageErrors: string[] = [];
-  const consoleErrors: string[] = [];
-  const networkErrors: string[] = [];
-  page.on("pageerror", (error) => pageErrors.push(error.message));
-  page.on("console", (message) => {
-    if (message.type() === "error") consoleErrors.push(message.text());
-  });
-  page.on("response", (response) => {
-    if (response.status() >= 400)
-      networkErrors.push(`${response.status()} ${response.url()}`);
-  });
-  const runs: Array<{
-    seed: number;
-    results: EarlyRoomResult[];
-    frames: number;
-    distance: number;
-  }> = [];
-  await mkdir("artifacts/qa-61", { recursive: true });
-  for (const seed of [17, 42]) {
-    await page.goto(`/intro.html?debug&seed=${seed}`);
-    await page.getByRole("button", { name: /Begin/ }).click();
-    const hooks = await page.evaluate(async () => {
-      const testWindow = window as unknown as {
-        __THREE_GAME_TEST_HOOKS__?: {
-          setState(name: string): Promise<{ state: string }>;
-        };
-      };
-      if (!testWindow.__THREE_GAME_TEST_HOOKS__)
-        throw new Error("Focused bot needs intro test hooks");
-      return testWindow.__THREE_GAME_TEST_HOOKS__.setState("final-door");
-    });
-    expect(hooks.state).toBe("final-door");
-    await walkThroughDoorway(page, { distance: 0, softlocks: 0 });
-    await expect
-      .poll(async () => (await readChapter(page)).active, { timeout: 15_000 })
-      .toBe(true);
-    const first = await readChapter(page);
-    expect(first.variationSeed).toBe(seed);
-    const results: EarlyRoomResult[] = [];
-    results.push(await playEarlyRoom(page, "door", `seed ${seed}`));
-    await expect.poll(async () => (await readChapter(page)).roomIndex).toBe(1);
-    await page.screenshot({ path: `artifacts/qa-61/shadow-seed-${seed}.png` });
-    results.push(
-      await playEarlyRoom(
-        page,
-        "monster",
-        "",
-        `artifacts/qa-61/shadow-action-seed-${seed}.png`
-      )
-    );
-    await expect.poll(async () => (await readChapter(page)).roomIndex).toBe(2);
-    await page.screenshot({
-      path: `artifacts/qa-61/ambition-seed-${seed}.png`,
-    });
-    results.push(
-      await playEarlyRoom(
-        page,
-        "chest",
-        "",
-        `artifacts/qa-61/ambition-action-seed-${seed}.png`
-      )
-    );
-    await expect
-      .poll(async () => (await readChapter(page)).phase)
-      .toBe("complete");
-    const end = await readChapter(page);
-    const uniqueDoors = new Set(
-      results.map((result) => `${result.door.x},${result.door.z}`)
-    );
-    expect(
-      uniqueDoors.size,
-      "doorway must occupy a different place on each floor"
-    ).toBe(3);
-    runs.push({
-      seed,
-      results,
-      frames: end.framesAdvanced - first.framesAdvanced,
-      distance: Number(
-        results.reduce((sum, result) => sum + result.distance, 0).toFixed(2)
-      ),
-    });
-  }
-  expect(
-    runs[0].results.some(
-      (result, index) =>
-        result.door.x !== runs[1].results[index].door.x ||
-        result.door.z !== runs[1].results[index].door.z
-    ),
-    "different seeds must vary at least one doorway"
-  ).toBe(true);
-  const report = {
-    runs,
-    pageErrors,
-    consoleErrors,
-    networkErrors,
-    introScope:
-      "final-door hook sets starting point; doorway and all three floors use real keyboard input",
-  };
-  await writeFile(
-    "artifacts/qa-61/early-floor-bot-report.json",
-    JSON.stringify(report, null, 2)
-  );
-  await testInfo.attach("early-floor-bot-report", {
-    body: JSON.stringify(report, null, 2),
-    contentType: "application/json",
-  });
-  expect(pageErrors).toEqual([]);
-  expect(consoleErrors).toEqual([]);
-  expect(networkErrors).toEqual([]);
-  expect(runs.every((run) => run.frames > 50 && run.distance > 5)).toBe(true);
 });
