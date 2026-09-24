@@ -548,6 +548,7 @@ export class BootScene {
     this._chapterTwoStarted = false;
     this._clearMovement();
     this._spatial.reset();
+    getElement("#os-progress-ts", HTMLElement).style.color = "";
     this._activeChoice = 0;
     getElement("#os-aside-ts", HTMLElement).textContent = "";
     getElement("#os-name-input-ts", HTMLInputElement).value = "";
@@ -877,6 +878,9 @@ export class BootScene {
     this._lastThreadName = ["Light", "Shadow", "Ambition"][index] ?? "Light";
     this._spatial.commitChoice(index);
     this._spatial.setPlayerStage(this._answersCommitted);
+    const playerColor = `#${this._spatial.getPlayerColor().toString(16).padStart(6, "0")}`;
+    getElement("#os-progress-ts", HTMLElement).style.color = playerColor;
+    if (this._root) this._root.dataset.osPlayerColorTs = playerColor;
     this._spatial.archive(question.choices[index].text, question.era, index);
     this._audio.choose(index);
     this._audio.dreamweaver(index);
@@ -1198,7 +1202,7 @@ export class BootScene {
       );
       if (!this._chapterTwoStarted && elapsedMs >= crossingMs) {
         this._chapterTwoStarted = true;
-        this._chapterTwo.start(this._lastThreadName);
+        this._chapterTwo.start(this._lastThreadName, this._spatial.getPlayerColor());
       }
     }
   }

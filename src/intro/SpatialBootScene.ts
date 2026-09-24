@@ -77,11 +77,11 @@ const GLYPHS: string =
 const ATLAS_COLUMNS: number = 16;
 const ATLAS_ROWS: number = 7;
 const GLYPH_CAPACITY: number = 256;
-// Owner order follows the Ghost .oml: Light, Shadow, Ambition.
-// Palette is lore, taken from the logo (official game docs index.md:12 —
-// "Hero (light blue), Ambition (red), Shadow (yellow)"): Light is blue-white,
-// Shadow is gold-amber, Ambition is crimson. The last two were swapped here.
-const INK: number[] = [0xdcefff, 0xe7b45a, 0xff6478];
+// Ghost OML owns choice order; the authored .omd personas own each color.
+// https://github.com/jessenaiman/omega-alpha-spiral/tree/main/src/dialogue
+const INK: number[] = (["light", "shadow", "ambition"] as const).map(
+  (id) => Number.parseInt(PROFILES[id].color.slice(1), 16)
+);
 const BACK_INK: number[] = [0x395057, 0x4a3510, 0x050103];
 const VOICE_NAMES: string[] = [
   "LIGHT // WITNESS",
@@ -1091,6 +1091,10 @@ export class SpatialBootScene {
   public getPlayerPosition(): { x: number; y: number; z: number } {
     const position: Vector3 = this._player.position;
     return { x: position.x, y: position.y, z: position.z + this._stationDepth };
+  }
+
+  public getPlayerColor(): number {
+    return this._playerCore?.material.color.getHex() ?? 0xbfd5df;
   }
 
   public getChoiceTargets(): Array<{ x: number; y: number; z: number }> {

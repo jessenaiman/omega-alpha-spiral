@@ -47,6 +47,8 @@ export class ChapterTwoScene {
     120
   );
   private _hero: Group = new Group();
+  private _heroBody: Mesh<BoxGeometry, MeshStandardMaterial> | null = null;
+  private _heroColor: number = 0xcbd7df;
   private _monster: Group = new Group();
   private _door: Group = new Group();
   private _chest: Group = new Group();
@@ -94,7 +96,7 @@ export class ChapterTwoScene {
     floor.position.y = -0.2;
     this._floorMesh = floor;
     this._scene.add(floor);
-    this._box(this._hero, 0, 0.8, 0, 0.7, 1, 0.45, 0xcbd7df);
+    this._heroBody = this._box(this._hero, 0, 0.8, 0, 0.7, 1, 0.45, this._heroColor);
     this._box(this._hero, 0, 1.6, 0, 0.5, 0.5, 0.5, 0xebd6b3);
     this._box(this._hero, -0.21, 0.2, 0, 0.24, 0.4, 0.3, 0x6b7c91);
     this._box(this._hero, 0.21, 0.2, 0, 0.24, 0.4, 0.3, 0x6b7c91);
@@ -272,6 +274,7 @@ export class ChapterTwoScene {
             framesAdvanced: this._world.framesAdvanced,
             distanceTravelled: this._world.distanceTravelled,
             thread: this._world.thread,
+            playerColor: this._heroColor,
             guide: this._world.guide,
             choices: this._world.choices.map((choice) => ({ ...choice })),
             variationSeed: this._variationSeed,
@@ -305,7 +308,9 @@ export class ChapterTwoScene {
     return node;
   }
 
-  public start(thread: string): void {
+  public start(thread: string, playerColor: number = this._heroColor): void {
+    this._heroColor = playerColor;
+    this._heroBody?.material.color.setHex(playerColor);
     if (this._middle) {
       this._scene.remove(this._middle.group);
       this._middle.dispose();
