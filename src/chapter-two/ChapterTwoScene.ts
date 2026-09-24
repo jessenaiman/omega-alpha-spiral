@@ -5,6 +5,7 @@ import {
   CanvasTexture,
   Color,
   DirectionalLight,
+  Fog,
   Group,
   Mesh,
   MeshStandardMaterial,
@@ -19,7 +20,11 @@ import {
 } from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { WalkField } from "./WalkField";
+import { MiddleFloorRuntime, type RecruitGuide } from "./floors/MiddleFloorRuntime";
+import { LateFloorRuntime } from "./floors/LateFloorRuntime";
+import { FLOOR_7_TOWN } from "./floors/late-floor-7-town";
 import { ECHO_ROOMS } from "./rooms";
+import { createRng } from "../core/random";
 import "./styles.css";
 
 const FIELD_SIZE: number = 48;
@@ -41,7 +46,12 @@ export class ChapterTwoScene {
   private _hero: Group = new Group();
   private _monster: Group = new Group();
   private _door: Group = new Group();
+  private _chest: Group = new Group();
   private _roomKit: Group = new Group();
+  private _middle: MiddleFloorRuntime | null = null;
+  private _late: LateFloorRuntime | null = null;
+  private _floorMesh: Mesh | null = null;
+  private _handoffDelay: number = -1;
   private _marker: Mesh<BoxGeometry, MeshStandardMaterial> = new Mesh(
     new BoxGeometry(2.9, 0.06, 2.9),
     new MeshStandardMaterial({ color: 0xe8d393, emissive: 0x493512 })
@@ -52,6 +62,9 @@ export class ChapterTwoScene {
   private _root: HTMLElement | null = null;
   private _paused: boolean = false;
   private _lastUi: string = "";
+  private _effectClock: number = 0;
+  private _fallenFlash: number = 0;
+  private _lastEarlyPhase: string = "exploring";
   private _questionLabel: Sprite | null = null;
   private _textures: CanvasTexture[] = [];
   private _target: Vector3 = new Vector3();
@@ -62,6 +75,7 @@ export class ChapterTwoScene {
   });
   private _thresholdPreview: WebGLRenderTarget | null = null;
   private _destroyed: boolean = false;
+  private _variationSeed: number = 0;
 
   public init(root: HTMLElement, debug: boolean): void {
     this._root = root;
@@ -75,6 +89,7 @@ export class ChapterTwoScene {
       this._floorMaterial
     );
     floor.position.y = -0.2;
+    this._floorMesh = floor;
     this._scene.add(floor);
     this._box(this._hero, 0, 0.8, 0, 0.7, 1, 0.45, 0xcbd7df);
     this._box(this._hero, 0, 1.6, 0, 0.5, 0.5, 0.5, 0xebd6b3);
@@ -114,26 +129,26 @@ export class ChapterTwoScene {
     this._box(this._monster, 0.5, 1.8, 0, 0.3, 0.8, 0.35, 0xd7c4b0);
     this._monster.add(this._label("M  MONSTER", 0, 4.6, 0, 4));
     this._scene.add(this._monster);
-    const chest: Group = new Group();
-    chest.position.x = 8;
-    this._box(chest, 0, 0.6, 0, 2, 1.2, 1.5, 0x947951);
-    this._box(chest, 0, 1.3, 0, 2.1, 0.28, 1.6, 0xd4b275);
-    chest.add(this._label("C  CHEST", 0, 4.6, 0, 4));
-    this._scene.add(chest, this._marker);
+    this._chest.position.x = 8;
+    this._box(this._chest, 0, 0.6, 0, 2, 1.2, 1.5, 0x947951);
+    this._box(this._chest, 0, 1.3, 0, 2.1, 0.28, 1.6, 0xd4b275);
+    this._chest.add(this._label("C  CHEST", 0, 4.6, 0, 4));
+    this._scene.add(this._chest, this._marker);
     this._scene.add(this._roomKit);
     this._buildRoomKit(0);
     this._hud = document.createElement("section");
     this._hud.className = "echo-hud";
     this._hud.hidden = true;
     this._hud.setAttribute("aria-label", "Echo chamber gameplay");
-    this._hud.innerHTML = `<header><strong id="echo-title"></strong><span>WASD / arrows · E interact · Esc pause · R restart</span><button id="echo-pause" type="button">Pause</button><button id="echo-restart" type="button">Restart rooms</button></header><section class="echo-prompt"><p id="echo-copy" aria-live="polite"></p><pre id="echo-script" aria-label="Next floor script" hidden></pre><form id="echo-form" hidden><label for="echo-answer">Your answer</label><input id="echo-answer" name="answer" required maxlength="240" autocomplete="off"><button type="submit">Answer</button></form><button id="echo-interact" type="button">E · Interact</button><button id="echo-next" type="button" hidden>Continue</button></section>`;
+    this._hud.innerHTML = `<header><strong id="echo-title"></strong><span>WASD / arrows · E interact · Esc pause · R restart</span><button id="echo-pause" type="button">Pause</button><button id="echo-restart" type="button">Restart journey</button></header><section class="echo-prompt"><p id="echo-copy" aria-live="polite"></p><pre id="echo-script" aria-label="Next floor script" hidden></pre><form id="echo-form" hidden><label for="echo-answer">Your answer</label><input id="echo-answer" name="answer" required maxlength="240" autocomplete="off"><button type="submit">Answer</button></form><button id="echo-interact" type="button">E · Interact</button><button id="echo-next" type="button" hidden>Continue</button><button id="echo-hit" type="button" hidden>Space · Hit</button><button id="echo-run" type="button" hidden>Shift · Run</button><div id="echo-recruits" hidden><span>Choose whose companion recommendation to follow:</span><button type="button" data-recruit="Light">1 · Light</button><button type="button" data-recruit="Shadow">2 · Shadow</button><button type="button" data-recruit="Ambition">3 · Ambition</button></div><div id="echo-routes" hidden><span>Choose an escape idea at the plaza:</span><button type="button" data-route="exit-boulevard">1 · Together</button><button type="button" data-route="exit-alleys">2 · Slip through</button><button type="button" data-route="exit-core">3 · Break the lock</button></div></section>`;
     root.append(this._hud);
     const signal: AbortSignal = this._abort.signal;
     this._element("echo-interact").addEventListener(
       "click",
       (): void => {
         if (!this.active || this._paused) return;
-        this._world.interact();
+        if (this._late) this._late.interact();
+        else if (!this._middle) this._world.interact();
         this._keys.clear();
       },
       { signal }
@@ -147,6 +162,33 @@ export class ChapterTwoScene {
       },
       { signal }
     );
+    this._element("echo-hit").addEventListener("click", (): void => {
+      if (!this.active || this._paused) return;
+      void this._middle?.unlockAudio();
+      this._middle?.hit();
+      this._late?.hit();
+    }, { signal });
+    this._element("echo-run").addEventListener("click", (): void => {
+      if (!this.active || this._paused) return;
+      void this._middle?.unlockAudio();
+      this._middle?.run(this._movementAxes());
+    }, { signal });
+    this._element("echo-recruits").addEventListener("click", (event: Event): void => {
+      if (!this.active || this._paused || !this._middle) return;
+      const target = event.target;
+      if (!(target instanceof HTMLButtonElement)) return;
+      const guide = target.dataset.recruit as RecruitGuide | undefined;
+      if (guide) this._middle.chooseRecruit(guide);
+    }, { signal });
+    this._element("echo-routes").addEventListener("click", (event: Event): void => {
+      if (!this.active || this._paused || !this._late) return;
+      const target = event.target;
+      if (!(target instanceof HTMLButtonElement)) return;
+      const route = target.dataset.route;
+      if (route === "exit-boulevard" || route === "exit-alleys" || route === "exit-core") {
+        this._late.interact(route);
+      }
+    }, { signal });
     this._element("echo-pause").addEventListener(
       "click",
       (): void => {
@@ -209,6 +251,11 @@ export class ChapterTwoScene {
             thread: this._world.thread,
             guide: this._world.guide,
             choices: this._world.choices.map((choice) => ({ ...choice })),
+            variationSeed: this._variationSeed,
+            objects: this._world.activeRoom.objects.map(({ kind, x, z }) => ({ kind, x, z })),
+            nearest: this._world.nearest?.kind ?? null,
+            routes: this._world.activeRoom.layout?.routes ?? this._world.activeRoom.routes ?? null,
+            blocks: this._world.activeRoom.blocks ?? [],
             paused: this._paused,
           }),
         },
@@ -229,14 +276,55 @@ export class ChapterTwoScene {
   }
 
   public start(thread: string): void {
-    this._world.start(thread);
+    if (this._middle) {
+      this._scene.remove(this._middle.group);
+      this._middle.dispose();
+      this._middle = null;
+    }
+    if (this._late) {
+      this._scene.remove(this._late.group);
+      this._late.dispose();
+      this._late = null;
+    }
+    this._roomKit.visible = true;
+    this._door.visible = true;
+    this._monster.visible = true;
+    this._chest.visible = true;
+    if (this._floorMesh) this._floorMesh.visible = true;
+    this._scene.background = new Color(0x070e19);
+    this._scene.fog = null;
+    this._scene.visible = true;
+    this._handoffDelay = -1;
+    this._variationSeed = this._journeyVariationSeed();
+    this._world.start(thread, this._variationSeed);
     this.active = true;
     this._paused = false;
     this._keys.clear();
     this._lastUi = "";
+    this._effectClock = 0;
+    this._fallenFlash = 0;
+    this._lastEarlyPhase = "exploring";
+    this._hero.scale.setScalar(1);
     this._input().value = "";
     if (this._hud) this._hud.hidden = false;
     if (this._root) this._root.dataset.chapter = "2";
+  }
+
+  private _journeyVariationSeed(): number {
+    const requested = new URLSearchParams(globalThis.location.search).get("seed");
+    if (requested !== null) {
+      const numeric = Number(requested);
+      return requested.trim() !== "" && Number.isSafeInteger(numeric)
+        ? numeric
+        : createRng(requested).int(0x7fffffff);
+    }
+    try {
+      const entropy = new Uint32Array(1);
+      globalThis.crypto.getRandomValues(entropy);
+      return entropy[0] ?? 0;
+    } catch {
+      return createRng(`${Date.now()}:${performance.now()}`).int(0x7fffffff);
+    }
   }
 
   public stop(): void {
@@ -291,6 +379,45 @@ export class ChapterTwoScene {
       return;
     }
     if (event.target instanceof HTMLInputElement) return;
+    if (this._late) {
+      if ((key === " " || key === "space") && !event.repeat && !this._paused) {
+        event.preventDefault();
+        this._late.hit();
+        return;
+      }
+      if (key === "e" && !event.repeat && !this._paused) {
+        event.preventDefault();
+        this._late.interact();
+        return;
+      }
+      if (["1", "2", "3"].includes(key) && !event.repeat && !this._paused) {
+        const routes = ["exit-boulevard", "exit-alleys", "exit-core"] as const;
+        this._late.interact(routes[Number(key) - 1]);
+        return;
+      }
+    }
+    if (this._middle) {
+      if (key === " " || key === "space") {
+        event.preventDefault();
+        if (!event.repeat && !this._paused) {
+          void this._middle.unlockAudio();
+          this._middle.hit();
+        }
+        return;
+      }
+      if (key === "shift") {
+        if (!event.repeat && !this._paused) {
+          void this._middle.unlockAudio();
+          this._middle.run(this._movementAxes());
+        }
+        return;
+      }
+      if (["1", "2", "3"].includes(key) && !event.repeat && !this._paused) {
+        const guide: RecruitGuide = (["Light", "Shadow", "Ambition"] as const)[Number(key) - 1];
+        this._middle.chooseRecruit(guide);
+        return;
+      }
+    }
     if (
       [
         "w",
@@ -308,11 +435,9 @@ export class ChapterTwoScene {
     }
     if (event.repeat) return;
     if (key === "r") this.start(this._world.thread);
-    if (key === "e" && !this._paused) {
+    if (key === "e" && !this._paused && this._world.phase === "exploring") {
       event.preventDefault();
-      if (this._world.phase === "result" || this._world.phase === "rewriting")
-        this._world.continue();
-      else this._world.interact();
+      this._world.interact();
       this._keys.clear();
     }
   };
@@ -325,12 +450,39 @@ export class ChapterTwoScene {
     const axis = (positive: string[], negative: string[]): number =>
       Number(positive.some((key) => this._keys.has(key))) -
       Number(negative.some((key) => this._keys.has(key)));
+    if (this._late) {
+      this._updateLate(delta, renderer, reduced);
+      return;
+    }
+    if (this._middle) {
+      this._updateMiddle(delta, renderer, reduced);
+      return;
+    }
     if (!this._paused)
       this._world.update(
         delta,
         axis(["d", "arrowright"], ["a", "arrowleft"]),
         axis(["s", "arrowdown"], ["w", "arrowup"])
       );
+    if (this._lastEarlyPhase === "fighting" && this._world.phase === "result"
+      && this._world.choices[this._world.roomIndex]?.combatOutcome === "fallen") {
+      this._fallenFlash = 0.75;
+    }
+    this._lastEarlyPhase = this._world.phase;
+    const transition = this._world.consumeTransitionSignal();
+    if (transition?.complete) this._handoffDelay = 1.6;
+    if (this._handoffDelay >= 0 && !this._paused) {
+      this._handoffDelay -= Math.max(0, delta);
+      if (this._handoffDelay <= 0) {
+        this._enterMiddle();
+        this._updateMiddle(delta, renderer, reduced);
+        return;
+      }
+    }
+    this._fallenFlash = Math.max(0, this._fallenFlash - Math.max(0, delta));
+    this._hero.scale.setScalar(this._fallenFlash > 0
+      ? 1 - 0.55 * this._fallenFlash / 0.75
+      : 1);
     this._hero.position.set(this._world.player.x, 0, this._world.player.z);
     const moving: boolean =
       this._keys.size > 0 &&
@@ -365,6 +517,7 @@ export class ChapterTwoScene {
     this._camera.lookAt(this._target);
     this._camera.updateProjectionMatrix();
     this._refreshUi();
+    this._animateEarlyEffects(delta, reduced);
     // Reveal world labels when they clear the HUD, rather than clipping words
     // across the top of the screen during the initial approach.
     this._camera.updateMatrixWorld();
@@ -383,6 +536,161 @@ export class ChapterTwoScene {
     renderer.render(this._scene, this._camera);
   }
 
+  private _movementAxes(): { x: number; z: number } {
+    const axis = (positive: string[], negative: string[]): number =>
+      Number(positive.some((key) => this._keys.has(key))) -
+      Number(negative.some((key) => this._keys.has(key)));
+    return {
+      x: axis(["d", "arrowright"], ["a", "arrowleft"]),
+      z: axis(["s", "arrowdown"], ["w", "arrowup"]),
+    };
+  }
+
+  private _enterMiddle(): void {
+    const middle = new MiddleFloorRuntime();
+    middle.enterFloor(4);
+    this._middle = middle;
+    this._scene.add(middle.group);
+    this._roomKit.visible = false;
+    this._door.visible = false;
+    this._monster.visible = false;
+    this._chest.visible = false;
+    this._marker.visible = false;
+    if (this._questionLabel) this._questionLabel.visible = false;
+    if (this._floorMesh) this._floorMesh.visible = false;
+    this._scene.background = new Color(0x091322);
+    this._scene.fog = null;
+    this._scene.visible = true;
+    this._lastUi = "";
+  }
+
+  private _updateMiddle(delta: number, renderer: WebGLRenderer, reduced: boolean): void {
+    const middle = this._middle;
+    if (!middle) return;
+    if (!this._paused) middle.update(delta * 1000, this._movementAxes());
+    const next = middle.transitionSignal;
+    if (next === 7) {
+      middle.consumeTransitionSignal();
+      this._enterLate();
+      this._updateLate(delta, renderer, reduced);
+      return;
+    }
+    if (next === 5 || next === 6) {
+      middle.consumeTransitionSignal();
+      middle.enterFloor(next);
+      this._scene.fog = next === 6 ? new Fog(0x091322, 42, 78) : null;
+      this._lastUi = "";
+    }
+    const player = middle.playerPosition;
+    this._hero.position.set(player.x, 0, player.z);
+    this._hero.rotation.z = !reduced && !this._paused && this._keys.size > 0
+      ? Math.sin(performance.now() * 0.012) * 0.05
+      : 0;
+    const aspect = innerWidth / innerHeight;
+    const halfHeight = Math.max(11, 14 / aspect);
+    this._camera.left = -halfHeight * aspect;
+    this._camera.right = halfHeight * aspect;
+    this._camera.top = halfHeight;
+    this._camera.bottom = -halfHeight;
+    this._target.set(player.x * 0.6, 0, player.z - 3);
+    this._camera.position.set(this._target.x, 23, this._target.z + 23);
+    this._camera.lookAt(this._target);
+    this._camera.updateProjectionMatrix();
+    const status = middle.status;
+    if (status) {
+      const key = `${status.floor}:${status.encounterPhase}:${status.playerHealth}:${status.nearOffer}:${status.recruitChoice}:${status.objective}:${this._paused}`;
+      if (key !== this._lastUi) {
+        this._lastUi = key;
+        this._element("echo-title").textContent = `FLOOR ${status.floor} — ${status.title.toUpperCase()}`;
+        this._element("echo-copy").textContent = this._paused ? "Paused"
+          : `${status.objective}${status.playerHealth === null ? "" : `  HP ${status.playerHealth}/${status.playerMaxHealth}`}`;
+        this._element("echo-form").hidden = true;
+        this._element("echo-script").hidden = true;
+        this._element("echo-next").hidden = true;
+        this._element("echo-interact").hidden = true;
+        this._element("echo-hit").hidden = status.encounterPhase !== "active" || this._paused;
+        this._element("echo-run").hidden = status.encounterPhase !== "active" || this._paused;
+        this._element("echo-recruits").hidden = !status.nearOffer || this._paused;
+        this._element("echo-pause").textContent = this._paused ? "Resume" : "Pause";
+      }
+    }
+    renderer.render(this._scene, this._camera);
+  }
+
+  private _enterLate(): void {
+    const recruitChoices = { ...(this._middle?.recruitChoices ?? {}) };
+    if (this._middle) {
+      this._scene.remove(this._middle.group);
+      this._middle.dispose();
+      this._middle = null;
+    }
+    const late = new LateFloorRuntime(recruitChoices);
+    late.enterFloor(7);
+    this._late = late;
+    this._scene.add(late.group);
+    this._roomKit.visible = false;
+    this._door.visible = false;
+    this._monster.visible = false;
+    this._chest.visible = false;
+    this._marker.visible = false;
+    if (this._questionLabel) this._questionLabel.visible = false;
+    if (this._floorMesh) this._floorMesh.visible = false;
+    this._scene.background = new Color(0x10202d);
+    this._scene.fog = null;
+    this._scene.visible = true;
+    this._lastUi = "";
+  }
+
+  private _updateLate(delta: number, renderer: WebGLRenderer, reduced: boolean): void {
+    const late = this._late;
+    if (!late) return;
+    if (!this._paused) late.update(delta, this._movementAxes(), reduced);
+    const transition = late.consumeTransitionSignal();
+    if (transition === 8) {
+      late.enterFloor(8);
+      this._scene.background = new Color(0x0e1728);
+      this._lastUi = "";
+    }
+    const player = late.playerPosition;
+    this._hero.position.set(player.x, 0, player.z);
+    this._hero.rotation.z = !reduced && !this._paused && this._keys.size > 0
+      ? Math.sin(performance.now() * 0.012) * 0.05
+      : 0;
+    const aspect = innerWidth / innerHeight;
+    const halfHeight = Math.max(11, 14 / aspect);
+    this._camera.left = -halfHeight * aspect;
+    this._camera.right = halfHeight * aspect;
+    this._camera.top = halfHeight;
+    this._camera.bottom = -halfHeight;
+    this._target.set(player.x * 0.6, 0, player.z - 3);
+    this._camera.position.set(this._target.x, 23, this._target.z + 23);
+    this._camera.lookAt(this._target);
+    this._camera.updateProjectionMatrix();
+    const status = late.status;
+    this._element("echo-title").textContent = status.floor === 7
+      ? "FLOOR 7 — RECYCLED TOWN"
+      : "FLOOR 8 — HEALING CORE";
+    this._element("echo-copy").textContent = this._paused ? "Paused"
+      : `${status.objective}. Party ${status.partySize}/4. Dreamweavers ${status.gatheredDreamweavers.length}/3.${status.floor === 7 ? ` Collector pressure ${status.collectorPressure.toFixed(1)}` : ""}`;
+    this._element("echo-form").hidden = true;
+    this._element("echo-script").hidden = true;
+    this._element("echo-next").hidden = true;
+    this._element("echo-recruits").hidden = true;
+    this._element("echo-run").hidden = true;
+    this._element("echo-hit").hidden = status.floor !== 7 || this._paused;
+    const nearDreamweaver = status.floor === 7 && FLOOR_7_TOWN.landmarks.some((landmark) =>
+      landmark.kind === "dreamweaver" &&
+      !status.gatheredDreamweavers.some((guide) => landmark.id === `dw-${guide.toLowerCase()}`) &&
+      Math.hypot(player.x - landmark.position.x, player.z - landmark.position.z) <= 3
+    );
+    this._element("echo-interact").hidden = !nearDreamweaver || this._paused;
+    const plaza = FLOOR_7_TOWN.routes[0].from;
+    const nearPlaza = Math.hypot(player.x - plaza.x, player.z - plaza.z) <= 4.5;
+    this._element("echo-routes").hidden = status.phase !== "ready-to-choose" || !nearPlaza || this._paused;
+    this._element("echo-pause").textContent = this._paused ? "Resume" : "Pause";
+    renderer.render(this._scene, this._camera);
+  }
+
   private _refreshUi(): void {
     const world: WalkField = this._world;
     const key: string = `${world.roomIndex}:${world.phase}:${world.nearest?.kind}:${this._paused}`;
@@ -391,24 +699,31 @@ export class ChapterTwoScene {
       this._lastUi.split(":")[0] !== String(world.roomIndex);
     this._lastUi = key;
     this._element("echo-title").textContent =
-      `ECHO CHAMBER / ${world.roomIndex + 1} — ${ECHO_ROOMS[world.roomIndex].owner.toUpperCase()}`;
+      `FLOOR ${world.roomIndex + 1} — ${world.activeRoom.owner.toUpperCase()}`;
     this._element("echo-copy").textContent = this._paused
       ? "Paused"
       : world.phase === "rewriting"
         ? "Floor ended. Next script ready."
         : world.phase === "complete"
           ? `${world.guide}: “I’m coming with you. Don’t lose me this time.”`
-          : (world.selected?.text ??
-            (world.nearest
-              ? `E · ${world.nearest.kind}`
-              : "Approach a door, monster, or chest. Choose one path through this room."));
+          : world.phase === "result" && world.selected
+            ? world.choices[world.roomIndex]?.combatOutcome === "fallen"
+              ? "You fell. The room remembers your choice. Walk through its exit."
+              : `${world.selected.text}  Follow this route through its exit.`
+            : (world.selected?.text ??
+              (world.nearest
+                ? `E · ${world.nearest.kind}`
+                : "Approach a door, monster, or chest. Choose one path through this room."));
     const script: HTMLElement = this._element("echo-script");
     script.hidden = world.phase !== "rewriting" || this._paused;
     script.textContent = world.phase === "rewriting" ? world.scriptPreview : "";
     this._element("echo-form").hidden =
       world.phase !== "prompt" || this._paused;
-    this._element("echo-next").hidden =
-      !["result", "rewriting"].includes(world.phase) || this._paused;
+    this._element("echo-next").hidden = true;
+    this._element("echo-hit").hidden = true;
+    this._element("echo-run").hidden = true;
+    this._element("echo-recruits").hidden = true;
+    this._element("echo-routes").hidden = true;
     this._element("echo-next").textContent =
       world.phase === "rewriting" ? "Reboot into next floor" : "Continue";
     this._element("echo-interact").hidden =
@@ -420,7 +735,14 @@ export class ChapterTwoScene {
     if (world.phase === "prompt" && !this._paused) this._input().focus();
     if (roomChanged) {
       this._buildRoomKit(world.roomIndex);
-      this._floorMaterial.color.setHex(PALETTE[world.roomIndex]);
+      this._floorMaterial.color.setHex(PALETTE[world.roomIndex] ?? PALETTE[0]);
+      const objects = world.activeRoom.objects;
+      const door = objects.find((object) => object.kind === "door");
+      const monster = objects.find((object) => object.kind === "monster");
+      const chest = objects.find((object) => object.kind === "chest");
+      if (door) this._door.position.set(door.x, 0, door.z);
+      if (monster) this._monster.position.set(monster.x, 0, monster.z);
+      if (chest) this._chest.position.set(chest.x, 0, chest.z);
       if (this._questionLabel) {
         this._scene.remove(this._questionLabel);
         const oldTexture = this._questionLabel.material.map;
@@ -431,10 +753,10 @@ export class ChapterTwoScene {
         this._questionLabel.material.dispose();
       }
       this._questionLabel = this._label(
-        ECHO_ROOMS[world.roomIndex].objects[0].text,
-        -8,
+        world.activeRoom.objects[0].text,
+        world.activeRoom.objects[0].x,
         5.8,
-        0,
+        world.activeRoom.objects[0].z,
         7
       );
       this._scene.add(this._questionLabel);
@@ -444,13 +766,58 @@ export class ChapterTwoScene {
   private _buildRoomKit(roomIndex: number): void {
     for (const child of [...this._roomKit.children]) {
       this._roomKit.remove(child);
-      if (child instanceof Mesh) {
-        child.geometry.dispose();
-        if (child.material instanceof MeshStandardMaterial)
-          child.material.dispose();
-      }
+      child.traverse((object): void => {
+        if (!(object instanceof Mesh)) return;
+        object.geometry.dispose();
+        for (const material of Array.isArray(object.material) ? object.material : [object.material]) material.dispose();
+      });
     }
-    if (roomIndex !== 0) return;
+    if (roomIndex > 0) {
+      const room = this._world.activeRoom;
+      const layout = room.layout;
+      if (!layout) return;
+      const routeColor = roomIndex === 1 ? 0x477fc4 : 0x9e78d1;
+      const blockColor = roomIndex === 1 ? 0x2a4568 : 0x51436d;
+      for (const route of Object.values(layout.routes)) {
+        for (let index = 1; index < route.length; index++) {
+          const from = route[index - 1];
+          const to = route[index];
+          const dx = to.x - from.x;
+          const dz = to.z - from.z;
+          const length = Math.hypot(dx, dz);
+          const segment = new Mesh(
+            new BoxGeometry(0.14, 0.035, length),
+            new MeshStandardMaterial({ color: routeColor, emissive: routeColor, emissiveIntensity: 0.18 })
+          );
+          segment.position.set((from.x + to.x) / 2, 0.025, (from.z + to.z) / 2);
+          segment.rotation.y = Math.atan2(dx, dz);
+          segment.userData.effect = "route";
+          this._roomKit.add(segment);
+        }
+      }
+      for (const block of room.blocks ?? []) {
+        const stack = new Group();
+        stack.position.set(block.x, 0, block.z);
+        stack.rotation.y = block.rotationRadians ?? 0;
+        this._box(stack, 0, 0.48, 0, block.width, 0.96, block.depth, blockColor);
+        const cap = this._box(stack, 0, 0.99, 0, block.width, 0.08, block.depth, routeColor);
+        cap.userData.effect = roomIndex === 1 ? "syntax" : "step";
+        cap.userData.step = this._roomKit.children.length;
+        cap.material.emissive.setHex(routeColor);
+        this._roomKit.add(stack);
+        if (roomIndex === 1 && this._roomKit.children.length % 2 === 0) {
+          const ash = this._box(this._roomKit, block.x + 0.5, 1.3, block.z, 0.14, 0.14, 0.14, 0xe0a65f);
+          ash.userData.effect = "ash";
+          ash.userData.baseY = 1.3;
+        }
+      }
+      for (const exit of layout.exits) {
+        const pad = this._box(this._roomKit, exit.position.x, 0.06, exit.position.z, 2.5, 0.12, 2.5, 0xa27955);
+        pad.userData.effect = "exit";
+        pad.userData.kind = exit.kind;
+      }
+      return;
+    }
     // Three straight Atari-like lanes. The raised bars use the same rectangles as movement collision.
     for (const x of [-8, 0, 8]) {
       this._box(this._roomKit, x, 0.015, 5.5, 4.7, 0.035, 13, 0x153550);
@@ -479,11 +846,41 @@ export class ChapterTwoScene {
         0x5baed4
       );
     }
+    for (const object of this._world.activeRoom.objects) {
+      const pad = this._box(this._roomKit, object.x, 0.035, object.z, 2.5, 0.07, 2.5, 0xb78d55);
+      pad.userData.effect = "exit";
+      pad.userData.kind = object.kind;
+      if (object.kind !== "door") {
+        this._box(this._roomKit, object.x - 1.5, 1.3, object.z, 0.14, 2.6, 0.14, 0x6f8cb1);
+        this._box(this._roomKit, object.x + 1.5, 1.3, object.z, 0.14, 2.6, 0.14, 0x6f8cb1);
+      }
+    }
     this._box(this._roomKit, 0, 0.035, 12, 22, 0.07, 0.12, 0xe09355);
     for (const x of [-16, 16])
       for (const z of [-4, 2, 8, 14]) {
         this._box(this._roomKit, x, 0.4, z, 0.75, 0.8, 0.75, 0x245879);
       }
+  }
+
+  private _animateEarlyEffects(delta: number, reduced: boolean): void {
+    this._effectClock += Math.min(Math.max(delta, 0), 0.1);
+    const room = this._world.roomIndex;
+    const selected = this._world.selected?.kind;
+    this._roomKit.traverse((object): void => {
+      if (!(object instanceof Mesh) || !(object.material instanceof MeshStandardMaterial)) return;
+      const effect = object.userData.effect;
+      if (!effect) return;
+      const phase = this._effectClock;
+      if (effect === "route") object.material.emissiveIntensity = reduced ? 0.16 : 0.14 + 0.1 * (1 + Math.sin(phase * (room === 1 ? 3 : 2)));
+      if (effect === "syntax") object.material.emissiveIntensity = reduced ? 0.12 : 0.12 + 0.18 * (1 + Math.sin(phase * 7 + object.position.z));
+      if (effect === "step") object.material.emissiveIntensity = reduced ? 0.16 : 0.14 + 0.22 * (1 + Math.sin(phase * 5 - Number(object.userData.step) * 0.4));
+      if (effect === "ash") object.position.y = Number(object.userData.baseY) + (reduced ? 0 : 0.18 * Math.sin(phase * 4 + object.position.x));
+      if (effect === "exit") {
+        const chosen = selected === object.userData.kind && this._world.phase === "result";
+        object.material.emissive.setHex(chosen ? 0xffbc6b : 0x503019);
+        object.material.emissiveIntensity = chosen ? (reduced ? 0.4 : 0.3 + 0.25 * (1 + Math.sin(phase * 5))) : 0.12;
+      }
+    });
   }
 
   private _box(
@@ -495,13 +892,14 @@ export class ChapterTwoScene {
     height: number,
     depth: number,
     color: number
-  ): void {
-    const mesh: Mesh = new Mesh(
+  ): Mesh<BoxGeometry, MeshStandardMaterial> {
+    const mesh: Mesh<BoxGeometry, MeshStandardMaterial> = new Mesh(
       new BoxGeometry(width, height, depth),
       new MeshStandardMaterial({ color, roughness: 0.95 })
     );
     mesh.position.set(x, y, z);
     parent.add(mesh);
+    return mesh;
   }
 
   private _label(
@@ -549,6 +947,16 @@ export class ChapterTwoScene {
     this._abort.abort();
     this._hud?.remove();
     this._thresholdPreview?.dispose();
+    if (this._late) {
+      this._scene.remove(this._late.group);
+      this._late.dispose();
+      this._late = null;
+    }
+    if (this._middle) {
+      this._scene.remove(this._middle.group);
+      this._middle.dispose();
+      this._middle = null;
+    }
     this._scene.traverse((object): void => {
       if (object instanceof Mesh) {
         object.geometry.dispose();

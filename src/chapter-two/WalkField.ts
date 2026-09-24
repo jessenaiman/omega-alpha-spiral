@@ -1,9 +1,11 @@
 import {
-  ECHO_ROOMS,
+  createEchoRooms,
   type Guide,
+  type EchoRoom,
   type ObjectKind,
   type RoomObject,
 } from "./rooms";
+import type { EarlyFloorLayout } from "./floors/early-layout";
 
 const FIELD_BOUNDARY: number = 22;
 const WALK_SPEED: number = 6;
@@ -13,6 +15,7 @@ const REACH: number = 3;
 const SOLID_RADIUS: number = 1.4;
 const PLAYER_RADIUS: number = 0.45;
 const AUTO_FIGHT_SECONDS: number = 1.2;
+const EXIT_CROSS_RADIUS: number = 0.8;
 
 export interface FieldPosition {
   x: number;
@@ -24,11 +27,24 @@ export interface EchoChoice {
   alignment: Guide;
   answer: string;
   points: number;
+  combatOutcome?: "fallen";
+}
+
+export interface RoomTransitionSignal {
+  /** Zero-based room indices. The final signal points to the next floor index. */
+  fromRoomIndex: number;
+  toRoomIndex: number;
+  object: ObjectKind;
+  complete: boolean;
 }
 
 /** Small graybox movement model; renderer and keyboard both consume this state. */
 export class WalkField {
-  public readonly boundary: number = FIELD_BOUNDARY;
+  private _rooms: EchoRoom[] = createEchoRooms();
+  private readonly _transitionSignals: RoomTransitionSignal[] = [];
+  public get boundary(): number {
+    return FIELD_BOUNDARY;
+  }
   public player: FieldPosition = { x: 0, z: START_Z };
   public thread: string = "";
   public framesAdvanced: number = 0;
@@ -42,15 +58,29 @@ export class WalkField {
   public guide: Guide | null = null;
   private _fightRemaining: number = 0;
 
+  public get activeRoom(): EchoRoom {
+    return this._rooms[this.roomIndex];
+  }
+  public get layout(): EarlyFloorLayout | null {
+    return this.activeRoom.layout ?? null;
+  }
+  public get transitionSignal(): RoomTransitionSignal | null {
+    return this._transitionSignals[0] ?? null;
+  }
+
+  public consumeTransitionSignal(): RoomTransitionSignal | null {
+    return this._transitionSignals.shift() ?? null;
+  }
+
   public get objects(): RoomObject[] {
-    return ECHO_ROOMS[this.roomIndex].objects;
+    return this.activeRoom.objects;
   }
   public get scriptRevision(): number {
     return this.roomIndex + 1;
   }
   public get scriptPreview(): string {
     const index: number = this.roomIndex + (this.phase === "rewriting" ? 1 : 0);
-    const room = ECHO_ROOMS[index];
+    const room = this._rooms[index];
     // ponytail: in-world shell-shaped text, never evaluated. The trusted room
     // data below is also what the runtime applies; no second scripting engine.
     return [
@@ -73,8 +103,11 @@ export class WalkField {
     );
   }
 
-  public start(thread: string): void {
-    this.player = { x: 0, z: START_Z };
+  public start(thread: string, variationSeed: number = 0): void {
+    this._rooms = createEchoRooms(variationSeed);
+    this.player = {
+      ...(this._rooms[0].heroStart ?? { x: 0, z: START_Z }),
+    };
     this.thread = thread;
     this.framesAdvanced = 0;
     this.distanceTravelled = 0;
@@ -84,6 +117,7 @@ export class WalkField {
     this.selected = null;
     this.guide = null;
     this._fightRemaining = 0;
+    this._transitionSignals.length = 0;
   }
 
   public update(delta: number, x: number, z: number): void {
@@ -91,9 +125,16 @@ export class WalkField {
     this.framesAdvanced += 1;
     if (this.phase === "fighting") {
       this._fightRemaining -= Math.min(delta, MAX_STEP);
-      if (this._fightRemaining <= 0) this._resolve("");
+      if (this._fightRemaining <= 0) {
+        const choice = this.choices[this.roomIndex];
+        if (choice?.object === "monster") choice.combatOutcome = "fallen";
+        this.phase = "result";
+      }
     }
-    if (this.phase !== "exploring") return;
+    if (
+      this.phase !== "exploring" &&
+      this.phase !== "result"
+    ) return;
     const length: number = Math.max(1, Math.hypot(x, z));
     const distance: number = Math.min(delta, MAX_STEP) * WALK_SPEED;
     const nextX: number = Math.max(
@@ -106,14 +147,26 @@ export class WalkField {
     );
     const clear = (px: number, pz: number): boolean =>
       this.objects.every(
-        (object: RoomObject): boolean =>
-          Math.hypot(object.x - px, object.z - pz) >= SOLID_RADIUS
+        (object: RoomObject): boolean => {
+          const isSelectedExit =
+            this.selected === object && this.choices.length > this.roomIndex;
+          return (
+            isSelectedExit ||
+            Math.hypot(object.x - px, object.z - pz) >= SOLID_RADIUS
+          );
+        }
       ) &&
-      (ECHO_ROOMS[this.roomIndex].blocks ?? []).every(
-        (block): boolean =>
-          Math.abs(px - block.x) >= block.width / 2 + PLAYER_RADIUS ||
-          Math.abs(pz - block.z) >= block.depth / 2 + PLAYER_RADIUS
-      );
+      (this.activeRoom.blocks ?? []).every((block): boolean => {
+        const dx = px - block.x;
+        const dz = pz - block.z;
+        const angle = block.rotationRadians ?? 0;
+        const localX = dx * Math.cos(angle) + dz * Math.sin(angle);
+        const localZ = -dx * Math.sin(angle) + dz * Math.cos(angle);
+        return (
+          Math.abs(localX) >= block.width / 2 + PLAYER_RADIUS ||
+          Math.abs(localZ) >= block.depth / 2 + PLAYER_RADIUS
+        );
+      });
     const allowedX: number = clear(nextX, this.player.z)
       ? nextX
       : this.player.x;
@@ -124,6 +177,17 @@ export class WalkField {
     );
     this.player.x = allowedX;
     this.player.z = allowedZ;
+    if (
+      this.phase === "result" &&
+      this.selected &&
+      this.choices.length > this.roomIndex &&
+      Math.hypot(
+        this.selected.x - this.player.x,
+        this.selected.z - this.player.z
+      ) <= EXIT_CROSS_RADIUS
+    ) {
+      this._crossSelectedExit();
+    }
   }
 
   public interact(): boolean {
@@ -135,8 +199,11 @@ export class WalkField {
         : this.selected.kind === "monster"
           ? "fighting"
           : "result";
-    if (this.selected.kind === "monster")
+    if (this.selected.kind === "monster") {
+      this._resolve("");
+      this.phase = "fighting";
       this._fightRemaining = AUTO_FIGHT_SECONDS;
+    }
     if (this.selected.kind === "chest") this._resolve("");
     return true;
   }
@@ -149,7 +216,7 @@ export class WalkField {
 
   private _resolve(answer: string): void {
     if (!this.selected || this.choices.length > this.roomIndex) return;
-    const owner: Guide = ECHO_ROOMS[this.roomIndex].owner;
+    const owner: Guide = this.activeRoom.owner;
     this.choices.push({
       room: owner,
       object: this.selected.kind,
@@ -161,23 +228,34 @@ export class WalkField {
   }
 
   public continue(): void {
-    if (this.phase === "rewriting") {
-      this.roomIndex += 1;
-      this.player = { x: 0, z: START_Z };
+    // Retained for older callers. Floor progress now requires crossing the chosen exit.
+  }
+
+  private _crossSelectedExit(): void {
+    if (!this.selected || this.choices.length <= this.roomIndex) return;
+    const fromRoomIndex = this.roomIndex;
+    const toRoomIndex = fromRoomIndex + 1;
+    const complete = toRoomIndex >= this._rooms.length;
+    this._transitionSignals.push({
+      fromRoomIndex,
+      toRoomIndex,
+      object: this.selected.kind,
+      complete,
+    });
+    if (!complete) {
+      this.roomIndex = toRoomIndex;
+      this.player = {
+        ...(this.activeRoom.heroStart ?? { x: 0, z: START_Z }),
+      };
       this.selected = null;
       this.phase = "exploring";
-      return;
-    }
-    if (this.phase !== "result") return;
-    if (this.roomIndex + 1 < ECHO_ROOMS.length) {
-      this.phase = "rewriting";
       return;
     }
     const totals: Record<Guide, number> = { Light: 0, Shadow: 0, Ambition: 0 };
     for (const choice of this.choices)
       totals[choice.alignment] += choice.points;
     const highest: number = Math.max(...Object.values(totals));
-    const tied: Guide[] = ECHO_ROOMS.map((room): Guide => room.owner).filter(
+    const tied: Guide[] = this._rooms.map((room): Guide => room.owner).filter(
       (id: Guide): boolean => totals[id] === highest
     );
     // Provisional deterministic tie rule: prefer the Stage 1 thread, then room order.

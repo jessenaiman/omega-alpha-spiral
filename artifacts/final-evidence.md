@@ -1,5 +1,16 @@
 # Omega Spiral review evidence
 
+## Eight-floor era journey — issue #61, targeted early-floor bot pass
+
+✅ The [design manifest](level-design/design-manifest.md) and [design scorecard](level-design/design-scorecard.md) record the owner-approved era order, early three-exit choices, combat introduction on Floors 4–6, varied Floor 7 town, and Floor 8 healing-core endpoint. New Floor 4, Floors 5–6, and Floor 7 concept images are design studies, not runtime captures.
+
+✅ Source review found the Floor 5 upper-index spur crossing a declared collider. The middle-floor author moved the obstacle and updated its visible art before integration. Early Monster defeat records a distinct fallen outcome and still permits progression in the state model. Floors 4–8 scene handoffs and varied Three.js town districts are present in source; this is static review only.
+
+✅ The [two-seed bot report](qa-61/early-floor-bot-report.json) records distinct door positions for Floors 1–3, real keyboard travel to each chosen exit, Shadow Monster `fallen`, and Floor 3 completion for seeds 17 and 42. The pass recorded zero page, console, or network errors; `npm.cmd run build` and the documented `npm.cmd run test:bot` command passed (2/2 bots). [Gameplay video](qa-61/seeded-exit-bot.webm), [Shadow action at seed 17](qa-61/shadow-action-seed-17.png), [Shadow action at seed 42](qa-61/shadow-action-seed-42.png), and [capture declaration](qa-61/capture-set.md) are current runtime artifacts. The `final-door` hook only positioned the two-seed bot at the intro threshold; it walked and interacted thereafter. Separately, the [full-route report](intro-bot-playtest-report.json) and [full-route video](qa-61/full-intro-to-floors-bot.webm) show a passing real-input run from Begin through the intro, three early floors, and restart (2,686 frames, 160.25 movement units, zero softlock windows).
+
+🔍 The inspected Shadow and Ambition frames show distinct diagonal and stepped forms, but camera framing leaves substantial empty black space and can push exits below the HUD or above the visible play area. Visual quality is not owner approved. The older root `artifacts/evidence.json` covers a separate intro review; no current canvas-inspector manifest check or Floors 4–8 gameplay pass is claimed.
+
+❌ Owner-run basic turn-on/visibility/access review, unscripted early-floor paths, Floors 4–8 runtime inspection, and a current visual score remain open. Historical evidence below cannot certify this journey.
 ## Floor One design integration — current review
 
 ✅ The owner-approved [sparse Stage 1 image](level-design/stage-1-atari-3d-starting-point.png) and [era progression sheet](level-design/era-progression-reference-draft.png) are the visual references. A new live Light room was seen in the browser at `http://127.0.0.1:5210/`: a lone hero, straight stacked walls, amber-slit pillars, and sparse code debris. This is a visual observation, not owner approval.
@@ -73,6 +84,9 @@ Real-input motion: [full bot playthrough](intro-flow-20260923-c/bot-playthrough.
 - The nine declared desktop/mobile canvas captures acknowledged their named states and were nonblank without console or page errors. The renderer was the hardware NVIDIA GTX 1660 D3D11, not a software fallback. [Manifest](evidence.json) checker passed all 30 declared/report artifacts.
 - Desktop final doorway: 250 calls, 10,399 triangles, 240 geometries, 9 textures, within the desktop starting budget. Mobile final doorway: 250 calls and 240 geometries, above its 150-call/200-geometry starting budget because the fragment door remains individually animatable.
 
+## Stage-era design review — 2026-09-24
+
+The owner identified a design gap: multiple historical graphics eras must be distinct in each stage before the town can recycle them. The [design manifest](level-design/design-manifest.md) now proposes an explicit per-floor technology ladder and source-asset lineage for Floor 7; the [scorecard](level-design/design-scorecard.md) marks Floors 4–6 and town visual inheritance as awaiting owner review. The [six-floor composition](level-design/era-progression-floors-1-6-proposal.png) and [focused Floors 4–6 era study](level-design/floors-4-6-era-vocabulary-proposal.png) are generated concepts, not runtime screenshots. Later source-only Floors 4–6 art passes added an instanced vault tile field, echo plinths, nearest-filter shelf fronts, banner/lamp forms, shallow shelf silhouettes, faceted vertex-color arches, a dithered observatory motif, and Floor-6-only distance fog. The existing project build passed after each pass. No new playable capture or checker run is claimed for these art passes.
 ## Remaining visual decisions
 
 The route camera now moves between questions, but the four station silhouettes still resemble one another. The faceless avatar grows but remains blocky. The portal interior is dark; the actual first playable stage is not yet legible through it. The next art pass should decide each station's constructed landmark, refine the figure and terminal materials, and make the level reveal readable without turning the early intro into a galaxy backdrop. The mobile door needs a static merged variant or another draw-call reduction before claiming the starting mobile budget. The typed name is stored by the intro; Chapter Two currently receives the last chosen thread.
