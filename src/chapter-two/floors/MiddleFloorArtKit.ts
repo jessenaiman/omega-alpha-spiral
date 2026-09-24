@@ -368,10 +368,16 @@ function addEraSetDressing(root: THREE.Group, layout: MiddleFloorLayout, mats: R
       root.add(sprite);
     }
   } else {
-    // Early PS1 observatory: perspective hoops and distant orbital fragments.
+    // Early PS1 observatory: shared low-poly arch geometry, with smaller
+    // distant orbital fragments preserving the open route silhouette.
+    const archGeometry = makeFacetedObservatoryArchGeometry();
+    const archMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff, vertexColors: true, flatShading: true, roughness: 0.9, metalness: 0.04 });
     for (const z of [-17, -7, 4, 15]) {
-      const arch = new THREE.Mesh(new THREE.TorusGeometry(12 + (z % 3), 0.18, 5, 18, Math.PI), mats.structure);
+      const arch = new THREE.Mesh(archGeometry, archMaterial);
+      const radiusScale = (12 + (z % 3)) / 12;
+      arch.scale.set(radiusScale, radiusScale, 1);
       arch.position.set(0, 4.3 + (z % 2) * 0.4, z);
+      arch.name = `observatory-faceted-arch:${z}`;
       root.add(arch);
       const marker = new THREE.Mesh(new THREE.OctahedronGeometry(0.7, 0), mats.glow);
       marker.position.set(z % 2 ? -15 : 15, 2.8, z);
@@ -385,12 +391,110 @@ function addEraSetDressing(root: THREE.Group, layout: MiddleFloorLayout, mats: R
     innerDial.position.set(-15, 0.09, 4);
     innerDial.rotation.x = Math.PI / 2;
     root.add(innerDial);
+    addObservatoryGroundMotif(root, layout);
     for (let i = 0; i < 9; i += 1) {
       const shard = new THREE.Mesh(new THREE.OctahedronGeometry(0.32 + (i % 3) * 0.12, 0), i % 2 ? mats.trim : mats.glow);
       shard.position.set(-18 + ((i * 9) % 36), 3.2 + (i % 3), -15 + ((i * 11) % 30));
       root.add(shard);
     }
   }
+}
+
+/** A single low-resolution, nearest-filter instrument graphic on clear floor. */
+function addObservatoryGroundMotif(root: THREE.Group, layout: MiddleFloorLayout): void {
+  const candidates = [
+    { x: layout.bounds.minX + 7, z: (layout.bounds.minZ + layout.bounds.maxZ) / 2 + 4 },
+    { x: layout.bounds.maxX - 7, z: (layout.bounds.minZ + layout.bounds.maxZ) / 2 + 4 },
+  ];
+  const point = candidates.find((candidate) =>
+    !isNearMiddleRoute(candidate, layout, 2.8) && !isInsideCollision(candidate, layout, 2.8));
+  if (!point) return;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = 32;
+  canvas.height = 32;
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error("Canvas 2D context unavailable for Floor 6 observatory motif");
+  context.clearRect(0, 0, 32, 32);
+  // Dithered octagonal instrument face and a four-point star map.
+  context.fillStyle = "#142844";
+  for (let y = 5; y < 27; y += 1) {
+    for (let x = 5; x < 27; x += 1) {
+      const dx = Math.abs(x - 16);
+      const dy = Math.abs(y - 16);
+      if (dx + dy < 19 && ((x + y) % 2 === 0 || dx < 3 || dy < 3)) context.fillRect(x, y, 1, 1);
+    }
+  }
+  context.fillStyle = "#73b6c8";
+  for (let x = 8; x <= 24; x += 4) context.fillRect(x, 7, 2, 1);
+  for (let y = 8; y <= 24; y += 4) context.fillRect(7, y, 1, 2);
+  context.fillRect(15, 9, 2, 14);
+  context.fillRect(9, 15, 14, 2);
+  context.fillStyle = "#f0c778";
+  context.fillRect(15, 13, 2, 6);
+  context.fillRect(13, 15, 6, 2);
+  context.fillStyle = "#8bd9de";
+  context.fillRect(22, 10, 2, 2);
+  context.fillRect(10, 21, 2, 2);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.magFilter = THREE.NearestFilter;
+  texture.minFilter = THREE.NearestFilter;
+  texture.generateMipmaps = false;
+  texture.colorSpace = THREE.SRGBColorSpace;
+  const material = new THREE.MeshBasicMaterial({ map: texture, transparent: true, depthWrite: false, side: THREE.DoubleSide });
+  const motif = new THREE.Mesh(new THREE.PlaneGeometry(5.2, 5.2), material);
+  motif.name = "observatory-dithered-floor-motif";
+  motif.rotation.x = -Math.PI / 2;
+  motif.position.set(point.x, -0.038, point.z);
+  root.add(motif);
+}
+
+/** Faceted arch band with per-face vertex colors; shared by all four ribs. */
+function makeFacetedObservatoryArchGeometry(): THREE.BufferGeometry {
+  const positions: number[] = [];
+  const colors: number[] = [];
+  const innerRadius = 11.55;
+  const outerRadius = 12;
+  const halfDepth = 0.2;
+  const segments = 10;
+  const facetColors = [0x394968, 0x56627c, 0x303d5b, 0x6b7183];
+  const pushTriangle = (a: THREE.Vector3, b: THREE.Vector3, c: THREE.Vector3, color: THREE.Color): void => {
+    for (const vertex of [a, b, c]) {
+      positions.push(vertex.x, vertex.y, vertex.z);
+      colors.push(color.r, color.g, color.b);
+    }
+  };
+  for (let i = 0; i < segments; i += 1) {
+    const a0 = (i / segments) * Math.PI;
+    const a1 = ((i + 1) / segments) * Math.PI;
+    const point = (radius: number, angle: number, z: number): THREE.Vector3 =>
+      new THREE.Vector3(Math.cos(angle) * radius, Math.sin(angle) * radius, z);
+    const frontInner0 = point(innerRadius, a0, halfDepth);
+    const frontInner1 = point(innerRadius, a1, halfDepth);
+    const frontOuter0 = point(outerRadius, a0, halfDepth);
+    const frontOuter1 = point(outerRadius, a1, halfDepth);
+    const backInner0 = point(innerRadius, a0, -halfDepth);
+    const backInner1 = point(innerRadius, a1, -halfDepth);
+    const backOuter0 = point(outerRadius, a0, -halfDepth);
+    const backOuter1 = point(outerRadius, a1, -halfDepth);
+    const color = new THREE.Color(facetColors[i % facetColors.length]!);
+    const addQuad = (a: THREE.Vector3, b: THREE.Vector3, c: THREE.Vector3, d: THREE.Vector3): void => {
+      pushTriangle(a, b, c, color);
+      pushTriangle(a, c, d, color);
+    };
+    addQuad(frontOuter0, frontOuter1, frontInner1, frontInner0);
+    addQuad(backOuter1, backOuter0, backInner0, backInner1);
+    addQuad(frontOuter0, backOuter0, backOuter1, frontOuter1);
+    addQuad(frontInner1, backInner1, backInner0, frontInner0);
+    addQuad(frontOuter1, backOuter1, backInner1, frontInner1);
+    addQuad(backOuter0, frontOuter0, frontInner0, backInner0);
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
+  geometry.computeVertexNormals();
+  return geometry;
 }
 
 /** Small 16-bit façade module shared by the archive's repeated shelves. */
@@ -558,7 +662,7 @@ function addEchoPlinths(root: THREE.Group, layout: MiddleFloorLayout, mats: Reco
   for (const point of candidates) {
     if (point.x < minX + 0.65 || point.x > maxX - 0.65 || point.z < minZ + 0.65 || point.z > maxZ - 0.65) continue;
     const overlapsEnemy = layout.encounter.enemies.some((enemy) => Math.hypot(point.x - enemy.spawn.x, point.z - enemy.spawn.z) < 2.4);
-    if (overlapsEnemy || isNearVaultRoute(point, layout, 2.4) || isInsideCollision(point, layout, 1.25)) continue;
+    if (overlapsEnemy || isNearMiddleRoute(point, layout, 2.4) || isInsideCollision(point, layout, 1.25)) continue;
     const plinth = form.clone(true);
     plinth.position.set(point.x, 0, point.z);
     plinth.name = `echo-plinth:${index++}`;
@@ -587,7 +691,7 @@ function makeEchoPlinth(mats: Record<string, THREE.MeshStandardMaterial>): THREE
   return plinth;
 }
 
-function isNearVaultRoute(point: FloorPoint, layout: MiddleFloorLayout, clearance: number): boolean {
+function isNearMiddleRoute(point: FloorPoint, layout: MiddleFloorLayout, clearance: number): boolean {
   for (const route of layout.routes) {
     for (let i = 0; i < route.points.length - 1; i += 1) {
       const a = route.points[i]!;

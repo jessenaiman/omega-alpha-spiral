@@ -5,6 +5,7 @@ import {
   CanvasTexture,
   Color,
   DirectionalLight,
+  Fog,
   Group,
   Mesh,
   MeshStandardMaterial,
@@ -291,6 +292,7 @@ export class ChapterTwoScene {
     this._chest.visible = true;
     if (this._floorMesh) this._floorMesh.visible = true;
     this._scene.background = new Color(0x070e19);
+    this._scene.fog = null;
     this._scene.visible = true;
     this._handoffDelay = -1;
     this._variationSeed = this._journeyVariationSeed();
@@ -557,6 +559,7 @@ export class ChapterTwoScene {
     if (this._questionLabel) this._questionLabel.visible = false;
     if (this._floorMesh) this._floorMesh.visible = false;
     this._scene.background = new Color(0x091322);
+    this._scene.fog = null;
     this._scene.visible = true;
     this._lastUi = "";
   }
@@ -575,6 +578,7 @@ export class ChapterTwoScene {
     if (next === 5 || next === 6) {
       middle.consumeTransitionSignal();
       middle.enterFloor(next);
+      this._scene.fog = next === 6 ? new Fog(0x091322, 42, 78) : null;
       this._lastUi = "";
     }
     const player = middle.playerPosition;
@@ -632,6 +636,7 @@ export class ChapterTwoScene {
     if (this._questionLabel) this._questionLabel.visible = false;
     if (this._floorMesh) this._floorMesh.visible = false;
     this._scene.background = new Color(0x10202d);
+    this._scene.fog = null;
     this._scene.visible = true;
     this._lastUi = "";
   }
