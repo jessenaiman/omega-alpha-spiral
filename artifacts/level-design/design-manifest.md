@@ -33,6 +33,18 @@ The [approved six-frame sheet](era-progression-reference-draft.png) establishes 
 
 **Two visible effects per floor.** Light: a restrained raster scan and code-block assembly around the selected straight exit. Shadow: localized diagonal raster tears and a brief signal-offset trail along the chosen route. Ambition: stepped tile construction and a curved threshold pulse. Floor 4: a tile charge tell and echo-seal resolution. Floor 5: shelf-parallax shift and aimed color-band tell. Floor 6: distance dither/fog reveal and faceted doorway assembly. Floor 7: a collector sweep and local terminal restart. Floor 8: inherited memory echoes and healing-core pulses. Each pair must communicate a route, enemy, or world-state change; none may obscure the hero or collision edge. These are design targets, not claims that the effects are implemented.
 **Town inheritance rule.** Before a misplaced asset appears in Floor 7, record its source floor, recognizable geometry or motif, era treatment, and what the town does to it. Start with the straight rail/door from Floor 1, diagonal break from Floor 2, stepped curve from Floor 3, echo plinth from Floor 4, archive furnishing from Floor 5, and faceted arch from Floor 6. Recoloring alone does not establish lineage. The existing varied-town concept is a useful exploration of mood and form, but its inn, market, canal, and observatory have not yet been proven to descend from this kit. Do not call that town visually approved or finished.
+### Proposed town inheritance ledger
+
+| Source floor | Recognizable source asset | Proposed Floor 7 reappearance | Gate |
+| --- | --- | --- | --- |
+| 1 · Light | Straight cyan rail, orange slit pillar, fragment door/threshold mark | Boulevard wayfinding rail and one reused threshold mark | Match the approved sparse profile in a playable Floor 1 frame. |
+| 2 · Shadow | Fractured diagonal rail and local raster seam | Broken alley crossing and a sign whose signal slips along that exact diagonal | Approve the Floor 2 geometry and error treatment first. |
+| 3 · Ambition | Stepped curved module and violet tile motif | Fountain rim or curved town stair built from the same step rhythm | Approve the Floor 3 tile/curve silhouette first. |
+| 4 · Echo Vault | Repeated vault tile, echo plinth, charge-lane mark | A recycled wayfinding plinth and collector warning tile | Build and visually review the late-NES source asset first. |
+| 5 · Moving Archive | Shelf front, book-spine pattern, banner/lamp face | Town archive or market stall that visibly reuses the same sprite-front pattern | Build and visually review the 16-bit source asset first. |
+| 6 · Depth Passage | Faceted arch, low-poly rail, observatory dial | Town observatory approach with the same large polygon silhouette | Approve the early-polygon material and fog treatment first. |
+
+Every town reappearance must retain enough geometry, material rhythm, or animation to be recognized without a caption. Town-native inn and market architecture are a separate design task; their presence alone does not satisfy the inheritance gate.
 ## Combat-to-town progression
 
 | Floor | New play vocabulary | Built world and two effect targets |
@@ -78,6 +90,7 @@ The official scene grants two hidden points when choice alignment matches the ro
 
 - [Floor 4 Echo Vault combat](floor-4-echo-vault-combat-concept.png): one lone hero, a readable charging sentinel, and a sparse vaulted arena. Concept only.
 - [Floors 5–6 combat era study](floors-5-6-combat-era-study.png): layered 16-bit ruins mature into faceted early 3D while telegraphed encounters deepen. Concept only.
+- [Floor 5 Moving Archive asset-kit proposal](floor-5-moving-archive-asset-kit-proposal.png): shelf front, banner, lamp, parallax backdrop, floor motif, and inherited door as six reusable parts. Concept only; source geometry and live readability await review.
 - [Floor 7 varied town architecture](floor-7-town-varied-architecture-concept.png): mood and form exploration only; its apparent mixed eras still need approved source assets from Floors 1–6.
 
 ## Visual references

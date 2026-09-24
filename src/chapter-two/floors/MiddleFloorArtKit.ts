@@ -336,19 +336,9 @@ function addExitLandmark(group: THREE.Group, layout: MiddleFloorLayout, mats: Re
 
 function addEraSetDressing(root: THREE.Group, layout: MiddleFloorLayout, mats: Record<string, THREE.MeshStandardMaterial>, p: Palette): void {
   if (layout.floor === 4) {
-    // Sparse raster floor: isolated tile banks and floating code marks.
-    for (let i = 0; i < 13; i += 1) {
-      const x = ((i * 7) % 19) - 9;
-      const z = 13 - ((i * 11) % 27);
-      const tile = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.045, 0.42), i % 4 === 0 ? mats.warning : mats.route);
-      tile.position.set(x, 0.015, z);
-      tile.name = `raster-code-tile:${i}`;
-      root.add(tile);
-    }
-    for (const z of [10, 2, -7]) {
-      addDigitColumn(root, -17, z, mats);
-      addDigitColumn(root, 17, z, mats);
-    }
+    // Late-NES vault: a finite, low-contrast tile grid beneath the route art.
+    addVaultTileField(root, layout);
+    addEchoPlinths(root, layout, mats);
   } else if (layout.floor === 5) {
     // 16-bit library: continuous book walls, readable route, leafy sprite cards.
     for (let side = -1; side <= 1; side += 2) {
@@ -403,6 +393,102 @@ function addEraSetDressing(root: THREE.Group, layout: MiddleFloorLayout, mats: R
       root.add(shard);
     }
   }
+}
+
+function addVaultTileField(root: THREE.Group, layout: MiddleFloorLayout): void {
+  const { minX, maxX, minZ, maxZ } = layout.bounds;
+  const tileSize = 1.42;
+  const pitch = 1.62;
+  const columns = Math.max(1, Math.ceil((maxX - minX) / pitch));
+  const rows = Math.max(1, Math.ceil((maxZ - minZ) / pitch));
+  const geometry = new THREE.BoxGeometry(tileSize, 0.026, tileSize);
+  const material = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.96, metalness: 0 });
+  const tiles = new THREE.InstancedMesh(geometry, material, columns * rows);
+  tiles.name = "echo-vault-repeat-tile-field";
+  tiles.instanceMatrix.setUsage(THREE.StaticDrawUsage);
+  const dummy = new THREE.Object3D();
+  const colorA = new THREE.Color(0x122b42);
+  const colorB = new THREE.Color(0x0d2135);
+  let index = 0;
+  for (let row = 0; row < rows; row += 1) {
+    for (let column = 0; column < columns; column += 1) {
+      const x = minX + pitch * (column + 0.5);
+      const z = minZ + pitch * (row + 0.5);
+      // Keep each tile fully inside the finite room bounds.
+      if (x + tileSize * 0.5 > maxX || z + tileSize * 0.5 > maxZ) continue;
+      dummy.position.set(x, -0.047, z);
+      dummy.updateMatrix();
+      tiles.setMatrixAt(index, dummy.matrix);
+      tiles.setColorAt(index, (row + column) % 2 ? colorA : colorB);
+      index += 1;
+    }
+  }
+  tiles.count = index;
+  tiles.instanceMatrix.needsUpdate = true;
+  if (tiles.instanceColor) tiles.instanceColor.needsUpdate = true;
+  root.add(tiles);
+}
+
+function addEchoPlinths(root: THREE.Group, layout: MiddleFloorLayout, mats: Record<string, THREE.MeshStandardMaterial>): void {
+  const form = makeEchoPlinth(mats);
+  const { minX, maxX, minZ, maxZ } = layout.bounds;
+  const candidates = [
+    { x: minX + 2.4, z: minZ + 2.4 }, { x: maxX - 2.4, z: minZ + 2.4 },
+    { x: minX + 2.4, z: maxZ - 2.4 }, { x: maxX - 2.4, z: maxZ - 2.4 },
+  ];
+  let index = 0;
+  for (const point of candidates) {
+    if (point.x < minX + 0.65 || point.x > maxX - 0.65 || point.z < minZ + 0.65 || point.z > maxZ - 0.65) continue;
+    const overlapsEnemy = layout.encounter.enemies.some((enemy) => Math.hypot(point.x - enemy.spawn.x, point.z - enemy.spawn.z) < 2.4);
+    if (overlapsEnemy || isNearVaultRoute(point, layout, 2.4) || isInsideCollision(point, layout, 1.25)) continue;
+    const plinth = form.clone(true);
+    plinth.position.set(point.x, 0, point.z);
+    plinth.name = `echo-plinth:${index++}`;
+    root.add(plinth);
+  }
+}
+
+function makeEchoPlinth(mats: Record<string, THREE.MeshStandardMaterial>): THREE.Group {
+  const plinth = new THREE.Group();
+  plinth.name = "echo-plinth-form";
+  const base = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.22, 1.05), mats.structure);
+  base.position.y = 0.12;
+  plinth.add(base);
+  const inset = new THREE.Mesh(new THREE.BoxGeometry(0.96, 0.1, 0.76), mats.shadow);
+  inset.position.y = 0.28;
+  plinth.add(inset);
+  const cap = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.09, 0.58), mats.trim);
+  cap.position.y = 0.37;
+  plinth.add(cap);
+  // Flat pixel glyph gives the repeatable prop a distinct echo read at distance.
+  for (const [x, y, width] of [[-0.2, 0.7, 0.2], [0, 0.82, 0.2], [0.2, 0.7, 0.2]] as const) {
+    const pixel = new THREE.Mesh(new THREE.BoxGeometry(width, 0.12, 0.06), mats.glow);
+    pixel.position.set(x, y, -0.12);
+    plinth.add(pixel);
+  }
+  return plinth;
+}
+
+function isNearVaultRoute(point: FloorPoint, layout: MiddleFloorLayout, clearance: number): boolean {
+  for (const route of layout.routes) {
+    for (let i = 0; i < route.points.length - 1; i += 1) {
+      const a = route.points[i]!;
+      const b = route.points[i + 1]!;
+      const dx = b.x - a.x;
+      const dz = b.z - a.z;
+      const lengthSq = dx * dx + dz * dz || 1;
+      const t = Math.max(0, Math.min(1, ((point.x - a.x) * dx + (point.z - a.z) * dz) / lengthSq));
+      const distance = Math.hypot(point.x - (a.x + t * dx), point.z - (a.z + t * dz));
+      if (distance < clearance + route.width * 0.5) return true;
+    }
+  }
+  return false;
+}
+
+function isInsideCollision(point: FloorPoint, layout: MiddleFloorLayout, clearance: number): boolean {
+  return layout.collision.some((shape) => shape.kind === "rect" &&
+    Math.abs(point.x - shape.center.x) < shape.width * 0.5 + clearance &&
+    Math.abs(point.z - shape.center.z) < shape.depth * 0.5 + clearance);
 }
 
 function addEncounterFigures(root: THREE.Group, layout: MiddleFloorLayout, mats: Record<string, THREE.MeshStandardMaterial>, p: Palette): void {
@@ -610,15 +696,6 @@ function addOutcomeSocket(socket: THREE.Group, layout: MiddleFloorLayout, mats: 
   const marker = new THREE.Mesh(new THREE.OctahedronGeometry(0.38, 0), mats.warning);
   marker.position.y = 1.1;
   socket.add(marker);
-}
-
-function addDigitColumn(root: THREE.Group, x: number, z: number, mats: Record<string, THREE.MeshStandardMaterial>): void {
-  for (let i = 0; i < 4; i += 1) {
-    const chip = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.035, 0.11), i % 2 ? mats.trim : mats.glow);
-    chip.position.set(x + (i % 2) * 0.32, 0.42 + i * 0.56, z);
-    chip.name = `code-pixel:${x}:${z}:${i}`;
-    root.add(chip);
-  }
 }
 
 function addBookSpines(group: THREE.Group, width: number, depth: number, mats: Record<string, THREE.MeshStandardMaterial>): void {
