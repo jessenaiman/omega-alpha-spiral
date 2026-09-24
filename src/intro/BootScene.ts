@@ -17,13 +17,7 @@ import {
   type InputController,
   type Intents,
 } from "../core/input";
-import {
-  GHOST_FINAL,
-  createGhostQuestions,
-  getGhostInterlude,
-  type GhostInterlude,
-  type GhostQuestion,
-} from "../dialogue/ghost";
+import type { GhostInterlude, GhostQuestion } from "../dialogue/ghost";
 import {
   GHOST_FINAL,
   createGhostQuestions,

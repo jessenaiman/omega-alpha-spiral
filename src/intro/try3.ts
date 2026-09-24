@@ -36,7 +36,7 @@ import {
   Vector3,
   WebGLRenderer,
 } from "three";
-import { createGhostQuestions } from "../dialogue/ghost";
+import { createGhostQuestions } from "../dialogue/ghost-vite";
 import { createBootFrames } from "./ghostwriting";
 import { getIntroEra } from "./IntroEraDesign";
 import { createAtlas, GlyphRibbon } from "./SpatialBootScene";
