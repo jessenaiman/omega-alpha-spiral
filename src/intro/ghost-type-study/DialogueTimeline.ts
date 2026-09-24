@@ -33,7 +33,7 @@ export type DialogueDocument = {
   presentation?: DialoguePresentation;
 };
 
-const validate = new Ajv({ allErrors: true }).compile<DialogueDocument>(schema);
+const validate = new Ajv({ allErrors: true }).compile(schema);
 
 export function parseDialogue(raw: string): DialogueDocument {
   const doc: unknown = JSON.parse(raw);
@@ -44,13 +44,14 @@ export function parseDialogue(raw: string): DialogueDocument {
         .map((error) => `${error.instancePath || "Document"}: ${error.message}`)
         .join("\n") || "Invalid dialogue document."
     );
+  const document = doc as DialogueDocument;
   const ids = new Set<string>();
-  for (const [index, event] of doc.events.entries()) {
+  for (const [index, event] of document.events.entries()) {
     if (ids.has(event.id))
       throw new Error(`Event ${index + 1}: provide a unique id.`);
     ids.add(event.id);
   }
-  return doc;
+  return document;
 }
 
 // Renderer-independent order and waits. All time comes from the host's paused clock.
