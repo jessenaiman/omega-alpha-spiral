@@ -22,6 +22,7 @@ export interface BootFrame {
     | "waiting"
     | "prelude"
     | "question"
+    | "choices"
     | "response"
     | "travel"
     | "final"
@@ -35,6 +36,10 @@ export interface BootFrame {
   speaker?: number;
   /** Explicit studio actor; independent of player-choice ownership. */
   studioSpeaker?: SpeakerId;
+  /** Choice text per Dreamweaver, authored in the studio. */
+  choiceLines?: readonly string[];
+  /** Which Dreamweaver is currently authoring a choice line. */
+  choiceSpeaker?: number;
 }
 
 const FIRST_INK_MS: number = 900;

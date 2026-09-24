@@ -8,6 +8,11 @@ export type WritingFrame = {
 };
 type Step = { at: number; text: string; phase: string };
 
+/** Authored text carries `word|replacement` cues. Display shows the first word. */
+export function resolveWritingText(text: string): string {
+  return text.replace(/\S+\|\S+/g, (pair) => pair.slice(0, pair.indexOf("|")));
+}
+
 // Glyph reveal/revision performance only. DialogueTimeline owns script progression.
 export class WritingPlayback {
   private steps: Step[] = [];
