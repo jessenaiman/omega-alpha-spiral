@@ -26,9 +26,15 @@
         </button>
       </nav>
       <div class="scene-io">
-        <select id="scene-pick" aria-label="Scene file"></select>
-        <button id="scene-save">Save to game</button>
-        <span id="scene-state" role="status"></span>
+        <label class="scene-file-picker" for="scene-pick">
+          <span>Editing project file</span>
+          <select id="scene-pick" aria-label="Dialogue file"></select>
+        </label>
+        <button id="scene-import" title="Open a file from your computer in the editor">Import file</button>
+        <button id="scene-export" title="Download a copy of the current editor text">Download copy</button>
+        <button id="scene-save" title="Write the current editor text to the project">Save to project</button>
+        <input id="scene-import-file" type="file" accept=".oml,.omd,.oms" hidden />
+        <p id="scene-state" role="status" aria-live="polite">Import opens a local file here. Save writes it to the project.</p>
       </div>
       <button id="tune" aria-expanded="false" aria-controls="settings">
         Tune voice

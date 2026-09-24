@@ -40,6 +40,7 @@ import type {
   WritingSettings,
 } from "./DialogueTimeline";
 import { createScriptEditor } from "./script-view";
+import { parseOml } from "../../core/oml";
 import {
   PROFILES,
   SPEAKERS,
@@ -75,6 +76,7 @@ let sceneId: TypographyScene =
 let era: Era = resolveTradition(
   params.get("era") ?? sceneProfiles[sceneId].era
 ).id;
+let selectedFileEra: string | null = null;
 sceneProfiles[sceneId].era = era;
 let paused = false,
   common = false,
@@ -349,19 +351,6 @@ function makeSliders() {
   };
   colour.onchange = () => {};
 
-  const eraRow = document.createElement("label");
-  const eraSelect = document.createElement("select");
-  eraSelect.append(letteringOptions());
-  eraSelect.value = resolveTradition(profile.era).id;
-  eraSelect.setAttribute("aria-label", "Lettering tradition");
-  eraRow.append("Lettering", eraSelect);
-  el("sliders").append(eraRow);
-  eraSelect.onchange = () => {
-    profile.era = eraSelect.value;
-    letters[selected].setEra(profile.era);
-    ghosts[selected].setEra(profile.era);
-  };
-
   for (const [key, label, min, max, step] of controls) {
     const row = document.createElement("label"),
       out = document.createElement("output"),
@@ -456,8 +445,8 @@ function applySceneTypography() {
   const tr = resolveTradition(era);
   era = tr.id;
   for (const id of SPEAKERS) {
-    letters[id].setEra(settings[id].era);
-    ghosts[id].setEra(settings[id].era);
+    letters[id].setEra(tr.id);
+    ghosts[id].setEra(tr.id);
   }
   const flat =
     tr.renderMethod === "bitmap-gui" ||
@@ -468,7 +457,7 @@ function applySceneTypography() {
   el<HTMLSelectElement>("scene-owner").value = sceneId;
   el<HTMLSelectElement>("era").value = tr.id;
   el("era-description").textContent =
-    `${tr.designIntent} ${tr.recognizableTrait} — ${tr.introduced}, ${tr.commonUse}; ${tr.confidence} confidence.`;
+    `Selected display method: ${tr.renderMethod} · ${isBuilt(tr) ? "built preview" : "render path pending"}. ${tr.designIntent} ${tr.recognizableTrait} — ${tr.introduced}, ${tr.commonUse}; ${tr.confidence} confidence.`;
   el("era").title =
     `${tr.device}. ${tr.spatialAdaptation} ${tr.sources[0] ?? ""}`;
   document.documentElement.dataset.sceneOwner = sceneProfiles[sceneId].owner;
@@ -482,6 +471,7 @@ function applySceneTypography() {
 }
 el<HTMLSelectElement>("era").onchange = (e) => {
   era = (e.target as HTMLSelectElement).value as Era;
+  selectedFileEra = era;
   for (const id of SPEAKERS) settings[id].era = era;
   applySceneTypography();
   savePresentation();
@@ -609,7 +599,7 @@ const dialogue = createDialogueEditor({
   restore(value) {
     restoringPresentation = true;
     sceneId = value.scene;
-    era = value.era;
+    era = selectedFileEra ?? value.era;
     layout = value.layout;
     for (const id of SPEAKERS)
       for (const [key] of controls)
@@ -647,60 +637,129 @@ const dialogue = createDialogueEditor({
   },
   script(doc) {
     scriptDoc = doc;
-    scriptEditor?.setText(SCRIPT_TEXT);
   },
 });
-scriptEditor = createScriptEditor(el("script-lines"), (text) =>
-  dialogue.loadText(text)
-);
+let currentFile = "scene1.oml";
+const validFile = (name: string) =>
+  /^[a-z0-9][a-z0-9_-]*\.(oml|omd|oms)$/i.test(name);
+const fileState = el("scene-state");
+function setFileState(state: "info" | "pending" | "success" | "error", message: string) {
+  fileState.dataset.state = state;
+  fileState.textContent = message;
+}
+scriptEditor = createScriptEditor(el("script-lines"), (text) => {
+  if (currentFile.toLowerCase().endsWith(".oml")) dialogue.loadText(text);
+  setFileState("pending", `Unsaved changes in ${currentFile}. Save to project when ready.`);
+});
 scriptEditor.setText(SCRIPT_TEXT);
 dialogue.loadText(SCRIPT_TEXT);
 
-// The game imports these files. Saving here is what puts the scene in the game.
-let scenes: string[] = [];
-async function listScenes() {
-  try {
-    const response = await fetch("/api/studio/scenes");
-    const body = await response.json();
-    scenes = body.files?.map((f: string) => f.replace(/\.oml$/, "")) ?? [];
-  } catch {
-    scenes = ["scene1"];
+// The studio writes files locally; the game imports the files, not the studio.
+let fileLoadRequest = 0;
+function showFile(name: string, text: string) {
+  currentFile = name;
+  scriptEditor?.setText(text);
+  if (name.toLowerCase().endsWith(".oml")) {
+    const parsed = parseOml(text);
+    dialogue.loadText(text);
+    selectedFileEra = resolveTradition(
+      parsed.scene.era ?? SCENES[sceneId].era
+    ).id;
+    era = selectedFileEra;
+    applySceneTypography();
   }
-  el<HTMLSelectElement>("scene-pick").replaceChildren(
-    ...scenes.map((name) => {
-      const option = document.createElement("option");
-      option.value = name;
-      option.textContent = `${name}.oml`;
-      return option;
-    })
-  );
-  if (!scenes.includes("scene1")) {
+  const picker = el<HTMLSelectElement>("scene-pick");
+  if (!Array.from(picker.options).some((option) => option.value === name)) {
     const option = document.createElement("option");
-    option.value = "scene1";
-    option.textContent = "scene1.oml";
-    el("scene-pick").prepend(option);
+    option.value = name;
+    option.textContent = name;
+    picker.add(option);
+  }
+  picker.value = name;
+}
+async function loadFile(name: string) {
+  const request = ++fileLoadRequest;
+  if (!validFile(name)) {
+    setFileState("error", "Choose an .oml, .omd, or .oms file.");
+    return;
+  }
+  setFileState("info", `Opening ${name}…`);
+  try {
+    const response = await fetch(`/api/studio/files?name=${encodeURIComponent(name)}`);
+    const body = await response.json();
+    if (!response.ok) throw new Error(body.error ?? "Could not open file.");
+    if (request !== fileLoadRequest) return;
+    showFile(name, String(body.text));
+    setFileState("info", `Editing ${name}. Import opens a local file; Save writes it to the project.`);
+  } catch (error) {
+    if (request !== fileLoadRequest) return;
+    setFileState("error", `Could not open ${name}: ${(error as Error).message}`);
   }
 }
-el<HTMLButtonElement>("scene-save").onclick = async () => {
-  const state = el("scene-state");
-  state.textContent = "Saving…";
+async function listFiles(preferred = currentFile) {
   try {
-    const response = await fetch("/api/studio/scenes", {
+    const response = await fetch("/api/studio/files");
+    const body = await response.json();
+    if (!response.ok) throw new Error(body.error ?? "Could not list files.");
+    const files: string[] = body.files ?? [];
+    el<HTMLSelectElement>("scene-pick").replaceChildren(...files.map((name) => {
+      const option = document.createElement("option");
+      option.value = name;
+      option.textContent = name;
+      return option;
+    }));
+    const picker = el<HTMLSelectElement>("scene-pick");
+    picker.value = files.includes(preferred) ? preferred : files[0] ?? "";
+    picker.onchange = () => void loadFile(picker.value);
+    if (picker.value) await loadFile(picker.value);
+  } catch (error) {
+    setFileState("error", `Local file service unavailable: ${(error as Error).message}`);
+  }
+}
+el<HTMLButtonElement>("scene-import").onclick = () =>
+  el<HTMLInputElement>("scene-import-file").click();
+el<HTMLInputElement>("scene-import-file").onchange = async (event) => {
+  const input = event.currentTarget as HTMLInputElement;
+  const file = input.files?.[0];
+  if (!file) return;
+  if (!validFile(file.name)) {
+    setFileState("error", "Import an .oml, .omd, or .oms file.");
+    return;
+  }
+  showFile(file.name, await file.text());
+  setFileState("pending", `Imported ${file.name} into the editor. Review it, then Save to project.`);
+  input.value = "";
+};
+el<HTMLButtonElement>("scene-export").onclick = () => {
+  const text = scriptEditor?.getText() ?? "";
+  const url = URL.createObjectURL(new Blob([text], { type: "text/plain" }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = currentFile;
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 0);
+  setFileState("success", `Downloaded a copy of ${currentFile}. The project file is unchanged.`);
+};
+el<HTMLButtonElement>("scene-save").onclick = async () => {
+  setFileState("info", `Saving ${currentFile} to the project…`);
+  try {
+    const response = await fetch("/api/studio/files", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        name: el<HTMLSelectElement>("scene-pick").value,
+        name: currentFile,
         text: scriptEditor?.getText(),
       }),
     });
     const body = await response.json();
     if (!response.ok) throw new Error(body.error ?? "Save failed.");
-    state.textContent = `Saved ${body.scene}.oml — reload the game to play it.`;
+    await listFiles(body.name);
+    setFileState("success", `Saved ${body.name} to the project. The game reads this file directly.`);
   } catch (error) {
-    state.textContent = (error as Error).message;
+    setFileState("error", `Could not save ${currentFile}: ${(error as Error).message}`);
   }
 };
-listScenes();
+listFiles();
 function applyTab() {
   document.body.dataset.tab = tab;
   el("script-view").hidden = tab !== "script";

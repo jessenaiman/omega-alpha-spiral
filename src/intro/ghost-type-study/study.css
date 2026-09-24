@@ -65,14 +65,66 @@ input:focus-visible {
   top: max(25px, env(safe-area-inset-top));
   left: 4vw;
   right: 4vw;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(170px, 1fr) auto minmax(210px, 300px) auto;
   align-items: start;
-  justify-content: space-between;
-  gap: 20px;
+  gap: 12px;
   pointer-events: none;
 }
 .masthead button {
   pointer-events: auto;
+}
+.scene-io {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+  pointer-events: auto;
+}
+.scene-file-picker {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 5px;
+  color: #aebec7;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+.scene-file-picker select {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 10px;
+}
+.scene-io button {
+  padding-inline: 10px;
+}
+#scene-state {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 8px 11px;
+  min-height: 36px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #c7d4dc;
+  background: #0e1820;
+  border: 1px solid #4b637044;
+  border-left: 3px solid #7699ae;
+  border-radius: 4px;
+}
+#scene-state[data-state="success"] {
+  color: #d7f6e5;
+  border-left-color: #80d6aa;
+  background: #0b1c18;
+}
+#scene-state[data-state="pending"] {
+  color: #ffe7b3;
+  border-left-color: #f0b46b;
+}
+#scene-state[data-state="error"] {
+  color: #ffcbcb;
+  border-left-color: #ff6868;
+  background: #220f13;
 }
 .eyebrow {
   font-size: 10px;
@@ -88,7 +140,7 @@ h1 {
 }
 #speakers {
   position: fixed;
-  top: 183px;
+  top: 245px;
   left: 4vw;
   display: flex;
   gap: 5px;
@@ -96,7 +148,7 @@ h1 {
 }
 .scene-typography {
   position: fixed;
-  top: 92px;
+  top: 170px;
   left: 4vw;
   display: flex;
   gap: 16px;
@@ -459,6 +511,17 @@ select {
   }
 }
 @media (width < 720px) {
+  .masthead {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 8px;
+  }
+  .scene-io {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+  .scene-typography {
+    top: 210px;
+  }
   .study-label {
     display: none;
   }
@@ -466,7 +529,7 @@ select {
     bottom: 102px;
   }
   #speakers {
-    top: 183px;
+    top: 285px;
     right: 4vw;
   }
   #speakers button {
@@ -496,10 +559,10 @@ select {
     top: 14px;
   }
   #speakers {
-    top: 149px;
+    top: 245px;
   }
   .scene-typography {
-    top: 72px;
+    top: 170px;
   }
   .caption {
     bottom: 83px;
@@ -513,6 +576,28 @@ select {
 }
 
 /* Script tab — static, no animation. */
+body[data-tab="stage"] .scene-io {
+  display: none;
+}
+body[data-tab="script"] .masthead {
+  z-index: 2;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+body[data-tab="script"] .scene-io {
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(190px, 1fr) auto auto auto;
+}
+body[data-tab="script"] .scene-file-picker {
+  grid-column: auto;
+}
+body[data-tab="script"] .scene-io button {
+  align-self: end;
+  white-space: nowrap;
+}
+body[data-tab="script"] #tune {
+  display: none;
+}
 .tabs {
   display: flex;
   gap: 6px;
@@ -534,8 +619,8 @@ select {
   z-index: 1;
   left: 340px;
   right: 4vw;
-  top: 152px;
-  bottom: 112px;
+  top: 255px;
+  bottom: 4vw;
   overflow: auto;
   padding: 14px 18px;
   background: #05080bcc;
@@ -607,13 +692,34 @@ body[data-tab="script"] #ghost-stage {
   opacity: 0.45;
 }
 body[data-tab="script"] #speakers,
-body[data-tab="script"] .caption {
+body[data-tab="script"] .scene-typography,
+body[data-tab="script"] .caption,
+body[data-tab="script"] #dialogue-editor,
+body[data-tab="script"] .study-label,
+body[data-tab="script"] .prototype-switcher {
   display: none;
+}
+body[data-tab="script"].script-mode::after {
+  content: none;
 }
 @media (width < 1000px) {
   #script-view {
     left: 4vw;
     right: 4vw;
+  }
+}
+@media (width < 780px) {
+  body[data-tab="script"] .scene-io {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  body[data-tab="script"] .scene-file-picker {
+    grid-column: 1 / -1;
+  }
+  body[data-tab="script"] .scene-io button {
+    white-space: normal;
+  }
+  #script-view {
+    top: 305px;
   }
 }
 

@@ -1,11 +1,9 @@
 export type { TypographyOwner as SpeakerId } from "../../core/sceneTypography";
 import type { TypographyOwner as SpeakerId } from "../../core/sceneTypography";
+import Ajv from "ajv";
 import scene1 from "../../dialogue/scene1.oml?raw";
-import Light from "../../dialogue/Light.omd?raw";
-import Shadow from "../../dialogue/Shadow.omd?raw";
-import Ambition from "../../dialogue/Ambition.omd?raw";
-import System from "../../dialogue/System.omd?raw";
-import { parseOmd, parseOml, type Omd } from "../../core/oml";
+import dreamweaverSchema from "../../dialogue/dreamweaver.oms?raw";
+import { parseOmd, parseOml, speakerId, type Omd } from "../../core/oml";
 
 /** A voice, as declared by its .omd file. Nothing here is hardcoded. */
 export interface SpeakerProfile {
@@ -20,16 +18,35 @@ export interface SpeakerProfile {
   revisionDelayMs: number;
   era: string;
   note: string;
+  favoritePalette: string[];
+  quickChoiceMs: number;
+  hesitationMs: number;
   sample: string;
   replacement: { from: string; to: string };
 }
 
-const designs: Record<SpeakerId, Omd> = {
-  light: parseOmd(Light),
-  shadow: parseOmd(Shadow),
-  ambition: parseOmd(Ambition),
-  omega: parseOmd(System),
-};
+export const SCRIPT = parseOml(scene1);
+export const SCRIPT_TEXT = scene1;
+const sourceFiles = import.meta.glob("../../dialogue/*.omd", {
+  eager: true,
+  query: "?raw",
+  import: "default",
+}) as Record<string, string>;
+const validate = new Ajv().compile(JSON.parse(dreamweaverSchema));
+const voices: SpeakerId[] = ["omega", "light", "shadow", "ambition"];
+const designs = Object.fromEntries(
+  voices.map((id) => {
+    const file = SCRIPT.voices.find((voice) => speakerId(voice.name) === id)?.file;
+    if (!file || !/^[a-z0-9_-]+\.omd$/i.test(file))
+      throw new Error(`Scene 1 needs an .omd declaration for ${id}.`);
+    const source = sourceFiles[`../../dialogue/${file}`];
+    if (!source) throw new Error(`Missing declared voice file: ${file}`);
+    const design = parseOmd(source);
+    if (design.id !== id || design.schema !== "dreamweaver.oms" || !validate(design))
+      throw new Error(`Invalid ${file}: ${JSON.stringify(validate.errors)}`);
+    return [id, design];
+  })
+) as Record<SpeakerId, Omd>;
 
 export const PROFILES = Object.fromEntries(
   (Object.keys(designs) as SpeakerId[]).map((id) => {
@@ -48,6 +65,12 @@ export const PROFILES = Object.fromEntries(
         revisionDelayMs: d.typing.revision,
         era: d.typography.tradition,
         note: d.spatial.note,
+        favoritePalette: (d.custom.favorite_palette ?? d.color)
+          .split(",")
+          .map((color) => color.trim())
+          .filter(Boolean),
+        quickChoiceMs: Number(d.custom.quick_choice_ms ?? 3000),
+        hesitationMs: Number(d.custom.hesitation_ms ?? 10000),
         sample: `NONCANONICAL - ${d.custom.personality ?? d.display_name}`,
         replacement: {
           from: d.replacement.from ?? "",
@@ -59,6 +82,3 @@ export const PROFILES = Object.fromEntries(
 ) as Record<SpeakerId, SpeakerProfile>;
 
 export const SPEAKERS = Object.keys(PROFILES) as SpeakerId[];
-
-export const SCRIPT = parseOml(scene1);
-export const SCRIPT_TEXT = scene1;

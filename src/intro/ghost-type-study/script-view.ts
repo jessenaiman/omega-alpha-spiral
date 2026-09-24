@@ -45,7 +45,7 @@ export function createScriptEditor(
   const input = document.createElement("textarea");
   input.className = "script-input";
   input.spellcheck = false;
-  input.setAttribute("aria-label", "OML script");
+  input.setAttribute("aria-label", "Dialogue source text");
   input.placeholder =
     "# add a tag\n[tag chime]\ncolor = #c9ffdd\n\n# write the scene\nSystem: [chime] Echo Chamber Active";
   wrap.append(mirror, input);
@@ -93,6 +93,11 @@ export function createScriptEditor(
       if (input.value === text) return;
       input.value = text;
       paint();
+      input.setSelectionRange(0, 0);
+      input.scrollTop = 0;
+      input.scrollLeft = 0;
+      mirror.scrollTop = 0;
+      mirror.scrollLeft = 0;
     },
     getText: () => input.value,
     focus: () => input.focus(),

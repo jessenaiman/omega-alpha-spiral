@@ -1,0 +1,66 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Omega dialogue persona",
+  "type": "object",
+  "required": ["id", "display_name", "color", "custom", "typing", "typography", "replacement", "spatial"],
+  "properties": {
+    "id": { "enum": ["omega", "light", "shadow", "ambition"] },
+    "display_name": { "type": "string", "minLength": 1 },
+    "nicknames": { "type": "string" },
+    "color": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+    "custom": {
+      "type": "object",
+      "required": ["thread", "style", "personality"],
+      "properties": {
+        "thread": { "type": "string", "minLength": 1 },
+        "style": { "type": "string", "minLength": 1 },
+        "personality": { "type": "string", "minLength": 1 },
+        "favorite_palette": { "type": "string" },
+        "quick_choice_ms": { "type": "string", "pattern": "^[0-9]+$" },
+        "hesitation_ms": { "type": "string", "pattern": "^[0-9]+$" }
+      }
+    },
+    "typing": {
+      "type": "object",
+      "required": ["interval", "delay", "jitter", "mistakes", "correction", "revision"],
+      "properties": {
+        "interval": { "type": "number", "minimum": 1 },
+        "delay": { "type": "number", "minimum": 0 },
+        "jitter": { "type": "number", "minimum": 0, "maximum": 1 },
+        "mistakes": { "type": "number", "minimum": 0, "maximum": 1 },
+        "correction": { "type": "number", "minimum": 0 },
+        "revision": { "type": "number", "minimum": 0 }
+      }
+    },
+    "typography": {
+      "type": "object",
+      "required": ["tradition", "case"],
+      "properties": {
+        "tradition": { "type": "string", "minLength": 1 },
+        "case": { "type": "string", "minLength": 1 }
+      }
+    },
+    "replacement": {
+      "type": "object",
+      "required": ["from", "to"],
+      "properties": {
+        "from": { "type": "string" },
+        "to": { "type": "string" }
+      }
+    },
+    "spatial": {
+      "type": "object",
+      "required": ["motion", "note"],
+      "properties": {
+        "motion": { "type": "string", "minLength": 1 },
+        "note": { "type": "string" }
+      }
+    }
+  },
+  "if": { "properties": { "id": { "enum": ["light", "shadow", "ambition"] } }, "required": ["id"] },
+  "then": {
+    "properties": {
+      "custom": { "required": ["favorite_palette", "quick_choice_ms", "hesitation_ms"] }
+    }
+  }
+}

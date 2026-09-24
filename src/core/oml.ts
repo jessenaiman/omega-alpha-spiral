@@ -14,6 +14,7 @@ export interface VoiceDef {
   name: string;
   color?: string;
   interval?: number;
+  file?: string;
 }
 
 export interface OmlEvent {
@@ -33,6 +34,7 @@ export interface Oml {
 
 /** An .omd voice design. Mirrors Dialogic's .dch. */
 export interface Omd {
+  schema?: string;
   id: string;
   display_name: string;
   nicknames: string;
@@ -136,13 +138,15 @@ export function parseOml(text: string): Oml {
 
     if (line.trimStart().startsWith("[")) {
       const head = section(line.trim().slice(1, -1).trim());
-      if (head) {
+      if (head && ["tag", "voice", "scene", "script"].includes(head[1].toLowerCase())) {
         const [, kind, name] = head;
         if (kind.toLowerCase() === "tag") {
+          if (!name?.trim()) continue;
           current = { name: name.trim() };
           oml.tags.push(current as TagDef);
           where = "tag";
         } else if (kind.toLowerCase() === "voice") {
+          if (!name?.trim()) continue;
           current = { name: name.trim() };
           oml.voices.push(current as VoiceDef);
           where = "voice";
@@ -153,8 +157,12 @@ export function parseOml(text: string): Oml {
           current = null;
           where = "script";
         }
+        continue;
       }
-      continue;
+      if (where === "script") {
+        oml.events.push(readEvent(line.trim()));
+        continue;
+      }
     }
 
     if (where === "scene") {
@@ -179,13 +187,22 @@ export function parseOml(text: string): Oml {
   return oml;
 }
 
-const WAIT = /^\[wait\s+(\d+)\]/i;
+const TIMED = /^\[(wait|timer_delay|delay)(?:\s+([^\]]+)|\(([^)]*)\)|\[([^\]]*)\])\]$/i;
 const CONTINUE = /^\[continue\s+(.+?)\]$/i;
 const SPOKEN = /^([A-Za-z][A-Za-z ]{0,20}?)\s*:\s*(.*)$/;
 
+export function parseDurationMs(value: string): number | null {
+  const match = /^(\d+(?:\.\d+)?)\s*(ms|milliseconds?|s|sec(?:onds?)?)?$/i.exec(value.trim());
+  if (!match) return null;
+  return Math.round(Number(match[1]) * (match[2]?.toLowerCase().startsWith("s") ? 1000 : 1));
+}
+
 function readEvent(line: string): OmlEvent {
-  const wait = line.match(WAIT);
-  if (wait) return { type: "wait", durationMs: Number(wait[1]) };
+  const timed = line.match(TIMED);
+  if (timed) {
+    const durationMs = parseDurationMs(timed[2] ?? timed[3] ?? timed[4]);
+    if (durationMs !== null) return { type: "wait", durationMs };
+  }
   const cont = line.match(CONTINUE);
   if (cont) return { type: "continue", label: cont[1] };
   const spoken = line.match(SPOKEN);
@@ -210,6 +227,7 @@ export function writeOml(oml: Oml): string {
   for (const voice of oml.voices) {
     out.push(`[voice ${voice.name}]`);
     if (voice.color) out.push(`color = ${voice.color}`);
+    if (voice.file) out.push(`file = ${voice.file}`);
     out.push("");
   }
   out.push("[script]");

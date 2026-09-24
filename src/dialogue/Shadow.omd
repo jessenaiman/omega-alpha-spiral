@@ -1,5 +1,6 @@
 # Shadow.omd — Omega Design. Mirrors Dialogic's .dch character resource.
 
+schema = dreamweaver.oms
 id = shadow
 display_name = Shadow
 nicknames = Keeper, Violet One
@@ -9,6 +10,9 @@ color = #f2b84b
 thread = shadow
 style = shadow_theme
 personality = Neutral and ambivalent. Sharp, angular lines.
+favorite_palette = #f2b84b
+quick_choice_ms = 3000
+hesitation_ms = 10000
 
 [typing]
 interval = 40

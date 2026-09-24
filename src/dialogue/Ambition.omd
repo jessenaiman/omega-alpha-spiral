@@ -1,5 +1,6 @@
 # Ambition.omd — Omega Design. Mirrors Dialogic's .dch character resource.
 
+schema = dreamweaver.oms
 id = ambition
 display_name = Ambition
 nicknames = Changer, Crimson One
@@ -9,6 +10,9 @@ color = #ed4949
 thread = ambition
 style = ambition_theme
 personality = Opportunity, potential, possible greed. Smooth, circular paths that turn back on themselves.
+favorite_palette = #ed4949
+quick_choice_ms = 3000
+hesitation_ms = 10000
 
 [typing]
 interval = 65

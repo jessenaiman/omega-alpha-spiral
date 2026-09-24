@@ -1,6 +1,6 @@
 # scene1.oml — Omega dialogue. Mirrors Dialogic's .dtl timeline.
 # One line is one event. Indent nothing; every instruction is a tag on its own line.
-# A tag used here must be declared in [tag] below. Add one and it exists.
+# Display tags are declared below. Timing and continue are built-in script events.
 
 [tag SYSTEM]
 color = #ffc94d
@@ -40,6 +40,18 @@ meaning = An interaction result, not dialogue. Marked with a leading >.
 color = #f0b46b
 meaning = Wait this many milliseconds before the next line.
 
+[voice System]
+file = System.omd
+
+[voice Light]
+file = Light.omd
+
+[voice Shadow]
+file = Shadow.omd
+
+[voice Ambition]
+file = Ambition.omd
+
 [scene]
 era = dec-vt100-ascii-terminal
 layout = passage
@@ -56,3 +68,4 @@ Shadow: A romance- written in stardust and sacrifice?
 [timer_delay 700]
 Ambition: A horror- that whispers your name in the dark?
 [timer_delay 700]
+[continue Choose one of the three paths]

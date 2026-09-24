@@ -2,6 +2,7 @@
 # Omega is the machine. Not a Dreamweaver: this colour is illumination, not identity.
 # Dialogic requires the label SYSTEM; you know it as Omega.
 
+schema = dreamweaver.oms
 id = omega
 display_name = SYSTEM
 nicknames = Omega, Terminal, Interface
