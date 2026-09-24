@@ -17,13 +17,12 @@ import {
   type InputController,
   type Intents,
 } from "../core/input";
+import type { GhostInterlude, GhostQuestion } from "../dialogue/ghost";
 import {
   GHOST_FINAL,
   createGhostQuestions,
   getGhostInterlude,
-  type GhostInterlude,
-  type GhostQuestion,
-} from "../dialogue/ghost";
+} from "../dialogue/ghost-vite";
 import { DialogueState, type DialogueStateSnapshot } from "../dialogue/state";
 import { createBootFrames, type BootFrame } from "./ghostwriting";
 import { getIntroEra } from "./IntroEraDesign";

@@ -1,13 +1,29 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
+import { createGhostDialogue } from '../../src/dialogue/ghost';
 import { createBootFrames } from '../../src/intro/ghostwriting';
-import { GHOST_FINAL, GHOST_QUESTIONS } from '../../src/dialogue/ghost';
+
+const source = (name: string): string =>
+  readFileSync(new URL(`../../src/dialogue/${name}`, import.meta.url), 'utf8');
+const GHOST_DIALOGUE = createGhostDialogue(
+  [
+    source('ghost-floor-01.oml'),
+    source('ghost-floor-02.oml'),
+    source('ghost-floor-03.oml'),
+    source('ghost-floor-04.oml'),
+  ],
+  source('dialogue.oms'),
+);
+const GHOST_QUESTIONS = GHOST_DIALOGUE.questions;
+const GHOST_FINAL = GHOST_DIALOGUE.final;
+const OPENING = GHOST_QUESTIONS[0];
 
 const QUESTION: string = 'If you could be only one story..:\nwho would you be?';
 
 test('ghostwriting attempts a chronological boot with temporary corruption before the question', () => {
-  const frames = createBootFrames('472');
-  assert.deepEqual(frames, createBootFrames('472'));
+  const frames = createBootFrames('472', OPENING);
+  assert.deepEqual(frames, createBootFrames('472', OPENING));
   assert.equal(frames[0].phase, 'cursor');
   assert.ok(frames.some((frame) => frame.transcript.includes('script unfinished')), 'Missing failed first invocation');
   assert.ok(frames.some((frame) => frame.transcript.includes('unexpected end')), 'Missing failed wake script');
@@ -24,7 +40,7 @@ test('ghostwriting attempts a chronological boot with temporary corruption befor
 });
 
 test('cursor boots the script, the question stalls, then voices breach sequentially', () => {
-  const frames = createBootFrames('472');
+  const frames = createBootFrames('472', OPENING);
   const commandIndex = frames.findIndex((frame) => frame.transcript.includes('/run omega.sh'));
   const questionIndex = frames.findIndex((frame) => frame.question.length > 0);
   const stalledIndex = frames.findIndex((frame) => frame.transcript.includes('question ... stalled'));

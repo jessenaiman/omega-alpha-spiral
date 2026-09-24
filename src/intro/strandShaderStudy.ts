@@ -24,7 +24,7 @@ import {
   Vector3,
   WebGLRenderer,
 } from "three";
-import { createGhostQuestions } from "../dialogue/ghost";
+import { createGhostQuestions } from "../dialogue/ghost-vite";
 import { createBootFrames } from "./ghostwriting";
 
 const question = createGhostQuestions(472)[0];

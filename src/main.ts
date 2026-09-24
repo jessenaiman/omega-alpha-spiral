@@ -10,7 +10,10 @@
 
 import * as THREE from "three";
 import { createSceneHost, type HostFrame, type SceneHost } from "./core";
-import { GHOST_QUESTIONS, getDreamweaverQuestion } from "./dialogue/ghost";
+import {
+  GHOST_QUESTIONS,
+  getDreamweaverQuestion,
+} from "./dialogue/ghost-vite";
 import "./styles.css";
 
 const canvas = document.querySelector<HTMLCanvasElement>("[data-game-canvas]");

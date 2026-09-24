@@ -1,9 +1,4 @@
 import Ajv from "ajv";
-import ghostFloor01Text from "./ghost-floor-01.oml?raw";
-import ghostFloor02Text from "./ghost-floor-02.oml?raw";
-import ghostFloor03Text from "./ghost-floor-03.oml?raw";
-import ghostFloor04Text from "./ghost-floor-04.oml?raw";
-import dialogueSchema from "./dialogue.oms?raw";
 import {
   parseOml,
   type ChoiceDef,
@@ -40,24 +35,13 @@ export interface GhostInterlude {
   readonly text: string;
 }
 
-const sources = [
-  ghostFloor01Text,
-  ghostFloor02Text,
-  ghostFloor03Text,
-  ghostFloor04Text,
-] as const;
-
-const validate = new Ajv({ strict: true }).compile(JSON.parse(dialogueSchema));
-
-export const GHOST_LEVELS: readonly Oml[] = sources.map((source, index) => {
-  const level = parseOml(source);
-  if (!validate(level))
-    throw new Error(
-      `Invalid Ghost floor ${index + 1} OML: ${JSON.stringify(validate.errors)}`
-    );
-  resolveEraShader(level.scene.era_shader ?? "");
-  return level;
-});
+export interface GhostDialogue {
+  readonly levels: readonly Oml[];
+  readonly questions: readonly GhostQuestion[];
+  readonly openingLog: string;
+  readonly symbols: string;
+  readonly final: string;
+}
 
 const ownerOf = (choice: ChoiceDef): DreamweaverOwner => {
   if (
@@ -101,8 +85,36 @@ const questionOf = (level: Oml, index: number): GhostQuestion => {
   };
 };
 
-export const GHOST_QUESTIONS: readonly GhostQuestion[] =
-  GHOST_LEVELS.map(questionOf);
+/** Parse authored Ghost OML using schema text supplied by the app or caller. */
+export function createGhostDialogue(
+  sources: readonly string[],
+  schemaText: string
+): GhostDialogue {
+  const validate = new Ajv({ strict: true }).compile(JSON.parse(schemaText));
+  const levels = sources.map((source, index) => {
+    const level = parseOml(source);
+    if (!validate(level))
+      throw new Error(
+        `Invalid Ghost floor ${index + 1} OML: ${JSON.stringify(validate.errors)}`
+      );
+    resolveEraShader(level.scene.era_shader ?? "");
+    return level;
+  });
+  const questions = levels.map(questionOf);
+  const opening = questions[0]?.prelude ?? "";
+  const ending = levels[3]?.completion ?? [];
+  return {
+    levels,
+    questions,
+    openingLog: opening.trim(),
+    symbols:
+      questions[3]?.prelude.match(/[∞◊Ω≋※](?:\s+[∞◊Ω≋※])+/)?.[0] ?? "",
+    final: ending
+      .filter((event) => event.type === "line")
+      .map((event) => event.text)
+      .join("\n"),
+  };
+}
 
 export function getDreamweaverQuestion(choice: GhostChoice): string {
   const question = choice.response
@@ -114,15 +126,12 @@ export function getDreamweaverQuestion(choice: GhostChoice): string {
   return question.trim();
 }
 
-export const GHOST_OPENING_LOG = GHOST_QUESTIONS[0].prelude.trim();
-export const GHOST_SYMBOLS =
-  GHOST_QUESTIONS[3].prelude.match(/[∞◊Ω≋※](?:\s+[∞◊Ω≋※])+/)?.[0] ?? "";
-
 /** Seeds affect presentation only; dialogue comes from the four Ghost OML files. */
 export function createGhostQuestions(
+  dialogue: GhostDialogue,
   _seed: string | number
 ): readonly GhostQuestion[] {
-  return GHOST_QUESTIONS;
+  return dialogue.questions;
 }
 
 /** Ghost has no extra interlude beyond each authored OML response. */
@@ -132,8 +141,3 @@ export function getGhostInterlude(
 ): GhostInterlude | null {
   return null;
 }
-
-export const GHOST_FINAL = GHOST_LEVELS[3].completion
-  .filter((event) => event.type === "line")
-  .map((event) => event.text)
-  .join("\n");

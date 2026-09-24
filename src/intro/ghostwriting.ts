@@ -1,11 +1,6 @@
 import { createRng } from "../core/random";
 import type { SpeakerId } from "../dialogue/personas";
-import {
-  GHOST_OPENING_LOG,
-  GHOST_QUESTIONS,
-  GHOST_SYMBOLS,
-  type GhostQuestion,
-} from "../dialogue/ghost";
+import type { GhostQuestion } from "../dialogue/ghost";
 
 export interface BootFrame {
   at: number;
@@ -48,15 +43,11 @@ const LETTER_RANGE_MS: number = 62;
 const ERASURE_MS: number = 38;
 const CORRECTION_PAUSE_MS: number = 520;
 export const BOOT_COMMAND: string = "/run omega.sh";
-export const BOOT_OPTIONS: string[] = GHOST_QUESTIONS[0].choices.map(
-  (option): string => option.text
-);
-export const BOOT_SYMBOLS: string = GHOST_SYMBOLS;
 
 /** Materialize timing once: render rate must not change the spelling or pauses. */
 export function createBootFrames(
   seed: string,
-  opening: GhostQuestion = GHOST_QUESTIONS[0]
+  opening: GhostQuestion
 ): BootFrame[] {
   const random = createRng(seed).fork("ghostwriting");
   const text: Record<"prelude" | "question" | "transcript", string> = {
@@ -115,7 +106,7 @@ export function createBootFrames(
   typeTerminal(`\n$ ${BOOT_COMMAND}`);
   at += 780;
   format = 3;
-  text.prelude = GHOST_OPENING_LOG;
+  text.prelude = opening.prelude.trim();
   record();
   phase = "writing";
   // Brackets are authored attempts, not punctuation to print or rewrite ourselves.

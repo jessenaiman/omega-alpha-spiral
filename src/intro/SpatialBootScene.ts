@@ -29,7 +29,11 @@ import {
 } from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
-import { BOOT_OPTIONS, BOOT_SYMBOLS, type BootFrame } from "./ghostwriting";
+import type { BootFrame } from "./ghostwriting";
+import {
+  GHOST_QUESTIONS,
+  GHOST_SYMBOLS as BOOT_SYMBOLS,
+} from "../dialogue/ghost-vite";
 import { getIntroEra, INTRO_ERAS, type IntroEraDesign } from "./IntroEraDesign";
 import { IntroParticleField } from "./IntroParticleField";
 import { IntroAvatar } from "./IntroAvatar";
@@ -56,6 +60,8 @@ import {
   type IntroPhysicsPosition,
   type IntroPhysicsStep,
 } from "./IntroPhysics";
+
+const BOOT_OPTIONS = GHOST_QUESTIONS[0].choices.map((choice) => choice.text);
 
 // Recorded first draw (seed 472): UI pixel-font-step .619, gameplay depth-drift
 // .472, stack plane-skew .716. Deliberately independent, bounded experiments.
