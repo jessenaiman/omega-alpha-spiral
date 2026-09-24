@@ -2,6 +2,26 @@
 
 Updated: 2026-09-24
 
+## Current task — Stage 1 four-floor redesign
+
+- Branch: `codex/feature-stage-one-redesign` in the isolated `stage-one-redesign` worktree, based on merged content. Commits: `b33695e` (OML presentation checkpoint), `2c10a11` (four OML era shaders), `3bfa7cc` (player color propagation), `e4180c8` (continuous station travel).
+- ✅ Gameplay consumes the four authored Ghost OML files for question, choice consequences, transitions, and era IDs. The shared era shader registry supplies the four 3D glyph treatments. Earlier glyph samples remain composited at later questions.
+- ✅ The selected Dreamweaver's `.omd` color drives the intro path and the player's accumulating imprint, the progress cue, and the Chapter Two hero handoff.
+- ✅ `npm.cmd run build` passed after each focused source increment. Fresh Chromium captures at question 1, 2, and 4 rendered nonblank, with zero reported browser errors. The manifest checker accepted all three reports.
+- 🔍 Station movement is now spread over strand travel while player world position is preserved in code. The fresh captures use named state hooks, so they do not prove unpaused travel/contact motion.
+- ❌ The current question frames still depart from the approved sparse galaxy and centered terminal reference: very large foreground linework and scattered lettering compete with the question. The owner has not approved the visual result.
+- Next: inspect one unpaused first-to-second-question travel sequence and correct the visible frame against the approved opening reference. Keep authored dialogue and Dialogue Studio separate. No later-stage content is in scope here.
+
+## Current task — Stage 1 four-floor redesign
+
+- Branch: `codex/feature-stage-one-redesign` in the isolated `stage-one-redesign` worktree, based on merged content. Commits: `b33695e` (OML presentation checkpoint), `2c10a11` (four OML era shaders), `3bfa7cc` (player color propagation), `e4180c8` (continuous station travel).
+- ✅ Gameplay consumes the four authored Ghost OML files for question, choice consequences, transitions, and era IDs. The shared era shader registry supplies the four 3D glyph treatments. Earlier glyph samples remain composited at later questions.
+- ✅ The selected Dreamweaver's `.omd` color drives the intro path and the player's accumulating imprint, the progress cue, and the Chapter Two hero handoff.
+- ✅ `npm.cmd run build` passed after each focused source increment. Fresh Chromium captures at question 1, 2, and 4 rendered nonblank, with zero reported browser errors. The manifest checker accepted all three reports.
+- 🔍 Station movement is now spread over strand travel while player world position is preserved in code. The fresh captures use named state hooks, so they do not prove unpaused travel/contact motion.
+- ❌ The current question frames still depart from the approved sparse galaxy and centered terminal reference: very large foreground linework and scattered lettering compete with the question. The owner has not approved the visual result.
+- Next: inspect one unpaused first-to-second-question travel sequence and correct the visible frame against the approved opening reference. Keep authored dialogue and Dialogue Studio separate. No later-stage content is in scope here.
+
 ## Current task — OML dialogue ownership and reusable era shaders
 
 - Branch: `codex/dialogic-era-shaders` in `C:\SpiralDrive\omega-alpha-spiral`.

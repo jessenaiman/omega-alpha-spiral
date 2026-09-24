@@ -1,5 +1,15 @@
 # Omega Spiral review evidence
 
+## Stage 1 four-floor redesign — 2026-09-24 current run
+
+✅ `npm.cmd run build` passed on `codex/feature-stage-one-redesign` after commits `2c10a11`, `3bfa7cc`, and `e4180c8`. The page at `http://127.0.0.1:5193/intro.html?debug` opened in Chromium. The three [declared captures](evidence.json) passed the current-run manifest checker: [question 1](stage1-oml-20260924/desktop-question-1.png), [question 2](stage1-oml-20260924/desktop-question-2.png), [question 4](stage1-oml-20260924/desktop-question-4.png). Each canvas was nonblank with zero reported console or page errors. The diagnostic level/era pairs were `ghost-floor-01`/`dec-vt100-ascii-terminal`, `ghost-floor-02`/`ibm-pc-cga`, and `ghost-floor-04`/`apple-macintosh-quickdraw`. The three reports recorded 96–105 draw calls and 2,964–4,258 triangles on the NVIDIA renderer; these are still frames, not frame-time evidence.
+
+✅ The capture procedure clicked Begin on the real start menu, awaited scene initialization, then used the existing named state hook for each question. Reproduction is in [capture.mjs](stage1-oml-20260924/capture.mjs). The current manifest command was `python .agents/skills/threejs-game-director/scripts/check_evidence.py . --manifest artifacts/evidence.json`.
+
+🔍 The arrival fix is source and build verified. These paused named-state frames do not verify the unpaused first-to-second-question handoff, real input, or a seamless camera transition. No such gameplay conclusion follows from the manifest result.
+
+❌ Visual inspection of the captures found thick foreground lines, scattered choice lettering, and a weak centered terminal/question hierarchy. This does not yet meet the [approved sparse galaxy and centered terminal direction](intro-direction/approved-design.md). Owner visual approval remains open.
+
 ## Eight-floor era journey — issue #61, targeted early-floor bot pass
 
 ✅ The [design manifest](level-design/design-manifest.md) and [design scorecard](level-design/design-scorecard.md) record the owner-approved era order, early three-exit choices, combat introduction on Floors 4–6, varied Floor 7 town, and Floor 8 healing-core endpoint. New Floor 4, Floors 5–6, and Floor 7 concept images are design studies, not runtime captures.
