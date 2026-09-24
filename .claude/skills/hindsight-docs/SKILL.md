@@ -10,7 +10,6 @@ Complete technical documentation for Hindsight - a biomimetic memory system for 
 ## When to Use This Skill
 
 Use this skill when you need to:
-
 - Understand Hindsight architecture and core concepts
 - Learn about retain/recall/reflect operations
 - Configure memory banks and dispositions

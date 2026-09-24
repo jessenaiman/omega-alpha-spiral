@@ -1,5 +1,7 @@
+
 {/* GENERATED from hindsight-integrations/coding-agents/README.md — edit that file, then run
-node hindsight-docs/scripts/sync-coding-agents-doc.mjs */}
+    node hindsight-docs/scripts/sync-coding-agents-doc.mjs */}
+
 
 Long-term project memory for **coding agents**, backed by [Hindsight](https://vectorize.io/hindsight).
 One package, several agents: a shared reflect-and-inject core with a thin entry point per agent
@@ -71,7 +73,7 @@ local daemon on this machine (see Where memory lives). Scripted installs pass
 
 Same command, only the harness name changes. Run after installing the package globally.
 
-#### Claude Code
+####  Claude Code
 
 ```bash
 npx @vectorize-io/hindsight-coding-agents install claude-code
@@ -79,7 +81,7 @@ npx @vectorize-io/hindsight-coding-agents install claude-code
 
 3 hooks in `~/.claude/settings.json`, MCP via `claude mcp add` (user scope), and the companion skill.
 
-#### Codex CLI
+####  Codex CLI
 
 ```bash
 npx @vectorize-io/hindsight-coding-agents install codex
@@ -87,7 +89,7 @@ npx @vectorize-io/hindsight-coding-agents install codex
 
 3 hooks in `~/.codex/hooks.json` plus `[mcp_servers]` in `config.toml` (needs `codex_hooks = true`).
 
-#### DeepAgents Dcode
+####  DeepAgents Dcode
 
 ```bash
 npx @vectorize-io/hindsight-coding-agents install dcode
@@ -108,7 +110,7 @@ capture an initiative or ingest a document. For the same reason the one-time cod
 under another installed agent's CLI when there is one, exactly as it does for Cursor, Copilot,
 Devin, Grok Build, Cline, Kilo and Prime Agent.
 
-#### opencode
+####  opencode
 
 ```bash
 npx @vectorize-io/hindsight-coding-agents install opencode
@@ -116,7 +118,7 @@ npx @vectorize-io/hindsight-coding-agents install opencode
 
 A plugin entry in `~/.config/opencode/opencode.json` — native tools, no MCP needed.
 
-#### opencode 2
+####  opencode 2
 
 ```bash
 npx @vectorize-io/hindsight-coding-agents install opencode2
@@ -135,7 +137,7 @@ injection, the native `hindsight_*` tools and session write-back are identical. 
 is identical too, but it is registered in memory through v2's skill API rather than copied into a
 skills directory — opencode2 has none of its own, and the two it reads belong to other agents.
 
-#### Kilo CLI
+####  Kilo CLI
 
 ```bash
 npx @vectorize-io/hindsight-coding-agents install kilo
@@ -143,7 +145,7 @@ npx @vectorize-io/hindsight-coding-agents install kilo
 
 A plugin entry in `~/.config/kilo/kilo.json[c]`.
 
-#### Cursor CLI
+####  Cursor CLI
 
 ```bash
 npx @vectorize-io/hindsight-coding-agents install cursor-cli
@@ -151,7 +153,7 @@ npx @vectorize-io/hindsight-coding-agents install cursor-cli
 
 Hooks in `~/.cursor/hooks.json`, `~/.cursor/mcp.json`, and the companion skill.
 
-#### GitHub Copilot CLI
+####  GitHub Copilot CLI
 
 ```bash
 npx @vectorize-io/hindsight-coding-agents install copilot-cli
@@ -159,7 +161,7 @@ npx @vectorize-io/hindsight-coding-agents install copilot-cli
 
 `~/.copilot/hooks/`, `mcp-config.json`, and the companion skill.
 
-#### Grok Build
+####  Grok Build
 
 ```bash
 npx @vectorize-io/hindsight-coding-agents install grok-build
@@ -167,7 +169,7 @@ npx @vectorize-io/hindsight-coding-agents install grok-build
 
 Native hooks and MCP in `~/.grok/config.toml`, plus the companion skill.
 
-#### Qwen Code
+####  Qwen Code
 
 ```bash
 npx @vectorize-io/hindsight-coding-agents install qwen-code
@@ -181,7 +183,7 @@ Native hooks in `~/.qwen/settings.json`, plus MCP and the companion skill.
 > continuations, so interactive sessions recall once per prompt while headless (`qwen -p`),
 > `serve`, SDK and ACP sessions seed and retain but do not recall.
 
-#### Factory Droid
+####  Factory Droid
 
 ```bash
 npx @vectorize-io/hindsight-coding-agents install factory-droid
@@ -196,7 +198,7 @@ user-managed MCP server already named `hindsight`. Droid's hook protocol matches
 injection use the same protocol; write-back also handles Droid's cancellation notification because
 Droid does not emit `Stop` after a cancelled turn.
 
-#### ZCode
+####  ZCode
 
 ```bash
 npx @vectorize-io/hindsight-coding-agents install zcode
@@ -220,7 +222,7 @@ refuses to touch an MCP server named `hindsight` that it did not write.
 > appending each new turn to the same session document. `--import-conversations` is therefore not
 > available for ZCode: there is no past history on disk to backfill from.
 
-#### Antigravity CLI
+####  Antigravity CLI
 
 ```bash
 npx @vectorize-io/hindsight-coding-agents install agy
@@ -228,7 +230,7 @@ npx @vectorize-io/hindsight-coding-agents install agy
 
 Lifecycle hooks, MCP, and the `Hindsight · <bank>` status line.
 
-#### Devin CLI
+####  Devin CLI
 
 ```bash
 npx @vectorize-io/hindsight-coding-agents install devin-cli
@@ -236,7 +238,7 @@ npx @vectorize-io/hindsight-coding-agents install devin-cli
 
 Hooks in `~/.config/devin/config.json` plus MCP. Needs Node 22.5+ — see below.
 
-#### Cline CLI
+####  Cline CLI
 
 ```bash
 npx @vectorize-io/hindsight-coding-agents install cline-cli
@@ -244,7 +246,7 @@ npx @vectorize-io/hindsight-coding-agents install cline-cli
 
 A native plugin via `cline plugin install`, plus MCP and the companion skill.
 
-#### pi
+####  pi
 
 ```bash
 npx @vectorize-io/hindsight-coding-agents install pi
@@ -260,7 +262,7 @@ whichever host it did not name would load the other's bundle and report itself a
 taking that harness's config section and stamping every document it retains with it. So the package
 carries no `pi` key at all, and each host is pointed at its own bundle by the install command above.
 
-#### Prime Agent
+####  Prime Agent
 
 ```bash
 npx @vectorize-io/hindsight-coding-agents install prime-agent
@@ -274,7 +276,7 @@ each host loads its own entry from its own settings file, and like every other p
 when you open Prime Agent. Separate entries are what keeps each side attributable — its own
 `harnesses.<name>` config section, and its own agent stamped on every document it retains.
 
-#### DeepSeek Harness
+####  DeepSeek Harness
 
 ```bash
 npx @vectorize-io/hindsight-coding-agents install dsh
@@ -537,7 +539,7 @@ hook by Codex...), so one shared config serves several agents side by side:
 | `dynamicBankId`         | dynamic iff no `bankId`              | force dynamic (`true`) or static (`false`) resolution                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | `bankIdTemplate`        | `"coding-agent::{gitProject}"`       | dynamic bank id format; the default makes every agent share one bank per repo                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | `mapPathToBank`         | —                                    | absolute path → bank; **longest prefix wins**; linked worktrees inherit their main checkout's mapping; overrides everything                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| `optInOnly`             | `false`                              | run memory ONLY in opted-in projects — everything else is inert, with no bank created; see Opt-in only                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `optInOnly`             | `false`                              | run memory ONLY in opted-in projects — everything else is inert, with no bank created; see Opt-in only                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `optInPaths`            | —                                    | directories opted in, matched as prefixes with `~` expanded; each repo beneath and its linked worktrees are approved while keeping their own dynamic bank                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | `resolveWorktrees`      | `true`                               | linked worktrees inherit the main checkout's bank identity, path approval, and mapping                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `retainTags`            | —                                    | extra tags on every document written by the integration, e.g. `["project:{gitProject}"]` — see **Recording where a memory came from** below                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |

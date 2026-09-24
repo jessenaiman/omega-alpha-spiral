@@ -46,7 +46,6 @@ The Go client uses `NullableString`, `NullableTime`, and similar types for optio
 ## More Examples
 
 For detailed examples of all operations, see:
-
 - [Python SDK documentation](./python.mdx) - API concepts are the same
 - [Node.js SDK documentation](./nodejs.mdx) - API concepts are the same
 - [OpenAPI specification](https://hindsight.dev/openapi.json) - Complete API reference

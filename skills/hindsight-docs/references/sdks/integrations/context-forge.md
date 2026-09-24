@@ -1,3 +1,4 @@
+
 # ContextForge
 
 Register [Hindsight](https://vectorize.io/hindsight) as an MCP backend in [IBM ContextForge](https://github.com/IBM/mcp-context-forge), an open-source MCP gateway. Once registered, every AI tool connected to ContextForge — Dust, Claude Desktop, custom agents — gets access to Hindsight's retain, recall, and reflect tools through a single unified endpoint.
@@ -122,16 +123,16 @@ Tools are scoped to that bank — no `bank_id` parameter needed. Useful when you
 
 Once registered, these Hindsight tools become available through ContextForge:
 
-| Tool                  | Description                                   |
-| --------------------- | --------------------------------------------- |
-| `retain`              | Store information to long-term memory         |
-| `recall`              | Search memories with natural language queries |
-| `reflect`             | Synthesize memories into a reasoned answer    |
-| `list_banks`          | List all memory banks                         |
-| `create_bank`         | Create a new memory bank                      |
-| `list_mental_models`  | List pinned reflections                       |
-| `create_mental_model` | Create a new mental model                     |
-| `list_documents`      | List ingested documents                       |
+| Tool | Description |
+|------|-------------|
+| `retain` | Store information to long-term memory |
+| `recall` | Search memories with natural language queries |
+| `reflect` | Synthesize memories into a reasoned answer |
+| `list_banks` | List all memory banks |
+| `create_bank` | Create a new memory bank |
+| `list_mental_models` | List pinned reflections |
+| `create_mental_model` | Create a new mental model |
+| `list_documents` | List ingested documents |
 
 See the full tool list in the [MCP Server reference](https://hindsight.vectorize.io/developer/mcp-server#available-tools).
 
@@ -239,7 +240,6 @@ curl -s http://hindsight-api:8888/health
 ### Connection refused from ContextForge
 
 If ContextForge can't reach Hindsight:
-
 - Verify network connectivity (same namespace/VPC, NetworkPolicy allows traffic)
 - Check the registered URL matches the actual Hindsight service endpoint
 - Ensure `SSRF_ALLOW_PRIVATE_NETWORKS=true` is set in ContextForge (required for in-cluster backends)

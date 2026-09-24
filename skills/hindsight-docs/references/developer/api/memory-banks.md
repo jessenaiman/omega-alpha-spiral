@@ -1,3 +1,4 @@
+
 # Memory Banks
 
 Memory banks are isolated containers that store all memory-related data for a specific context or use case.
@@ -18,16 +19,15 @@ Banks are completely isolated from each other — memories stored in one bank ar
 
 You don't need to pre-create a bank. Hindsight will automatically create it with default settings when you first use it.
 
-Only _writes_ create a bank — retaining, updating its profile, changing its config. **Reads of a
+Only *writes* create a bank — retaining, updating its profile, changing its config. **Reads of a
 bank that does not exist return `404`**, so a typo'd, renamed or deleted `bank_id` is reported
 rather than answered with empty results. That matters if you are monitoring a bank: `GET .../stats`
 on a missing bank fails loudly instead of returning zeroed counters that look like a healthy,
 empty bank.
 
 > **💡 Prerequisites**
-
+>
 Make sure you've completed the [Quick Start](./quickstart) to install the client and start the server.
-
 ## Creating a Memory Bank
 
 ### Python
@@ -39,7 +39,7 @@ client.create_bank(bank_id="my-bank")
 ### Node.js
 
 ```javascript
-await client.createBank("my-bank");
+await client.createBank('my-bank');
 ```
 
 ### CLI
@@ -74,13 +74,13 @@ Works alongside any extraction mode. Leave blank for general-purpose extraction.
 
 Controls how aggressively facts are extracted:
 
-| Mode                  | Description                                                                                           |
-| --------------------- | ----------------------------------------------------------------------------------------------------- |
-| `concise` _(default)_ | Selective — only facts worth remembering long-term                                                    |
-| `verbose`             | Captures more detail per fact; slower and uses more tokens                                            |
-| `custom`              | Write your own extraction rules via `retain_custom_instructions`                                      |
-| `verbatim`            | Stores each chunk's original text as one memory; the LLM extracts metadata such as entities and dates |
-| `chunks`              | Stores each chunk as one memory without an LLM call; only caller-provided entities are available      |
+| Mode | Description |
+|------|-------------|
+| `concise` *(default)* | Selective — only facts worth remembering long-term |
+| `verbose` | Captures more detail per fact; slower and uses more tokens |
+| `custom` | Write your own extraction rules via `retain_custom_instructions` |
+| `verbatim` | Stores each chunk's original text as one memory; the LLM extracts metadata such as entities and dates |
+| `chunks` | Stores each chunk as one memory without an LLM call; only caller-provided entities are available |
 
 ### retain_custom_instructions
 
@@ -115,14 +115,8 @@ Each entry in `entity_labels` is a **label group** — one classification dimens
       "type": "value",
       "optional": true,
       "values": [
-        {
-          "value": "active",
-          "description": "Student is actively participating"
-        },
-        {
-          "value": "passive",
-          "description": "Student is listening but not participating"
-        }
+        { "value": "active",  "description": "Student is actively participating" },
+        { "value": "passive", "description": "Student is listening but not participating" }
       ]
     },
     {
@@ -130,33 +124,24 @@ Each entry in `entity_labels` is a **label group** — one classification dimens
       "description": "Teaching strategies used",
       "type": "multi-values",
       "values": [
-        {
-          "value": "scaffolding",
-          "description": "Breaking complex tasks into smaller steps"
-        },
-        {
-          "value": "direct_instruction",
-          "description": "Explicit explanation by the teacher"
-        },
-        {
-          "value": "socratic_questioning",
-          "description": "Guiding through questions rather than answers"
-        }
+        { "value": "scaffolding",          "description": "Breaking complex tasks into smaller steps" },
+        { "value": "direct_instruction",   "description": "Explicit explanation by the teacher" },
+        { "value": "socratic_questioning", "description": "Guiding through questions rather than answers" }
       ]
     }
   ]
 }
 ```
 
-| Field         | Default   | Description                                                                                                                                                                                     |
-| ------------- | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `key`         | —         | Label group identifier. Becomes the prefix in `key:value` entities (or `key:field:value` for `"map"`).                                                                                          |
-| `description` | `""`      | Shown to the LLM to guide label assignment.                                                                                                                                                     |
-| `type`        | `"value"` | `"value"` → pick one enum value; `"multi-values"` → pick multiple; `"text"` → free-form string; `"multi-text"` → any number of free-form strings; `"map"` → structured group with named fields. |
-| `values`      | `[]`      | Allowed values for `"value"` and `"multi-values"` types. Ignored for `"text"`, `"multi-text"` and `"map"`.                                                                                      |
-| `fields`      | `{}`      | Field definitions for `"map"` types. Each field is itself typed (`"text"`, `"multi-text"`, `"value"`, `"multi-values"`, or nested `"map"`). Ignored for non-map types.                          |
-| `optional`    | `true`    | When `true` the LLM may skip the label if not applicable. When `false` the LLM must always assign a value. Has no effect on `"multi-values"` or `"multi-text"` groups (always optional).        |
-| `tag`         | `false`   | When `true`, extracted `key:value` labels are also written as tags on the memory unit, enabling filtering via `tags`/`tags_match` in recall/reflect.                                            |
+| Field | Default | Description |
+|-------|---------|-------------|
+| `key` | — | Label group identifier. Becomes the prefix in `key:value` entities (or `key:field:value` for `"map"`). |
+| `description` | `""` | Shown to the LLM to guide label assignment. |
+| `type` | `"value"` | `"value"` → pick one enum value; `"multi-values"` → pick multiple; `"text"` → free-form string; `"multi-text"` → any number of free-form strings; `"map"` → structured group with named fields. |
+| `values` | `[]` | Allowed values for `"value"` and `"multi-values"` types. Ignored for `"text"`, `"multi-text"` and `"map"`. |
+| `fields` | `{}` | Field definitions for `"map"` types. Each field is itself typed (`"text"`, `"multi-text"`, `"value"`, `"multi-values"`, or nested `"map"`). Ignored for non-map types. |
+| `optional` | `true` | When `true` the LLM may skip the label if not applicable. When `false` the LLM must always assign a value. Has no effect on `"multi-values"` or `"multi-text"` groups (always optional). |
+| `tag` | `false` | When `true`, extracted `key:value` labels are also written as tags on the memory unit, enabling filtering via `tags`/`tags_match` in recall/reflect. |
 
 **Enum groups** (`type: "value"` or `type: "multi-values"`): the LLM picks from the predefined `values` list; anything outside the list is silently dropped. Vocabulary stays stable and graph links stay tight. Use `"multi-values"` when a fact can belong to several values at once.
 
@@ -172,7 +157,7 @@ Each entry in `entity_labels` is a **label group** — one classification dimens
 }
 ```
 
-**Open-vocabulary groups** (`type: "multi-text"`): like `"text"`, but the LLM writes a _list_ of strings instead of one — so a single fact can carry several values that nobody enumerated in the bank config. Use it when the interesting values only exist in the content: the names a thing is known by (canonical name plus abbreviations, acronyms and alternative spellings), ticket references a fact cites, product codes or SKUs. Each value becomes its own `key:value` entity, and with `tag: true` each is written as a tag, so a bank can derive a classification from content and then filter on it at recall without the caller supplying the vocabulary.
+**Open-vocabulary groups** (`type: "multi-text"`): like `"text"`, but the LLM writes a *list* of strings instead of one — so a single fact can carry several values that nobody enumerated in the bank config. Use it when the interesting values only exist in the content: the names a thing is known by (canonical name plus abbreviations, acronyms and alternative spellings), ticket references a fact cites, product codes or SKUs. Each value becomes its own `key:value` entity, and with `tag: true` each is written as a tag, so a bank can derive a classification from content and then filter on it at recall without the caller supplying the vocabulary.
 
 ```json
 {
@@ -183,7 +168,7 @@ Each entry in `entity_labels` is a **label group** — one classification dimens
 }
 ```
 
-Retaining _"We deploy services to a Kubernetes cluster on EKS — the team usually just says k8s, or kube"_ yields the entities and tags `name:kubernetes`, `name:k8s` and `name:kube`, so `{"tags": ["name:k8s"], "tags_match": "any_strict"}` finds the fact. A `"text"` group would keep only one of the three.
+Retaining *"We deploy services to a Kubernetes cluster on EKS — the team usually just says k8s, or kube"* yields the entities and tags `name:kubernetes`, `name:k8s` and `name:kube`, so `{"tags": ["name:k8s"], "tags_match": "any_strict"}` finds the fact. A `"text"` group would keep only one of the three.
 
 **Map groups** (`type: "map"`): defines a structured entity type with named fields. Each field is itself typed (`"text"`, `"multi-text"`, `"value"`, `"multi-values"`, or nested `"map"`) so you can describe rich entities like a person with name, role, and organization. Each extracted field is stored as a flat `key:field:value` entity string (e.g. `person:name:Alice`), reusing the existing entity storage with no schema changes — so map fields participate in the knowledge graph and retrieval the same way single-value labels do.
 
@@ -193,8 +178,8 @@ Retaining _"We deploy services to a Kubernetes cluster on EKS — the team usual
   "description": "A person mentioned in the text",
   "type": "map",
   "fields": {
-    "name": { "type": "text", "description": "Full name of the person" },
-    "role": { "type": "text", "description": "Job title or role" },
+    "name":         { "type": "text", "description": "Full name of the person" },
+    "role":         { "type": "text", "description": "Job title or role" },
     "organization": { "type": "text", "description": "Company or organization" }
   }
 }
@@ -278,13 +263,12 @@ client.update_bank_config(
 ### Node.js
 
 ```javascript
-await client.createBank("architect-bank");
-await client.updateBankConfig("architect-bank", {
-  reflectMission:
-    "You're a senior software architect - keep track of system designs, technology decisions, and architectural patterns.",
-  dispositionSkepticism: 4, // Questions new technologies
-  dispositionLiteralism: 4, // Focuses on concrete specs
-  dispositionEmpathy: 2, // Prioritizes technical facts
+await client.createBank('architect-bank');
+await client.updateBankConfig('architect-bank', {
+    reflectMission: "You're a senior software architect - keep track of system designs, technology decisions, and architectural patterns.",
+    dispositionSkepticism: 4,   // Questions new technologies
+    dispositionLiteralism: 4,   // Focuses on concrete specs
+    dispositionEmpathy: 2,      // Prioritizes technical facts
 });
 ```
 
@@ -313,36 +297,35 @@ client.BanksAPI.CreateOrUpdateBank(ctx, "architect-bank").
 	}).Execute()
 ```
 
-| Value           | Behaviour                                    |
-| --------------- | -------------------------------------------- |
-| `1`             | Trusting — accepts information at face value |
-| `3` _(default)_ | Balanced                                     |
-| `5`             | Skeptical — questions and doubts claims      |
+| Value | Behaviour |
+|-------|-----------|
+| `1` | Trusting — accepts information at face value |
+| `3` *(default)* | Balanced |
+| `5` | Skeptical — questions and doubts claims |
 
 ### disposition_literalism
 
 How literally to interpret information during `reflect`. Scale 1–5.
 
-| Value           | Behaviour                                             |
-| --------------- | ----------------------------------------------------- |
-| `1`             | Flexible — reads between the lines, considers context |
-| `3` _(default)_ | Balanced                                              |
-| `5`             | Literal — takes things exactly as stated              |
+| Value | Behaviour |
+|-------|-----------|
+| `1` | Flexible — reads between the lines, considers context |
+| `3` *(default)* | Balanced |
+| `5` | Literal — takes things exactly as stated |
 
 ### disposition_empathy
 
 How much to weight emotional context when reasoning during `reflect`. Scale 1–5.
 
-| Value           | Behaviour                                |
-| --------------- | ---------------------------------------- |
-| `1`             | Detached — focuses on facts and logic    |
-| `3` _(default)_ | Balanced                                 |
-| `5`             | Empathetic — considers emotional context |
+| Value | Behaviour |
+|-------|-----------|
+| `1` | Detached — focuses on facts and logic |
+| `3` *(default)* | Balanced |
+| `5` | Empathetic — considers emotional context |
 
 > **ℹ️ Info**
-
+>
 Disposition traits and `reflect_mission` only affect the `reflect` operation. `retain_mission` and `observations_mission` are separate per-operation settings.
-
 ### mcp_enabled_tools
 
 An allowlist of MCP tool names that are enabled for this bank. When set, only the listed tools can be invoked; any tool not in the list returns an error (tools still appear in the MCP tools list for protocol compatibility). Set to `null` (or omit) to allow all tools.
@@ -359,8 +342,8 @@ Controls content filtering thresholds for Gemini and VertexAI providers. Accepts
 
 ```json
 [
-  { "category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE" },
-  { "category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE" }
+  {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
+  {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"}
 ]
 ```
 
@@ -370,10 +353,10 @@ Only applies when `HINDSIGHT_API_LLM_PROVIDER` is `gemini` or `vertexai`.
 
 Selects how the [`recall` request's `budget` parameter](./recall) (`low` / `mid` / `high`) maps to the internal `thinking_budget` integer used by every retrieval method (semantic, BM25, graph, temporal). Two functions are supported:
 
-| Function            | Behaviour                                                                                                                                                                             |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `fixed` _(default)_ | `thinking_budget = recall_budget_fixed_<level>` — independent of `max_tokens`. Preserves legacy behavior.                                                                             |
-| `adaptive`          | `thinking_budget = round(max_tokens * recall_budget_adaptive_<level>)`, clamped to `[recall_budget_min, recall_budget_max]`. Retrieval breadth scales with the requested output size. |
+| Function | Behaviour |
+|----------|-----------|
+| `fixed` *(default)* | `thinking_budget = recall_budget_fixed_<level>` — independent of `max_tokens`. Preserves legacy behavior. |
+| `adaptive` | `thinking_budget = round(max_tokens * recall_budget_adaptive_<level>)`, clamped to `[recall_budget_min, recall_budget_max]`. Retrieval breadth scales with the requested output size. |
 
 ```json
 {
@@ -404,22 +387,22 @@ See [Recall budget mapping](../configuration.md#recall-budget-mapping) for envir
 
 Per-bank Memory Defense policy. Defaults to absent (Memory Defense disabled on this bank).
 
-| Field                      | Type                                     | Default | Description                                                                                |
-| -------------------------- | ---------------------------------------- | ------- | ------------------------------------------------------------------------------------------ |
-| `enabled`                  | bool                                     | `false` | Master switch.                                                                             |
-| `default_action`           | `allow`\|`redact`\|`quarantine`\|`block` | `allow` | Fallback action when no rule matches.                                                      |
-| `protected_tag_namespaces` | `list[str]`                              | `[]`    | Writes with tags in these namespaces (`ns:*`) are subject to the `protected_key` detector. |
-| `immutable_tag_namespaces` | `list[str]`                              | `[]`    | Writes to these namespaces are blocked.                                                    |
-| `rules`                    | `list[Rule]`                             | `[]`    | Detector-to-action mappings (see below).                                                   |
-| `detector_overrides`       | `dict`                                   | `{}`    | Per-detector tuning (e.g. `size_anomaly.max_size`).                                        |
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `enabled` | bool | `false` | Master switch. |
+| `default_action` | `allow`\|`redact`\|`quarantine`\|`block` | `allow` | Fallback action when no rule matches. |
+| `protected_tag_namespaces` | `list[str]` | `[]` | Writes with tags in these namespaces (`ns:*`) are subject to the `protected_key` detector. |
+| `immutable_tag_namespaces` | `list[str]` | `[]` | Writes to these namespaces are blocked. |
+| `rules` | `list[Rule]` | `[]` | Detector-to-action mappings (see below). |
+| `detector_overrides` | `dict` | `{}` | Per-detector tuning (e.g. `size_anomaly.max_size`). |
 
 `Rule` shape:
 
-| Field          | Required | Description                                                                                                            |
-| -------------- | -------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `on`           | yes      | Detector name (`prompt_injection`, `sensitive_data`, `protected_key`, `immutable_key`, `size_anomaly`) or `*` for any. |
-| `action`       | yes      | One of `allow`, `redact`, `quarantine`, `block`.                                                                       |
-| `min_severity` | no       | Minimum severity (`low`, `medium`, `high`, `critical`) for the rule to fire. Defaults to `low`.                        |
+| Field | Required | Description |
+|---|---|---|
+| `on` | yes | Detector name (`prompt_injection`, `sensitive_data`, `protected_key`, `immutable_key`, `size_anomaly`) or `*` for any. |
+| `action` | yes | One of `allow`, `redact`, `quarantine`, `block`. |
+| `min_severity` | no | Minimum severity (`low`, `medium`, `high`, `critical`) for the rule to fire. Defaults to `low`. |
 
 Invalid policies are rejected on PATCH with HTTP 422.
 
@@ -447,12 +430,11 @@ for message in preview.messages:
 
 ```javascript
 const { data: preview } = await sdk.previewPrompt({
-  client: apiClient,
-  path: { bank_id: "my-bank" },
-  body: { operation: "retain" },
+    client: apiClient,
+    path: { bank_id: 'my-bank' },
+    body: { operation: 'retain' },
 });
-for (const message of preview.messages)
-  console.log(message.role, message.blocks.length);
+for (const message of preview.messages) console.log(message.role, message.blocks.length);
 ```
 
 ### CLI
@@ -518,11 +500,11 @@ The response carries the messages in send order, each broken into the blocks it 
 
 - **`messages`** — the request, system first, exactly as the model receives it.
 - **`blocks`** — the **active** blocks of a message concatenate back to its text exactly: nothing dropped, duplicated or reordered. `source` says what produced each: `config` for a setting you can change, `builtin` for Hindsight's own wording. The runtime data an operation is given is not a block — it is a hole in the text, marked inline with `«…»`.
-- **Inactive blocks** (`active: false`) have no text. They mark a setting that is switched off, at the point where it _would_ land — so a mission you have not written yet is still visible where it would go.
+- **Inactive blocks** (`active: false`) have no text. They mark a setting that is switched off, at the point where it *would* land — so a mission you have not written yet is still visible where it would go.
 - **Identifying a block** — whichever of these applies, in order: `field` is the config field behind it; `section` is a slug for a part no single field owns (`bank_identity`, `disposition`, `directives`); `heading` is the section heading the prompt text itself carries there. All three are machine values. The response carries **no display copy** — what a block is called, and what turning a switched-off one on would do, is for the client to say in the language it is running in.
 - **`editable`** — false for server-level fields such as `llm_output_language`, which shape the prompt but cannot be overridden per bank.
 
-**Both messages are returned on purpose.** For `retain` and `consolidation` the mission travels in the _user_ message, not the system prompt: keeping the system prompt identical for every bank lets one provider-side prompt cache serve them all, which is a large cost saving on high-volume ingestion. Only `reflect` puts its mission in the system prompt.
+**Both messages are returned on purpose.** For `retain` and `consolidation` the mission travels in the *user* message, not the system prompt: keeping the system prompt identical for every bank lets one provider-side prompt cache serve them all, which is a large cost saving on high-volume ingestion. Only `reflect` puts its mission in the system prompt.
 
 ### When there is no prompt
 
@@ -539,9 +521,8 @@ The response carries the messages in send order, each broken into the blocks it 
 In the Control Plane, each Mission field on the bank **Configuration** tab has a **Preview prompt** button, and each block's setting can be edited there and saved to the bank.
 
 > **💡 Tip**
-
-[Dry-run extraction](memories.md) is the paid counterpart: it spends a real LLM call to show what the same configuration actually _extracts_. It resolves its config the same way, strategy included, so the two agree. The Control Plane pairs them in one prompt tester.
-
+>
+[Dry-run extraction](memories.md) is the paid counterpart: it spends a real LLM call to show what the same configuration actually *extracts*. It resolves its config the same way, strategy included, so the two agree. The Control Plane pairs them in one prompt tester.
 ## Updating Configuration
 
 Bank configuration fields (retain mission, extraction mode, observations mission, etc.) are managed via a **separate config API**, not the `create_bank` call. This lets you change operational settings independently from the bank's identity and disposition.
@@ -565,15 +546,13 @@ client.update_bank_config(
 ### Node.js
 
 ```javascript
-await client.updateBankConfig("my-bank", {
-  retainMission:
-    "Always include technical decisions, API design choices, and architectural trade-offs. Ignore meeting logistics and social exchanges.",
-  retainExtractionMode: "verbose",
-  observationsMission:
-    "Observations are stable facts about people and projects. Always include preferences, skills, and recurring patterns. Ignore one-off events.",
-  dispositionSkepticism: 4,
-  dispositionLiteralism: 4,
-  dispositionEmpathy: 2,
+await client.updateBankConfig('my-bank', {
+    retainMission: 'Always include technical decisions, API design choices, and architectural trade-offs. Ignore meeting logistics and social exchanges.',
+    retainExtractionMode: 'verbose',
+    observationsMission: 'Observations are stable facts about people and projects. Always include preferences, skills, and recurring patterns. Ignore one-off events.',
+    dispositionSkepticism: 4,
+    dispositionLiteralism: 4,
+    dispositionEmpathy: 2,
 });
 ```
 
@@ -624,7 +603,7 @@ data = client.get_bank_config("my-bank")
 
 ```javascript
 // Returns resolved config (server defaults merged with bank overrides) and the raw overrides
-const { config, overrides } = await client.getBankConfig("my-bank");
+const { config, overrides } = await client.getBankConfig('my-bank');
 // config    — full resolved configuration
 // overrides — only fields overridden at the bank level
 ```
@@ -650,7 +629,6 @@ fmt.Println("Config keys:", len(result.GetConfig()))
 ```
 
 The response distinguishes:
-
 - **`config`** — the fully resolved configuration (server defaults merged with bank overrides)
 - **`overrides`** — only the fields explicitly overridden for this bank
 
@@ -667,7 +645,7 @@ client.reset_bank_config("my-bank")
 
 ```javascript
 // Remove all bank-level overrides, reverting to server defaults
-await client.resetBankConfig("my-bank");
+await client.resetBankConfig('my-bank');
 ```
 
 ### CLI
@@ -692,12 +670,11 @@ You can also update configuration directly from the Control Plane UI — navigat
 
 ## Directives
 
-Directives are hard rules that the agent must follow during [reflect](./reflect) operations. Unlike disposition traits which influence _how_ the agent reasons, directives are explicit instructions that are enforced whenever they are in scope (see [Directive Scope and Tags](#directive-scope-and-tags)).
+Directives are hard rules that the agent must follow during [reflect](./reflect) operations. Unlike disposition traits which influence *how* the agent reasons, directives are explicit instructions that are enforced whenever they are in scope (see [Directive Scope and Tags](#directive-scope-and-tags)).
 
 > **ℹ️ Info**
-
+>
 Directives only affect the `reflect` operation. They are injected into prompts and the agent is required to comply with them in all responses.
-
 ### When to Use Directives
 
 Use directives for rules that must never be violated:
@@ -736,9 +713,9 @@ print(f"Created directive: {directive.id}")
 ```javascript
 // Create a directive (hard rule for reflect)
 const directive = await client.createDirective(
-  BANK_ID,
-  "Formal Language",
-  "Always respond in formal English, avoiding slang and colloquialisms."
+    BANK_ID,
+    'Formal Language',
+    'Always respond in formal English, avoiding slang and colloquialisms.'
 );
 
 console.log(`Created directive: ${directive.id}`);
@@ -785,7 +762,7 @@ for d in directives.items:
 const directives = await client.listDirectives(BANK_ID);
 
 for (const d of directives.items) {
-  console.log(`- ${d.name}: ${d.content.slice(0, 50)}...`);
+    console.log(`- ${d.name}: ${d.content.slice(0, 50)}...`);
 }
 ```
 
@@ -831,7 +808,7 @@ print(f"Directive active: {updated.is_active}")
 ```javascript
 // Update a directive (e.g., disable without deleting)
 const updated = await client.updateDirective(BANK_ID, directiveId, {
-  isActive: false,
+    isActive: false
 });
 
 console.log(`Directive active: ${updated.is_active}`);
@@ -892,12 +869,12 @@ client.DirectivesAPI.DeleteDirective(ctx, bankID, directiveID).Execute()
 
 ### Directives vs Disposition
 
-| Aspect          | Directives                                  | Disposition                       |
-| --------------- | ------------------------------------------- | --------------------------------- |
-| **Nature**      | Hard rules, must be followed                | Soft influence on reasoning style |
-| **Enforcement** | Strict — responses are rejected if violated | Flexible — shapes interpretation  |
-| **Use case**    | Compliance, guardrails, constraints         | Personality, character, tone      |
-| **Example**     | "Never recommend specific stocks"           | High skepticism: questions claims |
+| Aspect | Directives | Disposition |
+|--------|------------|-------------|
+| **Nature** | Hard rules, must be followed | Soft influence on reasoning style |
+| **Enforcement** | Strict — responses are rejected if violated | Flexible — shapes interpretation |
+| **Use case** | Compliance, guardrails, constraints | Personality, character, tone |
+| **Example** | "Never recommend specific stocks" | High skepticism: questions claims |
 
 ---
 
@@ -905,15 +882,15 @@ client.DirectivesAPI.DeleteDirective(ctx, bankID, directiveID).Execute()
 
 Move a bank — or just its documents — between banks and instances **without re-running the LLM**. One archive format, one pair of endpoints, and three flags that decide what travels:
 
-| Flag                  | Default | What it carries                                                                                                                                                                                                                                                                                                                            |
-| --------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `include_data`        | `true`  | Documents, raw chunks, extracted facts, consolidated observations, entities and links, attachments **and their bytes**, the curation archive of invalidated facts, the operations log, the maintenance queues — and what the bank synthesized from all of it: mental models, their refresh history, and the knowledge-page tree over them. |
-| `include_bank_config` | `true`  | How the bank is set up: its config overrides, directives, and webhooks.                                                                                                                                                                                                                                                                    |
-| `include_history`     | `false` | `audit_log` and `llm_requests`.                                                                                                                                                                                                                                                                                                            |
+| Flag | Default | What it carries |
+|------|---------|-----------------|
+| `include_data` | `true` | Documents, raw chunks, extracted facts, consolidated observations, entities and links, attachments **and their bytes**, the curation archive of invalidated facts, the operations log, the maintenance queues — and what the bank synthesized from all of it: mental models, their refresh history, and the knowledge-page tree over them. |
+| `include_bank_config` | `true` | How the bank is set up: its config overrides, directives, and webhooks. |
+| `include_history` | `false` | `audit_log` and `llm_requests`. |
 
 Mental models and knowledge pages count as **data**, not configuration. A mental model is a reading of the bank's facts and cites them by id in its `based_on` evidence, so carrying it without them would restore a synthesis whose grounding resolves to nothing. Their refresh history follows them for the same reason.
 
-Embeddings and database ids are never carried: facts are re-embedded with the _target_ bank's model and entities are re-resolved against it, so an archive moves cleanly to an instance configured with a different embedding model, vector extension, or text-search backend.
+Embeddings and database ids are never carried: facts are re-embedded with the *target* bank's model and entities are re-resolved against it, so an archive moves cleanly to an instance configured with a different embedding model, vector extension, or text-search backend.
 
 Webhooks travel with `include_bank_config`. When copying a bank whose webhooks point at a per-bank consumer, export with `include_bank_config=false`, or delete them on the copy.
 
@@ -943,19 +920,17 @@ submission = await client.bank_transfer.export_bank_transfer(
 ```javascript
 // Whole bank, memories + config, no history.
 // Submits the export, polls the operation, downloads the ZIP.
-const archive = await client.exportBank("transfer-js");
+const archive = await client.exportBank('transfer-js');
 
 // Just the memories
-const memoriesOnly = await client.exportBank("transfer-js", {
-  includeBankConfig: false,
-});
+const memoriesOnly = await client.exportBank('transfer-js', { includeBankConfig: false });
 
 // Specific documents (a document subset carries no bank-level sections).
 // The low-level call only submits; poll the returned operation yourself.
 const { data: subset } = await sdk.exportBankTransfer({
-  client: apiClient,
-  path: { bank_id: "transfer-js" },
-  query: { document_id: ["doc-1", "doc-2"], include_bank_config: false },
+    client: apiClient,
+    path: { bank_id: 'transfer-js' },
+    query: { document_id: ['doc-1', 'doc-2'], include_bank_config: false },
 });
 ```
 
@@ -999,10 +974,10 @@ A document subset must also pass `include_bank_config=false` (and leave `include
 
 `POST /v1/default/banks/{bank_id}/transfer/import` — multipart upload (`file` = the ZIP), also a background operation.
 
-| Mode                | Behaviour                                                                                                                                                           |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `restore` (default) | Writes a whole bank into `target_bank_id`, which **must not already exist**. This is how a bank is moved to another instance, or copied under a new id.             |
-| `merge`             | Folds the archive's documents into `{bank_id}`. `document_conflict` decides what happens to document ids that already exist: `skip` (default), `replace`, `new-id`. |
+| Mode | Behaviour |
+|------|-----------|
+| `restore` (default) | Writes a whole bank into `target_bank_id`, which **must not already exist**. This is how a bank is moved to another instance, or copied under a new id. |
+| `merge` | Folds the archive's documents into `{bank_id}`. `document_conflict` decides what happens to document ids that already exist: `skip` (default), `replace`, `new-id`. |
 
 ### Python
 
@@ -1025,21 +1000,21 @@ submission = await client.bank_transfer.import_bank_transfer(
 
 ```javascript
 // Restore a bank under a new id
-const restoreId = await client.importBank("transfer-js", new Blob([archive]), {
-  targetBankId: "transfer-js-copy",
+const restoreId = await client.importBank('transfer-js', new Blob([archive]), {
+    targetBankId: 'transfer-js-copy',
 });
 // The restore is recorded against the bank in the URL — poll it there
 const { data: restoreStatus } = await sdk.getOperationStatus({
-  client: apiClient,
-  path: { bank_id: "transfer-js", operation_id: restoreId },
+    client: apiClient,
+    path: { bank_id: 'transfer-js', operation_id: restoreId },
 });
 
 // Merge an archive's documents into an existing bank
 const { data: merge } = await sdk.importBankTransfer({
-  client: apiClient,
-  path: { bank_id: "transfer-js-other" },
-  query: { mode: "merge", document_conflict: "replace" },
-  body: { file: new Blob([archive]) },
+    client: apiClient,
+    path: { bank_id: 'transfer-js-other' },
+    query: { mode: 'merge', document_conflict: 'replace' },
+    body: { file: new Blob([archive]) },
 });
 ```
 
@@ -1075,7 +1050,7 @@ The include flags apply here too, and can only narrow: they restore a subset of 
 
 In `restore` mode the operation is recorded against `{bank_id}` — the bank in the URL — because the target bank does not exist yet. Poll that bank's operations endpoint for status and the per-component counts.
 
-A restore carries the operations log as history, not as work: anything still in flight when the bank was exported is left behind, so a copied bank never re-runs the original's queued retains or re-fires its webhooks. In-flight work belongs to the bank that was exported — and a clone runs _inside_ one such operation, so carrying them would put the clone's own unfinished record in the copy.
+A restore carries the operations log as history, not as work: anything still in flight when the bank was exported is left behind, so a copied bank never re-runs the original's queued retains or re-fires its webhooks. In-flight work belongs to the bank that was exported — and a clone runs *inside* one such operation, so carrying them would put the clone's own unfinished record in the copy.
 
 ### Import facts extracted outside Hindsight
 
@@ -1097,9 +1072,7 @@ A document file:
   "id": "session-2026-09-22",
   "original_text": "Full original session text...",
   "tags": ["source:pi"],
-  "chunks": [
-    { "chunk_index": 0, "chunk_text": "Caller-defined source region..." }
-  ],
+  "chunks": [{ "chunk_index": 0, "chunk_text": "Caller-defined source region..." }],
   "facts": [
     {
       "text": "The user prefers lightweight local speech recognition models.",
@@ -1119,15 +1092,15 @@ A document file:
 }
 ```
 
-| Fact field                                          | Description                                                                                                                                          |
-| --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `text`                                              | Required. The memory, as it will be recalled.                                                                                                        |
-| `fact_type`                                         | Required. `world` or `experience`.                                                                                                                   |
-| `chunk_index`                                       | Optional. The chunk in `chunks` this fact came from.                                                                                                 |
-| `context`, `metadata`, `tags`, `observation_scopes` | Optional. Same meaning as on a retain item, set per fact.                                                                                            |
-| `mentioned_at`, `occurred_start`, `occurred_end`    | Optional ISO 8601 dates. With none of them set, the fact is dated at import time.                                                                    |
-| `entities`                                          | Optional entity names, resolved against the bank's existing entities.                                                                                |
-| `causal_relations`                                  | Optional. `[{"relation_type": "caused_by", "target_fact_index": N}]`, where `N` is the position of another fact in the same document's `facts` list. |
+| Fact field | Description |
+|------------|-------------|
+| `text` | Required. The memory, as it will be recalled. |
+| `fact_type` | Required. `world` or `experience`. |
+| `chunk_index` | Optional. The chunk in `chunks` this fact came from. |
+| `context`, `metadata`, `tags`, `observation_scopes` | Optional. Same meaning as on a retain item, set per fact. |
+| `mentioned_at`, `occurred_start`, `occurred_end` | Optional ISO 8601 dates. With none of them set, the fact is dated at import time. |
+| `entities` | Optional entity names, resolved against the bank's existing entities. |
+| `causal_relations` | Optional. `[{"relation_type": "caused_by", "target_fact_index": N}]`, where `N` is the position of another fact in the same document's `facts` list. |
 
 Metadata and dates live on each fact; a document carries no metadata or timestamp of its own. Re-sending a document id follows `document_conflict` (`replace` to overwrite it).
 
@@ -1168,77 +1141,55 @@ submission = await client.bank_transfer.import_bank_transfer(
 ### Node.js
 
 ```javascript
-import { crc32 } from "node:zlib";
+import { crc32 } from 'node:zlib';
 
 // Minimal uncompressed ZIP writer (Node has none built in); a library like jszip works too.
 function zip(files) {
-  const locals = [],
-    centrals = [];
-  let offset = 0;
-  for (const [name, text] of Object.entries(files)) {
-    const n = Buffer.from(name),
-      d = Buffer.from(text),
-      crc = crc32(d);
-    const local = Buffer.alloc(30);
-    local.writeUInt32LE(0x04034b50, 0);
-    local.writeUInt16LE(20, 4);
-    local.writeUInt16LE(0x21, 12);
-    local.writeUInt32LE(crc, 14);
-    local.writeUInt32LE(d.length, 18);
-    local.writeUInt32LE(d.length, 22);
-    local.writeUInt16LE(n.length, 26);
-    const central = Buffer.alloc(46);
-    central.writeUInt32LE(0x02014b50, 0);
-    central.writeUInt16LE(20, 4);
-    central.writeUInt16LE(20, 6);
-    central.writeUInt16LE(0x21, 14);
-    central.writeUInt32LE(crc, 16);
-    central.writeUInt32LE(d.length, 20);
-    central.writeUInt32LE(d.length, 24);
-    central.writeUInt16LE(n.length, 28);
-    central.writeUInt32LE(offset, 42);
-    locals.push(local, n, d);
-    centrals.push(central, n);
-    offset += 30 + n.length + d.length;
-  }
-  const dir = Buffer.concat(centrals),
-    end = Buffer.alloc(22);
-  const count = Object.keys(files).length;
-  end.writeUInt32LE(0x06054b50, 0);
-  end.writeUInt16LE(count, 8);
-  end.writeUInt16LE(count, 10);
-  end.writeUInt32LE(dir.length, 12);
-  end.writeUInt32LE(offset, 16);
-  return Buffer.concat([...locals, dir, end]);
+    const locals = [], centrals = [];
+    let offset = 0;
+    for (const [name, text] of Object.entries(files)) {
+        const n = Buffer.from(name), d = Buffer.from(text), crc = crc32(d);
+        const local = Buffer.alloc(30);
+        local.writeUInt32LE(0x04034b50, 0); local.writeUInt16LE(20, 4); local.writeUInt16LE(0x21, 12);
+        local.writeUInt32LE(crc, 14); local.writeUInt32LE(d.length, 18); local.writeUInt32LE(d.length, 22);
+        local.writeUInt16LE(n.length, 26);
+        const central = Buffer.alloc(46);
+        central.writeUInt32LE(0x02014b50, 0); central.writeUInt16LE(20, 4); central.writeUInt16LE(20, 6);
+        central.writeUInt16LE(0x21, 14); central.writeUInt32LE(crc, 16); central.writeUInt32LE(d.length, 20);
+        central.writeUInt32LE(d.length, 24); central.writeUInt16LE(n.length, 28); central.writeUInt32LE(offset, 42);
+        locals.push(local, n, d);
+        centrals.push(central, n);
+        offset += 30 + n.length + d.length;
+    }
+    const dir = Buffer.concat(centrals), end = Buffer.alloc(22);
+    const count = Object.keys(files).length;
+    end.writeUInt32LE(0x06054b50, 0); end.writeUInt16LE(count, 8); end.writeUInt16LE(count, 10);
+    end.writeUInt32LE(dir.length, 12); end.writeUInt32LE(offset, 16);
+    return Buffer.concat([...locals, dir, end]);
 }
 
 const doc = {
-  id: "session-2026-09-22",
-  original_text: "Full original session text...",
-  chunks: [{ chunk_index: 0, chunk_text: "Caller-defined source region..." }],
-  facts: [
-    {
-      text: "The user prefers lightweight local speech recognition models.",
-      fact_type: "experience",
-      chunk_index: 0,
-      mentioned_at: "2026-09-22T18:34:00Z",
-      entities: ["Parakeet"],
-    },
-  ],
+    id: 'session-2026-09-22',
+    original_text: 'Full original session text...',
+    chunks: [{ chunk_index: 0, chunk_text: 'Caller-defined source region...' }],
+    facts: [{
+        text: 'The user prefers lightweight local speech recognition models.',
+        fact_type: 'experience',
+        chunk_index: 0,
+        mentioned_at: '2026-09-22T18:34:00Z',
+        entities: ['Parakeet'],
+    }],
 };
 const archiveZip = zip({
-  "manifest.json": JSON.stringify({
-    schema_version: 1,
-    source_bank_id: "external",
-  }),
-  [`documents/${doc.id}.json`]: JSON.stringify(doc),
+    'manifest.json': JSON.stringify({ schema_version: 1, source_bank_id: 'external' }),
+    [`documents/${doc.id}.json`]: JSON.stringify(doc),
 });
 
 const { data: external } = await sdk.importBankTransfer({
-  client: apiClient,
-  path: { bank_id: "transfer-js-other" },
-  query: { mode: "merge", document_conflict: "replace" },
-  body: { file: new Blob([archiveZip]) },
+    client: apiClient,
+    path: { bank_id: 'transfer-js-other' },
+    query: { mode: 'merge', document_conflict: 'replace' },
+    body: { file: new Blob([archiveZip]) },
 });
 ```
 
@@ -1312,11 +1263,11 @@ status = await client.operations.get_operation_status("transfer-py", operation_i
 ### Node.js
 
 ```javascript
-const cloneId = await client.cloneBank("transfer-js", "transfer-js-clone");
+const cloneId = await client.cloneBank('transfer-js', 'transfer-js-clone');
 // The operation is recorded against the source bank
 const { data: cloneStatus } = await sdk.getOperationStatus({
-  client: apiClient,
-  path: { bank_id: "transfer-js", operation_id: cloneId },
+    client: apiClient,
+    path: { bank_id: 'transfer-js', operation_id: cloneId },
 });
 ```
 
@@ -1337,26 +1288,25 @@ clone, _, err := client.BankTransferAPI.CloneBank(ctx, "transfer-go").
 status, _, err = client.OperationsAPI.GetOperationStatus(ctx, "transfer-go", clone.OperationId).Execute()
 ```
 
-| Query param           | Default | Description                                                                                                  |
-| --------------------- | ------- | ------------------------------------------------------------------------------------------------------------ |
-| `target_bank_id`      | —       | Required. The bank to create; it must not already exist.                                                     |
-| `include_data`        | `true`  | Copy the memories, everything backing them, and the mental models and knowledge pages synthesized from them. |
-| `include_bank_config` | `true`  | Copy the bank's config overrides, directives and webhooks.                                                   |
-| `include_history`     | `false` | Copy `audit_log` and `llm_requests`.                                                                         |
+| Query param | Default | Description |
+|-------------|---------|-------------|
+| `target_bank_id` | — | Required. The bank to create; it must not already exist. |
+| `include_data` | `true` | Copy the memories, everything backing them, and the mental models and knowledge pages synthesized from them. |
+| `include_bank_config` | `true` | Copy the bank's config overrides, directives and webhooks. |
+| `include_history` | `false` | Copy `audit_log` and `llm_requests`. |
 
 The clone is independent from the moment it is made: later retains, consolidation and edits on either bank leave the other alone.
 
 The operation is recorded against the **source** bank, because the target does not exist yet — poll the source's operations endpoint for status and the per-component counts.
 
 > **⚠️ A clone inherits the source's webhooks**
-
+>
 Webhooks are part of a bank's configuration, so a clone made with the default flags will call the source's webhook endpoints. Pass `include_bank_config=false`, or delete them on the clone, when they point at a per-bank consumer.
-
 ### Document export & import (superseded)
 
 The endpoints below still work exactly as documented and are unchanged; new integrations should use `/transfer/export` and `/transfer/import` above, which carry the same document archives plus the bank's own configuration.
 
-Move documents — and the facts already extracted from them — between banks **without re-running the LLM**. Useful for testing a different embedding model, or copying data between banks/instances without paying for re-extraction. The archive carries documents, raw chunks, and extracted facts (entities by canonical name, causal links) — but **no embeddings or database ids**. On import, facts are re-embedded with the _target_ bank's model and entities/links are recomputed against it, so imported documents are integrated with whatever already exists there.
+Move documents — and the facts already extracted from them — between banks **without re-running the LLM**. Useful for testing a different embedding model, or copying data between banks/instances without paying for re-extraction. The archive carries documents, raw chunks, and extracted facts (entities by canonical name, causal links) — but **no embeddings or database ids**. On import, facts are re-embedded with the *target* bank's model and entities/links are recomputed against it, so imported documents are integrated with whatever already exists there.
 
 ### Export documents
 
@@ -1377,8 +1327,8 @@ with open("transfer-py-documents.zip", "wb") as f:
 ```javascript
 // Submits the export (whole bank; pass { documentIds: [...] } to scope it),
 // polls the operation until completed, downloads the archive.
-const docArchive = await client.exportDocuments("transfer-js");
-await writeFile("transfer-js-documents.zip", docArchive);
+const docArchive = await client.exportDocuments('transfer-js');
+await writeFile('transfer-js-documents.zip', docArchive);
 ```
 
 ### CLI
@@ -1426,13 +1376,13 @@ zipFile, _, err := client.DocumentTransferAPI.
 	DownloadFile(ctx, done.ResultMetadata["storage_key"].(string)).Execute()
 ```
 
-| Query param            | Description                                                                                                                                      |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `document_id`          | Repeatable. Export only these documents; omit for the whole bank.                                                                                |
+| Query param | Description |
+|-------------|-------------|
+| `document_id` | Repeatable. Export only these documents; omit for the whole bank. |
 | `include_observations` | Also export consolidated observations (default `false`). Only valid for a **whole-bank** export — combining it with `document_id` returns `400`. |
 
 > **📝 The synchronous `GET …/document-transfer` was removed**
-
+>
 It loaded the entire bank into memory and held a database connection for the full request, which could take down the shared API on large banks. It now returns `410` pointing here. Use the async flow above. The download route (`GET /v1/default/files/download/{key}`) authorizes the caller against the bank the archive belongs to.
 The archive lives as long as its export **operation record** — indefinitely by default, or until the operation is pruned when `HINDSIGHT_API_OPERATION_RETENTION_DAYS` is set (the archive is deleted in step with the row). Deleting the operation removes the archive immediately.
 
@@ -1456,15 +1406,15 @@ status = await client.operations.get_operation_status("transfer-py-other", submi
 
 ```javascript
 const { data: docImport } = await sdk.importDocuments({
-  client: apiClient,
-  path: { bank_id: "transfer-js-other" },
-  query: { on_conflict: "replace" },
-  body: { file: new Blob([await readFile("transfer-js-documents.zip")]) },
+    client: apiClient,
+    path: { bank_id: 'transfer-js-other' },
+    query: { on_conflict: 'replace' },
+    body: { file: new Blob([await readFile('transfer-js-documents.zip')]) },
 });
 
 const { data: docImportStatus } = await sdk.getOperationStatus({
-  client: apiClient,
-  path: { bank_id: "transfer-js-other", operation_id: docImport.operation_id },
+    client: apiClient,
+    path: { bank_id: 'transfer-js-other', operation_id: docImport.operation_id },
 });
 // docImportStatus.result_metadata -> { documents_imported: 3, facts_imported: 42, observations_imported: 5, ... }
 ```
@@ -1494,11 +1444,11 @@ status, _, err = client.OperationsAPI.GetOperationStatus(ctx, "transfer-go-other
 
 `on_conflict` controls what happens when a document id already exists in the target bank:
 
-| Mode             | Behavior                                           |
-| ---------------- | -------------------------------------------------- |
-| `skip` (default) | Leave the existing document untouched.             |
-| `replace`        | Delete the existing document's data and re-import. |
-| `new-id`         | Import a copy under a freshly generated id.        |
+| Mode | Behavior |
+|------|----------|
+| `skip` (default) | Leave the existing document untouched. |
+| `replace` | Delete the existing document's data and re-import. |
+| `new-id` | Import a copy under a freshly generated id. |
 
 ### Observations
 
@@ -1507,17 +1457,16 @@ Consolidated observations are excluded by default — the target bank regenerate
 Because an observation can be derived from facts spanning several documents, `include_observations` is only supported on a **whole-bank export** (omit `document_id`); combining it with a document subset returns `400`.
 
 > **⚠️ Imported observations are inserted as-is — no merge**
-
+>
 They are not merged or deduplicated against observations already in the target bank (consolidation merges related observations; import does not). Prefer importing observations into a fresh/empty bank, or omit `include_observations` and let the target consolidate the imported facts itself.
-
 ### Enabling / disabling
 
 Both endpoints are gated by server-level flags (default `true`). A disabled endpoint returns `404`, and `/version` reports the state under `features.document_export_api` / `features.document_import_api` (the control plane hides the buttons accordingly).
 
-| Variable                                   | Gates                                                              |
-| ------------------------------------------ | ------------------------------------------------------------------ |
+| Variable | Gates |
+|----------|-------|
 | `HINDSIGHT_API_ENABLE_DOCUMENT_EXPORT_API` | `POST …/document-transfer/export` and `GET …/files/download/{key}` |
-| `HINDSIGHT_API_ENABLE_DOCUMENT_IMPORT_API` | `POST …/document-transfer`                                         |
+| `HINDSIGHT_API_ENABLE_DOCUMENT_IMPORT_API` | `POST …/document-transfer` |
 
 ## Migrating a bank to a new instance
 

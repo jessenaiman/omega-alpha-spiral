@@ -1,3 +1,4 @@
+
 # LiteLLM
 
 Universal LLM memory integration via [LiteLLM](https://github.com/BerriAI/litellm). Add persistent memory to any LLM application with just a few lines of code.
@@ -373,56 +374,56 @@ cleanup()
 
 ### Main Functions
 
-| Function            | Description                                                           |
-| ------------------- | --------------------------------------------------------------------- |
-| `configure(...)`    | Configure static Hindsight settings (API URL, auth, storage options)  |
+| Function | Description |
+|----------|-------------|
+| `configure(...)` | Configure static Hindsight settings (API URL, auth, storage options) |
 | `set_defaults(...)` | Set defaults for per-call settings (bank_id, budget, reflect options) |
-| `enable()`          | Enable memory integration with LiteLLM                                |
-| `disable()`         | Disable memory integration                                            |
-| `is_enabled()`      | Check if memory integration is enabled                                |
-| `cleanup()`         | Clean up all resources                                                |
+| `enable()` | Enable memory integration with LiteLLM |
+| `disable()` | Disable memory integration |
+| `is_enabled()` | Check if memory integration is enabled |
+| `cleanup()` | Clean up all resources |
 
 ### Configuration Functions
 
-| Function                | Description                                                    |
-| ----------------------- | -------------------------------------------------------------- |
-| `get_config()`          | Get current static configuration                               |
-| `get_defaults()`        | Get current per-call defaults                                  |
-| `is_configured()`       | Check if Hindsight is configured with a bank_id                |
-| `reset_config()`        | Reset all configuration to defaults                            |
-| `set_document_id(id)`   | Convenience function to update document_id                     |
+| Function | Description |
+|----------|-------------|
+| `get_config()` | Get current static configuration |
+| `get_defaults()` | Get current per-call defaults |
+| `is_configured()` | Check if Hindsight is configured with a bank_id |
+| `reset_config()` | Reset all configuration to defaults |
+| `set_document_id(id)` | Convenience function to update document_id |
 | `set_bank_mission(...)` | Set mission/instructions for a memory bank (for mental models) |
 
 ### Memory Functions
 
-| Function                           | Description                                                 |
-| ---------------------------------- | ----------------------------------------------------------- |
-| `recall(query, ...)`               | Query raw memories (sync)                                   |
-| `arecall(query, ...)`              | Query raw memories (async)                                  |
-| `reflect(query, ...)`              | Get synthesized memory context (sync)                       |
-| `areflect(query, ...)`             | Get synthesized memory context (async)                      |
+| Function | Description |
+|----------|-------------|
+| `recall(query, ...)` | Query raw memories (sync) |
+| `arecall(query, ...)` | Query raw memories (async) |
+| `reflect(query, ...)` | Get synthesized memory context (sync) |
+| `areflect(query, ...)` | Get synthesized memory context (async) |
 | `retain(content, sync=False, ...)` | Store a memory (async by default, use `sync=True` to block) |
-| `aretain(content, ...)`            | Store a memory (async)                                      |
+| `aretain(content, ...)` | Store a memory (async) |
 
 ### Error Tracking Functions
 
-| Function                       | Description                                               |
-| ------------------------------ | --------------------------------------------------------- |
-| `get_pending_retain_errors()`  | Get and clear errors from background retain operations    |
+| Function | Description |
+|----------|-------------|
+| `get_pending_retain_errors()` | Get and clear errors from background retain operations |
 | `get_pending_storage_errors()` | Get and clear errors from background conversation storage |
 
 ### Debug Functions
 
-| Function                     | Description                               |
-| ---------------------------- | ----------------------------------------- |
+| Function | Description |
+|----------|-------------|
 | `get_last_injection_debug()` | Get debug info from last memory injection |
-| `clear_injection_debug()`    | Clear stored debug info                   |
+| `clear_injection_debug()` | Clear stored debug info |
 
 ### Client Wrappers
 
-| Function                      | Description                       |
-| ----------------------------- | --------------------------------- |
-| `wrap_openai(client, ...)`    | Wrap OpenAI client with memory    |
+| Function | Description |
+|----------|-------------|
+| `wrap_openai(client, ...)` | Wrap OpenAI client with memory |
 | `wrap_anthropic(client, ...)` | Wrap Anthropic client with memory |
 
 ## Streaming
@@ -430,7 +431,6 @@ cleanup()
 Streaming responses (`stream=True`) are fully supported. When streaming is detected, the response is automatically wrapped to collect chunks as they are consumed. Once the stream is fully consumed (or the context manager exits), the complete conversation is stored to Hindsight.
 
 This works across all integration modes:
-
 - **Monkeypatch wrappers** (`enable()` / `completion()` / `acompletion()`) — streaming responses are wrapped transparently
 - **Native client wrappers** (`wrap_openai()`, `wrap_anthropic()`) — same chunk-collection behavior
 - **Callback handler** — streaming responses are skipped in the callback since the callback doesn't control the return value; use the monkeypatch or native wrapper modes for streaming with storage

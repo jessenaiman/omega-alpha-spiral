@@ -1,7 +1,8 @@
+
 # Claude Code
 
 > **⚠️ Superseded by the Coding Agents plugin**
-
+>
 **The Claude Code plugin** is superseded by the [Coding Agents plugin](coding-agents.md) — one
 package covering Claude Code, Codex, opencode, Kilo, Cursor, Copilot, Grok, Antigravity, Devin and Cline and other CLI agents, with a per-repo memory bank they all share instead
 of one bank per agent.
@@ -33,9 +34,8 @@ Biomimetic long-term memory for [Claude Code](https://docs.anthropic.com/en/docs
 [View Changelog →](../../changelog/integrations/claude-code.md)
 
 > **💡 Works in Grok Build too**
-
+>
 Grok Build natively supports Claude Code plugins. See the [Grok Build integration guide](grok-build.md) for Grok-specific setup.
-
 ## Quick Start
 
 ```bash
@@ -77,14 +77,14 @@ That's it! The plugin will automatically start capturing and recalling memories.
 
 The plugin combines hooks (for automatic recall/retain) with an MCP server (for explicit knowledge tools) and a skill (for subagent creation):
 
-| Component          | Trigger                 | Purpose                                                                                 |
-| ------------------ | ----------------------- | --------------------------------------------------------------------------------------- |
-| `session_start.py` | `SessionStart` hook     | Health check — verify Hindsight is reachable                                            |
-| `recall.py`        | `UserPromptSubmit` hook | **Auto-recall** — query memories, inject as `additionalContext`                         |
-| `retain.py`        | `Stop` hook             | **Auto-retain** — extract transcript, POST to Hindsight (async)                         |
-| `session_end.py`   | `SessionEnd` hook       | Cleanup — stop auto-managed daemon if started                                           |
-| `mcp_server.py`    | MCP server              | Exposes `agent_knowledge_*` tools — list/get/create/update/delete pages, recall, ingest |
-| `create-agent`     | Skill                   | Scaffolds a subagent file under `~/.claude/agents/` and seeds its bank                  |
+| Component | Trigger | Purpose |
+|-----------|---------|---------|
+| `session_start.py` | `SessionStart` hook | Health check — verify Hindsight is reachable |
+| `recall.py` | `UserPromptSubmit` hook | **Auto-recall** — query memories, inject as `additionalContext` |
+| `retain.py` | `Stop` hook | **Auto-retain** — extract transcript, POST to Hindsight (async) |
+| `session_end.py` | `SessionEnd` hook | Cleanup — stop auto-managed daemon if started |
+| `mcp_server.py` | MCP server | Exposes `agent_knowledge_*` tools — list/get/create/update/delete pages, recall, ingest |
+| `create-agent` | Skill | Scaffolds a subagent file under `~/.claude/agents/` and seeds its bank |
 
 Python dependencies (`mcp`) are bootstrapped on first run into a private venv under `${CLAUDE_PLUGIN_DATA}/venv` — no global pip install, isolated to the plugin, survives plugin updates.
 
@@ -106,7 +106,6 @@ Connect to a running Hindsight server (cloud or self-hosted). No local LLM neede
 The plugin automatically starts and stops `hindsight-embed` via `uvx`. Requires an LLM provider API key for local fact extraction.
 
 Set an LLM provider:
-
 ```bash
 export OPENAI_API_KEY="sk-your-key"
 # or
@@ -126,7 +125,6 @@ If you already have `hindsight-embed` running, leave `hindsightApiUrl` empty and
 All settings live in `~/.hindsight/claude-code.json`. Every setting can also be overridden via environment variables. The plugin ships with sensible defaults — you only need to configure what you want to change.
 
 **Loading order** (later entries win):
-
 1. Built-in defaults (hardcoded in the plugin)
 2. Plugin `settings.json` (ships with the plugin, at `CLAUDE_PLUGIN_ROOT/settings.json`)
 3. User config (`~/.hindsight/claude-code.json` — recommended for your overrides)
@@ -138,14 +136,14 @@ All settings live in `~/.hindsight/claude-code.json`. Every setting can also be 
 
 These settings control how the plugin connects to the Hindsight API.
 
-| Setting                 | Env Var                             | Default      | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| ----------------------- | ----------------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `hindsightApiUrl`       | `HINDSIGHT_API_URL`                 | `""` (empty) | URL of an external Hindsight API server. When empty, the plugin uses a local daemon instead.                                                                                                                                                                                                                                                                                                                                                                                   |
-| `hindsightApiToken`     | `HINDSIGHT_API_TOKEN`               | `null`       | Authentication token for the external API. Only needed when `hindsightApiUrl` is set.                                                                                                                                                                                                                                                                                                                                                                                          |
-| `apiPort`               | `HINDSIGHT_API_PORT`                | `9077`       | Port used by the local `hindsight-embed` daemon. Change this if you run multiple instances or have a port conflict.                                                                                                                                                                                                                                                                                                                                                            |
-| `embedVersion`          | `HINDSIGHT_EMBED_VERSION`           | `"latest"`   | Which version of `hindsight-embed` to install via `uvx`. Pin to a specific version (e.g. `"0.5.2"`) for reproducibility.                                                                                                                                                                                                                                                                                                                                                       |
-| `embedPackagePath`      | `HINDSIGHT_EMBED_PACKAGE_PATH`      | `null`       | Local filesystem path to a `hindsight-embed` checkout. When set, the plugin runs from this path instead of installing via `uvx`. Useful for development.                                                                                                                                                                                                                                                                                                                       |
-| `requestTimeoutSeconds` | `HINDSIGHT_REQUEST_TIMEOUT_SECONDS` | `null`       | Overrides the per-call request timeout for recall (default `10s`), retain (default `15s`) and knowledge tool calls (`10–15s`). When unset, the per-call defaults are preserved. Bump this when self-hosted Hindsight legitimately takes longer than 10s under contention (e.g. parallel recalls), to avoid client-side `read operation timed out` errors on requests the server completes successfully. Does not affect the health check, which intentionally stays fast (5s). |
+| Setting | Env Var | Default | Description |
+|---------|---------|---------|-------------|
+| `hindsightApiUrl` | `HINDSIGHT_API_URL` | `""` (empty) | URL of an external Hindsight API server. When empty, the plugin uses a local daemon instead. |
+| `hindsightApiToken` | `HINDSIGHT_API_TOKEN` | `null` | Authentication token for the external API. Only needed when `hindsightApiUrl` is set. |
+| `apiPort` | `HINDSIGHT_API_PORT` | `9077` | Port used by the local `hindsight-embed` daemon. Change this if you run multiple instances or have a port conflict. |
+| `embedVersion` | `HINDSIGHT_EMBED_VERSION` | `"latest"` | Which version of `hindsight-embed` to install via `uvx`. Pin to a specific version (e.g. `"0.5.2"`) for reproducibility. |
+| `embedPackagePath` | `HINDSIGHT_EMBED_PACKAGE_PATH` | `null` | Local filesystem path to a `hindsight-embed` checkout. When set, the plugin runs from this path instead of installing via `uvx`. Useful for development. |
+| `requestTimeoutSeconds` | `HINDSIGHT_REQUEST_TIMEOUT_SECONDS` | `null` | Overrides the per-call request timeout for recall (default `10s`), retain (default `15s`) and knowledge tool calls (`10–15s`). When unset, the per-call defaults are preserved. Bump this when self-hosted Hindsight legitimately takes longer than 10s under contention (e.g. parallel recalls), to avoid client-side `read operation timed out` errors on requests the server completes successfully. Does not affect the health check, which intentionally stays fast (5s). |
 
 ---
 
@@ -153,11 +151,11 @@ These settings control how the plugin connects to the Hindsight API.
 
 These settings configure which LLM the local daemon uses for fact extraction. They are **ignored** when connecting to an external API (the server uses its own LLM configuration).
 
-| Setting        | Env Var                  | Default           | Description                                                                                                                                                                                                                                                                                                 |
-| -------------- | ------------------------ | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `llmProvider`  | `HINDSIGHT_LLM_PROVIDER` | auto-detect       | Which LLM provider to use. Supported values: `openai`, `anthropic`, `gemini`, `groq`, `ollama`, `ollama-cloud`, `openai-codex`, `claude-code`. When omitted, the plugin auto-detects by checking for API key env vars in order: `OPENAI_API_KEY` → `ANTHROPIC_API_KEY` → `GEMINI_API_KEY` → `GROQ_API_KEY`. |
-| `llmModel`     | `HINDSIGHT_LLM_MODEL`    | provider default  | Override the default model for the chosen provider (e.g. `"gpt-4o"`, `"claude-sonnet-4-20250514"`). When omitted, the Hindsight API picks a sensible default for each provider.                                                                                                                             |
-| `llmApiKeyEnv` | —                        | provider standard | Name of the environment variable that holds the API key. Normally auto-detected (e.g. `OPENAI_API_KEY` for the `openai` provider). Set this only if your key is in a non-standard env var.                                                                                                                  |
+| Setting | Env Var | Default | Description |
+|---------|---------|---------|-------------|
+| `llmProvider` | `HINDSIGHT_LLM_PROVIDER` | auto-detect | Which LLM provider to use. Supported values: `openai`, `anthropic`, `gemini`, `groq`, `ollama`, `ollama-cloud`, `openai-codex`, `claude-code`. When omitted, the plugin auto-detects by checking for API key env vars in order: `OPENAI_API_KEY` → `ANTHROPIC_API_KEY` → `GEMINI_API_KEY` → `GROQ_API_KEY`. |
+| `llmModel` | `HINDSIGHT_LLM_MODEL` | provider default | Override the default model for the chosen provider (e.g. `"gpt-4o"`, `"claude-sonnet-4-20250514"`). When omitted, the Hindsight API picks a sensible default for each provider. |
+| `llmApiKeyEnv` | — | provider standard | Name of the environment variable that holds the API key. Normally auto-detected (e.g. `OPENAI_API_KEY` for the `openai` provider). Set this only if your key is in a non-standard env var. |
 
 ---
 
@@ -165,17 +163,17 @@ These settings configure which LLM the local daemon uses for fact extraction. Th
 
 A **bank** is an isolated memory store — like a separate "brain." These settings control which bank the plugin reads from and writes to.
 
-| Setting                  | Env Var                     | Default                  | Description                                                                                                                                                                                                                                                   |
-| ------------------------ | --------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `bankId`                 | `HINDSIGHT_BANK_ID`         | `"claude_code"`          | The bank ID to use when `dynamicBankId` is `false`. All sessions share this single bank.                                                                                                                                                                      |
-| `bankMission`            | `HINDSIGHT_BANK_MISSION`    | generic assistant prompt | A short description of the agent's identity and purpose. Sent to Hindsight when creating or updating the bank, and used during recall to contextualize results.                                                                                               |
-| `retainMission`          | —                           | extraction prompt        | Instructions for the fact extraction LLM — tells it _what_ to extract from conversations (e.g. "Extract technical decisions and user preferences").                                                                                                           |
-| `dynamicBankId`          | `HINDSIGHT_DYNAMIC_BANK_ID` | `false`                  | When `true`, the plugin derives a unique bank ID from context fields (see `dynamicBankGranularity`), giving each combination its own isolated memory.                                                                                                         |
-| `dynamicBankGranularity` | —                           | `["agent", "project"]`   | Which context fields to combine when building a dynamic bank ID. Available fields: `agent` (agent name), `project` (working directory), `session` (session ID), `channel` (channel ID), `user` (user ID).                                                     |
-| `bankIdPrefix`           | —                           | `""`                     | A string prepended to all bank IDs — both static and dynamic. Useful for namespacing (e.g. `"prod"` or `"staging"`).                                                                                                                                          |
-| `agentName`              | `HINDSIGHT_AGENT_NAME`      | `"claude-code"`          | Name used for the `agent` field in dynamic bank ID derivation.                                                                                                                                                                                                |
-| `resolveWorktrees`       | —                           | `true`                   | When deriving the `project` field, resolve git worktrees to the **main repository's basename** so that all worktrees of the same repo share one bank. Set to `false` to use the literal working directory basename instead (each worktree gets its own bank). |
-| `directoryBankMap`       | —                           | `{}`                     | Explicit `{ "/path/to/dir": "bank-id" }` mapping. When the current working directory matches an entry, that bank is used directly — overrides both static and dynamic resolution. `bankIdPrefix` still applies on top.                                        |
+| Setting | Env Var | Default | Description |
+|---------|---------|---------|-------------|
+| `bankId` | `HINDSIGHT_BANK_ID` | `"claude_code"` | The bank ID to use when `dynamicBankId` is `false`. All sessions share this single bank. |
+| `bankMission` | `HINDSIGHT_BANK_MISSION` | generic assistant prompt | A short description of the agent's identity and purpose. Sent to Hindsight when creating or updating the bank, and used during recall to contextualize results. |
+| `retainMission` | — | extraction prompt | Instructions for the fact extraction LLM — tells it *what* to extract from conversations (e.g. "Extract technical decisions and user preferences"). |
+| `dynamicBankId` | `HINDSIGHT_DYNAMIC_BANK_ID` | `false` | When `true`, the plugin derives a unique bank ID from context fields (see `dynamicBankGranularity`), giving each combination its own isolated memory. |
+| `dynamicBankGranularity` | — | `["agent", "project"]` | Which context fields to combine when building a dynamic bank ID. Available fields: `agent` (agent name), `project` (working directory), `session` (session ID), `channel` (channel ID), `user` (user ID). |
+| `bankIdPrefix` | — | `""` | A string prepended to all bank IDs — both static and dynamic. Useful for namespacing (e.g. `"prod"` or `"staging"`). |
+| `agentName` | `HINDSIGHT_AGENT_NAME` | `"claude-code"` | Name used for the `agent` field in dynamic bank ID derivation. |
+| `resolveWorktrees` | — | `true` | When deriving the `project` field, resolve git worktrees to the **main repository's basename** so that all worktrees of the same repo share one bank. Set to `false` to use the literal working directory basename instead (each worktree gets its own bank). |
+| `directoryBankMap` | — | `{}` | Explicit `{ "/path/to/dir": "bank-id" }` mapping. When the current working directory matches an entry, that bank is used directly — overrides both static and dynamic resolution. `bankIdPrefix` still applies on top. |
 
 #### Worktrees and explicit mapping
 
@@ -202,16 +200,16 @@ When `cwd` matches one of the keys, that bank is used immediately — no static 
 
 Auto-recall runs on every user prompt. It queries Hindsight for relevant memories and injects them into Claude's context as invisible `additionalContext` (the user doesn't see them in the chat transcript).
 
-| Setting                | Env Var                            | Default                 | Description                                                                                                                                                                                                                                                                                             |
-| ---------------------- | ---------------------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `autoRecall`           | `HINDSIGHT_AUTO_RECALL`            | `true`                  | Master switch for auto-recall. Set to `false` to disable memory retrieval entirely.                                                                                                                                                                                                                     |
-| `recallBudget`         | `HINDSIGHT_RECALL_BUDGET`          | `"mid"`                 | Controls how hard Hindsight searches for memories. `"low"` = fast, fewer strategies; `"mid"` = balanced; `"high"` = thorough, slower. Affects latency directly.                                                                                                                                         |
-| `recallMaxTokens`      | `HINDSIGHT_RECALL_MAX_TOKENS`      | `1024`                  | Maximum number of tokens in the recalled memory block. Lower values reduce context usage but may truncate relevant memories.                                                                                                                                                                            |
-| `recallTypes`          | —                                  | `["observation"]`       | Which memory types to retrieve. `"world"` = general facts; `"experience"` = personal experiences; `"observation"` = consolidated, deduplicated beliefs built from multiple facts. Defaults to observations so the same answer doesn't surface multiple times when many raw memories say the same thing. |
-| `recallContextTurns`   | `HINDSIGHT_RECALL_CONTEXT_TURNS`   | `1`                     | How many prior conversation turns to include when composing the recall query. `1` = only the latest user message; higher values give more context but may dilute the query.                                                                                                                             |
-| `recallMaxQueryChars`  | `HINDSIGHT_RECALL_MAX_QUERY_CHARS` | `800`                   | Maximum character length of the query sent to Hindsight. Longer queries are truncated.                                                                                                                                                                                                                  |
-| `recallRoles`          | —                                  | `["user", "assistant"]` | Which message roles to include when building the recall query from prior turns.                                                                                                                                                                                                                         |
-| `recallPromptPreamble` | —                                  | built-in string         | Text placed above the recalled memories in the injected context block. Customize this to change how Claude interprets the memories.                                                                                                                                                                     |
+| Setting | Env Var | Default | Description |
+|---------|---------|---------|-------------|
+| `autoRecall` | `HINDSIGHT_AUTO_RECALL` | `true` | Master switch for auto-recall. Set to `false` to disable memory retrieval entirely. |
+| `recallBudget` | `HINDSIGHT_RECALL_BUDGET` | `"mid"` | Controls how hard Hindsight searches for memories. `"low"` = fast, fewer strategies; `"mid"` = balanced; `"high"` = thorough, slower. Affects latency directly. |
+| `recallMaxTokens` | `HINDSIGHT_RECALL_MAX_TOKENS` | `1024` | Maximum number of tokens in the recalled memory block. Lower values reduce context usage but may truncate relevant memories. |
+| `recallTypes` | — | `["observation"]` | Which memory types to retrieve. `"world"` = general facts; `"experience"` = personal experiences; `"observation"` = consolidated, deduplicated beliefs built from multiple facts. Defaults to observations so the same answer doesn't surface multiple times when many raw memories say the same thing. |
+| `recallContextTurns` | `HINDSIGHT_RECALL_CONTEXT_TURNS` | `1` | How many prior conversation turns to include when composing the recall query. `1` = only the latest user message; higher values give more context but may dilute the query. |
+| `recallMaxQueryChars` | `HINDSIGHT_RECALL_MAX_QUERY_CHARS` | `800` | Maximum character length of the query sent to Hindsight. Longer queries are truncated. |
+| `recallRoles` | — | `["user", "assistant"]` | Which message roles to include when building the recall query from prior turns. |
+| `recallPromptPreamble` | — | built-in string | Text placed above the recalled memories in the injected context block. Customize this to change how Claude interprets the memories. |
 
 ---
 
@@ -219,17 +217,17 @@ Auto-recall runs on every user prompt. It queries Hindsight for relevant memorie
 
 Auto-retain runs after Claude responds. It extracts the conversation transcript and sends it to Hindsight for long-term storage and fact extraction.
 
-| Setting              | Env Var                 | Default                 | Description                                                                                                                                                                            |
-| -------------------- | ----------------------- | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `autoRetain`         | `HINDSIGHT_AUTO_RETAIN` | `true`                  | Master switch for auto-retain. Set to `false` to disable memory storage entirely.                                                                                                      |
-| `retainMode`         | `HINDSIGHT_RETAIN_MODE` | `"full-session"`        | Retention strategy. `"full-session"` sends the full conversation transcript (with chunking).                                                                                           |
-| `retainEveryNTurns`  | —                       | `10`                    | How often to retain. `1` = every turn; `10` = every 10th turn. Higher values reduce API calls but delay memory capture. Values > 1 enable **chunked retention** with a sliding window. |
-| `retainOverlapTurns` | —                       | `2`                     | When chunked retention fires, this many extra turns from the previous chunk are included for continuity. Total window size = `retainEveryNTurns + retainOverlapTurns`.                 |
-| `retainRoles`        | —                       | `["user", "assistant"]` | Which message roles to include in the retained transcript.                                                                                                                             |
-| `retainToolCalls`    | —                       | `true`                  | Whether to include tool calls (function invocations and results) in the retained transcript. Captures structured actions like file reads, searches, and code edits.                    |
-| `retainTags`         | —                       | `["{session_id}"]`      | Tags attached to the retained document. Supports `{session_id}` placeholder which is replaced with the current session ID at runtime.                                                  |
-| `retainMetadata`     | —                       | `{}`                    | Arbitrary key-value metadata attached to the retained document.                                                                                                                        |
-| `retainContext`      | —                       | `"claude-code"`         | A label attached to retained memories identifying their source. Useful when multiple integrations write to the same bank.                                                              |
+| Setting | Env Var | Default | Description |
+|---------|---------|---------|-------------|
+| `autoRetain` | `HINDSIGHT_AUTO_RETAIN` | `true` | Master switch for auto-retain. Set to `false` to disable memory storage entirely. |
+| `retainMode` | `HINDSIGHT_RETAIN_MODE` | `"full-session"` | Retention strategy. `"full-session"` sends the full conversation transcript (with chunking). |
+| `retainEveryNTurns` | — | `10` | How often to retain. `1` = every turn; `10` = every 10th turn. Higher values reduce API calls but delay memory capture. Values > 1 enable **chunked retention** with a sliding window. |
+| `retainOverlapTurns` | — | `2` | When chunked retention fires, this many extra turns from the previous chunk are included for continuity. Total window size = `retainEveryNTurns + retainOverlapTurns`. |
+| `retainRoles` | — | `["user", "assistant"]` | Which message roles to include in the retained transcript. |
+| `retainToolCalls` | — | `true` | Whether to include tool calls (function invocations and results) in the retained transcript. Captures structured actions like file reads, searches, and code edits. |
+| `retainTags` | — | `["{session_id}"]` | Tags attached to the retained document. Supports `{session_id}` placeholder which is replaced with the current session ID at runtime. |
+| `retainMetadata` | — | `{}` | Arbitrary key-value metadata attached to the retained document. |
+| `retainContext` | — | `"claude-code"` | A label attached to retained memories identifying their source. Useful when multiple integrations write to the same bank. |
 
 ---
 
@@ -237,21 +235,21 @@ Auto-retain runs after Claude responds. It extracts the conversation transcript 
 
 The plugin runs an MCP server that exposes `agent_knowledge_*` tools, letting Claude explicitly read, write, and search its memory bank — as opposed to the hook-driven recall/retain which is fully automatic. None of the tools accept a `bank_id` parameter; the server resolves the active bank from the same config as the hooks, so tools and hooks always agree on which bank they touch.
 
-| Tool                               | Purpose                                                                                                  |
-| ---------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `agent_knowledge_get_current_bank` | Reports the bank ID the current session is bound to.                                                     |
-| `agent_knowledge_list_pages`       | Lists all knowledge pages (mental models) with IDs and names.                                            |
-| `agent_knowledge_get_page`         | Reads the full synthesized content of a specific page.                                                   |
-| `agent_knowledge_create_page`      | Creates a new knowledge page with a `source_query` that re-synthesizes content after each consolidation. |
-| `agent_knowledge_update_page`      | Updates a page's name or `source_query`.                                                                 |
-| `agent_knowledge_delete_page`      | Permanently deletes a knowledge page.                                                                    |
-| `agent_knowledge_recall`           | Searches across retained conversations and documents for specific facts.                                 |
-| `agent_knowledge_ingest`           | Uploads raw text content into the bank as a document.                                                    |
-| `agent_knowledge_ingest_file`      | Reads a file from disk and ingests its full content.                                                     |
+| Tool | Purpose |
+|------|---------|
+| `agent_knowledge_get_current_bank` | Reports the bank ID the current session is bound to. |
+| `agent_knowledge_list_pages` | Lists all knowledge pages (mental models) with IDs and names. |
+| `agent_knowledge_get_page` | Reads the full synthesized content of a specific page. |
+| `agent_knowledge_create_page` | Creates a new knowledge page with a `source_query` that re-synthesizes content after each consolidation. |
+| `agent_knowledge_update_page` | Updates a page's name or `source_query`. |
+| `agent_knowledge_delete_page` | Permanently deletes a knowledge page. |
+| `agent_knowledge_recall` | Searches across retained conversations and documents for specific facts. |
+| `agent_knowledge_ingest` | Uploads raw text content into the bank as a document. |
+| `agent_knowledge_ingest_file` | Reads a file from disk and ingests its full content. |
 
-| Setting                | Env Var                            | Default | Description                                                                                                                                                                                                                        |
-| ---------------------- | ---------------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `enableKnowledgeTools` | `HINDSIGHT_ENABLE_KNOWLEDGE_TOOLS` | `true`  | Master switch for the MCP knowledge tools. When `false`, the MCP server stays alive as an empty server exposing no `agent_knowledge_*` tools (it does not exit — exiting would trigger a `-32000` reconnect error in Claude Code). |
+| Setting | Env Var | Default | Description |
+|---------|---------|---------|-------------|
+| `enableKnowledgeTools` | `HINDSIGHT_ENABLE_KNOWLEDGE_TOOLS` | `true` | Master switch for the MCP knowledge tools. When `false`, the MCP server stays alive as an empty server exposing no `agent_knowledge_*` tools (it does not exit — exiting would trigger a `-32000` reconnect error in Claude Code). |
 
 ---
 
@@ -280,8 +278,8 @@ With `["agent", "project"]`, each subagent gets a unique bank per repository —
 
 ### Debug
 
-| Setting | Env Var           | Default | Description                                                                                                                                                               |
-| ------- | ----------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Setting | Env Var | Default | Description |
+|---------|---------|---------|-------------|
 | `debug` | `HINDSIGHT_DEBUG` | `false` | Enable verbose logging to stderr. All log lines are prefixed with `[Hindsight]`. Useful for diagnosing connection issues, recall/retain behavior, and bank ID derivation. |
 
 ## Claude Code Channels

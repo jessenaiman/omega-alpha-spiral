@@ -1,20 +1,20 @@
+
 # Gemini Spark
 
 Long-term memory for [Gemini Spark](https://blog.google/products/gemini/gemini-spark/), Google's always-on agentic assistant, via [Hindsight](https://vectorize.io/hindsight)'s MCP server.
 
 > **💡 Hindsight Cloud (recommended)**
-
+>
 [Sign up free](https://ui.hindsight.vectorize.io/signup) — get an API key instantly, no infrastructure to run. The setup below works with both Cloud and self-hosted Hindsight.
-
 ## How It Works
 
 Spark runs on Google's cloud infrastructure. Unlike OpenClaw or Claude Code, there is **no plugin host** where Hindsight code runs alongside Spark's agent loop. The only third-party extension surface is MCP:
 
-| Capability                                             | Spark support                                                                                                                 |
-| ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
-| Hook-based auto-recall (prepend context to the prompt) | Not available — Spark's prompt assembly is private. The agent calls `recall` when its planner judges it useful.               |
-| Hook-based auto-retain (save transcripts on turn end)  | Not available — third parties don't see Spark's transcripts. The agent calls `retain` when it learns something worth keeping. |
-| MCP tools (`recall`, `retain`, etc.)                   | Yes — Spark calls Hindsight's MCP tools via its built-in MCP client.                                                          |
+| Capability | Spark support |
+|---|---|
+| Hook-based auto-recall (prepend context to the prompt) | Not available — Spark's prompt assembly is private. The agent calls `recall` when its planner judges it useful. |
+| Hook-based auto-retain (save transcripts on turn end) | Not available — third parties don't see Spark's transcripts. The agent calls `retain` when it learns something worth keeping. |
+| MCP tools (`recall`, `retain`, etc.) | Yes — Spark calls Hindsight's MCP tools via its built-in MCP client. |
 
 ## Architecture
 

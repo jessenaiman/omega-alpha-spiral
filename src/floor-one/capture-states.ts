@@ -14,27 +14,20 @@
  *   unhurt. Defeat ends in a defeat that moves on (retry), never a
  *   final ending — the fight is placeholder while assets still load.
  */
-import {
-  createFloor,
-  stepFloor,
-  type Dir,
-  type FloorState,
-  type Intent,
-  type Vec,
-} from "../game/floor-one";
+import { createFloor, stepFloor, type Dir, type FloorState, type Intent, type Vec } from '../game/floor-one';
 
 /** Probed seed where the door-open driver succeeds deterministically. */
-export const DOOR_OPEN_SEED = "door-1";
+export const DOOR_OPEN_SEED = 'door-1';
 
 export const CAPTURE_STATE_NAMES = [
-  "entry",
-  "pause",
-  "guard-intent",
-  "pickup-resolved",
-  "door-open",
-  "exit-ready",
-  "escaped",
-  "defeat",
+  'entry',
+  'pause',
+  'guard-intent',
+  'pickup-resolved',
+  'door-open',
+  'exit-ready',
+  'escaped',
+  'defeat',
 ] as const;
 
 export type CaptureStateName = (typeof CAPTURE_STATE_NAMES)[number];
@@ -55,21 +48,16 @@ const DIRS: Record<Dir, Vec> = {
   w: { x: -1, y: 0 },
 };
 
-const adjacentTo =
-  (v: Vec) =>
-  (x: number, y: number): boolean =>
-    Math.abs(x - v.x) + Math.abs(y - v.y) === 1;
+const adjacentTo = (v: Vec) => (x: number, y: number): boolean =>
+  Math.abs(x - v.x) + Math.abs(y - v.y) === 1;
 
 function tileAt(s: FloorState, x: number, y: number): string {
-  if (x < 0 || y < 0 || x >= s.cols || y >= s.rows) return "wall";
-  return s.tiles[y * s.cols + x] ?? "wall";
+  if (x < 0 || y < 0 || x >= s.cols || y >= s.rows) return 'wall';
+  return s.tiles[y * s.cols + x] ?? 'wall';
 }
 
 /** BFS over the same passability rules the game enforces. */
-function bfs(
-  s: FloorState,
-  goal: (state: FloorState, x: number, y: number) => boolean
-): Dir[] | null {
+function bfs(s: FloorState, goal: (state: FloorState, x: number, y: number) => boolean): Dir[] | null {
   const key = (x: number, y: number): number => y * s.cols + x;
   const start = key(s.player.x, s.player.y);
   const prev = new Map<number, number>([[start, start]]);
@@ -85,7 +73,7 @@ function bfs(
       found = cur;
       break;
     }
-    for (const dir of ["n", "e", "s", "w"] as const) {
+    for (const dir of ['n', 'e', 's', 'w'] as const) {
       const d = DIRS[dir];
       const nx = cx + d.x;
       const ny = cy + d.y;
@@ -93,8 +81,8 @@ function bfs(
       const nk = key(nx, ny);
       if (prev.has(nk)) continue;
       const tile = tileAt(s, nx, ny);
-      if (tile === "wall") continue;
-      if (tile === "door" && !s.doorOpen) continue;
+      if (tile === 'wall') continue;
+      if (tile === 'door' && !s.doorOpen) continue;
       if (s.guard && s.guard.pos.x === nx && s.guard.pos.y === ny) continue;
       prev.set(nk, cur);
       via.set(nk, dir);
@@ -121,15 +109,15 @@ function apply(s: FloorState, intent: Intent): FloorState {
 function walkTo(
   s: FloorState,
   goal: (state: FloorState, x: number, y: number) => boolean,
-  cap = 300
+  cap = 300,
 ): FloorState {
   let cur = s;
   for (let i = 0; i < cap; i += 1) {
     if (goal(cur, cur.player.x, cur.player.y)) return cur;
     const path = bfs(cur, goal);
     if (!path || path.length === 0) return cur;
-    cur = apply(cur, { kind: "move", dir: path[0] as Dir });
-    if (cur.outcome !== "ongoing") return cur;
+    cur = apply(cur, { kind: 'move', dir: path[0] as Dir });
+    if (cur.outcome !== 'ongoing') return cur;
   }
   return cur;
 }
@@ -140,7 +128,7 @@ const toGuard = (s: FloorState, x: number, y: number): boolean =>
 function fail(name: string, s: FloorState): never {
   throw new Error(
     `capture state "${name}" could not be reached: outcome=${s.outcome} hp=${s.hp} ` +
-      `doorOpen=${s.doorOpen} pickup=${s.pickupTaken} player=${s.player.x},${s.player.y}`
+      `doorOpen=${s.doorOpen} pickup=${s.pickupTaken} player=${s.player.x},${s.player.y}`,
   );
 }
 
@@ -148,67 +136,56 @@ function fail(name: string, s: FloorState): never {
 
 function driverGuardIntent(seed: string): FloorState {
   let s = walkTo(createFloor(seed), toGuard);
-  if (
-    !s.guard ||
-    !adjacentTo(s.guard.pos)(s.player.x, s.player.y) ||
-    s.outcome !== "ongoing"
-  ) {
-    fail("guard-intent", s);
+  if (!s.guard || !adjacentTo(s.guard.pos)(s.player.x, s.player.y) || s.outcome !== 'ongoing') {
+    fail('guard-intent', s);
   }
-  s = apply(s, { kind: "hit" }); // any result — hit or miss — makes it hostile
-  const hostile = s.guard !== null && s.guard.disposition === "hostile";
-  if (!hostile || s.outcome !== "ongoing") fail("guard-intent", s);
+  s = apply(s, { kind: 'hit' }); // any result — hit or miss — makes it hostile
+  const hostile = s.guard !== null && s.guard.disposition === 'hostile';
+  if (!hostile || s.outcome !== 'ongoing') fail('guard-intent', s);
   return s;
 }
 
 function driverDefeat(seed: string): FloorState {
   let s = driverGuardIntent(seed);
-  for (let i = 0; i < 20 && s.outcome === "ongoing"; i += 1) {
-    s = apply(s, { kind: "wait" }); // the hostile guard strikes every turn
+  for (let i = 0; i < 20 && s.outcome === 'ongoing'; i += 1) {
+    s = apply(s, { kind: 'wait' }); // the hostile guard strikes every turn
   }
-  if (s.outcome !== "dead") fail("defeat", s);
+  if (s.outcome !== 'dead') fail('defeat', s);
   return s;
 }
 
 function driverPickup(seed: string): FloorState {
-  const s = walkTo(
-    createFloor(seed),
-    (st, x, y) => tileAt(st, x, y) === "pickup"
-  );
-  if (!s.pickupTaken) fail("pickup-resolved", s);
+  const s = walkTo(createFloor(seed), (st, x, y) => tileAt(st, x, y) === 'pickup');
+  if (!s.pickupTaken) fail('pickup-resolved', s);
   return s;
 }
 
 function driverExitReady(seed: string): FloorState {
-  const s = walkTo(createFloor(seed), (_st, x, y) =>
-    adjacentTo({ x: 18, y: 5 })(x, y)
-  );
+  const s = walkTo(createFloor(seed), (_st, x, y) => adjacentTo({ x: 18, y: 5 })(x, y));
   const ok =
-    s.outcome === "ongoing" &&
+    s.outcome === 'ongoing' &&
     adjacentTo({ x: 18, y: 5 })(s.player.x, s.player.y) &&
     !s.doorOpen;
-  if (!ok) fail("exit-ready", s);
+  if (!ok) fail('exit-ready', s);
   return s;
 }
 
 function driverEscaped(seed: string): FloorState {
   let s = driverExitReady(seed);
   const path = bfs(s, (_st, x, y) => x === 18 && y === 5);
-  if (path) for (const dir of path) s = apply(s, { kind: "move", dir });
-  if (s.outcome !== "escaped") fail("escaped", s);
+  if (path) for (const dir of path) s = apply(s, { kind: 'move', dir });
+  if (s.outcome !== 'escaped') fail('escaped', s);
   return s;
 }
 
 function driverDoorOpen(seed: string): FloorState {
   let s = walkTo(createFloor(seed), toGuard);
-  if (!s.guard || !adjacentTo(s.guard.pos)(s.player.x, s.player.y))
-    fail("door-open", s);
-  for (let i = 0; i < 60 && s.outcome === "ongoing" && !s.doorOpen; i += 1) {
-    if (s.guard && s.guard.disposition !== "hostile")
-      s = apply(s, { kind: "talk" });
-    else s = apply(s, { kind: "hit" });
+  if (!s.guard || !adjacentTo(s.guard.pos)(s.player.x, s.player.y)) fail('door-open', s);
+  for (let i = 0; i < 60 && s.outcome === 'ongoing' && !s.doorOpen; i += 1) {
+    if (s.guard && s.guard.disposition !== 'hostile') s = apply(s, { kind: 'talk' });
+    else s = apply(s, { kind: 'hit' });
   }
-  if (!s.doorOpen || s.outcome !== "ongoing") fail("door-open", s);
+  if (!s.doorOpen || s.outcome !== 'ongoing') fail('door-open', s);
   return s;
 }
 
@@ -218,26 +195,23 @@ function driverDoorOpen(seed: string): FloorState {
  * Drive a fresh floor to the requested capture state through real rules.
  * `current` only supplies the seed for seed-independent states.
  */
-export function applyCaptureState(
-  name: CaptureStateName,
-  current: FloorState
-): CaptureResult {
+export function applyCaptureState(name: CaptureStateName, current: FloorState): CaptureResult {
   switch (name) {
-    case "entry":
+    case 'entry':
       return { state: createFloor(current.seed), paused: false };
-    case "pause":
+    case 'pause':
       return { state: createFloor(current.seed), paused: true };
-    case "guard-intent":
+    case 'guard-intent':
       return { state: driverGuardIntent(current.seed), paused: false };
-    case "pickup-resolved":
+    case 'pickup-resolved':
       return { state: driverPickup(current.seed), paused: false };
-    case "door-open":
+    case 'door-open':
       return { state: driverDoorOpen(DOOR_OPEN_SEED), paused: false };
-    case "exit-ready":
+    case 'exit-ready':
       return { state: driverExitReady(current.seed), paused: false };
-    case "escaped":
+    case 'escaped':
       return { state: driverEscaped(current.seed), paused: false };
-    case "defeat":
+    case 'defeat':
       return { state: driverDefeat(current.seed), paused: false };
   }
 }

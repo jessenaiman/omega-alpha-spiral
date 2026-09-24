@@ -1,3 +1,4 @@
+
 # Agent Plugins
 
 Portable long-term memory for any [Agent Plugins](https://agent-plugins.org) client, powered by [Hindsight](https://vectorize.io/hindsight).
@@ -7,9 +8,8 @@ Portable long-term memory for any [Agent Plugins](https://agent-plugins.org) cli
 ## Quick Start
 
 > **💡 Recommended: Hindsight Cloud**
-
+>
 [Sign up free](https://ui.hindsight.vectorize.io/signup) for a Hindsight Cloud API key — no self-hosting, no local daemon to manage.
-
 1. Get your `hsk_...` API key from [ui.hindsight.vectorize.io/connect](https://ui.hindsight.vectorize.io/connect).
 2. Set the environment variables the plugin reads:
 
@@ -36,17 +36,17 @@ agent-plugin/
 ```
 
 - **`mcp.json`** connects the client to Hindsight's built-in [MCP server](../../developer/mcp-server.md) over Streamable HTTP.
-- **`skills/hindsight-memory/SKILL.md`** is loaded into the agent's context so it knows _when_ to reach for memory, not just that the tools exist.
+- **`skills/hindsight-memory/SKILL.md`** is loaded into the agent's context so it knows *when* to reach for memory, not just that the tools exist.
 
 ## Memory tools
 
 Via the MCP server, the agent gets Hindsight's full memory surface. The three it reaches for most:
 
-| Tool      | When                                                            | What it does                                                  |
-| --------- | --------------------------------------------------------------- | ------------------------------------------------------------- |
-| `recall`  | Before answering, when past context could help                  | Semantic + keyword + graph + temporal retrieval over the bank |
-| `retain`  | After learning a durable, reusable fact                         | Stores the fact for future sessions                           |
-| `reflect` | When a lookup is too shallow and you need synthesized reasoning | Disposition-aware reasoning over everything remembered        |
+| Tool | When | What it does |
+|------|------|--------------|
+| `recall` | Before answering, when past context could help | Semantic + keyword + graph + temporal retrieval over the bank |
+| `retain` | After learning a durable, reusable fact | Stores the fact for future sessions |
+| `reflect` | When a lookup is too shallow and you need synthesized reasoning | Disposition-aware reasoning over everything remembered |
 
 Additional tools (knowledge pages, mental models, documents, tags) are exposed too — see the [MCP Server reference](../../developer/mcp-server.md).
 
@@ -54,13 +54,13 @@ Additional tools (knowledge pages, mental models, documents, tags) are exposed t
 
 The plugin reads two environment variables, interpolated into `mcp.json`:
 
-| Setting     | Env Var             | Default   | Description                                                                                                  |
-| ----------- | ------------------- | --------- | ------------------------------------------------------------------------------------------------------------ |
-| API key     | `HINDSIGHT_API_KEY` | —         | Your `hsk_...` key. Sent as `Authorization: Bearer`. Required for Hindsight Cloud.                           |
+| Setting | Env Var | Default | Description |
+|---------|---------|---------|-------------|
+| API key | `HINDSIGHT_API_KEY` | — | Your `hsk_...` key. Sent as `Authorization: Bearer`. Required for Hindsight Cloud. |
 | Memory bank | `HINDSIGHT_BANK_ID` | `default` | Bank to read from and write to (sent as `X-Bank-Id`). Use one bank per user, project, or team for isolation. |
 
 > **📝 Env-var syntax varies by client**
-
+>
 Most clients substitute `${VAR}`; some (VS Code, Cursor) use `${env:VAR}`. If your client doesn't interpolate, paste the literal key and bank id into `mcp.json`.
 **Self-hosting:** replace the host in `mcp.json` (`https://api.hindsight.vectorize.io`) with your deployment's URL. A local server with the MCP endpoint open needs no API key.
 

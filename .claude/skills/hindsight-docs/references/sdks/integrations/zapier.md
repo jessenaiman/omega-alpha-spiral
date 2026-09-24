@@ -1,3 +1,4 @@
+
 # Zapier
 
 Long-term agent memory for [Zapier](https://zapier.com) via [Hindsight](https://hindsight.vectorize.io). The Hindsight Zapier app adds three actions — **Retain**, **Recall**, **Reflect** — plus instant **triggers** that start a Zap when a memory event fires, so memory flows between Hindsight and 7,000+ apps.
@@ -14,18 +15,16 @@ Zapier connects everything: Gmail, Slack, Sheets, HubSpot, Notion, forms, and th
 ## Setup
 
 > **💡 Recommended: Hindsight Cloud**
-
+>
 [Sign up free](https://ui.hindsight.vectorize.io/signup) and grab an API key — no self-hosting required.
-
 1. **Sign up** at [Hindsight Cloud](https://ui.hindsight.vectorize.io/signup) (free tier) or [self-host](../../developer/installation.md)
 2. **Get an API key** (`hsk_...`) from the Hindsight dashboard
 
 > **📝 Availability**
-
+>
 The native Hindsight Zapier app (the **Retain / Recall / Reflect** steps and triggers) is
 currently a **private beta** — it isn't listed in Zapier's public App Directory yet, so
 searching "Hindsight" in Zapier won't find it. Use the **Webhooks by Zapier** path below.
-
 ### Webhooks by Zapier
 
 Every Hindsight operation is a plain REST call, so you can drive it from Zapier's built-in
@@ -80,10 +79,10 @@ Get an LLM-synthesized answer grounded in the bank's memories.
 
 Instant triggers (REST Hooks) that fire when a memory event completes in a bank:
 
-| Trigger                     | Fires when                                                    |
-| --------------------------- | ------------------------------------------------------------- |
-| **Retain Completed**        | An asynchronous retain finishes processing                    |
-| **Consolidation Completed** | Memory consolidation synthesizes observations / mental models |
+| Trigger                      | Fires when                                                    |
+| ---------------------------- | ------------------------------------------------------------- |
+| **Retain Completed**         | An asynchronous retain finishes processing                    |
+| **Consolidation Completed**  | Memory consolidation synthesizes observations / mental models |
 
 ## Example Zaps
 

@@ -34,16 +34,16 @@ npm install @vectorize-io/hindsight-all @vectorize-io/hindsight-client
 ## Example
 
 ```ts
-import { HindsightServer, consoleLogger } from "@vectorize-io/hindsight-all";
-import { HindsightClient } from "@vectorize-io/hindsight-client";
+import { HindsightServer, consoleLogger } from '@vectorize-io/hindsight-all';
+import { HindsightClient } from '@vectorize-io/hindsight-client';
 
 const server = new HindsightServer({
-  profile: "my-app",
+  profile: 'my-app',
   port: 9077,
   env: {
-    HINDSIGHT_API_LLM_PROVIDER: "anthropic",
+    HINDSIGHT_API_LLM_PROVIDER: 'anthropic',
     HINDSIGHT_API_LLM_API_KEY: process.env.ANTHROPIC_API_KEY,
-    HINDSIGHT_API_LLM_MODEL: "claude-sonnet-4-20250514",
+    HINDSIGHT_API_LLM_MODEL: 'claude-sonnet-4-20250514',
   },
   logger: consoleLogger,
 });
@@ -51,11 +51,8 @@ const server = new HindsightServer({
 await server.start();
 
 const client = new HindsightClient({ baseUrl: server.getBaseUrl() });
-await client.retain("user-123", "User prefers dark mode.");
-const recall = await client.recall(
-  "user-123",
-  "what are the user preferences?"
-);
+await client.retain('user-123', 'User prefers dark mode.');
+const recall = await client.recall('user-123', 'what are the user preferences?');
 
 await server.stop();
 ```
@@ -64,29 +61,29 @@ For a remote Hindsight API, skip the server entirely and point `HindsightClient`
 
 ## `HindsightServerOptions`
 
-| Option                   | Type                                  | Default         | Description                                                                                                                                                                                         |
-| ------------------------ | ------------------------------------- | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `profile`                | `string`                              | `"default"`     | Profile name passed to `--profile` on every sub-command.                                                                                                                                            |
-| `port`                   | `number`                              | `8888`          | TCP port the daemon listens on.                                                                                                                                                                     |
-| `host`                   | `string`                              | `"127.0.0.1"`   | Hostname the daemon binds to (used for health checks).                                                                                                                                              |
-| `embedVersion`           | `string`                              | `"latest"`      | Version of the underlying `hindsight-embed` package to run via `uvx`.                                                                                                                               |
-| `embedPackagePath`       | `string`                              | —               | Local checkout path — takes precedence over `embedVersion`. Uses `uv run --directory` instead of `uvx`.                                                                                             |
-| `env`                    | `Record<string, string \| undefined>` | `{}`            | Environment variables passed to the daemon process **and** written into the profile config via `--env KEY=VALUE`. The preferred way to surface any `HINDSIGHT_API_*` / `HINDSIGHT_EMBED_*` setting. |
-| `extraProfileCreateArgs` | `string[]`                            | `[]`            | Extra args appended verbatim to `profile create`.                                                                                                                                                   |
-| `extraDaemonStartArgs`   | `string[]`                            | `[]`            | Extra args appended verbatim to `daemon start`.                                                                                                                                                     |
-| `platformCpuWorkaround`  | `boolean`                             | `true` on macOS | Auto-set `HINDSIGHT_API_EMBEDDINGS_LOCAL_FORCE_CPU=1` and `HINDSIGHT_API_RERANKER_LOCAL_FORCE_CPU=1` to avoid Metal/MPS crashes. Caller-supplied `env` values win over the auto-applied ones.       |
-| `readyTimeoutMs`         | `number`                              | `30000`         | Max time to wait for `/health` to return 200.                                                                                                                                                       |
-| `readyPollIntervalMs`    | `number`                              | `1000`          | Polling interval while waiting for `/health`.                                                                                                                                                       |
-| `logger`                 | `Logger`                              | silent          | Pluggable logger (`debug`/`info`/`warn`/`error`). `consoleLogger` and `silentLogger` helpers are exported.                                                                                          |
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `profile` | `string` | `"default"` | Profile name passed to `--profile` on every sub-command. |
+| `port` | `number` | `8888` | TCP port the daemon listens on. |
+| `host` | `string` | `"127.0.0.1"` | Hostname the daemon binds to (used for health checks). |
+| `embedVersion` | `string` | `"latest"` | Version of the underlying `hindsight-embed` package to run via `uvx`. |
+| `embedPackagePath` | `string` | — | Local checkout path — takes precedence over `embedVersion`. Uses `uv run --directory` instead of `uvx`. |
+| `env` | `Record<string, string \| undefined>` | `{}` | Environment variables passed to the daemon process **and** written into the profile config via `--env KEY=VALUE`. The preferred way to surface any `HINDSIGHT_API_*` / `HINDSIGHT_EMBED_*` setting. |
+| `extraProfileCreateArgs` | `string[]` | `[]` | Extra args appended verbatim to `profile create`. |
+| `extraDaemonStartArgs` | `string[]` | `[]` | Extra args appended verbatim to `daemon start`. |
+| `platformCpuWorkaround` | `boolean` | `true` on macOS | Auto-set `HINDSIGHT_API_EMBEDDINGS_LOCAL_FORCE_CPU=1` and `HINDSIGHT_API_RERANKER_LOCAL_FORCE_CPU=1` to avoid Metal/MPS crashes. Caller-supplied `env` values win over the auto-applied ones. |
+| `readyTimeoutMs` | `number` | `30000` | Max time to wait for `/health` to return 200. |
+| `readyPollIntervalMs` | `number` | `1000` | Polling interval while waiting for `/health`. |
+| `logger` | `Logger` | silent | Pluggable logger (`debug`/`info`/`warn`/`error`). `consoleLogger` and `silentLogger` helpers are exported. |
 
 ## Server methods
 
-| Method          | Returns            | Description                                                                           |
-| --------------- | ------------------ | ------------------------------------------------------------------------------------- |
-| `start()`       | `Promise<void>`    | Configure profile, spawn the daemon, wait for `/health`. Idempotent — safe to re-run. |
-| `stop()`        | `Promise<void>`    | Stop the daemon. Never throws; logs and resolves even on failure.                     |
-| `checkHealth()` | `Promise<boolean>` | One-shot `/health` probe with a 2 s timeout.                                          |
-| `getBaseUrl()`  | `string`           | `http://host:port` — pass this straight to `HindsightClient`.                         |
-| `getProfile()`  | `string`           | The profile name this server operates on.                                             |
+| Method | Returns | Description |
+|---|---|---|
+| `start()` | `Promise<void>` | Configure profile, spawn the daemon, wait for `/health`. Idempotent — safe to re-run. |
+| `stop()` | `Promise<void>` | Stop the daemon. Never throws; logs and resolves even on failure. |
+| `checkHealth()` | `Promise<boolean>` | One-shot `/health` probe with a 2 s timeout. |
+| `getBaseUrl()` | `string` | `http://host:port` — pass this straight to `HindsightClient`. |
+| `getProfile()` | `string` | The profile name this server operates on. |
 
 For memory operations (retain, recall, reflect, bank management) use [`@vectorize-io/hindsight-client`](./nodejs.mdx).

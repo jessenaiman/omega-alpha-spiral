@@ -1,3 +1,4 @@
+
 # CrewAI
 
 Persistent memory for AI agent crews via [CrewAI](https://github.com/crewAIInc/crewAI). Give your crews long-term memory with fact extraction, entity tracking, and temporal awareness.
@@ -21,9 +22,8 @@ pip install hindsight-crewai
 ## Quick Start
 
 > **💡 Recommended: Hindsight Cloud**
-
+>
 [Sign up free](https://ui.hindsight.vectorize.io/signup) and grab an API key — no self-hosting required.
-
 ```python
 from hindsight_crewai import configure, HindsightStorage
 from crewai.memory.external.external_memory import ExternalMemory
@@ -46,7 +46,6 @@ crew.kickoff()
 ```
 
 That's it. CrewAI will automatically:
-
 - **Query memories** at the start of each task
 - **Store task outputs** to Hindsight after each task completes
 
@@ -66,11 +65,11 @@ See the [installation guide](../../developer/installation.md) for self-hosting s
 
 The integration maps CrewAI's 3-method `Storage` interface to Hindsight's API:
 
-| CrewAI                         | Hindsight                       | What happens                                                                                                               |
-| ------------------------------ | ------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `save(value, metadata, agent)` | `retain(bank_id, content, ...)` | Task output is stored. Hindsight extracts facts, entities, and relationships from the raw text.                            |
-| `search(query, limit)`         | `recall(bank_id, query, ...)`   | CrewAI constructs a query from the task description. Hindsight runs semantic search, BM25, graph traversal, and reranking. |
-| `reset()`                      | `delete_bank(bank_id)`          | Wipes the bank and optionally recreates it with its original mission.                                                      |
+| CrewAI | Hindsight | What happens |
+|--------|-----------|--------------|
+| `save(value, metadata, agent)` | `retain(bank_id, content, ...)` | Task output is stored. Hindsight extracts facts, entities, and relationships from the raw text. |
+| `search(query, limit)` | `recall(bank_id, query, ...)` | CrewAI constructs a query from the task description. Hindsight runs semantic search, BM25, graph traversal, and reranking. |
+| `reset()` | `delete_bank(bank_id)` | Wipes the bank and optionally recreates it with its original mission. |
 
 CrewAI calls `search()` automatically at the start of each task and `save()` after each task completes.
 
@@ -138,9 +137,8 @@ storage = HindsightStorage(
 ```
 
 > **ℹ️ Info**
-
+>
 When `per_agent_banks=True`, the automatic `search()` at task start queries the base bank (shared context), since CrewAI's `search()` method does not receive the agent parameter. For per-agent search isolation, create separate `HindsightStorage` instances per agent.
-
 ## Reflect Tool
 
 CrewAI's storage interface only supports save/search/reset. To give agents access to Hindsight's `reflect` (disposition-aware memory synthesis), add it as a tool:
@@ -220,38 +218,38 @@ crew.kickoff()
 
 ### Configuration
 
-| Function         | Description                                |
-| ---------------- | ------------------------------------------ |
+| Function | Description |
+|----------|-------------|
 | `configure(...)` | Set global connection and default settings |
-| `get_config()`   | Get current configuration                  |
-| `reset_config()` | Reset configuration to None                |
+| `get_config()` | Get current configuration |
+| `reset_config()` | Reset configuration to None |
 
 ### Storage
 
-| Parameter           | Default     | Description                          |
-| ------------------- | ----------- | ------------------------------------ |
-| `bank_id`           | required    | Hindsight memory bank ID             |
-| `hindsight_api_url` | from config | Override API URL                     |
-| `api_key`           | from config | Override API key                     |
-| `budget`            | `"mid"`     | Recall budget (low/mid/high)         |
-| `max_tokens`        | `4096`      | Max tokens for recall results        |
-| `tags`              | `None`      | Tags applied when storing            |
-| `recall_tags`       | `None`      | Tags to filter when searching        |
-| `recall_tags_match` | `"any"`     | Tag matching mode                    |
-| `per_agent_banks`   | `False`     | Give each agent its own bank         |
-| `bank_resolver`     | `None`      | Custom `(bank_id, agent) -> bank_id` |
-| `mission`           | `None`      | Bank mission for memory organization |
-| `verbose`           | `False`     | Enable verbose logging               |
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `bank_id` | required | Hindsight memory bank ID |
+| `hindsight_api_url` | from config | Override API URL |
+| `api_key` | from config | Override API key |
+| `budget` | `"mid"` | Recall budget (low/mid/high) |
+| `max_tokens` | `4096` | Max tokens for recall results |
+| `tags` | `None` | Tags applied when storing |
+| `recall_tags` | `None` | Tags to filter when searching |
+| `recall_tags_match` | `"any"` | Tag matching mode |
+| `per_agent_banks` | `False` | Give each agent its own bank |
+| `bank_resolver` | `None` | Custom `(bank_id, agent) -> bank_id` |
+| `mission` | `None` | Bank mission for memory organization |
+| `verbose` | `False` | Enable verbose logging |
 
 ### Reflect Tool
 
-| Parameter           | Default     | Description                      |
-| ------------------- | ----------- | -------------------------------- |
-| `bank_id`           | required    | Hindsight memory bank ID         |
-| `budget`            | `"mid"`     | Reflect budget (low/mid/high)    |
-| `reflect_context`   | `None`      | Additional context for reasoning |
-| `hindsight_api_url` | from config | Override API URL                 |
-| `api_key`           | from config | Override API key                 |
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `bank_id` | required | Hindsight memory bank ID |
+| `budget` | `"mid"` | Reflect budget (low/mid/high) |
+| `reflect_context` | `None` | Additional context for reasoning |
+| `hindsight_api_url` | from config | Override API URL |
+| `api_key` | from config | Override API key |
 
 ## Requirements
 

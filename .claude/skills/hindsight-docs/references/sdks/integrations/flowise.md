@@ -1,3 +1,4 @@
+
 # Flowise
 
 Persistent memory for [Flowise](https://flowiseai.com) chatflows and agents via [Hindsight](https://hindsight.vectorize.io). Three Tool nodes — **Hindsight Retain**, **Hindsight Recall**, **Hindsight Reflect** — drop into any flow alongside your other LangChain tools.
@@ -37,9 +38,8 @@ pnpm start  # opens http://localhost:3000
 ## Setup
 
 > **💡 Hindsight Cloud (recommended)**
-
+>
 [Sign up free](https://ui.hindsight.vectorize.io/signup) — no infrastructure to run. Skip straight to creating your credential below.
-
 1. **Sign up** at [Hindsight Cloud](https://ui.hindsight.vectorize.io/signup) (free tier) or [self-host](../../developer/installation.md)
 2. **Get an API key** from the Hindsight dashboard
 3. **In Flowise**, create a new credential of type **Hindsight API**:
@@ -54,8 +54,8 @@ Each Hindsight tool node returns a LangChain `DynamicStructuredTool`, so it slot
 
 Stores content in a memory bank. Hindsight extracts facts asynchronously after the call returns.
 
-| Field           | Description                                                |
-| --------------- | ---------------------------------------------------------- |
+| Field | Description |
+|---|---|
 | Default Bank ID | Memory bank to retain into when the agent doesn't pass one |
 
 Tool input schema (the agent passes these): `bankId`, `content`, optional `tags`.
@@ -64,10 +64,10 @@ Tool input schema (the agent passes these): `bankId`, `content`, optional `tags`
 
 Searches a bank for memories relevant to a query. Returns ranked results.
 
-| Field           | Description                                           |
-| --------------- | ----------------------------------------------------- |
+| Field | Description |
+|---|---|
 | Default Bank ID | Memory bank to search when the agent doesn't pass one |
-| Default Budget  | `low` / `mid` / `high`                                |
+| Default Budget | `low` / `mid` / `high` |
 
 Tool input schema: `bankId`, `query`, optional `budget`, `maxTokens`, `tags`.
 
@@ -75,10 +75,10 @@ Tool input schema: `bankId`, `query`, optional `budget`, `maxTokens`, `tags`.
 
 Returns an LLM-synthesized answer over the bank.
 
-| Field           | Description                                               |
-| --------------- | --------------------------------------------------------- |
+| Field | Description |
+|---|---|
 | Default Bank ID | Memory bank to reflect on when the agent doesn't pass one |
-| Default Budget  | `low` / `mid` / `high`                                    |
+| Default Budget | `low` / `mid` / `high` |
 
 Tool input schema: `bankId`, `query`, optional `budget`.
 

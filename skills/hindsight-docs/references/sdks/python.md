@@ -1,3 +1,5 @@
+
+
 # Python Client
 
 Official HTTP client for the Hindsight API. Use this when you have a Hindsight server already running — locally, in Docker, or as a managed service — and you want a typed Python client to talk to it.

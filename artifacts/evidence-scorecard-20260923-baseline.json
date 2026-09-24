@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "runId": "scorecard-20260923-baseline",
+  "captures": [
+    { "mode": "desktop", "state": "question-1", "report": "artifacts/scorecard-20260923-baseline/desktop-question-1.json" },
+    { "mode": "mobile", "state": "question-1", "report": "artifacts/scorecard-20260923-baseline/mobile-question-1.json" },
+    { "mode": "desktop", "state": "final-door", "report": "artifacts/scorecard-20260923-baseline/desktop-final-door.json" },
+    { "mode": "mobile", "state": "final-door", "report": "artifacts/scorecard-20260923-baseline/mobile-final-door.json" }
+  ]
+}

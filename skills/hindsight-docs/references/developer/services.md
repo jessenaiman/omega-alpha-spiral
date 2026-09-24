@@ -1,3 +1,4 @@
+
 # Services
 
 Hindsight consists of three services that can run together or separately depending on your deployment needs.
@@ -52,11 +53,11 @@ hindsight-worker     # Default metrics port: 8889
 
 Workers use PostgreSQL as a task broker, polling for pending tasks. Multiple workers can run simultaneously without conflicts.
 
-| Deployment             | Internal Worker         | Dedicated Workers      |
-| ---------------------- | ----------------------- | ---------------------- |
-| **Development**        | ✅ Simple, all-in-one   | ❌ Overkill            |
-| **Small production**   | ✅ Less infrastructure  | ❌ Overkill            |
-| **High throughput**    | ❌ API bottleneck       | ✅ Scale independently |
+| Deployment | Internal Worker | Dedicated Workers |
+|------------|-----------------|-------------------|
+| **Development** | ✅ Simple, all-in-one | ❌ Overkill |
+| **Small production** | ✅ Less infrastructure | ❌ Overkill |
+| **High throughput** | ❌ API bottleneck | ✅ Scale independently |
 | **Long-running tasks** | ❌ Blocks API resources | ✅ Isolated processing |
 
 To use dedicated workers, disable the internal worker in the API and start worker processes:

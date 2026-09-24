@@ -1,3 +1,4 @@
+
 # Omnigent
 
 Persistent long-term memory for every harness in [Omnigent](https://github.com/omnigent-ai/omnigent) — the meta-harness that wraps and coordinates multiple AI agents (Claude Code, Codex, Cursor, OpenCode, Hermes, Pi, and more).
@@ -24,8 +25,8 @@ tools:
   builtins:
     - name: hindsight_recall
       api_key: ${HINDSIGHT_API_KEY}
-      bank_id: my-agent-memory # optional; defaults to agent_id
-      budget: mid # low / mid / high
+      bank_id: my-agent-memory      # optional; defaults to agent_id
+      budget: mid                   # low / mid / high
       max_tokens: 4096
 
     - name: hindsight_retain
@@ -69,16 +70,16 @@ To share memory between two agents, point them at the same `bank_id`.
 
 ## Configuration Reference
 
-| Field               | Description                                                  | Default                              |
-| ------------------- | ------------------------------------------------------------ | ------------------------------------ |
-| `api_key`           | Hindsight API key                                            | _(required for Cloud)_               |
-| `api_url`           | Hindsight API base URL                                       | `https://api.hindsight.vectorize.io` |
-| `bank_id`           | Memory bank name                                             | `agent_id` or `conversation_id`      |
-| `budget`            | Recall token budget (`low` / `mid` / `high`)                 | `mid`                                |
-| `max_tokens`        | Maximum tokens returned by recall                            | `4096`                               |
-| `tags`              | CSV tags applied to retained memories                        | _(none)_                             |
-| `recall_tags`       | CSV tags to filter recalled memories                         | _(none)_                             |
-| `recall_tags_match` | Tag match mode (`any` / `all` / `any_strict` / `all_strict`) | `any`                                |
+| Field | Description | Default |
+|---|---|---|
+| `api_key` | Hindsight API key | _(required for Cloud)_ |
+| `api_url` | Hindsight API base URL | `https://api.hindsight.vectorize.io` |
+| `bank_id` | Memory bank name | `agent_id` or `conversation_id` |
+| `budget` | Recall token budget (`low` / `mid` / `high`) | `mid` |
+| `max_tokens` | Maximum tokens returned by recall | `4096` |
+| `tags` | CSV tags applied to retained memories | _(none)_ |
+| `recall_tags` | CSV tags to filter recalled memories | _(none)_ |
+| `recall_tags_match` | Tag match mode (`any` / `all` / `any_strict` / `all_strict`) | `any` |
 
 ## Self-Hosted
 
@@ -102,14 +103,14 @@ After a few conversations, ask it something it learned in a previous session.
 
 ## Which Harnesses Benefit
 
-| Harness        | Native Hindsight integration    | Via Omnigent |
-| -------------- | ------------------------------- | ------------ |
-| Claude Code    | Yes (official)                  | Yes          |
-| Cursor         | Yes (official)                  | Yes          |
-| Codex          | Yes (official)                  | Yes          |
-| OpenCode       | Yes (official)                  | Yes          |
-| Pi             | Yes (community, via epimetheus) | Yes          |
-| Custom harness | Usually none                    | Yes          |
+| Harness | Native Hindsight integration | Via Omnigent |
+|---|---|---|
+| Claude Code | Yes (official) | Yes |
+| Cursor | Yes (official) | Yes |
+| Codex | Yes (official) | Yes |
+| OpenCode | Yes (official) | Yes |
+| Pi | Yes (community, via epimetheus) | Yes |
+| Custom harness | Usually none | Yes |
 
 Most of these harnesses already have a native Hindsight integration, ideal when you run that tool standalone. Omnigent's value is one central memory setup that spans every harness you orchestrate at once, plus coverage for custom harnesses with no native option.
 

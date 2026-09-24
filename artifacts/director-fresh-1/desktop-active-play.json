@@ -1,0 +1,18 @@
+{
+  "url": "http://127.0.0.1:5188/floor-one.html?debug",
+  "mode": "desktop",
+  "state": null,
+  "requestedState": "active-play",
+  "appliedState": null,
+  "runId": "director-fresh-1",
+  "seed": null,
+  "screenshotPath": null,
+  "gpu": null,
+  "result": {
+    "ok": false,
+    "reason": "capture-failed",
+    "error": "page.evaluate: Error: unknown capture state \"active-play\"; this scene declares: entry, pause, guard-intent, pickup-resolved, door-open, exit-ready, escaped, defeat\n    at Object.setState (http://127.0.0.1:5188/src/floor-one/main.ts?t=1790216069195:257:11)\n    at eval (eval at evaluate (:311:30), <anonymous>:42:64)\n    at step (eval at evaluate (:311:30), <anonymous>:26:32)\n    at eval (eval at evaluate (:311:30), <anonymous>:42:47)\n    at async eval (eval at evaluate (:311:30), <anonymous>:31:18)\n    at async <anonymous>:337:30"
+  },
+  "consoleErrors": [],
+  "pageErrors": []
+}

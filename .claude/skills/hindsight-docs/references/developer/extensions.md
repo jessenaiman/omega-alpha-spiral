@@ -44,7 +44,6 @@ For other multi-tenant setups with separate schemas per tenant (e.g., custom JWT
 Adds custom HTTP endpoints under the `/ext/` path prefix. Useful for adding domain-specific APIs that integrate with Hindsight's memory engine.
 
 Provides two router methods:
-
 - `get_router(memory)` — returns a FastAPI router mounted at `/ext/`
 - `get_root_router(memory)` — returns a FastAPI router mounted at the application root (for well-known endpoints or other paths that must be at specific locations). Returns `None` by default.
 
@@ -59,7 +58,6 @@ HINDSIGHT_API_HTTP_EXTENSION=mypackage.ext:MyHttpExtension
 ### OperationValidatorExtension
 
 Hooks into retain/recall/reflect operations for validation and monitoring. Use cases include:
-
 - Rate limiting and quota enforcement
 - Permission checks and content filtering
 - Audit logging and usage tracking
@@ -105,12 +103,10 @@ HINDSIGHT_API_<TYPE>_SOME_CONFIG=value
 ```
 
 All extensions support lifecycle hooks:
-
 - `on_startup()` - Called when the application starts
 - `on_shutdown()` - Called when the application shuts down
 
 Extensions have access to an `ExtensionContext` that provides:
-
 - `run_migration(schema)` - Run database migrations for a schema
 - `get_memory_engine()` - Get the MemoryEngine interface
 
@@ -154,7 +150,7 @@ raise AuthenticationError(
 
 ### Reading additional request headers
 
-`RequestContext` carries the `Authorization` header as `api_key`. To authenticate on a _different_ header — for instance when a gateway terminates auth with one shared identity and forwards the per-caller identity separately — name the headers you want forwarded:
+`RequestContext` carries the `Authorization` header as `api_key`. To authenticate on a *different* header — for instance when a gateway terminates auth with one shared identity and forwards the per-caller identity separately — name the headers you want forwarded:
 
 ```bash
 HINDSIGHT_API_EXTENSION_PASSTHROUGH_HEADERS=x-user-assertion
@@ -176,7 +172,7 @@ This works on both the HTTP and MCP transports, and the same `RequestContext` is
 
 Only headers you list are forwarded, and only when present on the request. The variable is unset by default, so extensions see no header data unless you opt in.
 
-A header sent **more than once** is not forwarded at all, and a warning is logged. There is no safe way to choose between the copies — a proxy may append its trusted value either before or after a client-supplied one — so an extension reading it sees nothing and fails the request, rather than silently accepting a value that may be spoofed. Make sure your proxy _replaces_ the identity header it injects instead of appending to it.
+A header sent **more than once** is not forwarded at all, and a warning is logged. There is no safe way to choose between the copies — a proxy may append its trusted value either before or after a client-supplied one — so an extension reading it sees nothing and fails the request, rather than silently accepting a value that may be spoofed. Make sure your proxy *replaces* the identity header it injects instead of appending to it.
 
 :::caution Deferred operations
 `extra_headers` describes the request being served. Operations that run later — a queued retain, a scheduled consolidation, a mental-model refresh — are executed by a background worker with no request behind them, so their `RequestContext` carries no headers. Authorize on the header at request time; do not rely on it inside work that continues after the response.

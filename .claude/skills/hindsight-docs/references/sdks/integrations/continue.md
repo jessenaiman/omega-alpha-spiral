@@ -1,3 +1,4 @@
+
 # Continue
 
 Long-term memory for the [Continue.dev](https://continue.dev) coding assistant, powered by [Hindsight](https://vectorize.io/hindsight). Recall relevant project memory directly into chat, and optionally let the agent recall and retain automatically in agent mode.

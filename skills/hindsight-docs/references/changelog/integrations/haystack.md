@@ -12,7 +12,7 @@ For the source code, see [`hindsight-integrations/haystack`](https://github.com/
 
 ## [0.1.1](https://github.com/vectorize-io/hindsight/tree/integrations/haystack/v0.1.1)
 
-_This release contains internal maintenance and infrastructure changes only._
+*This release contains internal maintenance and infrastructure changes only.*
 
 ## [0.1.0](https://github.com/vectorize-io/hindsight/tree/integrations/haystack/v0.1.0)
 

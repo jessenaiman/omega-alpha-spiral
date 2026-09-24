@@ -1,3 +1,4 @@
+
 # OpenHands
 
 Long-term memory for [OpenHands](https://github.com/OpenHands/OpenHands) (formerly OpenDevin), powered by [Hindsight](https://vectorize.io/hindsight). One command connects OpenHands to the Hindsight MCP server and adds a recall/retain rule — so the agent recalls relevant memory at the start of a task and retains durable facts as it works.
@@ -29,10 +30,10 @@ hindsight-openhands init --api-token YOUR_HINDSIGHT_API_KEY --bank-id my-project
 
 ## Commands
 
-| Command                         | Description                                   |
-| ------------------------------- | --------------------------------------------- |
-| `hindsight-openhands init`      | Add the MCP server + recall/retain rule       |
-| `hindsight-openhands status`    | Show whether the server + rule are configured |
-| `hindsight-openhands uninstall` | Remove the server + rule                      |
+| Command | Description |
+| --- | --- |
+| `hindsight-openhands init` | Add the MCP server + recall/retain rule |
+| `hindsight-openhands status` | Show whether the server + rule are configured |
+| `hindsight-openhands uninstall` | Remove the server + rule |
 
 See the [package README](https://github.com/vectorize-io/hindsight/tree/main/hindsight-integrations/openhands) for full configuration options.

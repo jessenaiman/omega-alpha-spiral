@@ -2,8 +2,6 @@
 title: "Omega Origins"
 description: A detailed exploration of the history and symbolism of the final letter of the Greek alphabet, omega.
 status: concept
-priority: medium
-reference: ['https://grok.com/share/bGVnYWN5_e1a336bf-5fc0-45f0-9ca1-eaba4fcff53e']
 ---
 
 ## History

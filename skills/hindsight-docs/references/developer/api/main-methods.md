@@ -1,3 +1,4 @@
+
 # Main Methods
 
 Hindsight provides three core operations: **retain**, **recall**, and **reflect**.
@@ -5,9 +6,8 @@ Hindsight provides three core operations: **retain**, **recall**, and **reflect*
 {/* Import raw source files */}
 
 > **💡 Prerequisites**
-
+>
 Make sure you've [installed Hindsight](../installation) and completed the [Quick Start](./quickstart).
-
 ## Retain: Store Information
 
 Store conversations, documents, and facts into a memory bank.
@@ -50,10 +50,7 @@ client.retain_batch(
 
 ```javascript
 // Store a single fact
-await client.retain(
-  "my-bank",
-  "Alice joined Google in March 2024 as a Senior ML Engineer"
-);
+await client.retain('my-bank', 'Alice joined Google in March 2024 as a Senior ML Engineer');
 
 // Store a conversation
 const conversation = `
@@ -63,15 +60,15 @@ User: How did it look?
 Assistant: Promising, but needs better error handling.
 `;
 
-await client.retain("my-bank", conversation, {
-  context: "Daily standup conversation",
+await client.retain('my-bank', conversation, {
+    context: 'Daily standup conversation'
 });
 
 // Batch retain multiple items
-await client.retainBatch("my-bank", [
-  { content: "Bob prefers Python for data science" },
-  { content: "Alice recommends using pytest for testing" },
-  { content: "The team uses GitHub for code reviews" },
+await client.retainBatch('my-bank', [
+    { content: 'Bob prefers Python for data science' },
+    { content: 'Alice recommends using pytest for testing' },
+    { content: 'The team uses GitHub for code reviews' }
 ]);
 ```
 
@@ -151,33 +148,29 @@ for result in results.results:
 
 ```javascript
 // Basic search
-const results = await client.recall("my-bank", "What does Alice do at Google?");
+const results = await client.recall('my-bank', 'What does Alice do at Google?');
 
 for (const result of results.results) {
-  console.log(`- ${result.text}`);
+    console.log(`- ${result.text}`);
 }
 
 // Search with options
-const filteredResults = await client.recall(
-  "my-bank",
-  "What happened last spring?",
-  {
-    budget: "high",
+const filteredResults = await client.recall('my-bank', 'What happened last spring?', {
+    budget: 'high',
     maxTokens: 8192,
-    types: ["world"],
-  }
-);
+    types: ['world']
+});
 
 // Include entity information
-const entityResults = await client.recall("my-bank", "Tell me about Alice", {
-  includeEntities: true,
-  maxEntityTokens: 500,
+const entityResults = await client.recall('my-bank', 'Tell me about Alice', {
+    includeEntities: true,
+    maxEntityTokens: 500
 });
 
 // Check entity details
 for (const [entityId, entity] of Object.entries(entityResults.entities || {})) {
-  console.log(`Entity: ${entity.canonical_name}`);
-  console.log(`Observations: ${entity.observations}`);
+    console.log(`Entity: ${entity.canonical_name}`);
+    console.log(`Observations: ${entity.observations}`);
 }
 ```
 
@@ -251,26 +244,19 @@ for fact in (response.based_on.memories if response.based_on else []):
 
 ```javascript
 // Basic reflect
-const response = await client.reflect(
-  "my-bank",
-  "Should we adopt TypeScript for our backend?"
-);
+const response = await client.reflect('my-bank', 'Should we adopt TypeScript for our backend?');
 
 console.log(response.text);
-console.log("\nBased on:", (response.based_on || []).length, "facts");
+console.log('\nBased on:', (response.based_on || []).length, 'facts');
 
 // Reflect with options
-const detailedResponse = await client.reflect(
-  "my-bank",
-  "What are Alice's strengths for the team lead role?",
-  {
-    budget: "high",
-  }
-);
+const detailedResponse = await client.reflect('my-bank', "What are Alice's strengths for the team lead role?", {
+    budget: 'high'
+});
 
 // See which facts influenced the response
 for (const fact of detailedResponse.based_on || []) {
-  console.log(`- ${fact.text}`);
+    console.log(`- ${fact.text}`);
 }
 ```
 
@@ -304,14 +290,14 @@ fmt.Println(answer.GetText())
 
 ## Comparison
 
-| Feature               | Retain             | Recall                      | Reflect                  |
-| --------------------- | ------------------ | --------------------------- | ------------------------ |
-| **Purpose**           | Store information  | Find information            | Reason about information |
-| **Input**             | Raw text/documents | Search query                | Question/prompt          |
-| **Output**            | Memory IDs         | Ranked facts + observations | Reasoned response        |
-| **Uses LLM**          | Yes (extraction)   | No                          | Yes (generation)         |
-| **Uses observations** | No                 | Yes                         | Yes                      |
-| **Disposition**       | No                 | No                          | Yes                      |
+| Feature | Retain | Recall | Reflect |
+|---------|--------|--------|---------|
+| **Purpose** | Store information | Find information | Reason about information |
+| **Input** | Raw text/documents | Search query | Question/prompt |
+| **Output** | Memory IDs | Ranked facts + observations | Reasoned response |
+| **Uses LLM** | Yes (extraction) | No | Yes (generation) |
+| **Uses observations** | No | Yes | Yes |
+| **Disposition** | No | No | Yes |
 
 ---
 

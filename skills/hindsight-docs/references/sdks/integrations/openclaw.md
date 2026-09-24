@@ -1,3 +1,4 @@
+
 # OpenClaw
 
 Local, long term memory for [OpenClaw](https://openclaw.ai) agents using [Hindsight](https://vectorize.io/hindsight).
@@ -236,10 +237,7 @@ With `dynamicBankId` enabled (the default), each derived bank otherwise inherits
           "dispositionEmpathy": 4,
           "entityLabels": [
             { "name": "person", "description": "A human user or contact" },
-            {
-              "name": "project",
-              "description": "A software project or product"
-            }
+            { "name": "project", "description": "A software project or product" }
           ],
           "retainMission": "Extract durable preferences, decisions, and project context.",
           "observationsMission": "Synthesise stable user preferences and active projects.",
@@ -466,12 +464,11 @@ Two things to expect after installing on OpenClaw 2026.8.1 or later:
   its built-in memory stepped aside.
 
 > **📝 Upgrading from 0.11.1 or earlier**
-
+>
 Installing 0.11.x could fail with
 `npm error Cannot read properties of null (reading 'edgesOut')`. That was a
 packaging problem in the plugin, triggered by a change in the npm registry, and
 it is fixed in 0.12.0 — retry the install with the new version.
-
 ## Troubleshooting
 
 ### Plugin not loading

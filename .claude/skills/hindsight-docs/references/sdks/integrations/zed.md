@@ -1,3 +1,4 @@
+
 # Zed
 
 Long-term memory for the [Zed](https://zed.dev) editor's AI assistant, powered by [Hindsight](https://vectorize.io/hindsight). One command connects Zed's Agent Panel to the Hindsight MCP server and adds a rule telling the agent to use it — so it recalls relevant memory at the start of a task and retains durable facts as it goes. Recall happens at query time against your actual message, and from your seat it's automatic.
@@ -34,11 +35,11 @@ Use a [Hindsight Cloud](https://hindsight.vectorize.io) key, or point at a self-
 
 ## Commands
 
-| Command                   | Description                                   |
-| ------------------------- | --------------------------------------------- |
-| `hindsight-zed init`      | Add the MCP server + recall/retain rule       |
-| `hindsight-zed status`    | Show whether the server + rule are configured |
-| `hindsight-zed uninstall` | Remove the server + rule                      |
+| Command | Description |
+| --- | --- |
+| `hindsight-zed init` | Add the MCP server + recall/retain rule |
+| `hindsight-zed status` | Show whether the server + rule are configured |
+| `hindsight-zed uninstall` | Remove the server + rule |
 
 ## Note
 

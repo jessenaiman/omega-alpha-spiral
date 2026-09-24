@@ -1,3 +1,4 @@
+
 # Composio
 
 Persistent memory for [Composio](https://composio.dev) agents via Hindsight. Exposes Hindsight's
@@ -25,9 +26,8 @@ pip install hindsight-composio
 ## Quick Start
 
 > **💡 Recommended: Hindsight Cloud**
-
+>
 [Sign up free](https://ui.hindsight.vectorize.io/signup) and grab an API key — no self-hosting required.
-
 ```python
 from composio import Composio
 from hindsight_composio import register_hindsight_tools
@@ -160,7 +160,7 @@ tools = register_hindsight_tools(composio)
 - A running Hindsight API server (or Hindsight Cloud)
 
 > **📝 Note**
-
+>
 Composio's custom-tools API is currently experimental. This integration targets the Composio
 0.13.x SDK (`from composio import Composio`) and intentionally excludes the in-progress `1.0.0`
 rewrite, whose API differs.

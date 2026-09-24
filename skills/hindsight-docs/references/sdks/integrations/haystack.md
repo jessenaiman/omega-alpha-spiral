@@ -1,3 +1,4 @@
+
 # Haystack
 
 Persistent long-term memory for [Haystack](https://haystack.deepset.ai/) agents via Hindsight. The `hindsight-haystack` package gives you two complementary patterns:

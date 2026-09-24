@@ -1,3 +1,4 @@
+
 # ChatGPT
 
 Add persistent, searchable memory to [ChatGPT](https://chatgpt.com) using [Hindsight](https://vectorize.io/hindsight). Store insights from your conversations and automatically recall relevant context in future sessions—all secured with OAuth.
@@ -55,9 +56,8 @@ Retain and recall aggressively—assume everything is valuable. The Hindsight to
 From now on, ChatGPT will automatically store insights from your conversations and surface relevant memories without you needing to ask.
 
 > **💡 Tip**
-
+>
 Feel free to experiment with the instructions to ensure proper behavior.
-
 ## Features
 
 - **Automatic retention** — Custom instructions tell ChatGPT to store insights after every response
@@ -77,7 +77,6 @@ Store meaningful, specific knowledge for best results:
 - **Decision history** — why you chose A over B, trade-offs considered
 
 **Example of what to store:**
-
 ```
 "We're building a real-time collaboration tool. Constraints:
 - <500ms latency for cursor updates
@@ -86,7 +85,7 @@ Store meaningful, specific knowledge for best results:
 - Team prefers WebSockets over polling"
 ```
 
-Later, when you ask ChatGPT _"How should we structure our database?"_, Hindsight recalls these constraints. ChatGPT's answer becomes tailored to your actual situation, not generic advice.
+Later, when you ask ChatGPT *"How should we structure our database?"*, Hindsight recalls these constraints. ChatGPT's answer becomes tailored to your actual situation, not generic advice.
 
 ## Best Practices
 
@@ -125,7 +124,6 @@ Both tools access multiple banks via bank_id parameter.
 - **Scoped access** — the connector can only read/write to its assigned bank
 
 When you approve OAuth in the browser, you're authorizing ChatGPT to:
-
 - **Read** your memory banks (to recall relevant facts)
 - **Write** to your memory banks (to store new discoveries)
 - **Search** your memories (to find context)
@@ -135,27 +133,23 @@ You can revoke access anytime by removing the connector in ChatGPT settings.
 ## Troubleshooting
 
 **"Connector failed to load"**
-
 - Verify the URL is correct (no typos in your bank ID)
 - Check that your Hindsight Cloud account is active
 - Try re-creating the connector
 
 **"Authorization failed" or "Access denied"**
-
 - Make sure you're signing in with the same Hindsight Cloud account where you want to store memories
 - If using a team account, verify you have permission to access the bank
 - Try logging out and back in
 
 **"Memory tools appear but don't return results"**
-
 - Give Hindsight a few seconds to index memories (processing is async)
 - Make sure you've stored relevant memories using the `retain` operation
 - Check the memory bank name matches your connector URL
 
 **Memories aren't being stored**
-
 - Use the Hindsight Cloud dashboard to verify memories are being created
-- In ChatGPT, explicitly ask Hindsight to store something: _"Hindsight, remember that we use Vue.js for frontend"_
+- In ChatGPT, explicitly ask Hindsight to store something: *"Hindsight, remember that we use Vue.js for frontend"*
 - Check that your bank isn't full (unlikely, but possible with very large memory sets)
 
 ## Next Steps

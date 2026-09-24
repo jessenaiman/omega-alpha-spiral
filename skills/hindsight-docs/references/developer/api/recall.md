@@ -1,3 +1,4 @@
+
 # Recall Memories
 
 Retrieve memories from a bank using multi-strategy recall.
@@ -7,13 +8,11 @@ When you **recall**, Hindsight runs four retrieval strategies in parallel — se
 {/* Import raw source files */}
 
 > **ℹ️ How Recall Works**
-
+>
 Learn about the four retrieval strategies (semantic, keyword, graph, temporal) and RRF fusion in the [Recall Architecture](../retrieval.md) guide.
-
 > **💡 Prerequisites**
-
+>
 Make sure you've completed the [Quick Start](./quickstart) to install the client and start the server.
-
 ## Basic Recall
 
 ### Python
@@ -45,7 +44,7 @@ response = client.recall(bank_id="my-bank", query="What does Alice do?")
 ### Node.js
 
 ```javascript
-const response = await client.recall("my-bank", "What does Alice do?");
+const response = await client.recall('my-bank', 'What does Alice do?');
 
 // response.results is an array of result objects, each with:
 // - id:            fact ID
@@ -122,7 +121,6 @@ world_facts = client.recall(
     types=["world"]
 )
 ```
-
 ```python
 # Only experience (conversations and events)
 experience = client.recall(
@@ -131,7 +129,6 @@ experience = client.recall(
     types=["experience"]
 )
 ```
-
 ```python
 # Only observations (consolidated knowledge)
 observations = client.recall(
@@ -144,15 +141,13 @@ observations = client.recall(
 ### Node.js
 
 ```javascript
-await client.recall("my-bank", "query", { types: ["world"] });
+await client.recall('my-bank', 'query', { types: ['world'] });
 ```
-
 ```javascript
-await client.recall("my-bank", "query", { types: ["experience"] });
+await client.recall('my-bank', 'query', { types: ['experience'] });
 ```
-
 ```javascript
-await client.recall("my-bank", "query", { types: ["observation"] });
+await client.recall('my-bank', 'query', { types: ['observation'] });
 ```
 
 ### CLI
@@ -171,7 +166,6 @@ client.MemoryAPI.RecallMemories(ctx, "my-bank").
 		Types: []string{"world"},
 	}).Execute()
 ```
-
 ```go
 // Only experience (conversations and events)
 client.MemoryAPI.RecallMemories(ctx, "my-bank").
@@ -180,7 +174,6 @@ client.MemoryAPI.RecallMemories(ctx, "my-bank").
 		Types: []string{"experience"},
 	}).Execute()
 ```
-
 ```go
 // Only observations (consolidated knowledge)
 client.MemoryAPI.RecallMemories(ctx, "my-bank").
@@ -191,9 +184,8 @@ client.MemoryAPI.RecallMemories(ctx, "my-bank").
 ```
 
 > **💡 About Observations**
-
+>
 Observations are deduplicated, evidence-grounded beliefs consolidated from multiple facts — preferences, recurring patterns, and durable learnings the memory bank has built up. Each observation references its supporting memories (with exact quotes), and is refined rather than overwritten when new evidence arrives. They are created and maintained automatically in the background after retain operations.
-
 ### prefer_observations
 
 Because observations are consolidated from raw facts, recalling `observation` alongside `world` and `experience` can return the same information twice — once as the raw fact and once folded into an observation. With `prefer_observations` you get the best of both: you still recall every type, but whenever an observation in the results was built from a raw fact, that raw fact is dropped so the observation supersedes it. The freed slots are backfilled with the next-best results, so you don't lose coverage.
@@ -218,16 +210,10 @@ results = client.recall(bank_id="my-bank", query="How are Alice and Bob connecte
 
 ```javascript
 // Quick lookup
-const quickResults = await client.recall("my-bank", "Alice's email", {
-  budget: "low",
-});
+const quickResults = await client.recall('my-bank', "Alice's email", { budget: 'low' });
 
 // Deep exploration
-const deepResults = await client.recall(
-  "my-bank",
-  "How are Alice and Bob connected?",
-  { budget: "high" }
-);
+const deepResults = await client.recall('my-bank', 'How are Alice and Bob connected?', { budget: 'high' });
 ```
 
 ### CLI
@@ -264,9 +250,8 @@ client.MemoryAPI.RecallMemories(ctx, "my-bank").
 The maximum number of tokens the returned facts can collectively occupy. Defaults to `4096`. Only the `text` field of each fact is counted toward this budget — metadata, tags, entities, and other fields are not included. After reranking, facts are included in relevance order until this budget is exhausted — so you always get the most relevant memories that fit. A fact too long for the remaining budget is skipped rather than ending the selection, so shorter facts ranked behind it still come back. Hindsight is designed for agents, which think in tokens rather than result counts: set `max_tokens` to however much of your context window you want to allocate to memories.
 
 > **📝 Note**
-
+>
 A query that matched something never comes back empty: if not even the top fact fits the budget, it is returned whole and over budget rather than clipped mid-sentence, because an empty result list would read as "this bank has no such memory" and a clipped fact would be a claim the memory never made. The one exception is `max_tokens=0`, which means "no facts" on purpose — it is how you ask for chunks alone.
-
 ### Python
 
 ```python
@@ -281,12 +266,10 @@ results = client.recall(bank_id="my-bank", query="Alice's email", max_tokens=500
 
 ```javascript
 // Fill up to 4K tokens of context with relevant memories
-await client.recall("my-bank", "What do I know about Alice?", {
-  maxTokens: 4096,
-});
+await client.recall('my-bank', 'What do I know about Alice?', { maxTokens: 4096 });
 
 // Smaller budget for quick lookups
-await client.recall("my-bank", "Alice's email", { maxTokens: 500 });
+await client.recall('my-bank', "Alice's email", { maxTokens: 500 });
 ```
 
 ### CLI
@@ -328,16 +311,10 @@ An ISO 8601 datetime representing when the query is being asked, from the user's
 An explicit `{ "start": ..., "end": ... }` pair of ISO 8601 datetimes for the temporal part of the search. Supply it when you already know the period you mean — a date picker in your UI, or an agent that has already worked out what "last quarter" resolves to — and Hindsight uses those bounds directly instead of reading dates out of the query text.
 
 ```json
-{
-  "query": "what did we decide about pricing",
-  "temporal_window": {
-    "start": "2023-04-01T00:00:00Z",
-    "end": "2023-06-30T23:59:59Z"
-  }
-}
+{ "query": "what did we decide about pricing", "temporal_window": { "start": "2023-04-01T00:00:00Z", "end": "2023-06-30T23:59:59Z" } }
 ```
 
-**This ranks, it does not filter.** Hindsight searches several ways at once, and the window steers only the time-aware part of that search: memories dated inside it are surfaced and ranked higher, while everything else keeps being searched normally. Results dated outside the window are still returned, so this is not a way to restrict an answer to a period. Note also that the dates being compared are the _memory's own_ dates — when the memory says something happened — not when it was stored.
+**This ranks, it does not filter.** Hindsight searches several ways at once, and the window steers only the time-aware part of that search: memories dated inside it are surfaced and ranked higher, while everything else keeps being searched normally. Results dated outside the window are still returned, so this is not a way to restrict an answer to a period. Note also that the dates being compared are the *memory's own* dates — when the memory says something happened — not when it was stored.
 
 Two smaller things worth knowing: bounds are inclusive and a naive datetime (one with no timezone) is read as UTC; and the window is ignored on banks that have time-aware search turned off. `temporal_window` replaces date extraction only — [`query_timestamp`](#query_timestamp) still anchors recency scoring, so it remains useful alongside it.
 
@@ -350,17 +327,15 @@ An optional object controlling supplementary data returned alongside the main fa
 When enabled, the response includes the raw source text chunks from which each fact was extracted. Chunks are fetched before the `max_tokens` filter, so setting `max_tokens=0` returns no facts but can still return chunks. The `max_tokens` sub-option (default `8192`) controls the total chunk token budget independently of the main fact budget. This is useful when agents need surrounding context beyond the extracted fact text.
 
 > **📝 Note**
-
+>
 When `include_chunks` is enabled, chunks are fetched based on the top-scored reranked results before token filtering. The last chunk is truncated (not dropped) to fit exactly within the budget, and each chunk carries a `truncated` flag indicating whether it was cut.
-
 #### source_facts
 
 When enabled and `types` includes `observation`, each observation result is accompanied by the original contributing facts it was synthesized from. Source facts are returned in a top-level `source_facts` dict keyed by fact ID, and each observation result carries a `source_fact_ids` list for cross-referencing. Facts are deduplicated across observations. The `max_tokens` sub-option (default `4096`) limits the total token budget for source facts.
 
 > **📝 Note**
-
+>
 The budget is spent in result order, so when it runs out it is the lowest-ranked results that lose their source facts — the top results always keep theirs. `source_fact_ids` always lists every source, so an ID may have no entry in `source_facts`; the response sets `source_facts_truncated: true` when that is the budget's doing rather than a missing fact. Raise `max_tokens` (or set it to `-1`) if you need every source resolved.
-
 ### Python
 
 ```python
@@ -387,25 +362,21 @@ for obs in response.results:
 
 ```javascript
 // Recall observations and include their source facts
-const obsResponse = await client.recall(
-  "my-bank",
-  "What patterns have I learned about Alice?",
-  {
-    types: ["observation"],
+const obsResponse = await client.recall('my-bank', 'What patterns have I learned about Alice?', {
+    types: ['observation'],
     includeSourceFacts: true,
     maxSourceFactsTokens: 4096,
-  }
-);
+});
 
 for (const obs of obsResponse.results) {
-  console.log(`Observation: ${obs.text}`);
-  if (obs.source_fact_ids && obsResponse.source_facts) {
-    console.log("  Derived from:");
-    for (const factId of obs.source_fact_ids) {
-      const fact = obsResponse.source_facts[factId];
-      if (fact) console.log(`    - [${fact.type}] ${fact.text}`);
+    console.log(`Observation: ${obs.text}`);
+    if (obs.source_fact_ids && obsResponse.source_facts) {
+        console.log('  Derived from:');
+        for (const factId of obs.source_fact_ids) {
+            const fact = obsResponse.source_facts[factId];
+            if (fact) console.log(`    - [${fact.type}] ${fact.text}`);
+        }
     }
-  }
 }
 ```
 
@@ -453,41 +424,40 @@ Filters recall to memories in the requested tag scope. `tags` defaults to `null`
 
 The `tags_match` parameter controls the filtering logic:
 
-| Mode            | Untagged memories | Match condition                                   |
-| --------------- | ----------------- | ------------------------------------------------- |
-| `any` (default) | Included          | Memory has **at least one** of the specified tags |
-| `any_strict`    | Excluded          | Memory has **at least one** of the specified tags |
-| `all`           | Included          | Memory has **all** of the specified tags          |
-| `all_strict`    | Excluded          | Memory has **all** of the specified tags          |
-| `exact`         | Excluded          | Memory has **exactly** the specified tag set      |
+| Mode | Untagged memories | Match condition |
+|------|-------------------|-----------------|
+| `any` (default) | Included | Memory has **at least one** of the specified tags |
+| `any_strict` | Excluded | Memory has **at least one** of the specified tags |
+| `all` | Included | Memory has **all** of the specified tags |
+| `all_strict` | Excluded | Memory has **all** of the specified tags |
+| `exact` | Excluded | Memory has **exactly** the specified tag set |
 
 The defaults and empty-filter behavior are important:
 
-| `tags`                   | `tags_match`                                | Eligible memories                                                   |
-| ------------------------ | ------------------------------------------- | ------------------------------------------------------------------- |
-| Omitted, `null`, or `[]` | Omitted (`any`)                             | All tagged and untagged memories                                    |
+| `tags` | `tags_match` | Eligible memories |
+|--------|--------------|-------------------|
+| Omitted, `null`, or `[]` | Omitted (`any`) | All tagged and untagged memories |
 | Omitted, `null`, or `[]` | `any`, `all`, `any_strict`, or `all_strict` | All tagged and untagged memories; an empty tag list means no filter |
-| Omitted, `null`, or `[]` | `exact`                                     | Only untagged/global memories                                       |
-| Non-empty                | `any` or `all`                              | Matching tagged memories plus untagged/global memories              |
-| Non-empty                | `any_strict` or `all_strict`                | Matching tagged memories only                                       |
-| Non-empty                | `exact`                                     | Memories whose complete tag set exactly equals `tags`               |
+| Omitted, `null`, or `[]` | `exact` | Only untagged/global memories |
+| Non-empty | `any` or `all` | Matching tagged memories plus untagged/global memories |
+| Non-empty | `any_strict` or `all_strict` | Matching tagged memories only |
+| Non-empty | `exact` | Memories whose complete tag set exactly equals `tags` |
 
 > **📝 MCP empty-scope behavior**
-
+>
 For the MCP `recall` tool, `tags_match` is forwarded only when `tags` is present.
 To select the untagged/global scope through MCP, pass both `tags: []` and
 `tags_match: "exact"` rather than omitting `tags`.
-
 #### Scenario setup
 
 Consider a bank with these four memories:
 
-| Memory                                   | Tags                     |
-| ---------------------------------------- | ------------------------ |
-| "Alice prefers async communication"      | `["user:alice"]`         |
-| "Bob dislikes long meetings"             | `["user:bob"]`           |
-| "Team uses Slack for announcements"      | `["user:alice", "team"]` |
-| "Company policy: no meetings on Fridays" | _(untagged)_             |
+| Memory | Tags |
+|--------|------|
+| "Alice prefers async communication" | `["user:alice"]` |
+| "Bob dislikes long meetings" | `["user:bob"]` |
+| "Team uses Slack for announcements" | `["user:alice", "team"]` |
+| "Company policy: no meetings on Fridays" | *(untagged)* |
 
 #### `any` — OR matching, includes untagged (default)
 
@@ -512,9 +482,9 @@ response = client.recall(
 ### Node.js
 
 ```javascript
-await client.recall("my-bank", "communication preferences", {
-  tags: ["user:alice"],
-  tagsMatch: "any",
+await client.recall('my-bank', 'communication preferences', {
+    tags: ['user:alice'],
+    tagsMatch: 'any'
 });
 ```
 
@@ -563,9 +533,9 @@ response = client.recall(
 ### Node.js
 
 ```javascript
-await client.recall("my-bank", "communication preferences", {
-  tags: ["user:alice"],
-  tagsMatch: "any_strict",
+await client.recall('my-bank', 'communication preferences', {
+    tags: ['user:alice'],
+    tagsMatch: 'any_strict'
 });
 ```
 
@@ -614,9 +584,9 @@ response = client.recall(
 ### Node.js
 
 ```javascript
-await client.recall("my-bank", "communication tools", {
-  tags: ["user:alice", "team"],
-  tagsMatch: "all",
+await client.recall('my-bank', 'communication tools', {
+    tags: ['user:alice', 'team'],
+    tagsMatch: 'all'
 });
 ```
 
@@ -665,9 +635,9 @@ response = client.recall(
 ### Node.js
 
 ```javascript
-await client.recall("my-bank", "communication tools", {
-  tags: ["user:alice", "team"],
-  tagsMatch: "all_strict",
+await client.recall('my-bank', 'communication tools', {
+    tags: ['user:alice', 'team'],
+    tagsMatch: 'all_strict'
 });
 ```
 
@@ -694,9 +664,8 @@ client.MemoryAPI.RecallMemories(ctx, "my-bank").
 Use this for strict scope enforcement where a memory must explicitly belong to **all** specified contexts.
 
 > **💡 Extra tags are fine**
-
+>
 A memory with tags `["user:alice", "team", "project:x"]` will still match a filter of `["user:alice", "team"]` under `all_strict` — extra tags on the memory are not a problem. The filter only requires the memory to contain **at least** the specified tags.
-
 #### `exact` — set equality, excludes untagged
 
 Returns memories whose tag set is exactly equal to the specified tags, regardless of tag order. Unlike `all_strict`, memories with extra tags do not match.
@@ -704,7 +673,7 @@ Returns memories whose tag set is exactly equal to the specified tags, regardles
 Use this when filtering a precise observation scope returned by `GET /v1/default/banks/{bank_id}/observations/scopes`, where `["user:alice"]` should not also match observations scoped to `["user:alice", "project:x"]`.
 
 > **💡 Filter to global (untagged) observations only**
-
+>
 The empty scope is a real scope — it's where `observation_scopes: "shared"` consolidation writes. Set `tags_match: "exact"` with **no tags** (omit `tags`, or pass `[]`) to recall **only** untagged/global memories and exclude every tagged one:
 
 ```json
@@ -712,7 +681,6 @@ The empty scope is a real scope — it's where `observation_scopes: "shared"` co
 ```
 
 With any other `tags_match` mode, absent or empty `tags` means "no tag filter" (all memories are eligible). Only under `exact` do absent/empty tags select "the global scope". This is the way to read back just the global observations after you've started using more specific scopes.
-
 ### tag_groups
 
 `tag_groups` is a list of compound boolean tag filters. The groups in the list are AND-ed together at the top level. Each group is a recursive boolean expression: a **leaf** node `{tags, match}`, or a **compound** node `{and: [...]}`, `{or: [...]}`, or `{not: ...}`.
@@ -770,12 +738,10 @@ Each tag resolves to the bank tags scoring at least 0.45, and the leaf then matc
 {
   "tag_groups": [
     { "tags": ["user:alice"], "match": "all_strict" },
-    {
-      "or": [
+    { "or": [
         { "tags": ["step:5"], "match": "any_strict" },
         { "tags": ["priority:high"], "match": "all_strict" }
-      ]
-    }
+    ]}
   ]
 }
 ```
@@ -799,12 +765,12 @@ When set to `true`, the response includes a detailed debug trace covering the qu
 
 An optional object of per-stage score floors, each compared **inclusively** (`>=`). Any field you leave unset imposes no floor; omitting `min_scores` entirely (the default) applies no score filtering at all. The four fields operate at **two different levels of the pipeline**, and the level decides what a returned result is guaranteed to satisfy:
 
-| field      | level      | effect                                                                                                                                                                      | guaranteed by every result? |
-| ---------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
-| `semantic` | retrieval  | minimum vector similarity, pushed into the **semantic arm's** SQL — prunes weak vector matches **before** fusion (overrides the global similarity minimum for this request) | no                          |
-| `keyword`  | retrieval  | minimum keyword/full-text (BM25) score, pushed into the **keyword arm's** SQL — prunes weak keyword matches before fusion                                                   | no                          |
-| `reranker` | post-query | minimum normalized cross-encoder score, applied to the ranked results                                                                                                       | yes                         |
-| `final`    | post-query | minimum final ranking score, applied to the ranked results                                                                                                                  | yes                         |
+| field | level | effect | guaranteed by every result? |
+|---|---|---|---|
+| `semantic` | retrieval | minimum vector similarity, pushed into the **semantic arm's** SQL — prunes weak vector matches **before** fusion (overrides the global similarity minimum for this request) | no |
+| `keyword` | retrieval | minimum keyword/full-text (BM25) score, pushed into the **keyword arm's** SQL — prunes weak keyword matches before fusion | no |
+| `reranker` | post-query | minimum normalized cross-encoder score, applied to the ranked results | yes |
+| `final` | post-query | minimum final ranking score, applied to the ranked results | yes |
 
 ```json
 { "query": "...", "min_scores": { "reranker": 0.5 } }
@@ -812,7 +778,7 @@ An optional object of per-stage score floors, each compared **inclusively** (`>=
 
 #### Retrieval floors constrain one arm, not the result
 
-Recall runs [four retrieval arms](#results) — semantic, keyword, graph and temporal — and a memory reaches the response if **any** of them surfaced it. `semantic` and `keyword` prune inside the arm they name, so they change _which candidates are considered_, and with them the final ordering. They are **not predicates over each returned result**:
+Recall runs [four retrieval arms](#results) — semantic, keyword, graph and temporal — and a memory reaches the response if **any** of them surfaced it. `semantic` and `keyword` prune inside the arm they name, so they change *which candidates are considered*, and with them the final ordering. They are **not predicates over each returned result**:
 
 - a result surfaced only semantically reports `"keyword": null`, whatever `min_scores.keyword` you set;
 - a result surfaced only by keyword reports `"semantic": null`, whatever `min_scores.semantic` you set;
@@ -822,11 +788,11 @@ Setting `semantic` and `keyword` together therefore does not restrict the respon
 
 #### For abstention, use `reranker` or `final`
 
-The post-query floors are applied to every scored result after fusion and reranking, so a returned result always clears them — and a query where nothing clears them returns no results. That is the floor to reach for when you want recall to abstain on a low-confidence or nonsense query. Note they gate a _combined_ signal: `final` blends RRF rank, cross-encoder relevance, recency/temporal and strategy boosts, and `reranker` depends on the cross-encoder's calibration, so neither is a drop-in equivalent of a retrieval-stage cutoff.
+The post-query floors are applied to every scored result after fusion and reranking, so a returned result always clears them — and a query where nothing clears them returns no results. That is the floor to reach for when you want recall to abstain on a low-confidence or nonsense query. Note they gate a *combined* signal: `final` blends RRF rank, cross-encoder relevance, recency/temporal and strategy boosts, and `reranker` depends on the cross-encoder's calibration, so neither is a drop-in equivalent of a retrieval-stage cutoff.
 
 Because freed slots are **not** backfilled, any floor can return fewer results than the budget allows.
 
-**Use floors with care.** The reranker's scores are reliable for _ordering_ but not as _absolute_ values — a clearly-relevant memory can score `~0.001` on one query and `~1.0` on another, so a fixed cutoff risks silently dropping good results. Calibrate any threshold against the scores you actually observe (recall with no `min_scores` first and inspect the [`scores`](#scores) object). See the note under [`scores`](#scores) on why the scale is relative, not absolute, before relying on a fixed threshold.
+**Use floors with care.** The reranker's scores are reliable for *ordering* but not as *absolute* values — a clearly-relevant memory can score `~0.001` on one query and `~1.0` on another, so a fixed cutoff risks silently dropping good results. Calibrate any threshold against the scores you actually observe (recall with no `min_scores` first and inspect the [`scores`](#scores) object). See the note under [`scores`](#scores) on why the scale is relative, not absolute, before relying on a fixed threshold.
 
 ---
 

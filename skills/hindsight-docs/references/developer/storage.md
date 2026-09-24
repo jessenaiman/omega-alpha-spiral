@@ -6,13 +6,13 @@ Hindsight uses PostgreSQL as its primary storage backend, with Oracle AI Databas
 
 PostgreSQL provides all capabilities required for a semantic memory system in a single database:
 
-| Capability       | Implementation                       |
-| ---------------- | ------------------------------------ |
-| Vector search    | pgvector extension with HNSW indexes |
-| Full-text search | Built-in tsvector with GIN indexes   |
-| Relational data  | Native PostgreSQL                    |
-| JSON documents   | JSONB with indexing                  |
-| Graph queries    | Recursive CTEs                       |
+| Capability | Implementation |
+|------------|----------------|
+| Vector search | pgvector extension with HNSW indexes |
+| Full-text search | Built-in tsvector with GIN indexes |
+| Relational data | Native PostgreSQL |
+| JSON documents | JSONB with indexing |
+| Graph queries | Recursive CTEs |
 
 ### Reduced System Dependencies
 
@@ -33,7 +33,6 @@ We believe PostgreSQL is becoming the standard database API. Its popularity, ext
 Supporting multiple databases would increase flexibility but conflict with our core goals: Hindsight is fully open source and designed to be as simple as possible to run and use. Adding database abstractions introduces complexity in code, testing, documentation, and operations—complexity that we pass on to users.
 
 By building on PostgreSQL, we keep the system simple:
-
 - One set of deployment instructions
 - One set of performance characteristics to understand
 - One codebase optimized for one backend
@@ -52,7 +51,6 @@ For local development, Hindsight uses **[pg0](https://github.com/vectorize-io/pg
 ### What is pg0?
 
 pg0 is a single binary containing:
-
 - PostgreSQL server
 - pgvector extension (pre-installed)
 - Automatic initialization
@@ -60,17 +58,16 @@ pg0 is a single binary containing:
 ### Behavior
 
 When no `HINDSIGHT_API_DATABASE_URL` is configured, Hindsight:
-
 1. Starts an embedded PostgreSQL instance on port 5555
 2. Initializes the schema
 3. Stores data in `~/.hindsight/pg0/`
 
 ### Environments
 
-| Environment | Database       | Configuration                                     |
-| ----------- | -------------- | ------------------------------------------------- |
-| Development | pg0 (embedded) | Automatic                                         |
-| Production  | PostgreSQL 15+ | `HINDSIGHT_API_DATABASE_URL` environment variable |
+| Environment | Database | Configuration |
+|-------------|----------|---------------|
+| Development | pg0 (embedded) | Automatic |
+| Production | PostgreSQL 15+ | `HINDSIGHT_API_DATABASE_URL` environment variable |
 
 ## Requirements
 

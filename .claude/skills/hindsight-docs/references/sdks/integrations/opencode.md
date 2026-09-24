@@ -1,7 +1,8 @@
+
 # OpenCode
 
 > **⚠️ Superseded by the Coding Agents plugin**
-
+>
 **The opencode plugin** is superseded by the [Coding Agents plugin](coding-agents.md) — one
 package covering Claude Code, Codex, opencode, Kilo, Cursor, Copilot, Grok, Antigravity, Devin and Cline and other CLI agents, with a per-repo memory bank they all share instead
 of one bank per agent.
@@ -55,13 +56,10 @@ Or configure inline via plugin options in `opencode.json`:
 {
   "$schema": "https://opencode.ai/config.json",
   "plugin": [
-    [
-      "@vectorize-io/opencode-hindsight",
-      {
-        "hindsightApiUrl": "https://api.hindsight.vectorize.io",
-        "hindsightApiToken": "your-api-key"
-      }
-    ]
+    ["@vectorize-io/opencode-hindsight", {
+      "hindsightApiUrl": "https://api.hindsight.vectorize.io",
+      "hindsightApiToken": "your-api-key"
+    }]
   ]
 }
 ```
@@ -72,10 +70,10 @@ Or configure inline via plugin options in `opencode.json`:
 
 The plugin registers three tools the agent can call explicitly:
 
-| Tool                | Description                                         |
-| ------------------- | --------------------------------------------------- |
-| `hindsight_retain`  | Store information in long-term memory               |
-| `hindsight_recall`  | Search long-term memory for relevant information    |
+| Tool | Description |
+|---|---|
+| `hindsight_retain` | Store information in long-term memory |
+| `hindsight_recall` | Search long-term memory for relevant information |
 | `hindsight_reflect` | Generate a synthesized answer from long-term memory |
 
 ### Auto-Retain
@@ -89,7 +87,6 @@ When a new session starts, the plugin recalls relevant project context and injec
 ### Compaction Hook
 
 When OpenCode compacts the context window, the plugin:
-
 1. Retains the current conversation before compaction
 2. Recalls relevant memories and injects them into the compaction context
 
@@ -102,22 +99,19 @@ This ensures memories survive context window trimming.
 ```json
 {
   "plugin": [
-    [
-      "@vectorize-io/opencode-hindsight",
-      {
-        "hindsightApiUrl": "http://localhost:8888",
-        "hindsightApiToken": "your-api-key",
-        "bankId": "my-project",
-        "autoRecall": true,
-        "autoRetain": true,
-        "recallBudget": "mid",
-        "recallTags": [],
-        "recallTagsMatch": "any",
-        "retainTags": [],
-        "retainEveryNTurns": 3,
-        "debug": false
-      }
-    ]
+    ["@vectorize-io/opencode-hindsight", {
+      "hindsightApiUrl": "http://localhost:8888",
+      "hindsightApiToken": "your-api-key",
+      "bankId": "my-project",
+      "autoRecall": true,
+      "autoRetain": true,
+      "recallBudget": "mid",
+      "recallTags": [],
+      "recallTagsMatch": "any",
+      "retainTags": [],
+      "retainEveryNTurns": 3,
+      "debug": false
+    }]
   ]
 }
 ```
@@ -136,21 +130,21 @@ Create `~/.hindsight/opencode.json` for persistent configuration that applies ac
 
 ### Environment Variables
 
-| Variable                      | Description                                              | Default        |
-| ----------------------------- | -------------------------------------------------------- | -------------- |
-| `HINDSIGHT_API_URL`           | Hindsight API base URL                                   | _(required)_   |
-| `HINDSIGHT_API_TOKEN`         | API key for authentication                               |                |
-| `HINDSIGHT_BANK_ID`           | Static memory bank ID                                    | `opencode`     |
-| `HINDSIGHT_AGENT_NAME`        | Agent name for dynamic bank IDs                          | `opencode`     |
-| `HINDSIGHT_AUTO_RECALL`       | Auto-recall on session start                             | `true`         |
-| `HINDSIGHT_AUTO_RETAIN`       | Auto-retain on session idle                              | `true`         |
-| `HINDSIGHT_RETAIN_MODE`       | `full-session` or `last-turn`                            | `full-session` |
-| `HINDSIGHT_RECALL_BUDGET`     | Recall budget: `low`, `mid`, `high`                      | `mid`          |
-| `HINDSIGHT_RECALL_MAX_TOKENS` | Max tokens for recall results                            | `1024`         |
-| `HINDSIGHT_RECALL_TAGS`       | Comma-separated tags to filter recall results            |                |
-| `HINDSIGHT_RECALL_TAGS_MATCH` | Tag match mode: `any`, `all`, `any_strict`, `all_strict` | `any`          |
-| `HINDSIGHT_DYNAMIC_BANK_ID`   | Enable dynamic bank ID derivation                        | `false`        |
-| `HINDSIGHT_BANK_MISSION`      | Bank mission/context for reflect                         |                |
+| Variable | Description | Default |
+|---|---|---|
+| `HINDSIGHT_API_URL` | Hindsight API base URL | *(required)* |
+| `HINDSIGHT_API_TOKEN` | API key for authentication | |
+| `HINDSIGHT_BANK_ID` | Static memory bank ID | `opencode` |
+| `HINDSIGHT_AGENT_NAME` | Agent name for dynamic bank IDs | `opencode` |
+| `HINDSIGHT_AUTO_RECALL` | Auto-recall on session start | `true` |
+| `HINDSIGHT_AUTO_RETAIN` | Auto-retain on session idle | `true` |
+| `HINDSIGHT_RETAIN_MODE` | `full-session` or `last-turn` | `full-session` |
+| `HINDSIGHT_RECALL_BUDGET` | Recall budget: `low`, `mid`, `high` | `mid` |
+| `HINDSIGHT_RECALL_MAX_TOKENS` | Max tokens for recall results | `1024` |
+| `HINDSIGHT_RECALL_TAGS` | Comma-separated tags to filter recall results | |
+| `HINDSIGHT_RECALL_TAGS_MATCH` | Tag match mode: `any`, `all`, `any_strict`, `all_strict` | `any` |
+| `HINDSIGHT_DYNAMIC_BANK_ID` | Enable dynamic bank ID derivation | `false` |
+| `HINDSIGHT_BANK_MISSION` | Bank mission/context for reflect | |
 
 Configuration priority (later wins): defaults < `~/.hindsight/opencode.json` < plugin options < env vars.
 

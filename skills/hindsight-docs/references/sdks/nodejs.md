@@ -1,3 +1,5 @@
+
+
 # TypeScript / JavaScript Client
 
 Official TypeScript/JavaScript client for the Hindsight API. Supports **Node.js** and **Deno**.
@@ -15,37 +17,36 @@ npm install @vectorize-io/hindsight-client
 No installation needed — import directly via the `npm:` specifier:
 
 ```typescript
-
 ```
 
 ## Quick Start
 
 ```typescript
-import { HindsightClient } from "@vectorize-io/hindsight-client";
+import { HindsightClient } from '@vectorize-io/hindsight-client';
 
-const client = new HindsightClient({ baseUrl: "http://localhost:8888" });
+const client = new HindsightClient({ baseUrl: 'http://localhost:8888' });
 
 // Retain a memory
-await client.retain("nodejs-sdk-bank", "Alice works at Google");
+await client.retain('nodejs-sdk-bank', 'Alice works at Google');
 
 // Recall memories
-const response = await client.recall("nodejs-sdk-bank", "What does Alice do?");
+const response = await client.recall('nodejs-sdk-bank', 'What does Alice do?');
 for (const r of response.results) {
-  console.log(r.text);
+    console.log(r.text);
 }
 
 // Reflect - generate response with disposition
-const answer = await client.reflect("nodejs-sdk-bank", "Tell me about Alice");
+const answer = await client.reflect('nodejs-sdk-bank', 'Tell me about Alice');
 console.log(answer.text);
 ```
 
 ## Client Initialization
 
 ```typescript
-import { HindsightClient } from "@vectorize-io/hindsight-client";
+import { HindsightClient } from '@vectorize-io/hindsight-client';
 
 const client = new HindsightClient({
-  baseUrl: "http://localhost:8888",
+    baseUrl: 'http://localhost:8888',
 });
 ```
 
@@ -59,7 +60,7 @@ const version = await client.getVersion();
 console.log(version.api_version);
 
 if (!version.features.mcp) {
-  throw new Error("This server does not expose the MCP endpoint");
+    throw new Error('This server does not expose the MCP endpoint');
 }
 ```
 
@@ -67,63 +68,55 @@ if (!version.features.mcp) {
 
 ```typescript
 // Simple
-await client.retain("nodejs-sdk-bank", "Alice works at Google");
+await client.retain('nodejs-sdk-bank', 'Alice works at Google');
 
 // With options
-await client.retain("nodejs-sdk-bank", "Alice got promoted", {
-  timestamp: new Date("2024-01-15"),
-  context: "career update",
-  metadata: { source: "slack" },
-  async: false, // Set true for background processing
+await client.retain('nodejs-sdk-bank', 'Alice got promoted', {
+    timestamp: new Date('2024-01-15'),
+    context: 'career update',
+    metadata: { source: 'slack' },
+    async: false,  // Set true for background processing
 });
 ```
 
 ### Retain Batch
 
 ```typescript
-await client.retainBatch(
-  "nodejs-sdk-bank",
-  [
-    { content: "Alice works at Google", context: "career" },
-    { content: "Bob is a data scientist", context: "career" },
-  ],
-  {
+await client.retainBatch('nodejs-sdk-bank', [
+    { content: 'Alice works at Google', context: 'career' },
+    { content: 'Bob is a data scientist', context: 'career' },
+], {
     async: false,
-  }
-);
+});
 ```
 
 ### Recall (Search)
 
 ```typescript
 // Simple - returns RecallResponse
-const response = await client.recall("nodejs-sdk-bank", "What does Alice do?");
+const response = await client.recall('nodejs-sdk-bank', 'What does Alice do?');
 
 for (const r of response.results) {
-  console.log(`${r.text} (type: ${r.type})`);
+    console.log(`${r.text} (type: ${r.type})`);
 }
 
 // With options
-const filtered = await client.recall("nodejs-sdk-bank", "What does Alice do?", {
-  types: ["world", "observation"], // Filter by fact type
-  maxTokens: 4096,
-  budget: "high", // 'low', 'mid', or 'high'
+const filtered = await client.recall('nodejs-sdk-bank', 'What does Alice do?', {
+    types: ['world', 'observation'],  // Filter by fact type
+    maxTokens: 4096,
+    budget: 'high',  // 'low', 'mid', or 'high'
 });
 ```
 
 ### Reflect (Generate Response)
 
 ```typescript
-const answer = await client.reflect(
-  "nodejs-sdk-bank",
-  "What should I know about Alice?",
-  {
-    budget: "low", // 'low', 'mid', or 'high'
-    context: "preparing for a meeting",
-  }
-);
+const answer = await client.reflect('nodejs-sdk-bank', 'What should I know about Alice?', {
+    budget: 'low',  // 'low', 'mid', or 'high'
+    context: 'preparing for a meeting',
+});
 
-console.log(answer.text); // Generated response
+console.log(answer.text);       // Generated response
 ```
 
 ## Bank Management
@@ -131,26 +124,25 @@ console.log(answer.text); // Generated response
 ### Create Bank
 
 ```typescript
-await client.createBank("nodejs-sdk-bank", {
-  name: "Assistant",
-  mission:
-    "You're a helpful AI assistant - keep track of user preferences and conversation history.",
-  disposition: {
-    skepticism: 3, // 1-5: trusting to skeptical
-    literalism: 3, // 1-5: flexible to literal
-    empathy: 3, // 1-5: detached to empathetic
-  },
+await client.createBank('nodejs-sdk-bank', {
+    name: 'Assistant',
+    mission: "You're a helpful AI assistant - keep track of user preferences and conversation history.",
+    disposition: {
+        skepticism: 3,   // 1-5: trusting to skeptical
+        literalism: 3,   // 1-5: flexible to literal
+        empathy: 3,      // 1-5: detached to empathetic
+    },
 });
 ```
 
 ### List Memories
 
 ```typescript
-const response = await client.listMemories("nodejs-sdk-bank", {
-  type: "world", // Optional filter
-  q: "Alice", // Optional text search
-  limit: 100,
-  offset: 0,
+const response = await client.listMemories('nodejs-sdk-bank', {
+    type: 'world',  // Optional filter
+    q: 'Alice',     // Optional text search
+    limit: 100,
+    offset: 0,
 });
 console.log(response);
 ```
@@ -160,18 +152,18 @@ console.log(response);
 ### Get Document
 
 ```typescript
-const doc = await client.getDocument("nodejs-sdk-bank", "conversation_001");
+const doc = await client.getDocument('nodejs-sdk-bank', 'conversation_001');
 if (doc) {
-  console.log(doc); // null when document not found
+    console.log(doc);  // null when document not found
 }
 ```
 
 ### List Documents
 
 ```typescript
-const response = await client.listDocuments("nodejs-sdk-bank", {
-  limit: 50,
-  offset: 0,
+const response = await client.listDocuments('nodejs-sdk-bank', {
+    limit: 50,
+    offset: 0,
 });
 console.log(response);
 ```
@@ -179,13 +171,13 @@ console.log(response);
 ### Update Document
 
 ```typescript
-await client.updateDocument("nodejs-sdk-bank", "conversation_001", {
-  tags: ["important", "meeting-notes"],
+await client.updateDocument('nodejs-sdk-bank', 'conversation_001', {
+    tags: ['important', 'meeting-notes'],
 });
 ```
 
 ### Delete Document
 
 ```typescript
-await client.deleteDocument("nodejs-sdk-bank", "conversation_001");
+await client.deleteDocument('nodejs-sdk-bank', 'conversation_001');
 ```

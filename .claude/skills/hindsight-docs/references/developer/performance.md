@@ -25,11 +25,11 @@ This means **Recall (search) operations are blazingly fast** because all the hea
 
 ### Performance Comparison
 
-| Operation   | Typical Latency        | Primary Bottleneck      | Optimization Strategy                    |
-| ----------- | ---------------------- | ----------------------- | ---------------------------------------- |
-| **Recall**  | 100-600ms              | Re-ranker (on CPU)      | Use GPU for re-ranking, or reduce budget |
-| **Reflect** | 800-3000ms             | LLM generation          | Use faster LLM                           |
-| **Retain**  | 500ms-2000ms per batch | **LLM fact extraction** | Use high-throughput LLM provider         |
+| Operation | Typical Latency | Primary Bottleneck | Optimization Strategy            |
+|-----------|----------------|-------------------|----------------------------------|
+| **Recall** | 100-600ms | Re-ranker (on CPU) | Use GPU for re-ranking, or reduce budget |
+| **Reflect** | 800-3000ms | LLM generation | Use faster LLM                   |
+| **Retain** | 500ms-2000ms per batch | **LLM fact extraction** | Use high-throughput LLM provider |
 
 Hindsight is designed to ensure your **application's read path (recall/reflect) is always fast**, even if it means spending more time upfront during writes. This is the right trade-off for memory systems where:
 
@@ -64,7 +64,6 @@ To maximize retention throughput:
 **When using async retain, Hindsight automatically handles batch sizing for you.** You don't need to manually tune batch sizes or worry about optimal chunking.
 
 How it works:
-
 - **Send large batches**: Submit hundreds or thousands of items in a single async retain request
 - **Automatic splitting**: Hindsight automatically splits large batches (>10,000 tokens) into optimized sub-batches
 - **Parallel processing**: Sub-batches are processed concurrently in the background
@@ -72,7 +71,6 @@ How it works:
 - **Token-based**: Batching counts real tokens, not characters
 
 Benefits:
-
 - Send entire documents or datasets in one API call
 - Let Hindsight optimize the processing strategy
 - Track overall progress via the parent operation status
@@ -81,7 +79,6 @@ Benefits:
 ### Throughput
 
 Factors affecting throughput:
-
 - Document size and complexity
 - LLM provider rate limits (for fact extraction)
 - Database write performance
@@ -103,7 +100,7 @@ export HINDSIGHT_API_LLM_MAX_CONCURRENT=2
 
 A value of `2` lets retain and consolidation run concurrently without blocking each other. If the endpoint is **shared** with other clients (other applications, agents, or workflows hitting the same llama-server / vLLM / LM Studio instance), reserve slots for them by lowering further — leave at least one slot free per shared client.
 
-You can also split the budget per operation so background work never crowds out live reads. The per-operation caps compose _on top of_ the global cap:
+You can also split the budget per operation so background work never crowds out live reads. The per-operation caps compose *on top of* the global cap:
 
 ```bash
 # global=4, with retain/consolidation capped low so reflect always has headroom
@@ -200,10 +197,10 @@ You can also reduce recall work directly: use a lower `budget` (`low`/`mid`) for
 
 The `budget` parameter controls the search depth and quality. Choose based on query complexity — comprehensive questions that need thorough analysis benefit from higher budgets:
 
-| Budget | Use Case                                   |
-| ------ | ------------------------------------------ |
-| `low`  | Quick lookups, real-time chat              |
-| `mid`  | Standard queries, balanced performance     |
+| Budget | Use Case |
+|--------|----------|
+| `low` | Quick lookups, real-time chat |
+| `mid` | Standard queries, balanced performance |
 | `high` | Comprehensive questions, thorough analysis |
 
 ### Optimization
@@ -224,11 +221,11 @@ Hindsight uses PostgreSQL with pgvector for efficient vector search:
 
 ### Performance Characteristics
 
-| Component      | Latency        | Description                             |
-| -------------- | -------------- | --------------------------------------- |
-| Memory search  | 100-600ms      | Based on budget (low/mid/high)          |
+| Component | Latency        | Description |
+|-----------|----------------|-------------|
+| Memory search | 100-600ms      | Based on budget (low/mid/high) |
 | LLM generation | 500-2000ms     | Depends on provider and response length |
-| **Total**      | **600-2600ms** | Typical end-to-end latency              |
+| **Total** | **600-2600ms** | Typical end-to-end latency |
 
 ### Optimization Strategies
 
@@ -238,26 +235,22 @@ Hindsight uses PostgreSQL with pgvector for efficient vector search:
 ## Best Practices
 
 ### Operations
-
 - **Use appropriate budgets**: Don't over-provision for simple queries; use higher budgets for comprehensive reasoning
 - **Batch retain operations**: Group related content together for better efficiency
 - **Cache frequent queries**: Cache at the application level for repeated queries
 - **Profile with trace**: Use the `trace` parameter to identify slow operations
 
 ### Scaling
-
 - **Horizontal scaling**: Deploy multiple API instances behind a load balancer with shared PostgreSQL
 - **Concurrency**: 100+ simultaneous requests supported; memory search scales with CPU cores
 - **LLM rate limits**: Distribute load across multiple API keys/providers (typically 60-500 RPM per key)
 
 ### Cost Optimization
-
 - **Use efficient models**: `gpt-oss-20b` via Groq for retain — Hindsight doesn't need frontier models
 - **Enable provider Batch API**: Set `HINDSIGHT_API_RETAIN_BATCH_ENABLED=true` with async retain to cut LLM fact-extraction costs by 50% (supported on OpenAI and Groq; results delivered within 24 hours)
 - **Control token budgets**: Limit `max_tokens` for recall, use lower budgets when possible
 - **Optimize chunks**: Larger chunks (1000-2000 tokens) are more efficient than many small ones
 
 ### Monitoring
-
 - **Prometheus metrics**: Available at `/metrics` — track latency percentiles, throughput, and error rates
 - **Key metrics**: `hindsight_recall_duration_seconds`, `hindsight_reflect_duration_seconds`, `hindsight_retain_items_total`

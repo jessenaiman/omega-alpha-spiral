@@ -1,3 +1,4 @@
+
 # Perplexity
 
 Add persistent, searchable memory to [Perplexity](https://www.perplexity.ai) using [Hindsight](https://vectorize.io/hindsight). Store research findings and automatically recall relevant context in future searches—all secured with OAuth.
@@ -57,9 +58,8 @@ Retain and recall everything—Hindsight handles filtering and deduplication.
 Perplexity will now automatically retain research findings and recall them for future searches, building a persistent knowledge base from your research.
 
 > **💡 Tip**
-
+>
 Feel free to experiment with the instructions to ensure proper behavior.
-
 ## Features
 
 - **Auto-retain research** — Custom instructions tell Perplexity to store findings after every search
@@ -81,7 +81,6 @@ Store meaningful research data for best results:
 - **Decision context** — Why you chose one approach over another, constraints considered
 
 **Example of what to store:**
-
 ```
 "Q3 2026 AI benchmarks:
 - Claude Opus 4.7: Best reasoning, ~$15/1M input tokens
@@ -91,7 +90,7 @@ Store meaningful research data for best results:
 - Use cases I care about: [your priorities]"
 ```
 
-Later, when you research _"What's the best LLM for my use case?"_, Hindsight recalls your preferences and benchmarks. Perplexity's answer becomes tailored to your situation, not generic.
+Later, when you research *"What's the best LLM for my use case?"*, Hindsight recalls your preferences and benchmarks. Perplexity's answer becomes tailored to your situation, not generic.
 
 ## Best Practices
 
@@ -107,16 +106,15 @@ Later, when you research _"What's the best LLM for my use case?"_, Hindsight rec
 
 ## Comparison with ChatGPT
 
-| Aspect                    | ChatGPT                                   | Perplexity                               |
-| ------------------------- | ----------------------------------------- | ---------------------------------------- |
-| **Best for**              | Deep conversations, reasoning with memory | Research with memory, fact-checking      |
-| **Hindsight integration** | Retain reasoning, insights, preferences   | Retain research findings, sources        |
-| **Session continuity**    | Good for multi-turn problem-solving       | Good for iterative research              |
-| **Web integration**       | Limited (beta)                            | Integrated; combines memory + web search |
-| **Memory context limit**  | Depends on conversation length            | Depends on search result count           |
+| Aspect | ChatGPT | Perplexity |
+|--------|---------|-----------|
+| **Best for** | Deep conversations, reasoning with memory | Research with memory, fact-checking |
+| **Hindsight integration** | Retain reasoning, insights, preferences | Retain research findings, sources |
+| **Session continuity** | Good for multi-turn problem-solving | Good for iterative research |
+| **Web integration** | Limited (beta) | Integrated; combines memory + web search |
+| **Memory context limit** | Depends on conversation length | Depends on search result count |
 
 **Recommended use:**
-
 - **ChatGPT + Hindsight** — Build projects, learn complex topics, creative work
 - **Perplexity + Hindsight** — Research, fact-checking, competitive analysis, news tracking
 
@@ -149,7 +147,6 @@ Both tools access multiple banks via bank_id parameter.
 - **Scoped access** — the connector can only read/write to its assigned bank
 
 When you approve OAuth in the browser, you're authorizing Perplexity to:
-
 - **Read** your memory banks (to recall relevant research)
 - **Write** to your memory banks (to store new findings)
 - **Search** your memories (to find context)
@@ -159,28 +156,24 @@ You can revoke access anytime by removing the connector in Perplexity settings.
 ## Troubleshooting
 
 **"Connector failed to load"**
-
 - Verify you have Perplexity Pro (required for Remote MCP connectors)
 - Verify the URL is correct (no typos in your bank ID)
 - Check that your Hindsight Cloud account is active
 - Try re-creating the connector
 
 **"Authorization failed" or "Access denied"**
-
 - Make sure you're signing in with the same Hindsight Cloud account where you want to store memories
 - If using a team account, verify you have permission to access the bank
 - Try logging out and back in
 
 **"Memory tools appear but don't return results"**
-
 - Give Hindsight a few seconds to index memories (processing is async)
 - Make sure you've stored relevant memories using the `retain` operation
 - Check the memory bank name matches your connector URL
 
 **Memories aren't being stored**
-
 - Use the Hindsight Cloud dashboard to verify memories are being created
-- In Perplexity, explicitly ask Hindsight to store something: _"Hindsight, remember that Q3 2026 benchmarks show Claude Opus is best for reasoning"_
+- In Perplexity, explicitly ask Hindsight to store something: *"Hindsight, remember that Q3 2026 benchmarks show Claude Opus is best for reasoning"*
 - Check that your bank isn't full (unlikely, but possible with very large memory sets)
 
 ## Next Steps

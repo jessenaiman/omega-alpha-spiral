@@ -1,9 +1,10 @@
+
+
 # Best Practices
 
 Practical guidance for agents and developers integrating Hindsight memory into production systems.
 
 **Contents**
-
 - [Core Concepts](#core-concepts) — Memory banks, taxonomy, memory types
 - [Bank Configuration](#bank-configuration) — Missions, dispositions, entity labels
 - [Retaining Data](#retaining-data) — Content format, context, document_id, [tags](#tags-naming-conventions), observation scopes
@@ -30,13 +31,13 @@ Banks are auto-created on first use. Configure them before ingesting data to ste
 
 ### Taxonomy
 
-| Operation         | What it does                                                                                                                                                                                                                                          | When to call it                                                           |
-| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| **Retain**        | Ingests raw content (conversations, documents, notes). The LLM extracts facts, entities, and relationships — raw content is never stored verbatim.                                                                                                    | After each conversation turn or session ends                              |
-| **Recall**        | Retrieves relevant memories using 4 parallel strategies: semantic search, BM25, graph traversal, and temporal ranking. Returns a ranked list of facts.                                                                                                | Before generating a response that benefits from past context              |
-| **Reflect**       | Autonomous reasoning loop: searches memory, synthesizes an answer, and returns it directly. Uses mental models and observations hierarchically.                                                                                                       | When you want Hindsight to answer a question, not just retrieve facts     |
-| **Observations**  | Deduplicated, evidence-grounded knowledge consolidated from multiple facts. Each observation tracks its supporting memories with exact quotes and proof counts. Refined — not overwritten — when new evidence supports, contradicts, or extends them. | Triggered automatically after retain — not part of the retain call itself |
-| **Mental Models** | Pre-computed reflect responses stored for common queries. Return instantly and consistently.                                                                                                                                                          | Create for repeated high-traffic queries or slowly-changing user profiles |
+| Operation | What it does | When to call it |
+|-----------|-------------|-----------------|
+| **Retain** | Ingests raw content (conversations, documents, notes). The LLM extracts facts, entities, and relationships — raw content is never stored verbatim. | After each conversation turn or session ends |
+| **Recall** | Retrieves relevant memories using 4 parallel strategies: semantic search, BM25, graph traversal, and temporal ranking. Returns a ranked list of facts. | Before generating a response that benefits from past context |
+| **Reflect** | Autonomous reasoning loop: searches memory, synthesizes an answer, and returns it directly. Uses mental models and observations hierarchically. | When you want Hindsight to answer a question, not just retrieve facts |
+| **Observations** | Deduplicated, evidence-grounded knowledge consolidated from multiple facts. Each observation tracks its supporting memories with exact quotes and proof counts. Refined — not overwritten — when new evidence supports, contradicts, or extends them. | Triggered automatically after retain — not part of the retain call itself |
+| **Mental Models** | Pre-computed reflect responses stored for common queries. Return instantly and consistently. | Create for repeated high-traffic queries or slowly-changing user profiles |
 
 ---
 
@@ -44,10 +45,10 @@ Banks are auto-created on first use. Configure them before ingesting data to ste
 
 Facts extracted during retain are classified into three types:
 
-| Type          | Description                                                                                                         | Example                                                                 |
-| ------------- | ------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| `world`       | General knowledge, external facts                                                                                   | "The Eiffel Tower is in Paris"                                          |
-| `experience`  | Personal events, user-specific facts                                                                                | "User moved to Berlin in 2024"                                          |
+| Type | Description | Example |
+|------|-------------|---------|
+| `world` | General knowledge, external facts | "The Eiffel Tower is in Paris" |
+| `experience` | Personal events, user-specific facts | "User moved to Berlin in 2024" |
 | `observation` | Consolidated belief grounded in multiple supporting facts; deduplicated and refined over time with tracked evidence | "User consistently prefers async communication (5 supporting memories)" |
 
 Use `types` filtering in recall to target specific memory types.
@@ -66,17 +67,16 @@ All three missions accept plain language. Be specific about your domain — vagu
 
 Injected into the fact extraction prompt. Tells the LLM what to extract and what to ignore.
 
-| Quality  | Example                                                                                                                                                                   |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Quality | Example |
+|---------|---------|
 | **Good** | `Always extract technical decisions, API design choices, architectural trade-offs, blockers, and error messages. Ignore greetings, small talk, and scheduling logistics.` |
-| **Good** | `Extract personal preferences, ongoing commitments, deadlines, health info, and relationship details. Ignore filler phrases and pleasantries.`                            |
-| **Bad**  | `Extract all information` — too vague, extracts noise                                                                                                                     |
-| **Bad**  | `Be helpful` — not an extraction directive                                                                                                                                |
+| **Good** | `Extract personal preferences, ongoing commitments, deadlines, health info, and relationship details. Ignore filler phrases and pleasantries.` |
+| **Bad** | `Extract all information` — too vague, extracts noise |
+| **Bad** | `Be helpful` — not an extraction directive |
 
 **Tips:**
-
-- List the fact _types_ you want (preferences, decisions, errors, commitments)
-- List what to _ignore_ — this is as important as what to include
+- List the fact *types* you want (preferences, decisions, errors, commitments)
+- List what to *ignore* — this is as important as what to include
 - Match the mission to your actual data type (conversations vs documents vs tickets)
 
 #### `observations_mission`
@@ -90,7 +90,6 @@ user behavior contradicts previous observations.
 ```
 
 **Tips:**
-
 - Emphasize "durable patterns" to avoid ephemeral observation noise
 - Mention contradiction detection explicitly if you need historical tracking
 - Match scope to how often you expect patterns to change
@@ -99,12 +98,12 @@ user behavior contradicts previous observations.
 
 Sets the agent persona and reasoning frame for `reflect` operations.
 
-| Use Case           | Mission                                                                                                                                                                                   |
-| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Coding assistant   | `You are a senior developer helping optimize the user's workflow. Always factor in past technical decisions, current project context, and stated preferences. Be direct and opinionated.` |
-| Customer support   | `You are a support agent with full context of this customer's history. Reference past tickets and resolutions where relevant. Be concise and solution-focused.`                           |
-| Personal assistant | `You are a personal assistant who remembers everything important to the user. Personalize every response using what you know about their preferences, schedule, and ongoing projects.`    |
-| Medical assistant  | `You are a health assistant. Reference the user's history accurately. Always recommend consulting a professional for medical decisions. Do not speculate.`                                |
+| Use Case | Mission |
+|----------|---------|
+| Coding assistant | `You are a senior developer helping optimize the user's workflow. Always factor in past technical decisions, current project context, and stated preferences. Be direct and opinionated.` |
+| Customer support | `You are a support agent with full context of this customer's history. Reference past tickets and resolutions where relevant. Be concise and solution-focused.` |
+| Personal assistant | `You are a personal assistant who remembers everything important to the user. Personalize every response using what you know about their preferences, schedule, and ongoing projects.` |
+| Medical assistant | `You are a health assistant. Reference the user's history accurately. Always recommend consulting a professional for medical decisions. Do not speculate.` |
 
 ---
 
@@ -112,21 +111,21 @@ Sets the agent persona and reasoning frame for `reflect` operations.
 
 Dispositions affect `reflect` only (not `recall`). Scale 1–5.
 
-| Trait        | 1                                     | 5                                              |
-| ------------ | ------------------------------------- | ---------------------------------------------- |
-| `skepticism` | Trusts all memories at face value     | Questions contradictions, flags uncertain info |
-| `literalism` | Liberal interpretation, infers intent | Strict literal reading, no inference           |
-| `empathy`    | Clinical, neutral tone                | Warm, personal, emotionally aware              |
+| Trait | 1 | 5 |
+|-------|---|---|
+| `skepticism` | Trusts all memories at face value | Questions contradictions, flags uncertain info |
+| `literalism` | Liberal interpretation, infers intent | Strict literal reading, no inference |
+| `empathy` | Clinical, neutral tone | Warm, personal, emotionally aware |
 
 **Common profiles:**
 
-| Agent type         | Skepticism | Literalism | Empathy |
-| ------------------ | ---------- | ---------- | ------- |
-| Code review        | 4          | 5          | 1       |
-| Customer support   | 2          | 3          | 4       |
-| Personal assistant | 2          | 2          | 4       |
-| Medical assistant  | 5          | 4          | 3       |
-| Research assistant | 4          | 4          | 2       |
+| Agent type | Skepticism | Literalism | Empathy |
+|------------|------------|------------|---------|
+| Code review | 4 | 5 | 1 |
+| Customer support | 2 | 3 | 4 |
+| Personal assistant | 2 | 2 | 4 |
+| Medical assistant | 5 | 4 | 3 |
+| Research assistant | 4 | 4 | 2 |
 
 ---
 
@@ -141,9 +140,9 @@ Define a controlled vocabulary for classification. The LLM will extract and norm
       "key": "tech_stack",
       "type": "multi-values",
       "values": [
-        { "value": "python", "description": "Python programming language" },
-        { "value": "typescript", "description": "TypeScript / Node.js" },
-        { "value": "react", "description": "React frontend framework" }
+        {"value": "python", "description": "Python programming language"},
+        {"value": "typescript", "description": "TypeScript / Node.js"},
+        {"value": "react", "description": "React frontend framework"}
       ]
     },
     {
@@ -151,8 +150,8 @@ Define a controlled vocabulary for classification. The LLM will extract and norm
       "type": "value",
       "tag": true,
       "values": [
-        { "value": "high", "description": "Urgent or blocking" },
-        { "value": "low", "description": "Nice to have" }
+        {"value": "high", "description": "Urgent or blocking"},
+        {"value": "low", "description": "Nice to have"}
       ]
     }
   ]
@@ -173,30 +172,20 @@ Use entity labels when you need consistent classification — domain-specific te
 
 Pass the richest representation available. Never pre-summarize.
 
-| Format                     | Recommendation                                                                  |
-| -------------------------- | ------------------------------------------------------------------------------- |
-| JSON conversation array    | **Preferred** for conversations — preserves structure, roles, and relationships |
-| Prefixed plain text        | Acceptable — `[ISO-timestamp] role: text` per line                              |
-| Markdown / HTML / raw text | Works for documents and notes                                                   |
-| Pre-summarized text        | **Avoid** — loses entity relationships, temporal markers, structural context    |
+| Format | Recommendation |
+|--------|---------------|
+| JSON conversation array | **Preferred** for conversations — preserves structure, roles, and relationships |
+| Prefixed plain text | Acceptable — `[ISO-timestamp] role: text` per line |
+| Markdown / HTML / raw text | Works for documents and notes |
+| Pre-summarized text | **Avoid** — loses entity relationships, temporal markers, structural context |
 
 **Conversation JSON (preferred):**
 
 ```json
 [
-  {
-    "role": "user",
-    "content": "I'm using React for the frontend.",
-    "timestamp": "2025-06-01T10:30:00Z"
-  },
-  {
-    "role": "assistant",
-    "content": "Got it. What state management are you using?"
-  },
-  {
-    "role": "user",
-    "content": "Zustand. We moved away from Redux last quarter."
-  }
+  {"role": "user",      "content": "I'm using React for the frontend.", "timestamp": "2025-06-01T10:30:00Z"},
+  {"role": "assistant", "content": "Got it. What state management are you using?"},
+  {"role": "user",      "content": "Zustand. We moved away from Redux last quarter."}
 ]
 ```
 
@@ -206,7 +195,7 @@ Pass the richest representation available. Never pre-summarize.
 
 ### The `context` Field
 
-High-impact on extraction quality. Always set it. Describes the _nature and source_ of the content.
+High-impact on extraction quality. Always set it. Describes the *nature and source* of the content.
 
 ```python
 # Good — specific, descriptive
@@ -228,7 +217,6 @@ context="conversation"
 Use for upsert behavior. Same `document_id` = delete previous version and reprocess.
 
 **Rules:**
-
 - Use stable, meaningful IDs (session ID, ticket ID, document UUID)
 - Always use the same ID for a growing conversation — retain the full conversation with each new message
 - Do NOT use random UUIDs per retain call — this creates duplicates
@@ -254,7 +242,7 @@ client.retain(bank_id="user-alice", items=[{
 Set whenever you have temporal context. Enables temporal retrieval strategies.
 
 - ISO 8601 format: `"2025-06-01T10:32:00Z"`
-- For conversations: set to when the conversation _started_
+- For conversations: set to when the conversation *started*
 - Omitting it disables temporal ranking entirely
 
 ---
@@ -265,13 +253,13 @@ Tags scope visibility. A memory tagged `user:alice` is only returned for recall/
 
 **Standard naming conventions:**
 
-| Pattern        | Example                            | Use for                 |
-| -------------- | ---------------------------------- | ----------------------- |
-| `user:<id>`    | `user:alice`, `user:u_123`         | Per-user isolation      |
-| `session:<id>` | `session:s_abc`                    | Session-scoped memories |
-| `team:<name>`  | `team:engineering`                 | Shared team knowledge   |
-| `topic:<name>` | `topic:billing`, `topic:technical` | Domain filtering        |
-| `scope:<name>` | `scope:private`, `scope:public`    | Visibility tiers        |
+| Pattern | Example | Use for |
+|---------|---------|---------|
+| `user:<id>` | `user:alice`, `user:u_123` | Per-user isolation |
+| `session:<id>` | `session:s_abc` | Session-scoped memories |
+| `team:<name>` | `team:engineering` | Shared team knowledge |
+| `topic:<name>` | `topic:billing`, `topic:technical` | Domain filtering |
+| `scope:<name>` | `scope:private`, `scope:public` | Visibility tiers |
 
 **Multi-tenant minimum:** Every retain for user data must include at least `user:<id>`. Omitting it makes the memory globally visible.
 
@@ -309,12 +297,12 @@ Metadata is returned with every recalled memory — use it to link memories back
 
 Controls which tag combinations get their own observation pass.
 
-| Value                | Behavior                        | When to use                                        |
-| -------------------- | ------------------------------- | -------------------------------------------------- |
-| `"combined"`         | One pass with all tags together | Default — single-user banks, general use           |
-| `"per_tag"`          | One pass per tag independently  | Users should have isolated behavioral observations |
-| `"all_combinations"` | All possible subsets of tags    | Complex multi-dimensional analysis (expensive)     |
-| Custom list          | Explicit scope list             | Precise multi-tenant control                       |
+| Value | Behavior | When to use |
+|-------|----------|------------|
+| `"combined"` | One pass with all tags together | Default — single-user banks, general use |
+| `"per_tag"` | One pass per tag independently | Users should have isolated behavioral observations |
+| `"all_combinations"` | All possible subsets of tags | Complex multi-dimensional analysis (expensive) |
+| Custom list | Explicit scope list | Precise multi-tenant control |
 
 **Custom scope example (recommended for multi-tenant):**
 
@@ -331,10 +319,10 @@ observation_scopes=[
 
 ### Sync vs Async
 
-| Mode                     | When to use                                                                   |
-| ------------------------ | ----------------------------------------------------------------------------- |
-| `async_=False` (default) | When you need confirmation before proceeding                                  |
-| `async_=True`            | End-of-turn or end-of-session retain; user-facing flows where latency matters |
+| Mode | When to use |
+|------|-------------|
+| `async_=False` (default) | When you need confirmation before proceeding |
+| `async_=True` | End-of-turn or end-of-session retain; user-facing flows where latency matters |
 
 Do not retain and recall in the same turn — retain is a write operation and the extracted memories will not be available immediately.
 
@@ -344,11 +332,11 @@ Do not retain and recall in the same turn — retain is a write operation and th
 
 ### Budget Selection
 
-| Budget | Latency   | Use when                                              |
-| ------ | --------- | ----------------------------------------------------- |
-| `low`  | 50–100ms  | Simple fact lookups, single-hop questions             |
-| `mid`  | 100–300ms | Multi-hop reasoning, relationship queries _(default)_ |
-| `high` | 300–500ms | Deep exploration, complex cross-domain patterns       |
+| Budget | Latency | Use when |
+|--------|---------|----------|
+| `low` | 50–100ms | Simple fact lookups, single-hop questions |
+| `mid` | 100–300ms | Multi-hop reasoning, relationship queries *(default)* |
+| `high` | 300–500ms | Deep exploration, complex cross-domain patterns |
 
 Default to `mid`. Use `low` for high-frequency agent loops. Reserve `high` for explicit "deep recall" user-triggered flows.
 
@@ -356,15 +344,14 @@ Default to `mid`. Use `low` for high-frequency agent loops. Reserve `high` for e
 
 ### Tag Filtering Modes
 
-| Mode              | Includes untagged? | Condition                               |
-| ----------------- | ------------------ | --------------------------------------- |
-| `any` _(default)_ | Yes                | At least one tag matches, OR untagged   |
-| `all`             | Yes                | All specified tags present, OR untagged |
-| `any_strict`      | No                 | At least one tag matches                |
-| `all_strict`      | No                 | All specified tags present              |
+| Mode | Includes untagged? | Condition |
+|------|-------------------|-----------|
+| `any` *(default)* | Yes | At least one tag matches, OR untagged |
+| `all` | Yes | All specified tags present, OR untagged |
+| `any_strict` | No | At least one tag matches |
+| `all_strict` | No | All specified tags present |
 
 **Decision guide:**
-
 - Shared global knowledge + per-user: `tags=["user:alice"], tags_match="any"` — returns Alice's memories and untagged global memories
 - Fully partitioned (no leakage): `tags=["user:alice"], tags_match="any_strict"` — Alice's memories only
 - Multi-condition AND: `tags=["user:alice", "topic:billing"], tags_match="all_strict"` — only where both tags present
@@ -393,20 +380,20 @@ recall(
 
 ### `include` Options
 
-| Option                 | Default  | Enable when                                               |
-| ---------------------- | -------- | --------------------------------------------------------- |
-| `include.entities`     | Enabled  | — (leave on; provides entity context for graph traversal) |
-| `include.chunks`       | Disabled | Agent needs exact wording or source quotation             |
-| `include.source_facts` | Disabled | Tracing observation provenance for auditing               |
+| Option | Default | Enable when |
+|--------|---------|-------------|
+| `include.entities` | Enabled | — (leave on; provides entity context for graph traversal) |
+| `include.chunks` | Disabled | Agent needs exact wording or source quotation |
+| `include.source_facts` | Disabled | Tracing observation provenance for auditing |
 
 ---
 
 ### `types` Filtering
 
-| Value                     | Returns                                                         |
-| ------------------------- | --------------------------------------------------------------- |
-| _(not set)_               | All types                                                       |
-| `["observation"]`         | Consolidated patterns only — faster for high-level questions    |
+| Value | Returns |
+|-------|---------|
+| *(not set)* | All types |
+| `["observation"]` | Consolidated patterns only — faster for high-level questions |
 | `["world", "experience"]` | Raw facts only — for ground-truth or citation-sensitive queries |
 
 ---
@@ -429,14 +416,8 @@ Use [entity labels](developer/api/memory-banks.md#entity-labels) with `tag: true
       "optional": false,
       "tag": true,
       "values": [
-        {
-          "value": "rule",
-          "description": "Concise operating rule or canonical guidance"
-        },
-        {
-          "value": "procedure",
-          "description": "Step-by-step technical instruction or troubleshooting note"
-        }
+        { "value": "rule",      "description": "Concise operating rule or canonical guidance" },
+        { "value": "procedure", "description": "Step-by-step technical instruction or troubleshooting note" }
       ]
     }
   ]
@@ -479,13 +460,13 @@ recall(query="user preferences", query_timestamp=datetime.utcnow().isoformat() +
 
 ### Recall vs Reflect
 
-| Use `recall` when                   | Use `reflect` when                                |
-| ----------------------------------- | ------------------------------------------------- |
+| Use `recall` when | Use `reflect` when |
+|-------------------|--------------------|
 | Agent will reason over facts itself | You want Hindsight to reason and return an answer |
-| You need raw citations              | You need a synthesized response                   |
-| You're building a RAG pipeline      | You want an autonomous multi-step search loop     |
-| Latency is critical                 | Response quality matters more than latency        |
-| You need precise fact counts        | You need a contextual, nuanced answer             |
+| You need raw citations | You need a synthesized response |
+| You're building a RAG pipeline | You want an autonomous multi-step search loop |
+| Latency is critical | Response quality matters more than latency |
+| You need precise fact counts | You need a contextual, nuanced answer |
 
 ---
 
@@ -516,10 +497,10 @@ reflect(
 
 ### Auditing and Debugging
 
-| Option                    | Purpose                                                                        |
-| ------------------------- | ------------------------------------------------------------------------------ |
-| `include.facts=True`      | Exposes which memories and mental models were used (for transparency/auditing) |
-| `include.tool_calls=True` | Full execution trace of the internal search loop (for debugging)               |
+| Option | Purpose |
+|--------|---------|
+| `include.facts=True` | Exposes which memories and mental models were used (for transparency/auditing) |
+| `include.tool_calls=True` | Full execution trace of the internal search loop (for debugging) |
 
 Enable `include.facts` in production for audit trails. Enable `include.tool_calls` only during development.
 
@@ -561,15 +542,14 @@ create_mental_model(
 
 ### Refresh Strategy
 
-| Trigger                                         | When to use                                                           |
-| ----------------------------------------------- | --------------------------------------------------------------------- |
-| Manual via API                                  | After significant data updates or review cycles                       |
+| Trigger | When to use |
+|---------|------------|
+| Manual via API | After significant data updates or review cycles |
 | `trigger={"refresh_after_consolidation": True}` | When observations update frequently and the model should stay current |
 
 Create narrow, scoped models — one per knowledge dimension. A mental model titled "Everything about the user" is as useful as none.
 
 **Model granularity examples for a personal assistant:**
-
 - "User Profile" — demographics, preferences, stated goals
 - "Current Projects" — active work, deadlines, blockers
 - "Technical Stack" — languages, tools, frameworks used
@@ -579,15 +559,15 @@ Create narrow, scoped models — one per knowledge dimension. A mental model tit
 
 ## Anti-patterns
 
-| Anti-pattern                                | Problem                                                          | Fix                                                        |
-| ------------------------------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------- |
-| Pre-summarizing before retain               | Loses entity relationships, temporal markers, structural context | Retain raw content; Hindsight extracts facts               |
-| Using random UUIDs as `document_id`         | Creates duplicate documents on every retain                      | Use stable session/ticket/document IDs                     |
-| Omitting the `context` field                | Reduces extraction quality significantly                         | Always describe what kind of data this is                  |
-| Using `metadata` for filtering              | Metadata is not filterable                                       | Use `tags` for anything you'll filter on                   |
-| Vague or generic missions                   | Generic extraction = noisy, low-value memories                   | Be specific about domain, data type, what to ignore        |
-| `tags_match="any"` for multi-tenant banks   | Leaks memories across users                                      | Use `any_strict` or `all_strict` for user-partitioned data |
-| Retaining and recalling in the same request | Retained memories not yet indexed                                | Retain end-of-turn; recall at the start of next turn       |
-| One mental model for everything             | Low accuracy, slow refresh, hard to scope                        | Create one model per knowledge dimension                   |
-| `high` budget for every recall              | Expensive, slow, usually unnecessary                             | Use `low` for simple lookups, `mid` default                |
-| Missing `timestamp` on retain               | Disables temporal retrieval strategies                           | Always set from actual content timestamps                  |
+| Anti-pattern | Problem | Fix |
+|-------------|---------|-----|
+| Pre-summarizing before retain | Loses entity relationships, temporal markers, structural context | Retain raw content; Hindsight extracts facts |
+| Using random UUIDs as `document_id` | Creates duplicate documents on every retain | Use stable session/ticket/document IDs |
+| Omitting the `context` field | Reduces extraction quality significantly | Always describe what kind of data this is |
+| Using `metadata` for filtering | Metadata is not filterable | Use `tags` for anything you'll filter on |
+| Vague or generic missions | Generic extraction = noisy, low-value memories | Be specific about domain, data type, what to ignore |
+| `tags_match="any"` for multi-tenant banks | Leaks memories across users | Use `any_strict` or `all_strict` for user-partitioned data |
+| Retaining and recalling in the same request | Retained memories not yet indexed | Retain end-of-turn; recall at the start of next turn |
+| One mental model for everything | Low accuracy, slow refresh, hard to scope | Create one model per knowledge dimension |
+| `high` budget for every recall | Expensive, slow, usually unnecessary | Use `low` for simple lookups, `mid` default |
+| Missing `timestamp` on retain | Disables temporal retrieval strategies | Always set from actual content timestamps |

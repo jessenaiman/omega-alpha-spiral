@@ -1,3 +1,4 @@
+
 # Quick Start
 
 Get up and running with Hindsight in 60 seconds.
@@ -38,13 +39,12 @@ docker run -it --pull always --name hindsight --restart unless-stopped --shm-siz
 - **Control Plane** (Web UI): http://localhost:9999
 
 > **💡 Set a stable `HINDSIGHT_API_WORKER_ID` in production**
-
+>
 The worker uses the container hostname as its identity, which Docker sets to the container ID by default. That value changes on every restart, so any task that was being processed when the container went down stays parked under the old ID with no way for the new container to recognize it as its own.
 
 Set `HINDSIGHT_API_WORKER_ID` to a stable value (e.g., `-e HINDSIGHT_API_WORKER_ID=hindsight-prod`) so the worker keeps the same identity across restarts. This is recommended even for single-container deployments. For diagnosis and recovery commands, see [Admin CLI - Recovering stuck operations](../admin-cli.md#recovering-stuck-or-zombie-operations).
-
 > **💡 LLM Provider**
-
+>
 Hindsight requires an LLM with structured output support. Recommended: **Groq** with `gpt-oss-20b` for fast, cost-effective inference.
 See [LLM Providers](../models.md#llm) for more details.
 ---
@@ -79,18 +79,18 @@ npm install @vectorize-io/hindsight-client
 ```
 
 ```javascript
-import { HindsightClient } from "@vectorize-io/hindsight-client";
+import { HindsightClient } from '@vectorize-io/hindsight-client';
 
-const client = new HindsightClient({ baseUrl: "http://localhost:8888" });
+const client = new HindsightClient({ baseUrl: 'http://localhost:8888' });
 
 // Retain: Store information
-await client.retain("my-bank", "Alice works at Google as a software engineer");
+await client.retain('my-bank', 'Alice works at Google as a software engineer');
 
 // Recall: Search memories
-await client.recall("my-bank", "What does Alice do?");
+await client.recall('my-bank', 'What does Alice do?');
 
 // Reflect: Generate response
-await client.reflect("my-bank", "Tell me about Alice");
+await client.reflect('my-bank', 'Tell me about Alice');
 ```
 
 ### CLI
@@ -153,11 +153,11 @@ fmt.Println(answer.GetText())
 
 ## What's Happening
 
-| Operation   | What it does                                                                                          |
-| ----------- | ----------------------------------------------------------------------------------------------------- |
-| **Retain**  | Content is processed, facts are extracted, entities are identified and linked in a knowledge graph    |
-| **Recall**  | Four search strategies (semantic, keyword, graph, temporal) run in parallel to find relevant memories |
-| **Reflect** | Retrieved memories are used to generate a disposition-aware response                                  |
+| Operation | What it does |
+|-----------|--------------|
+| **Retain** | Content is processed, facts are extracted, entities are identified and linked in a knowledge graph |
+| **Recall** | Four search strategies (semantic, keyword, graph, temporal) run in parallel to find relevant memories |
+| **Reflect** | Retrieved memories are used to generate a disposition-aware response |
 
 ---
 

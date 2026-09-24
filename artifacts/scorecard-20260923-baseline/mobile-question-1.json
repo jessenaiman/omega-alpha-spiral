@@ -1,0 +1,147 @@
+{
+  "url": "http://127.0.0.1:5188/intro.html?debug",
+  "mode": "mobile",
+  "state": "question-1",
+  "requestedState": "question-1",
+  "appliedState": "question-1",
+  "runId": "scorecard-20260923-baseline",
+  "seed": 472,
+  "screenshotPath": "artifacts\\scorecard-20260923-baseline\\mobile-question-1.png",
+  "gpu": {
+    "renderer": "ANGLE (NVIDIA, NVIDIA GeForce GTX 1660 (0x00002184) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+    "vendor": "Google Inc. (NVIDIA)",
+    "softwareRendered": false
+  },
+  "result": {
+    "ok": true,
+    "reason": "nonblank",
+    "rect": {
+      "x": 0,
+      "y": 0,
+      "width": 390,
+      "height": 664
+    },
+    "drawingBuffer": {
+      "width": 585,
+      "height": 996
+    },
+    "alphaPixels": 4097,
+    "variance": 255,
+    "colorBuckets": 77,
+    "metrics": {
+      "colorBuckets": 114,
+      "colorEntropyBits": 0.83,
+      "edgeDensity": 0.108,
+      "luminance": {
+        "mean": 7.8,
+        "p5": 0,
+        "p95": 15.5,
+        "contrast": 15.5
+      },
+      "dominantColorShare": 0.912,
+      "nonBackgroundShare": 0.088
+    },
+    "renderBudget": {
+      "tier": "mobile",
+      "note": "starting-point budget; adjust per game and document overrides",
+      "rows": [
+        {
+          "metric": "calls",
+          "actual": 103,
+          "limit": 150,
+          "ok": true
+        },
+        {
+          "metric": "triangles",
+          "actual": 1474,
+          "limit": 300000,
+          "ok": true
+        },
+        {
+          "metric": "geometries",
+          "actual": 87,
+          "limit": 200,
+          "ok": true
+        },
+        {
+          "metric": "textures",
+          "actual": 10,
+          "limit": 40,
+          "ok": true
+        }
+      ],
+      "withinBudget": true
+    },
+    "diagnostics": {
+      "renderer": {
+        "calls": 103,
+        "triangles": 1474,
+        "geometries": 87,
+        "textures": 10
+      },
+      "state": {
+        "frame": 73,
+        "phase": "waiting",
+        "storyMode": "waiting",
+        "questionIndex": 0,
+        "objective": "answer-question-1",
+        "objectiveProgress": 0,
+        "complete": false,
+        "failed": false,
+        "canContinue": false,
+        "selectedChoice": 0,
+        "pendingChoice": -1,
+        "actionDiscovered": false,
+        "tutorialAct": "movement",
+        "playerPosition": {
+          "x": 0,
+          "y": -2.549999952316284,
+          "z": 0.5199999809265137
+        },
+        "choiceTargets": [
+          {
+            "x": -0.9691265060240963,
+            "y": 0.4400000000000001,
+            "z": 0.18
+          },
+          {
+            "x": 0,
+            "y": 0.4400000000000001,
+            "z": 0.18
+          },
+          {
+            "x": 0.9691265060240963,
+            "y": 0.4400000000000001,
+            "z": 0.18
+          }
+        ],
+        "seed": "472",
+        "audio": {
+          "unlocked": false,
+          "muted": false,
+          "cueCount": 0
+        },
+        "physics": {
+          "ready": true,
+          "bodies": 5,
+          "colliders": 5,
+          "sensors": 4,
+          "activeSensors": 3,
+          "ccdBodies": 0,
+          "fixedTimestep": 0.016666666666666666,
+          "steps": 0
+        },
+        "viewport": {
+          "width": 390,
+          "height": 664,
+          "dpr": 1.5
+        },
+        "activeLoops": 1,
+        "pausedForScreenshot": true,
+        "debugUiHidden": true
+      }
+    }
+  },
+  "consoleErrors": [],
+  "pageErrors": []
+}

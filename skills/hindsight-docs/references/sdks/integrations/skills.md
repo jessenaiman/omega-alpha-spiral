@@ -1,23 +1,24 @@
+
 # Skills
 
 Hindsight provides an Agent Skill that gives AI coding assistants persistent memory across sessions. Skills are reusable prompt templates that agents can load when needed to gain specialized capabilities.
 
 ## Supported Platforms
 
-| Platform                                                      | Skills Directory      |
-| ------------------------------------------------------------- | --------------------- |
-| [Claude Code](https://docs.anthropic.com/en/docs/claude-code) | `~/.claude/skills/`   |
-| [OpenCode](https://github.com/opencode-ai/opencode)           | `~/.opencode/skills/` |
-| [Codex CLI](https://github.com/openai/codex)                  | `~/.codex/skills/`    |
+| Platform | Skills Directory |
+|----------|-----------------|
+| [Claude Code](https://docs.anthropic.com/en/docs/claude-code) | `~/.claude/skills/` |
+| [OpenCode](https://github.com/opencode-ai/opencode) | `~/.opencode/skills/` |
+| [Codex CLI](https://github.com/openai/codex) | `~/.codex/skills/` |
 
 ## Deployment Modes
 
 The skill supports two deployment modes:
 
-| Mode      | Best For                | Data Location            |
-| --------- | ----------------------- | ------------------------ |
-| **Local** | Individual developers   | Your machine (`~/.pg0/`) |
-| **Cloud** | Teams sharing knowledge | Hindsight Cloud          |
+| Mode | Best For | Data Location |
+|------|----------|---------------|
+| **Local** | Individual developers | Your machine (`~/.pg0/`) |
+| **Cloud** | Teams sharing knowledge | Hindsight Cloud |
 
 ## Quick Install
 
@@ -28,7 +29,6 @@ curl -fsSL https://hindsight.vectorize.io/get-skill | bash
 ```
 
 The installer will:
-
 1. Prompt you to select your AI coding assistant
 2. Select deployment mode (local or cloud)
 3. Configure the appropriate settings
@@ -70,7 +70,6 @@ npx add-skill vectorize-io/hindsight --skill hindsight-self-hosted
 ```
 
 On first use, the AI will guide you through the remaining setup:
-
 - **Local**: Run `uvx hindsight-embed configure` to set up your LLM provider
 - **Cloud**: Provide your API key and bank ID
 - **Self-hosted**: Provide your server URL, API key, and bank ID
@@ -90,7 +89,6 @@ The skill uses the `hindsight-embed` CLI which runs a lightweight local daemon w
 Skills are **model-invoked**, meaning the AI assistant automatically decides when to use them based on the context of your conversation. You don't need to explicitly trigger the skill.
 
 The assistant will:
-
 - **Store** when you share preferences, when tasks succeed/fail, or when learnings emerge
 - **Recall** before starting non-trivial tasks to get relevant context
 
@@ -98,11 +96,11 @@ The assistant will:
 
 The skill is optimized to store:
 
-| Category               | Examples                                                  |
-| ---------------------- | --------------------------------------------------------- |
-| **User Preferences**   | Coding style, tool preferences, language choices          |
+| Category | Examples |
+|----------|----------|
+| **User Preferences** | Coding style, tool preferences, language choices |
 | **Procedure Outcomes** | Commands that worked, configurations that resolved issues |
-| **Learnings**          | Bug solutions, workarounds, architecture decisions        |
+| **Learnings** | Bug solutions, workarounds, architecture decisions |
 
 ## Architecture
 
@@ -178,18 +176,17 @@ curl -fsSL https://hindsight.vectorize.io/get-skill | bash -s -- --mode cloud
 
 You'll be prompted for:
 
-| Setting           | Description                      | Example                              |
-| ----------------- | -------------------------------- | ------------------------------------ |
-| **Cloud API URL** | Hindsight Cloud endpoint         | `https://api.hindsight.vectorize.io` |
-| **API Key**       | Your authentication key          | `hs_xxx...`                          |
-| **Bank ID**       | Shared memory bank for your team | `team-acme-frontend`                 |
+| Setting | Description | Example |
+|---------|-------------|---------|
+| **Cloud API URL** | Hindsight Cloud endpoint | `https://api.hindsight.vectorize.io` |
+| **API Key** | Your authentication key | `hs_xxx...` |
+| **Bank ID** | Shared memory bank for your team | `team-acme-frontend` |
 
 ### Configuration Files
 
 Cloud mode creates two files:
 
 **`~/.hindsight/config`** — API connection settings (TOML format):
-
 ```toml
 api_url = "https://api.hindsight.vectorize.io"
 api_key = "hs_xxx..."
@@ -210,11 +207,11 @@ To set up cloud mode for your team:
 
 Cloud mode uses a **shared team bank**. Be thoughtful about what goes in:
 
-| Type                       | Examples                                              | How to Store                               |
-| -------------------------- | ----------------------------------------------------- | ------------------------------------------ |
-| **Project conventions**    | Linting rules, testing requirements, Node version     | `"Project uses ESLint with Airbnb config"` |
-| **Team knowledge**         | Architecture decisions, common pitfalls, domain logic | `"Auth module requires Redis 7+"`          |
-| **Individual preferences** | Personal coding style, communication preferences      | `"Alice prefers verbose commit messages"`  |
+| Type | Examples | How to Store |
+|------|----------|--------------|
+| **Project conventions** | Linting rules, testing requirements, Node version | `"Project uses ESLint with Airbnb config"` |
+| **Team knowledge** | Architecture decisions, common pitfalls, domain logic | `"Auth module requires Redis 7+"` |
+| **Individual preferences** | Personal coding style, communication preferences | `"Alice prefers verbose commit messages"` |
 
 **Key distinction**: Project conventions apply to everyone. Individual preferences should include the person's name so the AI knows when to apply them.
 
@@ -266,21 +263,18 @@ For permanent multi-bank setups, reinstall the skill with a different bank ID.
 ### Skill not activating
 
 The skill activates based on its description matching your request. Try being explicit:
-
 - "Remember that..." triggers storage
 - "What do you know about..." triggers recall
 
 ### Local Mode Issues
 
 **Daemon not starting:**
-
 ```bash
 uvx hindsight-embed daemon status
 uvx hindsight-embed daemon logs
 ```
 
 **Reconfigure LLM provider:**
-
 ```bash
 uvx hindsight-embed configure
 ```
@@ -288,7 +282,6 @@ uvx hindsight-embed configure
 ### Cloud Mode Issues
 
 **Authentication errors:**
-
 ```bash
 # Verify your config
 cat ~/.hindsight/config
@@ -300,19 +293,16 @@ hindsight bank list
 **Wrong bank ID:**
 
 Check your SKILL.md file to see which bank ID is configured:
-
 ```bash
 cat ~/.claude/skills/hindsight/SKILL.md | grep "memory retain"
 ```
 
 To change the bank ID, reinstall the skill:
-
 ```bash
 curl -fsSL https://hindsight.vectorize.io/get-skill | bash -s -- --mode cloud
 ```
 
 **Network/firewall issues:**
-
 ```bash
 # Test connectivity to cloud API
 curl -I https://api.hindsight.vectorize.io/health
@@ -321,12 +311,10 @@ curl -I https://api.hindsight.vectorize.io/health
 ## Requirements
 
 ### Local Mode
-
 - Python 3.10+ (for `uvx`)
 - An LLM API key (OpenAI, Anthropic, Groq, etc.)
 
 ### Cloud Mode
-
 - Python 3.10+ (for `uvx`)
 - Hindsight Cloud API key
 - Network access to `https://api.hindsight.vectorize.io`

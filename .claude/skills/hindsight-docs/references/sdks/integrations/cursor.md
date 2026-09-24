@@ -1,3 +1,4 @@
+
 # Cursor
 
 Biomimetic long-term memory for [Cursor](https://cursor.com) using [Hindsight](https://vectorize.io/hindsight). Automatically recalls relevant project context at session start and retains conversation transcripts after each task — adapted to Cursor's hook-based plugin architecture with MCP for on-demand tools.
@@ -8,13 +9,13 @@ Biomimetic long-term memory for [Cursor](https://cursor.com) using [Hindsight](h
 
 The Hindsight plugin uses two complementary mechanisms:
 
-|              | Plugin Hooks (automatic)                                  | MCP Tools (on-demand)                           |
-| ------------ | --------------------------------------------------------- | ----------------------------------------------- |
-| **Install**  | `pip install hindsight-cursor && hindsight-cursor init`   | Configured automatically by `init`              |
-| **Recall**   | Session start — memories injected via `additionalContext` | Agent calls `recall` tool mid-session           |
-| **Retain**   | Automatic on task stop                                    | Agent calls `retain` tool explicitly            |
-| **Reflect**  | Not available via hooks                                   | Available as a tool                             |
-| **Best for** | Ambient project memory with no user intervention          | Targeted lookups and explicit memory operations |
+| | Plugin Hooks (automatic) | MCP Tools (on-demand) |
+|--|--------------------------|----------------------|
+| **Install** | `pip install hindsight-cursor && hindsight-cursor init` | Configured automatically by `init` |
+| **Recall** | Session start — memories injected via `additionalContext` | Agent calls `recall` tool mid-session |
+| **Retain** | Automatic on task stop | Agent calls `retain` tool explicitly |
+| **Reflect** | Not available via hooks | Available as a tool |
+| **Best for** | Ambient project memory with no user intervention | Targeted lookups and explicit memory operations |
 
 Both are set up by a single `hindsight-cursor init` command. Use `--no-mcp` to skip the MCP integration if you only want hooks.
 
@@ -57,9 +58,8 @@ docker run --rm -it --pull always -p 8888:8888 \
 `hindsight-cursor uninstall` reverses all of it: the plugin directory, Hindsight's `.cursor/hooks.json` entries, the MCP server entry, the generated session rules file, and its `.gitignore` line.
 
 > **🚨 Caution**
-
+>
 If you add the plugin to an already-open workspace, **fully quit Cursor and reopen it**. Plugins are loaded at startup — a simple window reload is not enough.
-
 ## Features
 
 - **Session recall** — at the start of each session, queries Hindsight for relevant project memories and injects them as context via `additionalContext` (invisible to the chat, visible to the agent)
@@ -74,11 +74,11 @@ If you add the plugin to an already-open workspace, **fully quit Cursor and reop
 
 The plugin uses Cursor's hook system:
 
-| Hook               | Event          | Purpose                                                            |
-| ------------------ | -------------- | ------------------------------------------------------------------ |
+| Hook | Event | Purpose |
+|------|-------|---------|
 | `session_start.py` | `sessionStart` | **Session recall** — query memories, inject as `additionalContext` |
-| `retain.py`        | `stop`         | **Auto-retain** — extract transcript, POST to Hindsight            |
-| `retain.py`        | `sessionEnd`   | **Final flush** — retain whatever the turn window never got to     |
+| `retain.py` | `stop` | **Auto-retain** — extract transcript, POST to Hindsight |
+| `retain.py` | `sessionEnd` | **Final flush** — retain whatever the turn window never got to |
 
 The `sessionStart` hook fires once when a new Cursor session begins. It performs a broad project-level recall and injects relevant memories as hidden context.
 
@@ -87,7 +87,6 @@ The `sessionStart` hook fires once when a new Cursor session begins. It performs
 The `init` command also configures Cursor's MCP support (`.cursor/mcp.json`) to connect to Hindsight's MCP endpoint, giving the agent explicit `recall`, `retain`, and `reflect` tools for mid-session use.
 
 Additionally, the plugin provides:
-
 - **Skill** (`hindsight-recall`) — on-demand memory querying
 - **Rule** (`hindsight-memory.mdc`) — always-on rule instructing the agent to leverage recalled memories and MCP tools
 
@@ -109,7 +108,6 @@ Connect to a running Hindsight server (cloud or self-hosted). No local LLM neede
 The plugin automatically starts and stops `hindsight-embed` via `uvx`. Requires an LLM provider API key for local fact extraction.
 
 Set an LLM provider:
-
 ```bash
 export OPENAI_API_KEY="sk-your-key"
 # or
@@ -127,7 +125,6 @@ If you already have `hindsight-embed` running, leave `hindsightApiUrl` empty and
 All settings live in `~/.hindsight/cursor.json`. Every setting can also be overridden via environment variables. The plugin ships with sensible defaults — you only need to configure what you want to change.
 
 **Loading order** (later entries win):
-
 1. Built-in defaults (hardcoded in the plugin)
 2. Plugin `settings.json` (ships with the plugin, at `CURSOR_PLUGIN_ROOT/settings.json`)
 3. User config (`~/.hindsight/cursor.json` — recommended for your overrides)
@@ -137,13 +134,13 @@ All settings live in `~/.hindsight/cursor.json`. Every setting can also be overr
 
 ### Connection & Daemon
 
-| Setting             | Env Var                        | Default      | Description                                                                                  |
-| ------------------- | ------------------------------ | ------------ | -------------------------------------------------------------------------------------------- |
-| `hindsightApiUrl`   | `HINDSIGHT_API_URL`            | `""` (empty) | URL of an external Hindsight API server. When empty, the plugin uses a local daemon instead. |
-| `hindsightApiToken` | `HINDSIGHT_API_TOKEN`          | `null`       | Authentication token for the external API. Only needed when `hindsightApiUrl` is set.        |
-| `apiPort`           | `HINDSIGHT_API_PORT`           | `9077`       | Port used by the local `hindsight-embed` daemon.                                             |
-| `embedVersion`      | `HINDSIGHT_EMBED_VERSION`      | `"latest"`   | Which version of `hindsight-embed` to install via `uvx`.                                     |
-| `embedPackagePath`  | `HINDSIGHT_EMBED_PACKAGE_PATH` | `null`       | Local path to a `hindsight-embed` checkout for development.                                  |
+| Setting | Env Var | Default | Description |
+|---------|---------|---------|-------------|
+| `hindsightApiUrl` | `HINDSIGHT_API_URL` | `""` (empty) | URL of an external Hindsight API server. When empty, the plugin uses a local daemon instead. |
+| `hindsightApiToken` | `HINDSIGHT_API_TOKEN` | `null` | Authentication token for the external API. Only needed when `hindsightApiUrl` is set. |
+| `apiPort` | `HINDSIGHT_API_PORT` | `9077` | Port used by the local `hindsight-embed` daemon. |
+| `embedVersion` | `HINDSIGHT_EMBED_VERSION` | `"latest"` | Which version of `hindsight-embed` to install via `uvx`. |
+| `embedPackagePath` | `HINDSIGHT_EMBED_PACKAGE_PATH` | `null` | Local path to a `hindsight-embed` checkout for development. |
 
 ---
 
@@ -151,11 +148,11 @@ All settings live in `~/.hindsight/cursor.json`. Every setting can also be overr
 
 These settings configure which LLM the local daemon uses for fact extraction. They are **ignored** when connecting to an external API.
 
-| Setting        | Env Var                  | Default           | Description                                                                                                     |
-| -------------- | ------------------------ | ----------------- | --------------------------------------------------------------------------------------------------------------- |
-| `llmProvider`  | `HINDSIGHT_LLM_PROVIDER` | auto-detect       | LLM provider: `openai`, `anthropic`, `gemini`, `groq`, `ollama`. Auto-detects by checking for API key env vars. |
-| `llmModel`     | `HINDSIGHT_LLM_MODEL`    | provider default  | Override the default model for the chosen provider.                                                             |
-| `llmApiKeyEnv` | —                        | provider standard | Name of the env var holding the API key, if non-standard.                                                       |
+| Setting | Env Var | Default | Description |
+|---------|---------|---------|-------------|
+| `llmProvider` | `HINDSIGHT_LLM_PROVIDER` | auto-detect | LLM provider: `openai`, `anthropic`, `gemini`, `groq`, `ollama`. Auto-detects by checking for API key env vars. |
+| `llmModel` | `HINDSIGHT_LLM_MODEL` | provider default | Override the default model for the chosen provider. |
+| `llmApiKeyEnv` | — | provider standard | Name of the env var holding the API key, if non-standard. |
 
 ---
 
@@ -163,14 +160,14 @@ These settings configure which LLM the local daemon uses for fact extraction. Th
 
 A **bank** is an isolated memory store — like a separate "brain."
 
-| Setting                  | Env Var                     | Default                  | Description                                                                               |
-| ------------------------ | --------------------------- | ------------------------ | ----------------------------------------------------------------------------------------- |
-| `bankId`                 | `HINDSIGHT_BANK_ID`         | `"cursor"`               | The bank ID when `dynamicBankId` is `false`.                                              |
-| `bankMission`            | `HINDSIGHT_BANK_MISSION`    | generic assistant prompt | Description of the agent's identity and purpose.                                          |
-| `dynamicBankId`          | `HINDSIGHT_DYNAMIC_BANK_ID` | `false`                  | When `true`, derives a unique bank ID from context fields (see `dynamicBankGranularity`). |
-| `dynamicBankGranularity` | —                           | `["agent", "project"]`   | Fields to combine for dynamic bank IDs: `agent`, `project`, `session`, `channel`, `user`. |
-| `bankIdPrefix`           | —                           | `""`                     | String prepended to all bank IDs for namespacing.                                         |
-| `agentName`              | `HINDSIGHT_AGENT_NAME`      | `"cursor"`               | Name used for the `agent` field in dynamic bank ID derivation.                            |
+| Setting | Env Var | Default | Description |
+|---------|---------|---------|-------------|
+| `bankId` | `HINDSIGHT_BANK_ID` | `"cursor"` | The bank ID when `dynamicBankId` is `false`. |
+| `bankMission` | `HINDSIGHT_BANK_MISSION` | generic assistant prompt | Description of the agent's identity and purpose. |
+| `dynamicBankId` | `HINDSIGHT_DYNAMIC_BANK_ID` | `false` | When `true`, derives a unique bank ID from context fields (see `dynamicBankGranularity`). |
+| `dynamicBankGranularity` | — | `["agent", "project"]` | Fields to combine for dynamic bank IDs: `agent`, `project`, `session`, `channel`, `user`. |
+| `bankIdPrefix` | — | `""` | String prepended to all bank IDs for namespacing. |
+| `agentName` | `HINDSIGHT_AGENT_NAME` | `"cursor"` | Name used for the `agent` field in dynamic bank ID derivation. |
 
 ---
 
@@ -178,13 +175,13 @@ A **bank** is an isolated memory store — like a separate "brain."
 
 Session recall runs once at the start of each session. It queries Hindsight for relevant project memories and injects them into the agent's context as invisible `additionalContext`.
 
-| Setting               | Env Var                            | Default                   | Description                                      |
-| --------------------- | ---------------------------------- | ------------------------- | ------------------------------------------------ |
-| `autoRecall`          | `HINDSIGHT_AUTO_RECALL`            | `true`                    | Master switch for session recall.                |
-| `recallBudget`        | `HINDSIGHT_RECALL_BUDGET`          | `"mid"`                   | Search thoroughness: `"low"`, `"mid"`, `"high"`. |
-| `recallMaxTokens`     | `HINDSIGHT_RECALL_MAX_TOKENS`      | `1024`                    | Max tokens in the recalled memory block.         |
-| `recallTypes`         | —                                  | `["world", "experience"]` | Memory types to retrieve.                        |
-| `recallMaxQueryChars` | `HINDSIGHT_RECALL_MAX_QUERY_CHARS` | `800`                     | Max character length of the query.               |
+| Setting | Env Var | Default | Description |
+|---------|---------|---------|-------------|
+| `autoRecall` | `HINDSIGHT_AUTO_RECALL` | `true` | Master switch for session recall. |
+| `recallBudget` | `HINDSIGHT_RECALL_BUDGET` | `"mid"` | Search thoroughness: `"low"`, `"mid"`, `"high"`. |
+| `recallMaxTokens` | `HINDSIGHT_RECALL_MAX_TOKENS` | `1024` | Max tokens in the recalled memory block. |
+| `recallTypes` | — | `["world", "experience"]` | Memory types to retrieve. |
+| `recallMaxQueryChars` | `HINDSIGHT_RECALL_MAX_QUERY_CHARS` | `800` | Max character length of the query. |
 
 ---
 
@@ -192,21 +189,21 @@ Session recall runs once at the start of each session. It queries Hindsight for 
 
 Auto-retain runs after the agent completes a task. It extracts the conversation transcript and sends it to Hindsight.
 
-| Setting              | Env Var                          | Default          | Description                                                  |
-| -------------------- | -------------------------------- | ---------------- | ------------------------------------------------------------ |
-| `autoRetain`         | `HINDSIGHT_AUTO_RETAIN`          | `true`           | Master switch for auto-retain.                               |
-| `retainMode`         | `HINDSIGHT_RETAIN_MODE`          | `"full-session"` | Retention strategy. `"full-session"` or `"chunked"`.         |
-| `retainEveryNTurns`  | `HINDSIGHT_RETAIN_EVERY_N_TURNS` | `10`             | How often to retain. `1` = every turn.                       |
-| `retainOverlapTurns` | —                                | `2`              | Extra turns included from the previous chunk for continuity. |
-| `retainContext`      | `HINDSIGHT_RETAIN_CONTEXT`       | `"cursor"`       | Source label for retained memories.                          |
-| `retainToolCalls`    | —                                | `false`          | Whether to include tool calls in the retained transcript.    |
+| Setting | Env Var | Default | Description |
+|---------|---------|---------|-------------|
+| `autoRetain` | `HINDSIGHT_AUTO_RETAIN` | `true` | Master switch for auto-retain. |
+| `retainMode` | `HINDSIGHT_RETAIN_MODE` | `"full-session"` | Retention strategy. `"full-session"` or `"chunked"`. |
+| `retainEveryNTurns` | `HINDSIGHT_RETAIN_EVERY_N_TURNS` | `10` | How often to retain. `1` = every turn. |
+| `retainOverlapTurns` | — | `2` | Extra turns included from the previous chunk for continuity. |
+| `retainContext` | `HINDSIGHT_RETAIN_CONTEXT` | `"cursor"` | Source label for retained memories. |
+| `retainToolCalls` | — | `false` | Whether to include tool calls in the retained transcript. |
 
 ---
 
 ### Debug
 
-| Setting | Env Var           | Default | Description                                                    |
-| ------- | ----------------- | ------- | -------------------------------------------------------------- |
+| Setting | Env Var | Default | Description |
+|---------|---------|---------|-------------|
 | `debug` | `HINDSIGHT_DEBUG` | `false` | Enable verbose logging to stderr. Prefixed with `[Hindsight]`. |
 
 ## Verifying Plugin Hooks
@@ -220,7 +217,6 @@ cat ~/.hindsight/cursor-state/state/last_retain.json
 ```
 
 Each file contains:
-
 - `saved_at` — timestamp of the last invocation
 - `status` — one of `success`, `empty`, `skipped`, or `error`
 - `bank_id` — which bank was used (present on `success` and `empty`)

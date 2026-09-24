@@ -1,3 +1,5 @@
+
+
 # Multilingual Support
 
 Hindsight automatically detects the language of your input and responds in the same language. This means facts, entities, and reflect responses are preserved in their original language without translation to English.
@@ -165,11 +167,9 @@ Most modern LLMs (GPT-4, Claude, Gemini, Llama 3, etc.) support dozens of langua
 For optimal multilingual performance, configure all four components of the pipeline:
 
 ### 1. LLM (Required)
-
 Your LLM must support the target languages. Most modern LLMs do, but verify with your specific model.
 
 ### 2. Embedding Model (Recommended)
-
 The default embedding model (`BAAI/bge-small-en-v1.5`) is **English-only**. For multilingual content, use a multilingual embedding model:
 
 ```bash
@@ -178,15 +178,13 @@ HINDSIGHT_API_EMBEDDINGS_LOCAL_MODEL=BAAI/bge-m3
 ```
 
 **Recommended multilingual embedding models:**
-
-| Model                                                         | Languages | Notes                                 |
-| ------------------------------------------------------------- | --------- | ------------------------------------- |
-| `BAAI/bge-m3`                                                 | 100+      | Best overall multilingual performance |
-| `intfloat/multilingual-e5-large`                              | 100+      | Good alternative                      |
-| `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` | 50+       | Lighter weight                        |
+| Model | Languages | Notes |
+|-------|-----------|-------|
+| `BAAI/bge-m3` | 100+ | Best overall multilingual performance |
+| `intfloat/multilingual-e5-large` | 100+ | Good alternative |
+| `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` | 50+ | Lighter weight |
 
 ### 3. Reranker Model (Recommended)
-
 The default reranker (`cross-encoder/ms-marco-MiniLM-L-6-v2`) is **English-only**. For multilingual content, use a multilingual reranker:
 
 ```bash
@@ -195,11 +193,10 @@ HINDSIGHT_API_RERANKER_LOCAL_MODEL=BAAI/bge-reranker-v2-m3
 ```
 
 **Recommended multilingual reranker models:**
-
-| Model                                        | Languages | Notes                       |
-| -------------------------------------------- | --------- | --------------------------- |
-| `BAAI/bge-reranker-v2-m3`                    | 100+      | Best multilingual reranking |
-| `cross-encoder/mmarco-mMiniLMv2-L12-H384-v1` | 14        | Lighter alternative         |
+| Model | Languages | Notes |
+|-------|-----------|-------|
+| `BAAI/bge-reranker-v2-m3` | 100+ | Best multilingual reranking |
+| `cross-encoder/mmarco-mMiniLMv2-L12-H384-v1` | 14 | Lighter alternative |
 
 ### 4. BM25 / Full-Text Search Backend
 
@@ -212,23 +209,21 @@ There are two knobs that interact:
 
 Pick the backend based on the languages your bank stores:
 
-| Backend         | Multilingual / CJK                                                                                                                                                                                                                      | Notes                                                                                                                                                                                        |
-| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `native`        | European languages only (English, French, German, Spanish, Italian, Portuguese, Russian, Dutch, Swedish, Norwegian, Danish, Finnish, Hungarian, Turkish, Arabic, plus `simple`). CJK requires a third-party dictionary like `zhparser`. | Stock PostgreSQL — no extra extensions. Configure the language via `HINDSIGHT_API_TEXT_SEARCH_EXTENSION_NATIVE_LANGUAGE`.                                                                    |
-| `vchord`        | Multilingual via `llmlingua2` tokenizer.                                                                                                                                                                                                | Best when you're already using vchord for vector search.                                                                                                                                     |
-| `pg_textsearch` | English only (hardcoded).                                                                                                                                                                                                               | Industry-standard BM25 ranking + Block-Max WAND.                                                                                                                                             |
-| `pgroonga`      | **Yes — out of the box.** Single index handles English, CJK, and mixed-script content via the `TokenBigram` polyglot tokenizer + `NormalizerNFKC150` Unicode normalization.                                                             | Recommended for non-English / mixed-language banks. Requires the `pgroonga` extension. See `docker/docker-compose/pgroonga/`.                                                                |
-| `pg_search`     | Multilingual via configurable tokenizer (e.g. `chinese_compatible`, `jieba`, `chinese_lindera`, `japanese_lindera`, `korean_lindera`, `ngram`).                                                                                         | ParadeDB `pg_search` extension; the only Citus-compatible BM25 backend. Tokenizer set via `HINDSIGHT_API_TEXT_SEARCH_EXTENSION_PG_SEARCH_TOKENIZER`. See `docker/docker-compose/pg_search/`. |
+| Backend | Multilingual / CJK | Notes |
+|---------|--------------------|-------|
+| `native` | European languages only (English, French, German, Spanish, Italian, Portuguese, Russian, Dutch, Swedish, Norwegian, Danish, Finnish, Hungarian, Turkish, Arabic, plus `simple`). CJK requires a third-party dictionary like `zhparser`. | Stock PostgreSQL — no extra extensions. Configure the language via `HINDSIGHT_API_TEXT_SEARCH_EXTENSION_NATIVE_LANGUAGE`. |
+| `vchord` | Multilingual via `llmlingua2` tokenizer. | Best when you're already using vchord for vector search. |
+| `pg_textsearch` | English only (hardcoded). | Industry-standard BM25 ranking + Block-Max WAND. |
+| `pgroonga` | **Yes — out of the box.** Single index handles English, CJK, and mixed-script content via the `TokenBigram` polyglot tokenizer + `NormalizerNFKC150` Unicode normalization. | Recommended for non-English / mixed-language banks. Requires the `pgroonga` extension. See `docker/docker-compose/pgroonga/`. |
+| `pg_search` | Multilingual via configurable tokenizer (e.g. `chinese_compatible`, `jieba`, `chinese_lindera`, `japanese_lindera`, `korean_lindera`, `ngram`). | ParadeDB `pg_search` extension; the only Citus-compatible BM25 backend. Tokenizer set via `HINDSIGHT_API_TEXT_SEARCH_EXTENSION_PG_SEARCH_TOKENIZER`. See `docker/docker-compose/pg_search/`. |
 
 **Choosing for a single-language bank** (e.g. all Spanish content):
-
 ```bash
 HINDSIGHT_API_TEXT_SEARCH_EXTENSION=native
 HINDSIGHT_API_TEXT_SEARCH_EXTENSION_NATIVE_LANGUAGE=spanish
 ```
 
 **Choosing for a CJK or mixed-language bank**:
-
 ```bash
 HINDSIGHT_API_TEXT_SEARCH_EXTENSION=pgroonga
 ```
@@ -249,7 +244,6 @@ HINDSIGHT_API_LLM_OUTPUT_LANGUAGE=Spanish
 ```
 
 Common patterns:
-
 - **Aligned, single-language bank**: `HINDSIGHT_API_TEXT_SEARCH_EXTENSION_NATIVE_LANGUAGE=spanish` + `HINDSIGHT_API_LLM_OUTPUT_LANGUAGE=Spanish` — store, index, and respond in Spanish even when sources are mixed.
 - **Mixed-language bank with multilingual indexing**: `HINDSIGHT_API_TEXT_SEARCH_EXTENSION=pgroonga` + leave `HINDSIGHT_API_LLM_OUTPUT_LANGUAGE` unset — preserve source-language facts; pgroonga handles all of them in one index; reflect responds in the query's language.
 - **Cross-lingual unification**: `HINDSIGHT_API_LLM_OUTPUT_LANGUAGE=English` — every fact, observation, and reflect response in English regardless of source. Useful when the consumer (an English-only LLM, dashboard, or downstream pipeline) needs uniform output.
@@ -271,15 +265,12 @@ This is prompt-level guidance, not a hard guarantee: a model that ignores instru
 ## Best Practices
 
 ### 1. Use Multilingual Models for Non-English Content
-
 If you primarily work with non-English content, configure multilingual embedding and reranker models. English-only models will still store your content correctly, but semantic search quality will be degraded.
 
 ### 2. Keep Content in One Language Per Retain Call
-
 While mixed content works, keeping each `retain` call in a single language produces more consistent results.
 
 ### 3. Query in the Same Language as Your Content
-
 For best results, query using the same language as your stored content. Cross-language queries (e.g., English query for Chinese content) may work but results can vary depending on your embedding model.
 
 ---
@@ -294,7 +285,6 @@ Multilingual support is implemented through LLM prompt instructions rather than 
 - **Preserves semantic meaning** better than rule-based translation
 
 The LLM is instructed to:
-
 1. Detect the input language
 2. Extract all facts, entities, and descriptions in that same language
 3. Never translate to English unless the input is in English

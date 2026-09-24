@@ -16,7 +16,7 @@ import PageHero from '@site/src/components/PageHero';
 
 ## [0.5.3](https://github.com/vectorize-io/hindsight/tree/integrations/litellm/v0.5.3)
 
-_This release contains internal maintenance and infrastructure changes only._
+*This release contains internal maintenance and infrastructure changes only.*
 
 ## [0.5.2](https://github.com/vectorize-io/hindsight/tree/integrations/litellm/v0.5.2)
 

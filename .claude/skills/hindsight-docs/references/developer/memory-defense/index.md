@@ -29,7 +29,9 @@ A minimal policy:
 {
   "memory_defense": {
     "enabled": true,
-    "rules": [{ "on": "sensitive_data", "action": "redact" }]
+    "rules": [
+      { "on": "sensitive_data", "action": "redact" }
+    ]
   }
 }
 ```
@@ -56,87 +58,87 @@ The 45 bundled patterns cover the categories below.
 
 ### AI and LLM providers
 
-| Label                                                  | Catches                                 |
-| ------------------------------------------------------ | --------------------------------------- |
-| `anthropic_key`                                        | `sk-ant-...`                            |
+| Label | Catches |
+|---|---|
+| `anthropic_key` | `sk-ant-...` |
 | `openai_key`, `openai_project_key`, `openai_admin_key` | `sk-...`, `sk-proj-...`, `sk-admin-...` |
-| `google_api_key`                                       | `AIza...` (39 chars)                    |
-| `google_oauth_token`                                   | `ya29.<token>`                          |
-| `xai_key`                                              | `xai-...`                               |
-| `groq_key`                                             | `gsk_...`                               |
-| `huggingface_token`                                    | `hf_...`                                |
-| `replicate_token`                                      | `r8_...`                                |
-| `perplexity_key`                                       | `pplx-...`                              |
-| `databricks_token`                                     | `dapi<hex32>`                           |
+| `google_api_key` | `AIza...` (39 chars) |
+| `google_oauth_token` | `ya29.<token>` |
+| `xai_key` | `xai-...` |
+| `groq_key` | `gsk_...` |
+| `huggingface_token` | `hf_...` |
+| `replicate_token` | `r8_...` |
+| `perplexity_key` | `pplx-...` |
+| `databricks_token` | `dapi<hex32>` |
 
 ### Cloud providers
 
-| Label                | Catches          |
-| -------------------- | ---------------- |
-| `aws_access_key`     | `AKIA<16>`       |
-| `aws_session_token`  | `ASIA<16>`       |
+| Label | Catches |
+|---|---|
+| `aws_access_key` | `AKIA<16>` |
+| `aws_session_token` | `ASIA<16>` |
 | `digitalocean_token` | `dop_v1_<hex64>` |
 
 ### Source control and CI
 
-| Label               | Catches                   |
-| ------------------- | ------------------------- |
-| `github_fg_pat`     | `github_pat_...`          |
-| `github_token`      | `ghp_<36>`                |
-| `github_app_token`  | `ghs_<36>`                |
-| `github_user_token` | `ghu_<36>`                |
-| `github_refresh`    | `ghr_<36>`                |
-| `github_oauth`      | `gho_<36>`                |
-| `gitlab_pat`        | `glpat-...`               |
-| `npm_token`         | `npm_...`                 |
-| `pypi_token`        | `pypi-AgEIcHlwaS5vcmc...` |
+| Label | Catches |
+|---|---|
+| `github_fg_pat` | `github_pat_...` |
+| `github_token` | `ghp_<36>` |
+| `github_app_token` | `ghs_<36>` |
+| `github_user_token` | `ghu_<36>` |
+| `github_refresh` | `ghr_<36>` |
+| `github_oauth` | `gho_<36>` |
+| `gitlab_pat` | `glpat-...` |
+| `npm_token` | `npm_...` |
+| `pypi_token` | `pypi-AgEIcHlwaS5vcmc...` |
 
 ### Payment processors
 
-| Label               | Catches                       |
-| ------------------- | ----------------------------- |
-| `stripe_secret`     | `sk_live_...`, `sk_test_...`  |
-| `stripe_restricted` | `rk_live_...`, `rk_test_...`  |
-| `square_token`      | `sq0...`                      |
-| `braintree_token`   | `access_token$production$...` |
+| Label | Catches |
+|---|---|
+| `stripe_secret` | `sk_live_...`, `sk_test_...` |
+| `stripe_restricted` | `rk_live_...`, `rk_test_...` |
+| `square_token` | `sq0...` |
+| `braintree_token` | `access_token$production$...` |
 
 ### Communications and email
 
-| Label                | Catches                                |
-| -------------------- | -------------------------------------- |
-| `slack_token`        | `xoxb-`, `xoxp-`, `xoxa-`, `xoxr-`     |
-| `slack_webhook`      | `https://hooks.slack.com/services/...` |
-| `twilio_api_key`     | `SK<hex32>`                            |
-| `twilio_account_sid` | `AC<hex32>`                            |
-| `sendgrid_key`       | `SG.<22>.<43>`                         |
-| `mailgun_key`        | `key-<32>`                             |
-| `discord_bot`        | `<MNO><23>.<6>.<27>`                   |
-| `telegram_bot`       | `<8-10 digits>:<35>`                   |
+| Label | Catches |
+|---|---|
+| `slack_token` | `xoxb-`, `xoxp-`, `xoxa-`, `xoxr-` |
+| `slack_webhook` | `https://hooks.slack.com/services/...` |
+| `twilio_api_key` | `SK<hex32>` |
+| `twilio_account_sid` | `AC<hex32>` |
+| `sendgrid_key` | `SG.<22>.<43>` |
+| `mailgun_key` | `key-<32>` |
+| `discord_bot` | `<MNO><23>.<6>.<27>` |
+| `telegram_bot` | `<8-10 digits>:<35>` |
 
 ### Commerce
 
-| Label           | Catches         |
-| --------------- | --------------- |
+| Label | Catches |
+|---|---|
 | `shopify_token` | `shpat_<hex32>` |
 
 ### Database connection strings
 
-| Label             | Catches                                           |
-| ----------------- | ------------------------------------------------- |
+| Label | Catches |
+|---|---|
 | `db_url_postgres` | `postgres://user:pass@host` or `postgresql://...` |
-| `db_url_mysql`    | `mysql://user:pass@host`                          |
-| `db_url_mongodb`  | `mongodb://user:pass@host` or `mongodb+srv://...` |
+| `db_url_mysql` | `mysql://user:pass@host` |
+| `db_url_mongodb` | `mongodb://user:pass@host` or `mongodb+srv://...` |
 
 ### Private keys, JWTs, and generic credentials
 
-| Label             | Catches                                      |
-| ----------------- | -------------------------------------------- |
+| Label | Catches |
+|---|---|
 | `private_key_pem` | `-----BEGIN ... PRIVATE KEY-----` PEM blocks |
-| `jwt`             | `eyJ<header>.eyJ<payload>.<signature>`       |
+| `jwt` | `eyJ<header>.eyJ<payload>.<signature>` |
 
 ### PII (US defaults)
 
-| Label         | Catches                                 |
-| ------------- | --------------------------------------- |
+| Label | Catches |
+|---|---|
 | `credit_card` | 13 to 19 digits with regular separators |
-| `ssn_us`      | `123-45-6789` shape                     |
+| `ssn_us` | `123-45-6789` shape |

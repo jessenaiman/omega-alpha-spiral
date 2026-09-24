@@ -1,7 +1,8 @@
+
 # Cline
 
 > **⚠️ Superseded by the Coding Agents plugin**
-
+>
 **The Cline integration** is superseded by the [Coding Agents plugin](coding-agents.md) — one
 package covering Claude Code, Codex, opencode, Kilo, Cursor, Copilot, Grok, Antigravity, Devin and Cline and other CLI agents, with a per-repo memory bank they all share instead
 of one bank per agent.
@@ -22,7 +23,7 @@ Persistent memory for [Cline](https://github.com/cline/cline) using [Hindsight](
 ## Quick Start
 
 > **💡 Recommended: Hindsight Cloud**
-
+>
 [Sign up free](https://ui.hindsight.vectorize.io/signup) for a Hindsight Cloud API key — no self-hosting required.
 Install the CLI, then run the installer from your project directory with your Hindsight URL and key:
 
@@ -38,9 +39,8 @@ Use `hindsight-cline install --global` to install for all projects, or `hindsigh
 Then **enable hooks in Cline**: Settings → Features → Hooks.
 
 > **📝 Platform**
-
+>
 Cline hooks run on **macOS and Linux only** (no Windows) and require Python 3.
-
 ## How It Works
 
 | Cline hook         | What Hindsight does                                                   |

@@ -10,12 +10,12 @@ Hindsight can be deployed in several ways depending on your infrastructure and r
 
 Hindsight runs on **Linux**, **macOS**, and **Windows**:
 
-| Platform                          | Docker | Bare Metal (pip) | Embedded DB (pg0) | Notes                                                                                                                                                                                                                                                                                                                                         |
-| --------------------------------- | ------ | ---------------- | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Linux** (x86_64, ARM64)         | ✅     | ✅               | ✅                | Fully supported, recommended for production                                                                                                                                                                                                                                                                                                   |
-| **macOS** (Apple Silicon / arm64) | ✅     | ✅               | ✅                | Fully supported                                                                                                                                                                                                                                                                                                                               |
-| **macOS** (Intel / x86_64)        | ✅     | ⚠️ slim only     | ✅                | Use `hindsight-all-slim` / `hindsight-api-slim`. The full bundle's local ML models (PyTorch, MLX) publish no Intel-Mac wheels, so `pip install hindsight-all` silently backtracks to a months-old release. Pair the slim bundle with a hosted embeddings/reranker provider or the in-process ONNX backend (`hindsight-api-slim[local-onnx]`). |
-| **Windows** (x86_64)              | ✅     | ✅               | ✅                | Fully supported — see [Windows setup](#windows) for external PostgreSQL option                                                                                                                                                                                                                                                                |
+| Platform | Docker | Bare Metal (pip) | Embedded DB (pg0) | Notes |
+|----------|--------|------------------|--------------------|-------|
+| **Linux** (x86_64, ARM64) | ✅ | ✅ | ✅ | Fully supported, recommended for production |
+| **macOS** (Apple Silicon / arm64) | ✅ | ✅ | ✅ | Fully supported |
+| **macOS** (Intel / x86_64) | ✅ | ⚠️ slim only | ✅ | Use `hindsight-all-slim` / `hindsight-api-slim`. The full bundle's local ML models (PyTorch, MLX) publish no Intel-Mac wheels, so `pip install hindsight-all` silently backtracks to a months-old release. Pair the slim bundle with a hosted embeddings/reranker provider or the in-process ONNX backend (`hindsight-api-slim[local-onnx]`). |
+| **Windows** (x86_64) | ✅ | ✅ | ✅ | Fully supported — see [Windows setup](#windows) for external PostgreSQL option |
 
 All platforms support the embedded database (pg0) for development. On Windows, you can also use an external PostgreSQL installation — see the [Windows](#windows) section for a step-by-step guide.
 
@@ -37,7 +37,6 @@ Configure which one to use with `HINDSIGHT_API_VECTOR_EXTENSION`. See [Configura
 **By default**, Hindsight uses **pg0** — an embedded PostgreSQL that runs locally on your machine. This is convenient for development but **not recommended for production**.
 
 **For production**, use an external PostgreSQL with one of the supported vector extensions:
-
 - **Supabase** — Managed PostgreSQL with pgvector built-in
 - **Neon** — Serverless PostgreSQL with pgvector
 - **Azure Database for PostgreSQL** — With pgvector and pgvectorscale support
@@ -53,13 +52,13 @@ You need an LLM API key for fact extraction, entity resolution, and answer gener
 
 Hindsight is designed to run on commodity hardware. The footprint depends mainly on whether the **full** image (which bundles local embedding and reranker models) or the **slim** image (which delegates those to external providers) is used.
 
-| Component                 | Minimum RAM               | Recommended RAM           | Notes                                                                                                                                                                                             |
-| ------------------------- | ------------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **API — Full image**      | 1.5 GB                    | 2 GB                      | Loads local BGE embedder (~130 MB) and MiniLM cross-encoder (~90 MB) into memory, plus PyTorch/ONNX runtime arenas. Idle RSS settles around 0.8–1.0 GB; expect 1.2–1.5 GB under load.             |
-| **API — Slim image**      | 512 MB                    | 1 GB                      | No local models. Steady-state RSS is dominated by Python runtime and DB connections. Requires [external embedding and reranker providers](./configuration#embeddings) (e.g. TEI, OpenAI, Cohere). |
-| **Control Plane (UI)**    | 128 MB                    | 256 MB                    | Next.js process, lightweight.                                                                                                                                                                     |
-| **Worker** (if separated) | Same as API image variant | Same as API image variant | Workers load the same models as the API server.                                                                                                                                                   |
-| **PostgreSQL**            | 512 MB                    | 1 GB+                     | Scales with the number of memories and indexes.                                                                                                                                                   |
+| Component | Minimum RAM | Recommended RAM | Notes |
+|-----------|-------------|-----------------|-------|
+| **API — Full image** | 1.5 GB | 2 GB | Loads local BGE embedder (~130 MB) and MiniLM cross-encoder (~90 MB) into memory, plus PyTorch/ONNX runtime arenas. Idle RSS settles around 0.8–1.0 GB; expect 1.2–1.5 GB under load. |
+| **API — Slim image** | 512 MB | 1 GB | No local models. Steady-state RSS is dominated by Python runtime and DB connections. Requires [external embedding and reranker providers](./configuration#embeddings) (e.g. TEI, OpenAI, Cohere). |
+| **Control Plane (UI)** | 128 MB | 256 MB | Next.js process, lightweight. |
+| **Worker** (if separated) | Same as API image variant | Same as API image variant | Workers load the same models as the API server. |
+| **PostgreSQL** | 512 MB | 1 GB+ | Scales with the number of memories and indexes. |
 
 :::tip Reducing the footprint
 The bulk of the full image's memory comes from the bundled embedding and reranker models and their PyTorch/ONNX runtimes. To shrink the deployment to a few hundred MB of RAM, switch to the **slim** image and configure [external embedding and reranker providers](./configuration#embeddings).
@@ -115,10 +114,10 @@ Set `HINDSIGHT_API_WORKER_ID` to a stable value (e.g., `-e HINDSIGHT_API_WORKER_
 
 ### Docker Image Variants
 
-| Variant             | Size (AMD64) | Size (ARM64) | When to use                                                                                                                                                                                                |
-| ------------------- | ------------ | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Full** (`latest`) | ~9 GB        | ~3.7 GB      | Default. Embeddings and reranking run in the image; the LLM is always external, including for local inference.                                                                                             |
-| **Slim** (`slim`)   | ~500 MB      | ~500 MB      | Use when you already rely on external services for embeddings and reranking (OpenAI, Cohere, TEI). Significantly smaller image, faster deploys. Requires [external providers](./configuration#embeddings). |
+| Variant | Size (AMD64) | Size (ARM64) | When to use |
+|---------|--------------|--------------|-------------|
+| **Full** (`latest`) | ~9 GB | ~3.7 GB | Default. Embeddings and reranking run in the image; the LLM is always external, including for local inference. |
+| **Slim** (`slim`) | ~500 MB | ~500 MB | Use when you already rely on external services for embeddings and reranking (OpenAI, Cohere, TEI). Significantly smaller image, faster deploys. Requires [external providers](./configuration#embeddings). |
 
 The slim image corresponds to the [`hindsight-api-slim`](#bare-metal-pip) pip package. See [Configuration](./configuration#embeddings) for external provider options.
 
@@ -199,7 +198,6 @@ helm upgrade hindsight oci://ghcr.io/vectorize-io/charts/hindsight
 ```
 
 **Requirements**:
-
 - Kubernetes cluster (GKE, EKS, AKS, or self-hosted)
 - Helm 3.8+
 
@@ -282,12 +280,12 @@ This connects to your running API server and provides a visual interface for man
 
 #### Options
 
-| Option           | Environment Variable             | Default               | Description                                                                                |
-| ---------------- | -------------------------------- | --------------------- | ------------------------------------------------------------------------------------------ |
-| `-p, --port`     | `PORT`                           | 9999                  | Port to listen on                                                                          |
-| `-H, --hostname` | `HOSTNAME`                       | 0.0.0.0               | Hostname to bind to                                                                        |
-| `-a, --api-url`  | `HINDSIGHT_CP_DATAPLANE_API_URL` | http://localhost:8888 | Hindsight API URL                                                                          |
-|                  | `HINDSIGHT_CP_ACCESS_KEY`        | _(none)_              | Access key to protect the Control Plane UI. When set, users must enter this key to log in. |
+| Option | Environment Variable | Default | Description |
+|--------|---------------------|---------|-------------|
+| `-p, --port` | `PORT` | 9999 | Port to listen on |
+| `-H, --hostname` | `HOSTNAME` | 0.0.0.0 | Hostname to bind to |
+| `-a, --api-url` | `HINDSIGHT_CP_DATAPLANE_API_URL` | http://localhost:8888 | Hindsight API URL |
+| | `HINDSIGHT_CP_ACCESS_KEY` | *(none)* | Access key to protect the Control Plane UI. When set, users must enter this key to log in. |
 
 #### Examples
 

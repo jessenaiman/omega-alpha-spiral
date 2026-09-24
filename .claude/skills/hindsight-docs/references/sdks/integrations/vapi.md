@@ -1,3 +1,4 @@
+
 # Vapi
 
 Persistent long-term memory for [Vapi](https://vapi.ai) voice AI calls via [Hindsight](https://vectorize.io/hindsight). A single webhook handler recalls relevant memories at call start (injected as `assistantOverrides`) and retains the full transcript when the call ends.
@@ -7,9 +8,8 @@ Persistent long-term memory for [Vapi](https://vapi.ai) voice AI calls via [Hind
 ## Quick Start
 
 > **💡 Hindsight Cloud (recommended)**
-
+>
 [Sign up free](https://ui.hindsight.vectorize.io/signup) — get an API key instantly, no infrastructure to run.
-
 ```bash
 pip install hindsight-vapi
 ```
@@ -122,7 +122,6 @@ Typical patterns for the `bank_id`:
 A running Hindsight instance:
 
 **Self-hosted:**
-
 ```bash
 pip install hindsight-all
 export HINDSIGHT_API_LLM_API_KEY=your-api-key

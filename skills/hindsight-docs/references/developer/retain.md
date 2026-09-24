@@ -2,6 +2,7 @@
 sidebar_position: 2
 ---
 
+
 # Retain: How Hindsight Stores Memories
 
 When you call `retain()`, Hindsight transforms conversations and documents into structured, searchable memories that preserve meaning and context.
@@ -40,17 +41,14 @@ Hindsight doesn't just store what was said — it captures **why**, **how**, and
 When you retain "Alice joined Google last spring and was thrilled about the research opportunities", Hindsight extracts:
 
 **The core facts:**
-
 - Alice joined Google
 - This happened last spring
 
 **The emotions and meaning:**
-
 - She was thrilled
 - It represented an important opportunity
 
 **The reasoning:**
-
 - She chose it for the research opportunities
 
 This rich extraction means you can later ask "Why did Alice join Google?" and get a meaningful answer, not just "she joined Google."
@@ -58,13 +56,11 @@ This rich extraction means you can later ask "Why did Alice join Google?" and ge
 ### Preserving Context
 
 Traditional systems fragment information:
-
 - "Bob suggested Summer Vibes"
 - "Alice wanted something unique"
 - "They chose Beach Beats"
 
 Hindsight preserves the full narrative:
-
 - "Alice and Bob discussed naming their summer party playlist. Bob suggested 'Summer Vibes' because it's catchy, but Alice wanted something unique. They ultimately decided on 'Beach Beats' for its playful tone."
 
 This means search results include the full context, not disconnected fragments.
@@ -75,17 +71,17 @@ This means search results include the full context, not disconnected fragments.
 
 Every fact is classified by **whose perspective it captures** — the agent that owns the bank, or the outside world:
 
-| Type           | What it captures                                                                  | Example                         |
-| -------------- | --------------------------------------------------------------------------------- | ------------------------------- |
+| Type           | What it captures                                                              | Example |
+|----------------|------------------------------------------------------------------------------|---------|
 | **experience** | The bank's own agent acting, observing, or interacting — its first-person history | "I recommended Python to Alice" |
-| **world**      | Facts about other people, places, things, and events                              | "Alice works at Google"         |
+| **world**      | Facts about other people, places, things, and events                          | "Alice works at Google" |
 
-The split is decided by **who is speaking**, not by grammar. A first-person statement is an `experience` only when the speaker _is_ the bank's agent. The same words said by someone else are a `world` fact about that person:
+The split is decided by **who is speaking**, not by grammar. A first-person statement is an `experience` only when the speaker *is* the bank's agent. The same words said by someone else are a `world` fact about that person:
 
 - Agent's own log — "I patched the auth bug" → **experience** (the agent did it).
-- A user talking to the agent — "I bought a Tesla" → **world** (a fact about the _user_, not the agent).
+- A user talking to the agent — "I bought a Tesla" → **world** (a fact about the *user*, not the agent).
 
-**Describe the speaker in each item's `context`** to steer this correctly. When retaining transcripts or third-party content, a context like _"Customer Maria is speaking"_ ensures her first-person statements are stored as `world` facts about Maria rather than mistaken for the agent's own experiences. For the agent's own logs, a context like _"The assistant is speaking"_ attributes its first-person statements to the agent as `experience` facts.
+**Describe the speaker in each item's `context`** to steer this correctly. When retaining transcripts or third-party content, a context like *"Customer Maria is speaking"* ensures her first-person statements are stored as `world` facts about Maria rather than mistaken for the agent's own experiences. For the agent's own logs, a context like *"The assistant is speaking"* attributes its first-person statements to the agent as `experience` facts.
 
 **Note:** Observations are consolidated automatically in the background after `retain()` operations complete. This consolidation process synthesizes patterns from new facts into the bank's knowledge base.
 
@@ -105,7 +101,6 @@ Hindsight automatically identifies and tracks **entities** — the people, organ
 ### Entity Resolution
 
 The same entity mentioned different ways gets unified through **fuzzy name matching**, reinforced by co-occurrence and temporal proximity:
-
 - "Alice" + "Alice Chen" + "Alice C." → one person
 
 Because resolution keys off name similarity, close variants merge automatically. Names that do not resemble each other (a nickname and an unrelated formal name, for example) are not unified on the name alone, though shared co-occurring entities can still link them.
@@ -166,11 +161,9 @@ Hindsight tracks **two temporal dimensions**:
 ### When It Happened
 
 For events (meetings, trips, milestones), Hindsight records when they occurred.
-
 - "Alice got married in June 2024" → occurred in June 2024
 
 For general facts (preferences, characteristics), there's no specific occurrence time.
-
 - "Alice prefers Python" → ongoing preference
 
 ### When You Learned It
@@ -180,7 +173,6 @@ Hindsight also tracks when you told it each fact.
 **Why both?**
 
 Imagine in January 2025, someone tells you "Alice got married in June 2024":
-
 - **Historical queries** work: "What did Alice do in 2024?" → finds the marriage
 - **Recency ranking** works: Recent mentions get priority in search
 - **Temporal reasoning** works: "What happened before her marriage?" → finds earlier events
@@ -205,18 +197,15 @@ See [Retain API](./api/retain) for code examples and [Recall API](./api/recall) 
 
 A lot of what a document actually says lives in its pictures: the screenshot of
 the button an instruction refers to, the diagram holding an escalation path, the
-chart that _is_ the data. `content` accepts an ordered list of blocks so those sit
+chart that *is* the data. `content` accepts an ordered list of blocks so those sit
 where they belong, instead of being summarised into a caption beforehand:
 
 ```json
 {
   "content": [
-    { "type": "text", "text": "To reset the VPN, click the button shown:" },
-    {
-      "type": "image",
-      "source": { "type": "base64", "media_type": "image/png", "data": "..." }
-    },
-    { "type": "text", "text": "...then reconnect." }
+    {"type": "text",  "text": "To reset the VPN, click the button shown:"},
+    {"type": "image", "source": {"type": "base64", "media_type": "image/png", "data": "..."}},
+    {"type": "text",  "text": "...then reconnect."}
   ]
 }
 ```
@@ -239,12 +228,8 @@ with a URL you can fetch:
 {
   "text": "The escalation path for a stuck sync begins by contacting Tier 3 Platform.",
   "attachments": [
-    {
-      "id": "c414cd0e204d",
-      "kind": "image",
-      "media_type": "image/png",
-      "url": "/v1/default/banks/my-bank/attachments/c414cd0e204d"
-    }
+    {"id": "c414cd0e204d", "kind": "image", "media_type": "image/png",
+     "url": "/v1/default/banks/my-bank/attachments/c414cd0e204d"}
   ]
 }
 ```
@@ -317,13 +302,13 @@ The mission is injected into the extraction prompt alongside the built-in rules 
 
 For finer control, you can also change the **extraction mode**:
 
-| Mode                  | When to use                                                                                             |
-| --------------------- | ------------------------------------------------------------------------------------------------------- |
-| `concise` _(default)_ | General-purpose — selective, fast                                                                       |
-| `verbose`             | When you need richer facts with full context and relationships                                          |
-| `custom`              | When you want to write your own extraction rules entirely                                               |
-| `verbatim`            | When you need the original chunk text preserved, with LLM-extracted metadata such as entities and dates |
-| `chunks`              | When you want to store chunks as-is with no LLM call or extracted metadata                              |
+| Mode | When to use |
+|------|-------------|
+| `concise` *(default)* | General-purpose — selective, fast |
+| `verbose` | When you need richer facts with full context and relationships |
+| `custom` | When you want to write your own extraction rules entirely |
+| `verbatim` | When you need the original chunk text preserved, with LLM-extracted metadata such as entities and dates |
+| `chunks` | When you want to store chunks as-is with no LLM call or extracted metadata |
 
 Set `retain_mission` and `retain_extraction_mode` via the [bank config API](api/memory-banks.md#retain-configuration), or with the [`HINDSIGHT_API_RETAIN_MISSION`](configuration.md#retain) and [`HINDSIGHT_API_RETAIN_EXTRACTION_MODE`](configuration.md#retain) environment variables.
 
@@ -333,10 +318,10 @@ A mission narrows what becomes a memory — and content that produces no facts p
 
 This is a normal outcome, not an error: the retain succeeds and the operation is reported as completed. Two signals tell you it happened:
 
-| Where                                                         | What to look for                                       |
-| ------------------------------------------------------------- | ------------------------------------------------------ |
-| [`retain.completed` webhook](api/webhooks.md#retaincompleted) | `data.memory_unit_count: 0`                            |
-| [Metrics](monitoring.md#retain-metrics)                       | `hindsight.retain.documents.total{outcome="no_facts"}` |
+| Where | What to look for |
+|-------|------------------|
+| [`retain.completed` webhook](api/webhooks.md#retaincompleted) | `data.memory_unit_count: 0` |
+| [Metrics](monitoring.md#retain-metrics) | `hindsight.retain.documents.total{outcome="no_facts"}` |
 
 You can also audit after the fact: `GET /documents` returns `memory_unit_count` per document, so filtering for `0` lists everything currently unreachable.
 
@@ -381,12 +366,7 @@ When Memory Defense is enabled on the target bank and **every** item in the batc
 {
   "detail": {
     "violations": [
-      {
-        "index": 0,
-        "detector": "prompt_injection",
-        "severity": "high",
-        "message": "..."
-      }
+      { "index": 0, "detector": "prompt_injection", "severity": "high", "message": "..." }
     ]
   }
 }

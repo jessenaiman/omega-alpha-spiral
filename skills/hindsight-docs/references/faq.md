@@ -1,9 +1,10 @@
+
+
 # FAQ
 
 Common questions and answers about Hindsight.
 
 **Contents**
-
 - [What is Hindsight and how does it differ from RAG?](#what-is-hindsight-and-how-does-it-differ-from-rag)
 - [Why use Hindsight instead of other solutions?](#why-use-hindsight-instead-of-other-solutions)
 - [Supported clients, integrations, and LLM providers](#which-clients-and-languages-are-supported)
@@ -126,7 +127,6 @@ See [Installation](developer/installation.md) for self-hosting instructions.
 ### What are the minimum system requirements for self-hosting?
 
 For running the Hindsight API server locally:
-
 - Python 3.11+
 - 4GB RAM minimum (8GB recommended for production)
 - LLM API key (OpenAI, Anthropic, etc.) or local LLM setup
@@ -164,7 +164,6 @@ A **memory bank** is an isolated memory store (like a "brain") that contains its
 There are two approaches for multi-user applications:
 
 **1. Per-user memory banks** (recommended for most use cases)
-
 - Create one bank per user (e.g., `bank_id="user-123"`)
 - Easiest setup and strongest data isolation
 - Perfect for per-user queries and personalization
@@ -172,7 +171,6 @@ There are two approaches for multi-user applications:
 - **Limitation**: Cannot perform cross-user analysis (e.g., "What is the most mentioned topic across all users?")
 
 **2. Single bank with tags** (for applications needing aggregated insights)
-
 - Use one bank for the entire application
 - Tag memories with user identifiers during retain (e.g., `tags={"user_id": "user-123"}`)
 - Filter by tags during recall/reflect for per-user queries
@@ -197,7 +195,6 @@ See [Operations](developer/api/operations.md) for API details.
 ### When should I use recall vs reflect?
 
 **Use recall when:**
-
 - You want raw facts to feed into your own reasoning or prompt
 - You need maximum control over how memories are interpreted
 - You're doing simple fact lookup (e.g., "What did Alice say about X?")
@@ -205,7 +202,6 @@ See [Operations](developer/api/operations.md) for API details.
 - You want to build your own answer synthesis layer on top of retrieved memories
 
 **Use reflect when:**
-
 - You want a ready-to-use answer generated from memories (no extra LLM call needed)
 - You need disposition-aware responses shaped by the bank's personality traits (skepticism, literalism, empathy)
 - The query requires multi-step reasoning across facts, observations, and mental models
@@ -243,12 +239,12 @@ You create a mental model with the question that defines it; Hindsight builds th
 
 A **knowledge page is a mental model** — the same engine, the same refresh behaviour — with two additions: a place in a folder tree, and a set of defaults tuned for documents rather than answers (built from observations only, refreshed incrementally after each consolidation, never influenced by other pages, and a larger content budget).
 
-|                  | Mental model                            | Knowledge page                         |
-| ---------------- | --------------------------------------- | -------------------------------------- |
-| Shape            | A standing answer to a question         | A markdown document with frontmatter   |
-| Organization     | Flat list, scoped by tags               | Nested folders and pages               |
-| Sources          | All fact types by default               | Observations only by default           |
-| Refresh          | Off by default                          | Delta refresh after each consolidation |
+| | Mental model | Knowledge page |
+|---|---|---|
+| Shape | A standing answer to a question | A markdown document with frontmatter |
+| Organization | Flat list, scoped by tags | Nested folders and pages |
+| Sources | All fact types by default | Observations only by default |
+| Refresh | Off by default | Delta refresh after each consolidation |
 | Typical consumer | Your application or an agent, by lookup | A person or agent browsing and reading |
 
 Use a plain mental model when something in your system looks up the answer. Use a knowledge page when the result is meant to be browsed and read directly, like a wiki. Anything you can configure on a mental model can be configured on a page.
@@ -260,7 +256,6 @@ See [Mental Models](developer/api/mental-models.md) and the Knowledge Pages sect
 ### What's the typical latency for recall operations?
 
 Typical latencies:
-
 - **Without reranking**: 50-100ms
 - **With reranking**: 200-500ms (depends on reranker model and installation)
 
@@ -312,7 +307,6 @@ See [Entity Labels](developer/retain.md#entity-labels) for configuration details
 **What about document `metadata`?**
 
 Document metadata (the `metadata` key-value pairs on a retain item) serves a different purpose. It is:
-
 - **Included in the fact extraction prompt**, so the LLM can use it as additional context when extracting facts — for example, knowing the document title or source can improve accuracy.
 - **Returned with every recalled memory** as-is, so your application can link memories back to source systems (e.g. a URL, thread ID, or ticket number) without extra lookups.
 
@@ -342,9 +336,9 @@ Pass the **entire conversation as a single document** and upsert it as the conve
 
 ```json
 [
-  { "role": "user", "content": "I moved to Berlin last month." },
-  { "role": "assistant", "content": "How are you finding it?" },
-  { "role": "user", "content": "Love it, especially the food scene." }
+  {"role": "user",      "content": "I moved to Berlin last month."},
+  {"role": "assistant", "content": "How are you finding it?"},
+  {"role": "user",      "content": "Love it, especially the food scene."}
 ]
 ```
 
@@ -408,7 +402,7 @@ This is where traditional graphs run into major limitations when used for AI mem
 The creation of stickers happens through a mix of AI automation and developer control:
 
 - **Open-world automation (default):** Hindsight's LLM pipeline automatically detects and extracts standard entities — people, places, dates — from raw text and turns them into stickers.
-- **Developer control via `entity_labels`:** You can define a custom schema using [entity labels](developer/retain.md#entity-labels). This forces the LLM to categorize memories using a strict, predefined vocabulary. Instead of letting the AI invent random descriptors, you choose the exact names and parameters for the stickers — for example, forcing a `pedagogy` key to only choose from `scaffolding`, `direct_instruction`, or `socratic_questioning`. To lock the bank to _only_ your configured labels and turn off the open-world automation above, also set `entities_allow_free_form: false` on the bank config — the LLM then skips free-form named entities entirely and emits only entries that match your schema.
+- **Developer control via `entity_labels`:** You can define a custom schema using [entity labels](developer/retain.md#entity-labels). This forces the LLM to categorize memories using a strict, predefined vocabulary. Instead of letting the AI invent random descriptors, you choose the exact names and parameters for the stickers — for example, forcing a `pedagogy` key to only choose from `scaffolding`, `direct_instruction`, or `socratic_questioning`. To lock the bank to *only* your configured labels and turn off the open-world automation above, also set `entities_allow_free_form: false` on the bank config — the LLM then skips free-form named entities entirely and emits only entries that match your schema.
 
 #### Can I build direct entity-to-entity pipelines?
 

@@ -1,3 +1,4 @@
+
 # Right Agent
 
 Persistent memory for [Right Agent](https://github.com/onsails/right-agent) using [Hindsight](https://hindsight.vectorize.io).
@@ -59,11 +60,11 @@ Right Agent's MCP aggregator runs on the host — outside the sandbox — and is
 
 The aggregator exposes three memory tools to every Hindsight-mode agent:
 
-| Tool                                          | Purpose                                                                                 |
-| --------------------------------------------- | --------------------------------------------------------------------------------------- |
+| Tool | Purpose |
+|---|---|
 | `mcp__right__memory_retain(content, context)` | Save a fact permanently with a short label (`"user preference"`, `"api format"`, etc.). |
-| `mcp__right__memory_recall(query)`            | Ranked semantic + keyword + graph search across the agent's memory.                     |
-| `mcp__right__memory_reflect(query)`           | Deep analysis across memories — synthesize patterns, compare past decisions.            |
+| `mcp__right__memory_recall(query)` | Ranked semantic + keyword + graph search across the agent's memory. |
+| `mcp__right__memory_reflect(query)` | Deep analysis across memories — synthesize patterns, compare past decisions. |
 
 The bundled `rightmemory` skill tells the agent when to reach for each one and what belongs in memory rather than in the agent's identity files.
 
@@ -74,9 +75,9 @@ The bundled `rightmemory` skill tells the agent when to reach for each one and w
 ```yaml
 memory:
   provider: hindsight
-  api_key: your-api-key # or omit to use HINDSIGHT_API_KEY env var
-  bank_id: my-agent # defaults to the agent name
-  recall_budget: 8000 # optional, token budget for auto-recall
+  api_key: your-api-key   # or omit to use HINDSIGHT_API_KEY env var
+  bank_id: my-agent                    # defaults to the agent name
+  recall_budget: 8000                  # optional, token budget for auto-recall
 ```
 
 To change any of these later, edit the file and run `right restart <agent>`. To switch an existing agent between providers, run `right agent config <agent>` and re-run the wizard.

@@ -46,10 +46,10 @@ hindsight-admin run-db-migration [OPTIONS]
 
 **Options:**
 
-| Option                       | Description                                                                                                                                                                                                                                                                                                             | Default        |
-| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------- |
-| `--schema`, `-s`             | Database schema to run migrations on. If omitted, migrate the base schema plus all discovered tenant schemas.                                                                                                                                                                                                           | All schemas    |
-| `--embedding-dimension`      | Expected embedding dimension to enforce after migrations. Omit to skip the post-migration dimension sync.                                                                                                                                                                                                               | Skipped        |
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--schema`, `-s` | Database schema to run migrations on. If omitted, migrate the base schema plus all discovered tenant schemas. | All schemas |
+| `--embedding-dimension` | Expected embedding dimension to enforce after migrations. Omit to skip the post-migration dimension sync. | Skipped |
 | `--skip-extension-reconcile` | Skip the post-migration vector / text-search index reconcile (it only does work when `HINDSIGHT_API_VECTOR_EXTENSION` / `HINDSIGHT_API_TEXT_SEARCH_EXTENSION` differs from a schema's existing indexes). Makes a no-change re-migration across many tenant schemas much faster; only use when the backend is unchanged. | Reconcile runs |
 
 **Examples:**
@@ -82,12 +82,12 @@ hindsight-admin repair-bank (--bank BANK_ID | --all) [OPTIONS]
 
 **Options:**
 
-| Option           | Description                                                             | Default     |
-| ---------------- | ----------------------------------------------------------------------- | ----------- |
-| `--bank`, `-b`   | Bank id to repair. Mutually exclusive with `--all`.                     | —           |
-| `--all`          | Repair every bank in the base schema and all discovered tenant schemas. | —           |
-| `--schema`, `-s` | Limit to a single schema.                                               | All schemas |
-| `--dry-run`      | Report what would be repaired without creating or dropping any index.   | Off         |
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--bank`, `-b` | Bank id to repair. Mutually exclusive with `--all`. | — |
+| `--all` | Repair every bank in the base schema and all discovered tenant schemas. | — |
+| `--schema`, `-s` | Limit to a single schema. | All schemas |
+| `--dry-run` | Report what would be repaired without creating or dropping any index. | Off |
 
 Exactly one of `--bank` or `--all` is required. No-op for backends that use a single global vector index (AlloyDB ScaNN, Oracle). It is idempotent — safe to re-run and safe to run while the API is serving traffic.
 
@@ -152,12 +152,12 @@ hindsight-admin rename-bank --from OLD_ID --to NEW_ID [OPTIONS]
 
 **Options:**
 
-| Option           | Description                                                                     | Default                |
-| ---------------- | ------------------------------------------------------------------------------- | ---------------------- |
-| `--from`         | Current bank id.                                                                | —                      |
-| `--to`           | New bank id. Must not already exist.                                            | —                      |
-| `--schema`, `-s` | Schema the bank lives in.                                                       | Configured base schema |
-| `--dry-run`      | Run the whole rename, print the rows that would move per table, then roll back. | Off                    |
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--from` | Current bank id. | — |
+| `--to` | New bank id. Must not already exist. | — |
+| `--schema`, `-s` | Schema the bank lives in. | Configured base schema |
+| `--dry-run` | Run the whole rename, print the rows that would move per table, then roll back. | Off |
 
 **Before you run it:**
 
@@ -189,14 +189,14 @@ hindsight-admin backup OUTPUT [OPTIONS]
 
 **Arguments:**
 
-| Argument | Description                                                 |
-| -------- | ----------------------------------------------------------- |
+| Argument | Description |
+|----------|-------------|
 | `OUTPUT` | Output file path (will add `.zip` extension if not present) |
 
 **Options:**
 
-| Option           | Description               | Default  |
-| ---------------- | ------------------------- | -------- |
+| Option | Description | Default |
+|--------|-------------|---------|
 | `--schema`, `-s` | Database schema to backup | `public` |
 
 **Examples:**
@@ -210,7 +210,6 @@ hindsight-admin backup /backups/tenant-acme.zip --schema tenant_acme
 ```
 
 The backup includes:
-
 - Memory banks and their configuration
 - Documents and chunks
 - Entities and their relationships
@@ -236,16 +235,16 @@ hindsight-admin restore INPUT [OPTIONS]
 
 **Arguments:**
 
-| Argument | Description              |
-| -------- | ------------------------ |
-| `INPUT`  | Input backup file (.zip) |
+| Argument | Description |
+|----------|-------------|
+| `INPUT` | Input backup file (.zip) |
 
 **Options:**
 
-| Option           | Description                   | Default  |
-| ---------------- | ----------------------------- | -------- |
+| Option | Description | Default |
+|--------|-------------|---------|
 | `--schema`, `-s` | Database schema to restore to | `public` |
-| `--yes`, `-y`    | Skip confirmation prompt      | `false`  |
+| `--yes`, `-y` | Skip confirmation prompt | `false` |
 
 **Examples:**
 
@@ -276,16 +275,16 @@ hindsight-admin decommission-worker WORKER_ID [OPTIONS]
 
 **Arguments:**
 
-| Argument    | Description                      |
-| ----------- | -------------------------------- |
+| Argument | Description |
+|----------|-------------|
 | `WORKER_ID` | ID of the worker to decommission |
 
 **Options:**
 
-| Option           | Description              | Default  |
-| ---------------- | ------------------------ | -------- |
-| `--schema`, `-s` | Database schema          | `public` |
-| `--yes`, `-y`    | Skip confirmation prompt | `false`  |
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--schema`, `-s` | Database schema | `public` |
+| `--yes`, `-y` | Skip confirmation prompt | `false` |
 
 **Examples:**
 
@@ -312,6 +311,7 @@ hindsight-admin decommission-worker worker-1 --schema tenant_acme
 Worker IDs default to the hostname. In Kubernetes StatefulSets, this is the pod name (e.g., `hindsight-worker-0`). You can also set a custom ID with `HINDSIGHT_API_WORKER_ID` or `--worker-id`.
 :::
 
+
 ### decommission-workers
 
 Release all currently-processing tasks from every worker, resetting them from "processing" back to "pending" status. Use this when one or more workers have crashed or been removed without graceful shutdown and you don't know which worker IDs to target.
@@ -322,10 +322,10 @@ hindsight-admin decommission-workers [OPTIONS]
 
 **Options:**
 
-| Option           | Description              | Default  |
-| ---------------- | ------------------------ | -------- |
-| `--schema`, `-s` | Database schema          | `public` |
-| `--yes`, `-y`    | Skip confirmation prompt | `false`  |
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--schema`, `-s` | Database schema | `public` |
+| `--yes`, `-y` | Skip confirmation prompt | `false` |
 
 **Examples:**
 
@@ -362,8 +362,8 @@ hindsight-admin worker-status [OPTIONS]
 
 **Options:**
 
-| Option           | Description     | Default  |
-| ---------------- | --------------- | -------- |
+| Option | Description | Default |
+|--------|-------------|---------|
 | `--schema`, `-s` | Database schema | `public` |
 
 **Examples:**
@@ -394,12 +394,12 @@ hindsight-admin export-bank --bank <BANK_ID> --output <FILE.zip> [OPTIONS]
 
 **Options:**
 
-| Option              | Description                                                    | Default     |
-| ------------------- | -------------------------------------------------------------- | ----------- |
-| `--bank`, `-b`      | Bank id to export.                                             | (required)  |
-| `--output`, `-o`    | Path to write the `.zip` archive.                              | (required)  |
-| `--schema`, `-s`    | Schema the bank lives in.                                      | base schema |
-| `--include-history` | Also export operational history (`audit_log`, `llm_requests`). | `false`     |
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--bank`, `-b` | Bank id to export. | (required) |
+| `--output`, `-o` | Path to write the `.zip` archive. | (required) |
+| `--schema`, `-s` | Schema the bank lives in. | base schema |
+| `--include-history` | Also export operational history (`audit_log`, `llm_requests`). | `false` |
 
 **Examples:**
 
@@ -424,12 +424,12 @@ hindsight-admin import-bank --archive <FILE.zip> [OPTIONS]
 
 **Options:**
 
-| Option              | Description                                                   | Default     |
-| ------------------- | ------------------------------------------------------------- | ----------- |
-| `--archive`, `-a`   | Path to the `.zip` produced by `export-bank`.                 | (required)  |
-| `--schema`, `-s`    | Target schema.                                                | base schema |
-| `--target-bank`     | Override the bank id (defaults to the archive's source bank). | source bank |
-| `--include-history` | Also restore history if present in the archive.               | `false`     |
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--archive`, `-a` | Path to the `.zip` produced by `export-bank`. | (required) |
+| `--schema`, `-s` | Target schema. | base schema |
+| `--target-bank` | Override the bank id (defaults to the archive's source bank). | source bank |
+| `--include-history` | Also restore history if present in the archive. | `false` |
 
 **Examples:**
 
@@ -513,8 +513,8 @@ See [Installation - Docker](./installation#docker) and [Configuration - Distribu
 
 The admin CLI uses the same environment variables as the API service. The most important one is:
 
-| Variable                     | Description                  | Default          |
-| ---------------------------- | ---------------------------- | ---------------- |
+| Variable | Description | Default |
+|----------|-------------|---------|
 | `HINDSIGHT_API_DATABASE_URL` | PostgreSQL connection string | `pg0` (embedded) |
 
 **Example:**
