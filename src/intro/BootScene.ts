@@ -18,12 +18,13 @@ import {
   type Intents,
 } from "../core/input";
 import {
-  CHRONICLE_FINAL,
-  createChronicleQuestions,
-  getChronicleInterlude,
-  type ChronicleInterlude,
-  type ChronicleQuestion,
-} from "./chronicle";
+  GHOST_FINAL,
+  createGhostQuestions,
+  getGhostInterlude,
+  type GhostInterlude,
+  type GhostQuestion,
+} from "../dialogue/ghost";
+import { DialogueState, type DialogueStateSnapshot } from "../dialogue/state";
 import { createBootFrames, type BootFrame } from "./ghostwriting";
 import { getIntroEra } from "./IntroEraDesign";
 import { IntroAudio } from "./IntroAudio";
@@ -31,8 +32,9 @@ import type { IntroPhysicsDiagnostics } from "./IntroPhysics";
 import { BOOT_EFFECTS, SpatialBootScene } from "./SpatialBootScene";
 import { ChapterTwoScene } from "../chapter-two/ChapterTwoScene";
 import { StudioOpening, studioOpeningDocument } from "./StudioOpening";
-import { WritingPlayback } from "./ghost-type-study/WritingPlayback";
-import { PROFILES, SPEAKERS } from "./ghost-type-study/profiles";
+import { WritingPlayback } from "../dialogue/writing";
+import { PROFILES, SPEAKERS } from "../dialogue/personas";
+import { applyEraShaderCss } from "../era-shaders";
 import dustBundle from "./vfx/boot-dust.bundle.json";
 
 const SEED: number = 472;
@@ -88,6 +90,13 @@ interface IntroDiagnosticState {
   activeLoops: number;
   pausedForScreenshot: boolean;
   debugUiHidden: boolean;
+  dialogue: {
+    levelId: string;
+    eraShaderId: string;
+    event: string;
+    nextLevel: string;
+    values: DialogueStateSnapshot;
+  };
 }
 
 interface IntroTestHooks {
@@ -134,8 +143,7 @@ export class BootScene {
   private _vfx: ThreeVfxRenderer | null = null;
   private _dust: ThreeVfxEffectInstance | null = null;
   private _abort: AbortController = new AbortController();
-  private _questions: readonly ChronicleQuestion[] =
-    createChronicleQuestions(SEED);
+  private _questions: readonly GhostQuestion[] = createGhostQuestions(SEED);
   private _studioOpening = new StudioOpening();
   private _typing = new WritingPlayback();
   private _typingKey = "";
@@ -189,15 +197,16 @@ export class BootScene {
   private _lastInputMode: "controller" | "keyboard" | "touch" = "keyboard";
   private _actionDiscovered: boolean = false;
   private _pendingChoice: number = -1;
-  private _interlude: ChronicleInterlude | null = null;
+  private _interlude: GhostInterlude | null = null;
   private _currentFrame: BootFrame | null = null;
+  private _dialogueState = new DialogueState();
+  private _dialogueEvent = "";
+  private _nextLevel = "";
 
   public init(): void {
     this._spatial.setStudioPresentation(studioOpeningDocument.presentation);
     this._questions = this._questions.map((question, index) =>
-      index === 0
-        ? { ...question, question: this._studioOpening.lastLine }
-        : question
+      index === 0 ? this._studioOpening.applyTo(question) : question
     );
     this._root = getElement("main", HTMLElement);
     this._prelude = getElement("#os-prelude-ts", HTMLElement);
@@ -209,6 +218,13 @@ export class BootScene {
       HTMLElement
     );
     this._choices = getElement("#os-choices-ts", HTMLFieldSetElement);
+    applyEraShaderCss(this._root, this._questions[0].eraShaderId);
+    document
+      .querySelectorAll<HTMLElement>(".os-choice")
+      .forEach((element, index) => {
+        const speaker = SPEAKERS[index + 1];
+        if (speaker) applyEraShaderCss(element, PROFILES[speaker].eraShaderId);
+      });
     this._isDebug = new URLSearchParams(location.search).has("debug");
     this._chapterTwo.init(this._root, this._isDebug);
     document
@@ -491,12 +507,13 @@ export class BootScene {
   }
 
   private _reset(): void {
+    this._dialogueState.reset();
+    this._dialogueEvent = "";
+    this._nextLevel = "";
     this._typingKey = "";
     this._studioOpening = new StudioOpening();
     this._questions = this._questions.map((question, index) =>
-      index === 0
-        ? { ...question, question: this._studioOpening.lastLine }
-        : question
+      index === 0 ? this._studioOpening.applyTo(question) : question
     );
     this._chapterTwo.stop();
     this._elapsedMs = 0;
@@ -579,14 +596,15 @@ export class BootScene {
           this._isReduced
         );
         this._canContinue = opening.awaiting;
+        const promptReady = opening.awaiting || opening.done;
         const frame = this._storyFrame(
-          opening.text,
+          promptReady ? this._questions[0].question : opening.text,
           opening.done ? "waiting" : "prelude",
           0,
           opening.awaiting ? "Continue to the three paths" : undefined,
           this._motionMs
         );
-        frame.studioSpeaker = opening.speaker;
+        frame.studioSpeaker = promptReady ? "omega" : opening.speaker;
         this._applyFrame(frame, opening.done);
       }
       const displayMs: number = this._elapsedMs;
@@ -712,8 +730,8 @@ export class BootScene {
       "doorway",
       "final",
     ].includes(this._storyMode)
-      ? "QUESTION 5 / 5 · THRESHOLD"
-      : `QUESTION ${Math.min(this._questionIndex + 1, this._questions.length)} / 5`;
+      ? `PASSAGE ${this._questions.length} / ${this._questions.length} · THRESHOLD`
+      : `PASSAGE ${Math.min(this._questionIndex + 1, this._questions.length)} / ${this._questions.length}`;
     const guide = getElement("#os-route-guide-ts", HTMLElement);
     guide.hidden = this._storyMode !== "waiting";
     guide
@@ -763,27 +781,32 @@ export class BootScene {
       this._storyMode === "complete";
     const isDoorway: boolean = this._storyMode === "doorway";
     const spatialView: boolean = isQuestion || isTravel;
-    const targetX: number =
-      spatialView || isResponse
-        ? (window.innerWidth < 760 ? 0.28 : 0.68) +
-          (isTravel || isResponse ? player.x * 0.24 : 0)
+    const viewFov: number = spatialView ? 48 : 36;
+    if (Math.abs(this._camera.fov - viewFov) > 0.01) {
+      this._camera.fov = viewFov;
+      this._camera.updateProjectionMatrix();
+    }
+    const targetX: number = spatialView
+      ? player.x * 0.55 + (window.innerWidth < 760 ? 0.15 : 0.32)
+      : isResponse
+        ? 0.68 + player.x * 0.24
         : 0;
     const targetY: number = isTravel
-      ? player.y - 0.25
+      ? player.y - 0.9
       : isResponse
         ? player.y * 0.48
         : isDoorway
           ? player.y * 0.22
           : spatialView
-            ? -0.9
+            ? player.y - 0.82
             : isThreshold
               ? 0.12
               : 0;
     const targetZ: number = isTravel
-      ? player.z + 8.55
+      ? player.z + 3.45
       : stationDepth +
         (isQuestion
-          ? 9.1
+          ? player.z - stationDepth + 3.6
           : isThreshold
             ? 8.35
             : this._storyMode === "boot"
@@ -799,17 +822,17 @@ export class BootScene {
     this._camera.position.y += (targetY - this._camera.position.y) * blend;
     this._camera.position.z += (targetZ - this._camera.position.z) * blend;
     this._cameraLook.set(
-      isTravel ? player.x * 0.22 : 0,
+      spatialView ? player.x * 0.38 : 0,
       isTravel
-        ? player.y + 0.75
+        ? player.y + 1.12
         : isResponse
           ? player.y * 0.4
           : isDoorway
             ? player.y * 0.2
             : spatialView
-              ? 0.12
+              ? player.y + 1.05
               : 0,
-      isTravel ? player.z - 0.9 : stationDepth + (spatialView ? -0.7 : 0)
+      spatialView ? player.z - 1.35 : stationDepth
     );
     this._camera.lookAt(this._cameraLook);
   }
@@ -829,7 +852,26 @@ export class BootScene {
     this._selectedChoice = index;
     this._pendingChoice = -1;
     this._answersCommitted += 1;
-    const question: ChronicleQuestion = this._questions[this._questionIndex];
+    const question: GhostQuestion = this._questions[this._questionIndex];
+    const choice = question.choices[index];
+    this._dialogueState.apply(choice.effects);
+    this._dialogueEvent = choice.emit;
+    this._nextLevel = choice.transition;
+    if (this._root) {
+      this._root.dataset.osDialogueEventTs = choice.emit;
+      this._root.dataset.osNextLevelTs = choice.transition;
+    }
+    if (choice.emit)
+      window.dispatchEvent(
+        new CustomEvent(choice.emit, {
+          detail: {
+            levelId: question.levelId,
+            owner: choice.owner,
+            state: this._dialogueState.snapshot(),
+            transition: choice.transition,
+          },
+        })
+      );
     this._lastThreadName = ["Light", "Shadow", "Ambition"][index] ?? "Light";
     this._spatial.commitChoice(index);
     this._spatial.setPlayerStage(this._answersCommitted);
@@ -854,6 +896,8 @@ export class BootScene {
 
   private _beginPrelude(index: number): void {
     this._questionIndex = index;
+    if (this._root)
+      applyEraShaderCss(this._root, this._questions[index].eraShaderId);
     this._storyMode = "prelude";
     this._storyStartedAt = performance.now();
     this._canContinue = false;
@@ -877,7 +921,7 @@ export class BootScene {
     );
   }
 
-  private _beginCommentary(interlude: ChronicleInterlude): void {
+  private _beginCommentary(interlude: GhostInterlude): void {
     this._interlude = interlude;
     this._storyMode = "commentary";
     this._storyStartedAt = performance.now();
@@ -952,7 +996,7 @@ export class BootScene {
       return;
     }
     if (this._storyMode === "response") {
-      const interlude: ChronicleInterlude | null = getChronicleInterlude(
+      const interlude: GhostInterlude | null = getGhostInterlude(
         this._questionIndex,
         this._selectedChoice
       );
@@ -979,7 +1023,7 @@ export class BootScene {
 
   private _updateStory(now: number): void {
     const elapsedMs: number = Math.max(0, now - this._storyStartedAt);
-    const question: ChronicleQuestion =
+    const question: GhostQuestion =
       this._questions[
         Math.min(this._questionIndex, this._questions.length - 1)
       ];
@@ -1165,7 +1209,7 @@ export class BootScene {
     isCorrupt: boolean = false,
     speaker?: number
   ): BootFrame {
-    const question: ChronicleQuestion =
+    const question: GhostQuestion =
       this._questions[
         Math.min(this._questionIndex, this._questions.length - 1)
       ];
@@ -1180,6 +1224,10 @@ export class BootScene {
       question: text,
       transcript: this._frames.at(-1)?.transcript ?? "",
       choices: question.choices.map((choice) => choice.text),
+      choiceLines:
+        phase === "waiting"
+          ? question.choices.map((choice) => choice.text)
+          : undefined,
       isCorrupt,
       phase,
       format,
@@ -1275,7 +1323,7 @@ export class BootScene {
   }
 
   private _finalScript(): string {
-    return CHRONICLE_FINAL.replace("{{THREAD_NAME}}", this._lastThreadName);
+    return GHOST_FINAL.replace("{{THREAD_NAME}}", this._lastThreadName);
   }
 
   private _finalText(elapsedMs: number): string {
@@ -1424,6 +1472,10 @@ export class BootScene {
         ? "stick forward · walk through the words · A guides"
         : "W / ↑ · walk through the words · Enter guides";
     if (this._storyMode === "name") return "Type your name and press Enter";
+    if (this._storyMode === "boot" && this._canContinue)
+      return this._lastInputMode === "controller"
+        ? "A · continue to the three paths"
+        : "Enter · continue to the three paths";
     if (this._canContinue)
       return this._lastInputMode === "controller"
         ? "A · continue now · otherwise the story continues"
@@ -1683,7 +1735,7 @@ export class BootScene {
       seed: async (value: string | number): Promise<{ seed: string }> => {
         await this._spatialReady;
         this._seed = String(value);
-        this._questions = createChronicleQuestions(this._seed);
+        this._questions = createGhostQuestions(this._seed);
         this._frames = createBootFrames(this._seed, this._questions[0]);
         this._reset();
         return { seed: this._seed };
@@ -1731,7 +1783,7 @@ export class BootScene {
     this._clearNativeChoices();
     if (name.startsWith("question-")) {
       const questionIndex: number = Number(name.slice(-1)) - 1;
-      const question: ChronicleQuestion | undefined =
+      const question: GhostQuestion | undefined =
         this._questions[questionIndex];
       if (!question) throw new Error(`Unknown test state: ${name}`);
       this._questionIndex = questionIndex;
@@ -1850,6 +1902,13 @@ export class BootScene {
       activeLoops: this._isDestroyed || !this._raf ? 0 : 1,
       pausedForScreenshot: this._simulationPaused,
       debugUiHidden: this._debugUiHidden,
+      dialogue: {
+        levelId: this._questions[this._questionIndex]?.levelId ?? "",
+        eraShaderId: this._questions[this._questionIndex]?.eraShaderId ?? "",
+        event: this._dialogueEvent,
+        nextLevel: this._nextLevel,
+        values: this._dialogueState.snapshot(),
+      },
     };
   }
 }

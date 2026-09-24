@@ -1,6 +1,7 @@
 # Shadow.omd — Omega Design. Mirrors Dialogic's .dch character resource.
 
-schema = dreamweaver.oms
+schema = dialogue.oms
+kind = persona
 id = shadow
 display_name = Shadow
 nicknames = Keeper, Violet One
@@ -23,8 +24,11 @@ correction = 220
 revision = 420
 
 [typography]
-tradition = dec-vt100-ascii-terminal
 case = mixed
+
+[era_shader]
+id = dec-vt100-ascii-terminal
+surfaces = dialogue, choice, hud, menu, npc-label, world-prompt
 
 [replacement]
 from = holds

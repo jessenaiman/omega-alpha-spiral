@@ -1,7 +1,7 @@
-// Skeleton → atlas. One authored skeleton, rasterised at each tradition's fidelity.
+// Skeleton → atlas. One authored skeleton, rasterised at each era shader's fidelity.
 import { CanvasTexture, LinearFilter, NearestFilter } from "three";
 import { SKELETON, type Glyph } from "./skeleton";
-import type { Tradition } from "./traditions";
+import type { EraShaderDefinition } from "../../era-shaders";
 
 export const GLYPHS =
   Array.from({ length: 96 }, (_, i) => String.fromCharCode(i + 32)).join("") +
@@ -13,7 +13,7 @@ const ROWS = 7;
 function trace(
   ctx: CanvasRenderingContext2D,
   glyph: Glyph,
-  [cw, ch]: [number, number],
+  [cw, ch]: readonly [number, number],
   round: boolean
 ) {
   ctx.beginPath();
@@ -38,7 +38,10 @@ function trace(
 }
 
 /** A glyph we have not authored yet — visible, never a silent blank. */
-function tofu(ctx: CanvasRenderingContext2D, [cw, ch]: [number, number]) {
+function tofu(
+  ctx: CanvasRenderingContext2D,
+  [cw, ch]: readonly [number, number]
+) {
   ctx.strokeRect(cw * 0.22, ch * 0.22, cw * 0.56, ch * 0.56);
 }
 
@@ -49,16 +52,16 @@ function harden(ctx: CanvasRenderingContext2D, w: number, h: number) {
   ctx.putImageData(img, 0, 0);
 }
 
-export function makeAtlas(tradition: Tradition): CanvasTexture {
-  const [cw, ch] = tradition.cell;
-  const smooth = tradition.round > 0.5;
+export function makeAtlas(eraShader: EraShaderDefinition): CanvasTexture {
+  const [cw, ch] = eraShader.cell;
+  const smooth = eraShader.round > 0.5;
   const canvas = document.createElement("canvas");
   canvas.width = cw * COLS;
   canvas.height = ch * ROWS;
   const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
   ctx.strokeStyle = "#ffffff";
   ctx.fillStyle = "#ffffff";
-  ctx.lineWidth = Math.max(1, tradition.weight * ch);
+  ctx.lineWidth = Math.max(1, eraShader.weight * ch);
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
   const pad = ctx.lineWidth / 2 + 0.5;
@@ -71,8 +74,8 @@ export function makeAtlas(tradition: Tradition): CanvasTexture {
     const glyph = SKELETON[ch2];
     if (ch2 === " ") {
       // nothing
-    } else if (glyph && glyph.length) trace(ctx, glyph, tradition.cell, smooth);
-    else tofu(ctx, tradition.cell);
+    } else if (glyph && glyph.length) trace(ctx, glyph, eraShader.cell, smooth);
+    else tofu(ctx, eraShader.cell);
     ctx.restore();
   }
   if (!smooth) harden(ctx, canvas.width, canvas.height);

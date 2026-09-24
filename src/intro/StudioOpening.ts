@@ -1,52 +1,35 @@
-import scene1 from "../dialogue/scene1.oml?raw";
+import ghostFloor01 from "../dialogue/ghost-floor-01.oml?raw";
 import {
   DialogueTimeline,
-  parseDialogue,
+  dialogueDocumentFromOml,
   type DialogueDocument,
-} from "./ghost-type-study/DialogueTimeline";
-import {
-  WritingPlayback,
-  resolveWritingText,
-} from "./ghost-type-study/WritingPlayback";
+} from "../dialogue/timeline";
+import { WritingPlayback, resolveWritingText } from "../dialogue/writing";
 import { parseOml } from "../core/oml";
-import type { ChronicleQuestion } from "./chronicle";
-import {
-  PROFILES,
-  SPEAKERS,
-  type SpeakerId,
-} from "./ghost-type-study/profiles";
+import type { GhostQuestion } from "../dialogue/ghost";
+import { PROFILES, SPEAKERS, type SpeakerId } from "../dialogue/personas";
+import type { Layout } from "../era-shaders/text";
+
+const layouts: readonly Layout[] = ["manuscript", "fragments", "passage"];
 
 /** The game plays the same .oml the studio edits. One file, one parser. */
-export const studioOpeningDocument = toDocument(parseOml(scene1));
-
-function toDocument(parsed: ReturnType<typeof parseOml>): DialogueDocument {
-  return parseDialogue(
-    JSON.stringify({
-      $schema: "./dialogue.schema.json",
-      schemaVersion: 1,
-      title: "Opening",
-      source: "src/dialogue/scene1.oml",
-      events: parsed.events.map((event, index) => ({
-        id: `line-${index + 1}`,
-        ...(event.type === "wait"
-          ? { type: "wait", durationMs: event.durationMs ?? 0 }
-          : event.type === "continue"
-            ? { type: "continue", label: event.label ?? "continue" }
-            : {
-                type: "line",
-                speaker: event.speaker ?? "omega",
-                text: event.text ?? "",
-              }),
-      })),
-      presentation: {
-        scene: "opening",
-        era: parsed.scene.era ?? "ibm-pc-vga",
-        layout: parsed.scene.layout ?? "passage",
-        voices: {},
-      },
-    })
-  );
-}
+export const ghostFloor01Script = parseOml(ghostFloor01);
+const openingLayout = layouts.includes(
+  ghostFloor01Script.scene.layout as Layout
+)
+  ? (ghostFloor01Script.scene.layout as Layout)
+  : "passage";
+export const studioOpeningDocument = dialogueDocumentFromOml(
+  ghostFloor01Script,
+  "src/dialogue/ghost-floor-01.oml",
+  {
+    levelId: ghostFloor01Script.scene.id ?? "ghost-floor-01",
+    eraShaderId:
+      ghostFloor01Script.scene.era_shader ?? "dec-vt100-ascii-terminal",
+    layout: openingLayout,
+    voices: {},
+  }
+);
 for (const event of studioOpeningDocument.events)
   if (event.type === "line" && !SPEAKERS.includes(event.speaker as SpeakerId))
     throw new Error(
@@ -78,31 +61,28 @@ export class StudioOpening {
     });
   }
   get choices(): string[] {
-    return SPEAKERS.slice(1)
-      .map((speaker) =>
-        this.document.events
-          .filter((event) => event.type === "line" && event.speaker === speaker)
-          .at(-1)
-      )
-      .map((event) =>
-        event?.type === "line" ? resolveWritingText(event.text) : ""
-      );
+    return ghostFloor01Script.choices.map((choice) =>
+      resolveWritingText(choice.text)
+    );
   }
-  get lastLine(): string {
-    const event = this.document.events
-      .filter((event) => event.type === "line" && event.speaker === "omega")
-      .at(-1);
-    return event?.type === "line" ? resolveWritingText(event.text) : "";
+  get questionPrompt(): string {
+    return resolveWritingText(ghostFloor01Script.question.text ?? "");
   }
-  applyTo(question: ChronicleQuestion): ChronicleQuestion {
-    const text = this.choices;
-    const choice = (index: 0 | 1 | 2) => ({
-      ...question.choices[index],
-      text: text[index] || question.choices[index].text,
-    });
+  applyTo(question: GhostQuestion): GhostQuestion {
+    const choice = (index: 0 | 1 | 2) => {
+      const authored = ghostFloor01Script.choices[index];
+      return {
+        ...question.choices[index],
+        text: resolveWritingText(authored.text),
+        response: authored.responses.join("\n"),
+        effects: authored.effects,
+        emit: authored.emit ?? "",
+        transition: authored.transition ?? "",
+      };
+    };
     return {
       ...question,
-      question: this.lastLine,
+      question: this.questionPrompt,
       choices: [choice(0), choice(1), choice(2)],
     };
   }

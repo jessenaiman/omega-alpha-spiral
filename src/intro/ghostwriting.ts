@@ -1,11 +1,11 @@
 import { createRng } from "../core/random";
-import type { SpeakerId } from "./ghost-type-study/profiles";
+import type { SpeakerId } from "../dialogue/personas";
 import {
-  CHRONICLE_OPENING_LOG,
-  CHRONICLE_QUESTIONS,
-  CHRONICLE_SYMBOLS,
-  type ChronicleQuestion,
-} from "./chronicle";
+  GHOST_OPENING_LOG,
+  GHOST_QUESTIONS,
+  GHOST_SYMBOLS,
+  type GhostQuestion,
+} from "../dialogue/ghost";
 
 export interface BootFrame {
   at: number;
@@ -48,17 +48,15 @@ const LETTER_RANGE_MS: number = 62;
 const ERASURE_MS: number = 38;
 const CORRECTION_PAUSE_MS: number = 520;
 export const BOOT_COMMAND: string = "/run omega.sh";
-export const BOOT_OPTIONS: string[] = CHRONICLE_QUESTIONS[0].choices.map(
+export const BOOT_OPTIONS: string[] = GHOST_QUESTIONS[0].choices.map(
   (option): string => option.text
 );
-export const BOOT_SYMBOLS: string = CHRONICLE_SYMBOLS;
-const QUESTION_SOURCE: string =
-  "If you could [hear|be] only one story..:\n[what|who] would [it|you] be?";
+export const BOOT_SYMBOLS: string = GHOST_SYMBOLS;
 
 /** Materialize timing once: render rate must not change the spelling or pauses. */
 export function createBootFrames(
   seed: string,
-  opening: ChronicleQuestion = CHRONICLE_QUESTIONS[0]
+  opening: GhostQuestion = GHOST_QUESTIONS[0]
 ): BootFrame[] {
   const random = createRng(seed).fork("ghostwriting");
   const text: Record<"prelude" | "question" | "transcript", string> = {
@@ -117,14 +115,13 @@ export function createBootFrames(
   typeTerminal(`\n$ ${BOOT_COMMAND}`);
   at += 780;
   format = 3;
-  text.prelude = CHRONICLE_OPENING_LOG;
+  text.prelude = GHOST_OPENING_LOG;
   record();
   phase = "writing";
   // Brackets are authored attempts, not punctuation to print or rewrite ourselves.
   const attempts: RegExp = /\[([^|\]]+)\|([^\]]+)\]/g;
   let offset: number = 0;
-  const questionSource: string =
-    opening === CHRONICLE_QUESTIONS[0] ? QUESTION_SOURCE : opening.question;
+  const questionSource: string = opening.question;
   for (const match of questionSource.matchAll(attempts)) {
     type("question", questionSource.slice(offset, match.index));
     type("question", match[1]);

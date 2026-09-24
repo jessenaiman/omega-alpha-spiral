@@ -1,0 +1,68 @@
+# Ghost Floor 02 - Omega dialogue and player choice
+# https://github.com/jessenaiman/omega-alpha-spiral/blob/main/project-management/official%20game%20docs%20(read-only)/chapter-zero-stages/stage_1_opening/ghost.json
+
+[voice System]
+file = System.omd
+
+[voice Light]
+file = Light.omd
+
+[voice Shadow]
+file = Shadow.omd
+
+[voice Ambition]
+file = Ambition.omd
+
+[scene]
+id = ghost-floor-02
+era_shader = ibm-pc-cga
+layout = passage
+next = ghost-floor-03
+
+[question]
+text = In that story, who are you?
+
+[choice light]
+owner = light
+text = The seeker—searching for choice.
+response =
+response = The seeker... searching for choice.
+response = But some choices bind you tighter than freedom allows.
+response = Are you prepared to seek what finds you instead?
+response =
+response = > Role noted...
+set = ghost.floor2.choice = light
+increment = dreamweavers.light.affinity = 1
+emit = ghost.floor2.choice.selected
+transition = ghost-floor-03
+
+[choice shadow]
+owner = shadow
+text = The keeper of secrets—holding what others fear.
+response =
+response = The keeper... holding fearsome secrets.
+response = But secrets weigh heavy, and some consume the keeper.
+response = Do you dare guard what others flee from?
+response =
+response = > Role noted...
+set = ghost.floor2.choice = shadow
+increment = dreamweavers.shadow.affinity = 1
+emit = ghost.floor2.choice.selected
+transition = ghost-floor-03
+
+[choice ambition]
+owner = ambition
+text = The one who changes everything.
+response =
+response = The changer... reshaping everything.
+response = But change demands loss, and not all can endure it.
+response = Can you change without losing yourself?
+response =
+response = > Role noted...
+set = ghost.floor2.choice = ambition
+increment = dreamweavers.ambition.affinity = 1
+emit = ghost.floor2.choice.selected
+transition = ghost-floor-03
+
+[script]
+System: \nThe spiral remembers all stories.\nBut it begins with yours.\n\n> Awaiting echo...

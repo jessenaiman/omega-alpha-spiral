@@ -1,6 +1,7 @@
 # Ambition.omd — Omega Design. Mirrors Dialogic's .dch character resource.
 
-schema = dreamweaver.oms
+schema = dialogue.oms
+kind = persona
 id = ambition
 display_name = Ambition
 nicknames = Changer, Crimson One
@@ -23,8 +24,11 @@ correction = 400
 revision = 750
 
 [typography]
-tradition = dec-vt100-ascii-terminal
 case = mixed
+
+[era_shader]
+id = dec-vt100-ascii-terminal
+surfaces = dialogue, choice, hud, menu, npc-label, world-prompt
 
 [replacement]
 from = failed

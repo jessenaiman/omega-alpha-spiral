@@ -21,34 +21,35 @@ import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
-import { GhostLetters, type Layout } from "./GhostLetters";
+import { GhostLetters, type Layout } from "../era-shaders/text";
 import {
   SCENES,
   type Era,
   type TypographyScene,
-} from "../../core/sceneTypography";
+} from "../core/sceneTypography";
 import {
-  TRADITIONS,
-  isBuilt,
-  resolveTradition,
-} from "../../core/lettering/traditions";
-import { WritingPlayback } from "./WritingPlayback";
-import { createDialogueEditor } from "./DialogueEditor";
+  ERA_SHADERS,
+  isEraShaderBuilt,
+  resolveEraShader,
+} from "../era-shaders";
+import { WritingPlayback } from "../dialogue/writing";
+import { createDialogueEditor } from "./editor";
 import type {
   DialogueDocument,
   DialoguePresentation,
   WritingSettings,
-} from "./DialogueTimeline";
+} from "../dialogue/timeline";
 import { createScriptEditor } from "./script-view";
-import { parseOml } from "../../core/oml";
+import { parseOmd, parseOml, speakerId } from "../core/oml";
 import {
   PROFILES,
+  SCRIPT,
   SPEAKERS,
   SCRIPT_TEXT,
   type SpeakerId,
   type SpeakerProfile,
-} from "./profiles";
-import "./study.css";
+} from "../dialogue/personas";
+import "./styles.css";
 
 const el = <T extends HTMLElement>(id: string) =>
   document.getElementById(id) as T;
@@ -73,7 +74,7 @@ let sceneId: TypographyScene =
   (Object.keys(SCENES) as TypographyScene[]).find(
     (id) => id === params.get("scene")
   ) ?? "opening";
-let era: Era = resolveTradition(
+let era: Era = resolveEraShader(
   params.get("era") ?? sceneProfiles[sceneId].era
 ).id;
 let selectedFileEra: string | null = null;
@@ -124,10 +125,16 @@ composer.addPass(new OutputPass());
 const world = new Group();
 scene.add(world);
 const letters = Object.fromEntries(
-  SPEAKERS.map((id) => [id, new GhostLetters(id, settings[id].color)])
+  SPEAKERS.map((id) => [
+    id,
+    new GhostLetters(id, settings[id].color, settings[id].eraShaderId),
+  ])
 ) as Record<SpeakerId, GhostLetters>;
 const ghosts = Object.fromEntries(
-  SPEAKERS.map((id) => [id, new GhostLetters(id, settings[id].color)])
+  SPEAKERS.map((id) => [
+    id,
+    new GhostLetters(id, settings[id].color, settings[id].eraShaderId),
+  ])
 ) as Record<SpeakerId, GhostLetters>;
 const playbacks = Object.fromEntries(
   SPEAKERS.map((id) => [id, new WritingPlayback()])
@@ -189,7 +196,7 @@ world.add(target);
 
 /** Historical casing is a display choice; authored text in saved files is untouched. */
 function cased(text: string) {
-  const t = resolveTradition(era);
+  const t = resolveEraShader(era);
   return honorCasing && t.casePolicy === "upper" ? text.toUpperCase() : text;
 }
 function textFor(id: SpeakerId) {
@@ -201,7 +208,7 @@ function textFor(id: SpeakerId) {
 function displayedText(text: string) {
   const columns = Math.max(
     12,
-    Math.floor(9.1 / resolveTradition(era).tracking)
+    Math.floor(9.1 / resolveEraShader(era).tracking)
   );
   return text
     .split("\n")
@@ -305,6 +312,7 @@ function choose(id: SpeakerId) {
   scriptMode = false;
   dialogue.deactivate();
   selected = id;
+  el<HTMLSelectElement>("persona-era").value = settings[id].eraShaderId;
   compose();
   makeSliders();
   restart();
@@ -422,13 +430,13 @@ for (const [id, profile] of Object.entries(SCENES)) {
   option.textContent = `${profile.label} · ${PROFILES[profile.owner].label}`;
   el("scene-owner").append(option);
 }
-// All 18 traditions are listed; unbuilt render paths are disabled, never hidden.
+// All documented era shaders are listed; unbuilt render paths are disabled, never hidden.
 function letteringOptions() {
   const fragment = document.createDocumentFragment();
   for (const built of [true, false]) {
     const group = document.createElement("optgroup");
     group.label = built ? "Reconstruction ladder" : "Render path pending";
-    for (const tr of TRADITIONS.filter((x) => isBuilt(x) === built)) {
+    for (const tr of ERA_SHADERS.filter((x) => isEraShaderBuilt(x) === built)) {
       const option = document.createElement("option");
       option.value = tr.id;
       option.textContent = `${tr.introduced} · ${tr.label}`;
@@ -441,12 +449,15 @@ function letteringOptions() {
   return fragment;
 }
 el("era").append(letteringOptions());
+el("persona-era").append(letteringOptions());
 function applySceneTypography() {
-  const tr = resolveTradition(era);
+  const tr = resolveEraShader(era);
   era = tr.id;
   for (const id of SPEAKERS) {
-    letters[id].setEra(tr.id);
-    ghosts[id].setEra(tr.id);
+    const personaEraShader = resolveEraShader(settings[id].eraShaderId);
+    settings[id].eraShaderId = personaEraShader.id;
+    letters[id].setEra(personaEraShader.id);
+    ghosts[id].setEra(personaEraShader.id);
   }
   const flat =
     tr.renderMethod === "bitmap-gui" ||
@@ -456,8 +467,9 @@ function applySceneTypography() {
   sceneProfiles[sceneId].era = tr.id;
   el<HTMLSelectElement>("scene-owner").value = sceneId;
   el<HTMLSelectElement>("era").value = tr.id;
+  el<HTMLSelectElement>("persona-era").value = settings[selected].eraShaderId;
   el("era-description").textContent =
-    `Selected display method: ${tr.renderMethod} · ${isBuilt(tr) ? "built preview" : "render path pending"}. ${tr.designIntent} ${tr.recognizableTrait} — ${tr.introduced}, ${tr.commonUse}; ${tr.confidence} confidence.`;
+    `Selected era shader: ${tr.label} · ${isEraShaderBuilt(tr) ? "built preview" : "render path pending"}. ${tr.designIntent} ${tr.recognizableTrait} — ${tr.introduced}, ${tr.commonUse}; ${tr.confidence} confidence.`;
   el("era").title =
     `${tr.device}. ${tr.spatialAdaptation} ${tr.sources[0] ?? ""}`;
   document.documentElement.dataset.sceneOwner = sceneProfiles[sceneId].owner;
@@ -472,9 +484,33 @@ function applySceneTypography() {
 el<HTMLSelectElement>("era").onchange = (e) => {
   era = (e.target as HTMLSelectElement).value as Era;
   selectedFileEra = era;
-  for (const id of SPEAKERS) settings[id].era = era;
   applySceneTypography();
   savePresentation();
+};
+el<HTMLSelectElement>("persona-era").onchange = async (event) => {
+  const eraShaderId = resolveEraShader(
+    (event.target as HTMLSelectElement).value
+  ).id;
+  const file = SCRIPT.voices.find(
+    (voice) => speakerId(voice.name) === selected
+  )?.file;
+  if (file && currentFile !== file) await loadFile(file);
+  settings[selected].eraShaderId = eraShaderId;
+  letters[selected].setEra(eraShaderId);
+  ghosts[selected].setEra(eraShaderId);
+  if (file && currentFile === file && scriptEditor) {
+    const source = scriptEditor.getText();
+    const updated = source.replace(
+      /(\[era_shader\][\s\S]*?\bid\s*=\s*)[^\r\n]+/i,
+      `$1${eraShaderId}`
+    );
+    scriptEditor.setText(updated);
+    setFileState(
+      "pending",
+      `Unsaved era shader change in ${file}. Save to project when ready.`
+    );
+  }
+  compose();
 };
 el<HTMLSelectElement>("scene-owner").onchange = (e) => {
   sceneId = (e.target as HTMLSelectElement).value as TypographyScene;
@@ -588,7 +624,7 @@ function presentation(): DialoguePresentation {
     for (const [key] of controls) voice[key] = settings[id][key];
     voices[id] = voice;
   }
-  return { scene: sceneId, era, layout, voices };
+  return { levelId: sceneId, eraShaderId: era, layout, voices };
 }
 function savePresentation() {
   if (scriptMode && !restoringPresentation)
@@ -598,8 +634,9 @@ const dialogue = createDialogueEditor({
   presentation,
   restore(value) {
     restoringPresentation = true;
-    sceneId = value.scene;
-    era = selectedFileEra ?? value.era;
+    if (value.levelId in sceneProfiles)
+      sceneId = value.levelId as TypographyScene;
+    era = selectedFileEra ?? value.eraShaderId;
     layout = value.layout;
     for (const id of SPEAKERS)
       for (const [key] of controls)
@@ -639,17 +676,23 @@ const dialogue = createDialogueEditor({
     scriptDoc = doc;
   },
 });
-let currentFile = "scene1.oml";
+let currentFile = "ghost-floor-01.oml";
 const validFile = (name: string) =>
   /^[a-z0-9][a-z0-9_-]*\.(oml|omd|oms)$/i.test(name);
 const fileState = el("scene-state");
-function setFileState(state: "info" | "pending" | "success" | "error", message: string) {
+function setFileState(
+  state: "info" | "pending" | "success" | "error",
+  message: string
+) {
   fileState.dataset.state = state;
   fileState.textContent = message;
 }
 scriptEditor = createScriptEditor(el("script-lines"), (text) => {
   if (currentFile.toLowerCase().endsWith(".oml")) dialogue.loadText(text);
-  setFileState("pending", `Unsaved changes in ${currentFile}. Save to project when ready.`);
+  setFileState(
+    "pending",
+    `Unsaved changes in ${currentFile}. Save to project when ready.`
+  );
 });
 scriptEditor.setText(SCRIPT_TEXT);
 dialogue.loadText(SCRIPT_TEXT);
@@ -662,11 +705,23 @@ function showFile(name: string, text: string) {
   if (name.toLowerCase().endsWith(".oml")) {
     const parsed = parseOml(text);
     dialogue.loadText(text);
-    selectedFileEra = resolveTradition(
-      parsed.scene.era ?? SCENES[sceneId].era
+    selectedFileEra = resolveEraShader(
+      parsed.scene.era_shader ?? SCENES[sceneId].era
     ).id;
     era = selectedFileEra;
     applySceneTypography();
+  } else if (name.toLowerCase().endsWith(".omd")) {
+    const design = parseOmd(text);
+    const persona = speakerId(design.id) as SpeakerId;
+    if (SPEAKERS.includes(persona)) {
+      selected = persona;
+      settings[persona].eraShaderId = resolveEraShader(design.era_shader.id).id;
+      letters[persona].setEra(settings[persona].eraShaderId);
+      ghosts[persona].setEra(settings[persona].eraShaderId);
+      el<HTMLSelectElement>("persona-era").value =
+        settings[persona].eraShaderId;
+      compose();
+    }
   }
   const picker = el<HTMLSelectElement>("scene-pick");
   if (!Array.from(picker.options).some((option) => option.value === name)) {
@@ -685,15 +740,23 @@ async function loadFile(name: string) {
   }
   setFileState("info", `Opening ${name}…`);
   try {
-    const response = await fetch(`/api/studio/files?name=${encodeURIComponent(name)}`);
+    const response = await fetch(
+      `/api/studio/files?name=${encodeURIComponent(name)}`
+    );
     const body = await response.json();
     if (!response.ok) throw new Error(body.error ?? "Could not open file.");
     if (request !== fileLoadRequest) return;
     showFile(name, String(body.text));
-    setFileState("info", `Editing ${name}. Import opens a local file; Save writes it to the project.`);
+    setFileState(
+      "info",
+      `Editing ${name}. Import opens a local file; Save writes it to the project.`
+    );
   } catch (error) {
     if (request !== fileLoadRequest) return;
-    setFileState("error", `Could not open ${name}: ${(error as Error).message}`);
+    setFileState(
+      "error",
+      `Could not open ${name}: ${(error as Error).message}`
+    );
   }
 }
 async function listFiles(preferred = currentFile) {
@@ -702,18 +765,23 @@ async function listFiles(preferred = currentFile) {
     const body = await response.json();
     if (!response.ok) throw new Error(body.error ?? "Could not list files.");
     const files: string[] = body.files ?? [];
-    el<HTMLSelectElement>("scene-pick").replaceChildren(...files.map((name) => {
-      const option = document.createElement("option");
-      option.value = name;
-      option.textContent = name;
-      return option;
-    }));
+    el<HTMLSelectElement>("scene-pick").replaceChildren(
+      ...files.map((name) => {
+        const option = document.createElement("option");
+        option.value = name;
+        option.textContent = name;
+        return option;
+      })
+    );
     const picker = el<HTMLSelectElement>("scene-pick");
-    picker.value = files.includes(preferred) ? preferred : files[0] ?? "";
+    picker.value = files.includes(preferred) ? preferred : (files[0] ?? "");
     picker.onchange = () => void loadFile(picker.value);
     if (picker.value) await loadFile(picker.value);
   } catch (error) {
-    setFileState("error", `Local file service unavailable: ${(error as Error).message}`);
+    setFileState(
+      "error",
+      `Local file service unavailable: ${(error as Error).message}`
+    );
   }
 }
 el<HTMLButtonElement>("scene-import").onclick = () =>
@@ -727,7 +795,10 @@ el<HTMLInputElement>("scene-import-file").onchange = async (event) => {
     return;
   }
   showFile(file.name, await file.text());
-  setFileState("pending", `Imported ${file.name} into the editor. Review it, then Save to project.`);
+  setFileState(
+    "pending",
+    `Imported ${file.name} into the editor. Review it, then Save to project.`
+  );
   input.value = "";
 };
 el<HTMLButtonElement>("scene-export").onclick = () => {
@@ -738,7 +809,10 @@ el<HTMLButtonElement>("scene-export").onclick = () => {
   link.download = currentFile;
   link.click();
   setTimeout(() => URL.revokeObjectURL(url), 0);
-  setFileState("success", `Downloaded a copy of ${currentFile}. The project file is unchanged.`);
+  setFileState(
+    "success",
+    `Downloaded a copy of ${currentFile}. The project file is unchanged.`
+  );
 };
 el<HTMLButtonElement>("scene-save").onclick = async () => {
   setFileState("info", `Saving ${currentFile} to the project…`);
@@ -754,9 +828,15 @@ el<HTMLButtonElement>("scene-save").onclick = async () => {
     const body = await response.json();
     if (!response.ok) throw new Error(body.error ?? "Save failed.");
     await listFiles(body.name);
-    setFileState("success", `Saved ${body.name} to the project. The game reads this file directly.`);
+    setFileState(
+      "success",
+      `Saved ${body.name} to the project. The game reads this file directly.`
+    );
   } catch (error) {
-    setFileState("error", `Could not save ${currentFile}: ${(error as Error).message}`);
+    setFileState(
+      "error",
+      `Could not save ${currentFile}: ${(error as Error).message}`
+    );
   }
 };
 listFiles();

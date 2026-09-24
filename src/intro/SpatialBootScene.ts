@@ -34,10 +34,10 @@ import { getIntroEra, INTRO_ERAS, type IntroEraDesign } from "./IntroEraDesign";
 import { IntroParticleField } from "./IntroParticleField";
 import { IntroAvatar } from "./IntroAvatar";
 import { IntroOmegaDisplay } from "./IntroOmegaDisplay";
-import { GhostLetters } from "./ghost-type-study/GhostLetters";
-import { PROFILES, SPEAKERS, type SpeakerId } from "./ghost-type-study/profiles";
-import type { DialoguePresentation } from "./ghost-type-study/DialogueTimeline";
-import { resolveTradition } from "../core/lettering/traditions";
+import { GhostLetters } from "../era-shaders/text";
+import { PROFILES, SPEAKERS, type SpeakerId } from "../dialogue/personas";
+import type { DialoguePresentation } from "../dialogue/timeline";
+import { resolveEraShader } from "../era-shaders";
 import { IntroWorldEvolution } from "./IntroWorldEvolution";
 import { StrandSigils } from "./StrandSigils";
 import { FilamentForm, type FilamentOwner } from "./filaments/FilamentForm";
@@ -71,7 +71,7 @@ const GLYPHS: string =
 const ATLAS_COLUMNS: number = 16;
 const ATLAS_ROWS: number = 7;
 const GLYPH_CAPACITY: number = 256;
-// Owner order follows chronicle.ts: Light, Shadow, Ambition.
+// Owner order follows the Ghost .oml: Light, Shadow, Ambition.
 // Palette is lore, taken from the logo (official game docs index.md:12 —
 // "Hero (light blue), Ambition (red), Shadow (yellow)"): Light is blue-white,
 // Shadow is gold-amber, Ambition is crimson. The last two were swapped here.
@@ -494,7 +494,12 @@ export class SpatialBootScene {
   private _avatar: IntroAvatar = new IntroAvatar();
   private _omegaDisplay: IntroOmegaDisplay = new IntroOmegaDisplay();
   private _studioPresentation: DialoguePresentation | undefined;
-  private _studioLetters = Object.fromEntries(SPEAKERS.map(id => [id, new GhostLetters(id, PROFILES[id].color)])) as Record<SpeakerId, GhostLetters>;
+  private _studioLetters = Object.fromEntries(
+    SPEAKERS.map((id) => [
+      id,
+      new GhostLetters(id, PROFILES[id].color, PROFILES[id].eraShaderId),
+    ])
+  ) as Record<SpeakerId, GhostLetters>;
   private _worldEvolution: IntroWorldEvolution = new IntroWorldEvolution();
   private _playerCore: Mesh<BoxGeometry, MeshStandardMaterial> | null = null;
   private _playerOutline: LineSegments<
@@ -567,9 +572,12 @@ export class SpatialBootScene {
     this._thresholdPreview = texture;
   }
 
-  public setStudioPresentation(presentation: DialoguePresentation | undefined): void {
+  public setStudioPresentation(
+    presentation: DialoguePresentation | undefined
+  ): void {
     this._studioPresentation = presentation;
-    if (presentation) for (const letters of Object.values(this._studioLetters)) letters.setEra(presentation.era);
+    for (const id of SPEAKERS)
+      this._studioLetters[id].setEra(PROFILES[id].eraShaderId);
   }
 
   public init(scene: Scene): Promise<void> {
@@ -579,7 +587,10 @@ export class SpatialBootScene {
     this._particles.init(this._root);
     this._root.add(this._worldEvolution.root);
     this._root.add(this._omegaDisplay.root);
-    for (const letters of Object.values(this._studioLetters)) { letters.root.visible = false; this._root.add(letters.root); }
+    for (const letters of Object.values(this._studioLetters)) {
+      letters.root.visible = false;
+      this._root.add(letters.root);
+    }
     // command, three boot slots, archive, question, symbols, aside, three choices,
     // three fossils, and three diegetic speaker names.
     for (let index: number = 0; index < 17; index += 1) {
@@ -661,8 +672,12 @@ export class SpatialBootScene {
       .catch((error: unknown) => {
         console.warn("Unable to load Blender intro layers", error);
       });
-    if (!this._thresholdPreview) throw new Error("Chapter Two threshold preview is missing");
-    const extrasReady = loadIntroBlenderExtras(this._root, this._thresholdPreview)
+    if (!this._thresholdPreview)
+      throw new Error("Chapter Two threshold preview is missing");
+    const extrasReady = loadIntroBlenderExtras(
+      this._root,
+      this._thresholdPreview
+    )
       .then((extras): void => {
         if (!this._destroyed) this._blenderExtras = extras;
       })
@@ -823,7 +838,7 @@ export class SpatialBootScene {
     ];
     for (let index: number = 0; index < memoryPositions.length; index += 1) {
       const memory: Mesh<BoxGeometry, MeshStandardMaterial> = new Mesh(
-        new BoxGeometry(0.16, 0.045, 0.07),
+        new BoxGeometry(0.22, 0.15, 0.12),
         new MeshStandardMaterial({
           color: 0x70838c,
           emissive: 0x101b20,
@@ -1256,8 +1271,8 @@ export class SpatialBootScene {
     if (this._choiceHistory.length > 0)
       imprint.multiplyScalar(1 / this._choiceHistory.length);
     else imprint.copy(neutral);
-    this._playerCore.material.color.copy(neutral).lerp(imprint, 0.38);
-    this._playerCore.material.emissive.copy(imprint).multiplyScalar(0.32);
+    this._playerCore.material.color.copy(neutral).lerp(imprint, 0.82);
+    this._playerCore.material.emissive.copy(imprint).multiplyScalar(0.58);
     this._playerCore.material.emissiveIntensity =
       0.7 + this._choiceHistory.length * 0.13;
     this._avatar.setImprint(imprint);
@@ -1413,7 +1428,7 @@ export class SpatialBootScene {
         new MeshBasicMaterial({
           color: 0x12212a,
           transparent: true,
-          opacity: 0.09,
+          opacity: 0.18,
           side: DoubleSide,
           depthWrite: false,
         })
@@ -1439,7 +1454,7 @@ export class SpatialBootScene {
         new LineBasicMaterial({
           color: 0x7a9cab,
           transparent: true,
-          opacity: 0.07,
+          opacity: 0.12,
           blending: AdditiveBlending,
           depthWrite: false,
           toneMapped: false,
@@ -1681,7 +1696,9 @@ export class SpatialBootScene {
         ? 0.16
         : frame.phase === "doorway"
           ? Math.min(0.92, 0.18 + (frame.phaseElapsedMs ?? 0) / 1800)
-          : isCrossing ? 0.92 : 0;
+          : isCrossing
+            ? 0.92
+            : 0;
     }
     this._worldEvolution.update(
       this._choiceHistory.length,
@@ -1699,16 +1716,20 @@ export class SpatialBootScene {
           ? Math.min(0.28, Math.max(0, (frame.phaseElapsedMs ?? 0) / 9200))
           : 1;
       const assembly = rawAssembly * rawAssembly * (3 - 2 * rawAssembly);
-      const openTime = frame.phase === "doorway"
-        ? Math.min(1, Math.max(0, (frame.phaseElapsedMs ?? 0) / 1700))
-        : isCrossing ? 1 : 0;
+      const openTime =
+        frame.phase === "doorway"
+          ? Math.min(1, Math.max(0, (frame.phaseElapsedMs ?? 0) / 1700))
+          : isCrossing
+            ? 1
+            : 0;
       const opening = openTime * openTime * (3 - 2 * openTime);
       this._doorRailMaterials.forEach((material, index): void => {
         material.opacity = (index < 3 ? 0.8 : 0.36) * assembly;
       });
       this._doorFragments.forEach(({ node, home, offset }): void => {
         node.position.copy(home).addScaledVector(offset, 1 - assembly);
-        node.position.x += (node.name.includes("_L_") ? -1 : 1) * 1.15 * opening;
+        node.position.x +=
+          (node.name.includes("_L_") ? -1 : 1) * 1.15 * opening;
       });
     }
     const crossingProgress: number = isCrossing
@@ -1927,8 +1948,13 @@ export class SpatialBootScene {
       if (isThreshold) voice.scale.multiplyScalar(1 - finalProgress * 0.74);
       const observerFade: number =
         frame.phase === "loading" && index < newestVoice ? 0.42 : 1;
-      this._voiceForms[index].update(isReduced ? 0 : seconds, smoothEntrance,
-        0, 0, observerFade * (isSpeaking ? 1 : 0.72));
+      this._voiceForms[index].update(
+        isReduced ? 0 : seconds,
+        smoothEntrance,
+        0,
+        0,
+        observerFade * (isSpeaking ? 1 : 0.72)
+      );
       const trailPositions: BufferAttribute = trail.geometry.getAttribute(
         "position"
       ) as BufferAttribute;
@@ -1943,7 +1969,8 @@ export class SpatialBootScene {
           const segment = Math.min(6, Math.floor(t * 7));
           const local = t * 7 - segment;
           const offsets = [0, 0.2, -0.16, 0.25, -0.12, 0.18, -0.08, 0];
-          const corner = offsets[segment] * (1 - local) + offsets[segment + 1] * local;
+          const corner =
+            offsets[segment] * (1 - local) + offsets[segment + 1] * local;
           point.y += corner;
           point.z -= (1 - t) * 0.35;
         } else {
@@ -1964,7 +1991,8 @@ export class SpatialBootScene {
         observerFade *
         (isThreshold ? 1 - finalProgress * 0.55 : 1);
     }
-    this._ribbons[4].root.visible = !isBoot && !isThreshold && !isTravel && !frame.choiceLines;
+    this._ribbons[4].root.visible =
+      !isBoot && !isThreshold && !isTravel && !frame.choiceLines;
     this._ribbons[4].root.scale.setScalar(scale * 0.37);
     this._ribbons[4].root.position.set(left, 1.65, -0.05);
     const question: Group = this._ribbons[5].root;
@@ -1991,9 +2019,11 @@ export class SpatialBootScene {
             ? 2.55
             : responseAnchor
               ? responseAnchor.y - 0.96
-              : isWaiting || isChoiceTurns
-                ? 1.25 + this._questionRecede * 0.35
-                : -0.8 + Math.min(Math.max((seconds - 13) / 16, 0), 1) * 1.45,
+              : isWaiting
+                ? 1.18 + this._questionRecede * 0.12
+                : isChoiceTurns
+                  ? -0.05 + this._questionRecede * 0.22
+                  : -0.8 + Math.min(Math.max((seconds - 13) / 16, 0), 1) * 1.45,
       responseAnchor
         ? responseAnchor.z + 0.14
         : frame.phase === "doorway" || frame.phase === "complete"
@@ -2037,37 +2067,60 @@ export class SpatialBootScene {
       seconds,
       isReduced
     );
-    for (const letters of Object.values(this._studioLetters)) letters.root.visible = false;
+    for (const letters of Object.values(this._studioLetters))
+      letters.root.visible = false;
     if (this._studioPresentation && !isThreshold && frame.question) {
-      const speaker: SpeakerId = frame.studioSpeaker ?? (responseOwner >= 0 ? SPEAKERS[responseOwner + 1] : "omega");
+      const speaker: SpeakerId =
+        frame.studioSpeaker ??
+        (responseOwner >= 0 ? SPEAKERS[responseOwner + 1] : "omega");
       const letters = this._studioLetters[speaker];
-      const glyphScale = Math.min(this._width * 0.085, this._isNarrow ? 0.45 : 0.64) * (1 - this._questionRecede * 0.18);
+      const glyphScale =
+        (isWaiting && speaker === "omega"
+          ? Math.min(this._width * 0.061, this._isNarrow ? 0.36 : 0.45)
+          : Math.min(this._width * 0.085, this._isNarrow ? 0.45 : 0.64)) *
+        (1 - this._questionRecede * 0.18);
       letters.root.visible = true;
       letters.root.position.copy(question.position);
-      letters.root.position.x += 12 * resolveTradition(this._studioPresentation.era).tracking * glyphScale;
+      const speakerEraShader = PROFILES[speaker].eraShaderId;
+      letters.setEra(speakerEraShader);
+      letters.root.position.x +=
+        12 * resolveEraShader(speakerEraShader).tracking * glyphScale;
       letters.root.position.y -= 0.5 * glyphScale;
       letters.root.scale.setScalar(glyphScale);
       letters.root.rotation.set(0, 0, 0);
-      letters.setText(wrapAtWords(frame.question, 27));
+      letters.setText(
+        wrapAtWords(frame.question, isWaiting && speaker === "omega" ? 34 : 27)
+      );
       letters.update(seconds, this._studioPresentation.layout, isReduced);
       question.visible = false;
     }
     if (frame.choiceLines && (isChoiceTurns || isWaiting)) {
-      const era = this._studioPresentation?.era ?? "dos";
-      const columnWidth = this._width * 0.29;
-      const glyphScale = columnWidth / (17 * resolveTradition(era).tracking);
+      const columnWidth = this._width * 0.27;
       for (let owner = 0; owner < 3; owner++) {
-        const letters = this._studioLetters[SPEAKERS[owner + 1]];
+        const speaker = SPEAKERS[owner + 1];
+        const letters = this._studioLetters[speaker];
+        const eraShaderId = PROFILES[speaker].eraShaderId;
+        const glyphScale =
+          columnWidth / (18 * resolveEraShader(eraShaderId).tracking);
         const text = frame.choiceLines[owner] ?? "";
         letters.root.visible = text.length > 0;
-        letters.setEra(era);
+        letters.setEra(eraShaderId);
         letters.setText(wrapAtWords(text, 16));
         letters.opacity = frame.choiceSpeaker === owner || isWaiting ? 1 : 0.68;
-        letters.root.position.set((owner - 1) * this._width * 0.32 - columnWidth * 0.5
-          + 12 * resolveTradition(era).tracking * glyphScale, -0.15, 0.45);
+        letters.root.position.set(
+          (owner - 1) * this._width * 0.36 -
+            columnWidth * 0.5 +
+            12 * resolveEraShader(eraShaderId).tracking * glyphScale,
+          -0.9,
+          0.45
+        );
         letters.root.scale.setScalar(glyphScale);
         letters.root.rotation.set(0, 0, 0);
-        letters.update(seconds, this._studioPresentation?.layout ?? "passage", isReduced);
+        letters.update(
+          seconds,
+          this._studioPresentation?.layout ?? "passage",
+          isReduced
+        );
       }
     }
     const symbols: Group = this._ribbons[6].root;

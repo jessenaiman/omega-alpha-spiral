@@ -1,8 +1,12 @@
 // The script surface. Edits the OML text directly; highlights what it finds there.
-import { PROFILES } from "./profiles";
-import { classOf, parseOml, tagMatches, type Oml } from "../../core/oml";
+import { PROFILES } from "../dialogue/personas";
+import { classOf, parseOml, tagMatches, type Oml } from "../core/oml";
 
-const ESCAPES: Record<string, string> = { "&": "&amp;", "<": "&lt;", ">": "&gt;" };
+const ESCAPES: Record<string, string> = {
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+};
 const escape = (text: string) => text.replace(/[&<>]/g, (c) => ESCAPES[c]);
 
 function highlight(text: string, tags: Oml["tags"]): string {

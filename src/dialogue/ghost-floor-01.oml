@@ -1,0 +1,118 @@
+# Ghost Floor 01 - Omega dialogue and first player choice
+# Writing source:
+# https://github.com/jessenaiman/omega-alpha-spiral/blob/main/project-management/official%20game%20docs%20(read-only)/chapter-zero-stages/stage_1_opening/ghost.json
+# Presentation source:
+# https://github.com/jessenaiman/omega-alpha-spiral/blob/main/project-management/TaskNotes/t5%20Ghost%20terminal%20presentation%20and%20copy.md
+
+[tag SYSTEM]
+color = #ffc94d
+role = system
+meaning = The machine speaking as itself.
+
+[tag SYSTEM NOTICE]
+color = #ffe08a
+role = notice
+meaning = A stronger system announcement.
+
+[tag CHAMBER]
+role = chamber
+meaning = A domain boundary. Takes the owner's identity colour.
+
+[tag STATIC]
+color = #6b7a85
+role = damage
+meaning = Corrupted or collapsed content.
+
+[tag GLITCH]
+color = #b98cff
+role = damage
+meaning = A world error.
+
+[tag ERROR]
+color = #ff6868
+role = damage
+meaning = A failed object.
+
+[tag log]
+color = #7fb0c4
+role = log
+meaning = An interaction result, not dialogue. Marked with a leading >.
+
+[tag timer_delay]
+color = #f0b46b
+meaning = Wait this many milliseconds before the next line.
+
+[voice System]
+file = System.omd
+
+[voice Light]
+file = Light.omd
+
+[voice Shadow]
+file = Shadow.omd
+
+[voice Ambition]
+file = Ambition.omd
+
+[scene]
+id = ghost-floor-01
+era_shader = dec-vt100-ascii-terminal
+layout = passage
+next = ghost-floor-02
+
+[question]
+text = If you could [hear|be] only one story..:\n[what|who] would [it|you] be?
+
+[choice light]
+owner = light
+text = A fantasy- where light and shadow wage war?
+response =
+response = A journey... far into the unknown.
+response = But some paths lead to places you can't return from.
+response = Are you ready for the road that never ends?
+response =
+response = > Choice logged...
+set = ghost.floor1.choice = light
+increment = dreamweavers.light.affinity = 1
+emit = ghost.floor1.choice.selected
+transition = ghost-floor-02
+
+[choice shadow]
+owner = shadow
+text = A romance— written in stardust and sacrifice?
+response =
+response = An enigma... riddles and hidden truths.
+response = But some secrets unravel the mind that seeks them.
+response = Do you dare uncover what was meant to stay buried?
+response =
+response = > Choice logged...
+set = ghost.floor1.choice = shadow
+increment = dreamweavers.shadow.affinity = 1
+emit = ghost.floor1.choice.selected
+transition = ghost-floor-02
+
+[choice ambition]
+owner = ambition
+text = A horror— that whispers your name in the dark?
+response =
+response = A legend... heroes rising, worlds changing.
+response = But legends demand sacrifices that break the ordinary.
+response = Can you bear the weight of becoming more than you are?
+response =
+response = > Choice logged...
+set = ghost.floor1.choice = ambition
+increment = dreamweavers.ambition.affinity = 1
+emit = ghost.floor1.choice.selected
+transition = ghost-floor-02
+
+[script]
+System: [PROGRAM RESTART: INSTANCE #472 - 03/09/2025 - ECHO ARCHIVE REACTIVATED]\n\n\n
+[timer_delay 2000]
+[show question]
+[timer_delay 1100]
+[show choice light]
+[timer_delay 700]
+[show choice shadow]
+[timer_delay 700]
+[show choice ambition]
+[timer_delay 700]

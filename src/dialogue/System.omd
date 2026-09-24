@@ -2,7 +2,8 @@
 # Omega is the machine. Not a Dreamweaver: this colour is illumination, not identity.
 # Dialogic requires the label SYSTEM; you know it as Omega.
 
-schema = dreamweaver.oms
+schema = dialogue.oms
+kind = persona
 id = omega
 display_name = SYSTEM
 nicknames = Omega, Terminal, Interface
@@ -22,8 +23,11 @@ correction = 650
 revision = 1500
 
 [typography]
-tradition = dec-vt100-ascii-terminal
 case = mixed
+
+[era_shader]
+id = dec-vt100-ascii-terminal
+surfaces = dialogue, choice, hud, menu, npc-label, world-prompt
 
 [replacement]
 from = clear

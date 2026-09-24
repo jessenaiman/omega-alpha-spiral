@@ -1,9 +1,9 @@
-export type { TypographyOwner as SpeakerId } from "../../core/sceneTypography";
-import type { TypographyOwner as SpeakerId } from "../../core/sceneTypography";
+export type SpeakerId = "omega" | "light" | "shadow" | "ambition";
 import Ajv from "ajv";
-import scene1 from "../../dialogue/scene1.oml?raw";
-import dreamweaverSchema from "../../dialogue/dreamweaver.oms?raw";
-import { parseOmd, parseOml, speakerId, type Omd } from "../../core/oml";
+import ghostFloor01 from "./ghost-floor-01.oml?raw";
+import dialogueSchema from "./dialogue.oms?raw";
+import { parseOmd, parseOml, speakerId, type Omd } from "../core/oml";
+import { resolveEraShader } from "../era-shaders";
 
 /** A voice, as declared by its .omd file. Nothing here is hardcoded. */
 export interface SpeakerProfile {
@@ -16,7 +16,8 @@ export interface SpeakerProfile {
   mistakeFrequency: number;
   correctionDelayMs: number;
   revisionDelayMs: number;
-  era: string;
+  eraShaderId: string;
+  eraShaderSurfaces: string[];
   note: string;
   favoritePalette: string[];
   quickChoiceMs: number;
@@ -25,25 +26,36 @@ export interface SpeakerProfile {
   replacement: { from: string; to: string };
 }
 
-export const SCRIPT = parseOml(scene1);
-export const SCRIPT_TEXT = scene1;
-const sourceFiles = import.meta.glob("../../dialogue/*.omd", {
+export const SCRIPT = parseOml(ghostFloor01);
+export const SCRIPT_TEXT = ghostFloor01;
+const sourceFiles = import.meta.glob("./*.omd", {
   eager: true,
   query: "?raw",
   import: "default",
 }) as Record<string, string>;
-const validate = new Ajv().compile(JSON.parse(dreamweaverSchema));
+const validate = new Ajv({ strict: true }).compile(JSON.parse(dialogueSchema));
+if (!validate(SCRIPT))
+  throw new Error(
+    `Invalid ghost-floor-01.oml: ${JSON.stringify(validate.errors)}`
+  );
 const voices: SpeakerId[] = ["omega", "light", "shadow", "ambition"];
 const designs = Object.fromEntries(
   voices.map((id) => {
-    const file = SCRIPT.voices.find((voice) => speakerId(voice.name) === id)?.file;
+    const file = SCRIPT.voices.find(
+      (voice) => speakerId(voice.name) === id
+    )?.file;
     if (!file || !/^[a-z0-9_-]+\.omd$/i.test(file))
       throw new Error(`Scene 1 needs an .omd declaration for ${id}.`);
-    const source = sourceFiles[`../../dialogue/${file}`];
+    const source = sourceFiles[`./${file}`];
     if (!source) throw new Error(`Missing declared voice file: ${file}`);
     const design = parseOmd(source);
-    if (design.id !== id || design.schema !== "dreamweaver.oms" || !validate(design))
+    if (
+      design.id !== id ||
+      design.schema !== "dialogue.oms" ||
+      !validate(design)
+    )
       throw new Error(`Invalid ${file}: ${JSON.stringify(validate.errors)}`);
+    resolveEraShader(design.era_shader.id);
     return [id, design];
   })
 ) as Record<SpeakerId, Omd>;
@@ -63,7 +75,11 @@ export const PROFILES = Object.fromEntries(
         mistakeFrequency: d.typing.mistakes,
         correctionDelayMs: d.typing.correction,
         revisionDelayMs: d.typing.revision,
-        era: d.typography.tradition,
+        eraShaderId: d.era_shader.id,
+        eraShaderSurfaces: d.era_shader.surfaces
+          .split(",")
+          .map((surface) => surface.trim())
+          .filter(Boolean),
         note: d.spatial.note,
         favoritePalette: (d.custom.favorite_palette ?? d.color)
           .split(",")

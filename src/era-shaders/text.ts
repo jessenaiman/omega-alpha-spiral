@@ -10,9 +10,14 @@ import {
   ShaderMaterial,
   type CanvasTexture,
 } from "three";
-import type { SpeakerId } from "./profiles";
-import { GLYPHS, makeAtlas } from "../../core/lettering/generate";
-import { resolveTradition, type Tradition } from "../../core/lettering/traditions";
+import type { SpeakerId } from "../dialogue/personas";
+import { GLYPHS, makeAtlas } from "../core/lettering/generate";
+import {
+  applyEraTextMaterial,
+  createEraTextMaterial,
+  resolveEraShader,
+  type EraShaderDefinition,
+} from ".";
 
 export type Layout = "manuscript" | "fragments" | "passage";
 const CAPACITY = 256;
@@ -20,7 +25,7 @@ const CAPACITY = 256;
 export class GhostLetters {
   readonly root = new Group();
   private atlas: CanvasTexture;
-  private tradition: Tradition;
+  private eraShader: EraShaderDefinition;
   private geometry = new PlaneGeometry(1, 1);
   private glyphs = new InstancedBufferAttribute(new Float32Array(CAPACITY), 1);
   private material: ShaderMaterial;
@@ -32,43 +37,12 @@ export class GhostLetters {
   constructor(
     readonly speaker: SpeakerId,
     color: string,
-    traditionId = "dec-vt100-ascii-terminal"
+    eraShaderId = "dec-vt100-ascii-terminal"
   ) {
-    this.tradition = resolveTradition(traditionId);
-    this.atlas = makeAtlas(this.tradition);
+    this.eraShader = resolveEraShader(eraShaderId);
+    this.atlas = makeAtlas(this.eraShader);
     this.geometry.setAttribute("aGlyph", this.glyphs);
-    this.material = new ShaderMaterial({
-      transparent: true,
-      depthWrite: false,
-      side: DoubleSide,
-      uniforms: {
-        uAtlas: { value: this.atlas },
-        uColor: { value: new Color(color) },
-        uTime: { value: 0 },
-        uOpacity: { value: 1 },
-        uScan: { value: this.tradition.effects.scan },
-        uDots: { value: this.tradition.effects.dots },
-        uHalo: { value: this.tradition.effects.halo },
-        uCell: { value: [...this.tradition.cell] },
-      },
-      vertexShader: `attribute float aGlyph; varying vec2 vUv; varying float vGlyph;
-        void main(){vUv=uv; vGlyph=aGlyph; gl_Position=projectionMatrix*modelViewMatrix*instanceMatrix*vec4(position,1.0);}`,
-      fragmentShader: `uniform sampler2D uAtlas; uniform vec3 uColor; uniform vec2 uCell; uniform float uTime,uOpacity,uScan,uDots,uHalo; varying vec2 vUv; varying float vGlyph;
-        void main(){
-          vec2 cell=vec2(mod(vGlyph,16.0),6.0-floor(vGlyph/16.0));
-          vec2 p=(cell+vUv)/vec2(16.0,7.0);
-          float a=texture2D(uAtlas,p).a;
-          vec2 d=vec2(1.0)/(uCell*vec2(16.0,7.0));
-          float halo=(texture2D(uAtlas,p+d).a+texture2D(uAtlas,p-d).a+texture2D(uAtlas,p+vec2(d.x,-d.y)).a+texture2D(uAtlas,p+vec2(-d.x,d.y)).a)*uHalo;
-          vec2 dotPosition=fract(vUv*uCell)-.5;
-          a*=mix(1.0,1.0-smoothstep(.32,.52,length(dotPosition)),uDots);
-          float scan=1.0-uScan*(.5+.5*sin(vUv.y*170.0-uTime*.4));
-          float alpha=(a+halo)*uOpacity*scan;
-          if(alpha<.008) discard;
-          gl_FragColor=vec4(uColor,alpha);
-          #include <colorspace_fragment>
-        }`,
-    });
+    this.material = createEraTextMaterial(this.eraShader, this.atlas, color);
     this.mesh = new InstancedMesh(this.geometry, this.material, CAPACITY);
     this.mesh.instanceMatrix.setUsage(DynamicDrawUsage);
     this.mesh.frustumCulled = false;
@@ -80,18 +54,15 @@ export class GhostLetters {
     (this.material.uniforms.uColor.value as Color).set(color);
   }
 
-  /** Accepts a tradition id or a retired era id; both resolve. */
-  setEra(id: string) {    if (this.tradition.id === id) return;
-    const next = resolveTradition(id);
-    if (next.id === this.tradition.id) return;
-    this.tradition = next;
+  /** Accepts a canonical era-shader id or an explicit legacy alias. */
+  setEra(id: string) {
+    if (this.eraShader.id === id) return;
+    const next = resolveEraShader(id);
+    if (next.id === this.eraShader.id) return;
+    this.eraShader = next;
     this.atlas.dispose();
     this.atlas = makeAtlas(next);
-    this.material.uniforms.uAtlas.value = this.atlas;
-    this.material.uniforms.uScan.value = next.effects.scan;
-    this.material.uniforms.uDots.value = next.effects.dots;
-    this.material.uniforms.uHalo.value = next.effects.halo;
-    this.material.uniforms.uCell.value = [...next.cell];
+    applyEraTextMaterial(this.material, next, this.atlas);
   }
 
   setText(text: string) {
@@ -106,7 +77,7 @@ export class GhostLetters {
     let row = 0,
       col = 0,
       word = 0;
-    const step = this.tradition.tracking;
+    const step = this.eraShader.tracking;
     for (let i = 0; i < this.text.length; i++) {
       const ch = this.text[i];
       if (ch === "\n") {

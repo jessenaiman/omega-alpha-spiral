@@ -870,7 +870,9 @@ body[data-tab="script"].script-mode::after {
   inset: 0;
   margin: 0;
   padding: 14px 18px;
-  font: 13px/1.7 "Courier New", monospace;
+  font:
+    13px/1.7 "Courier New",
+    monospace;
   white-space: pre-wrap;
   overflow-wrap: break-word;
   border: 0;
