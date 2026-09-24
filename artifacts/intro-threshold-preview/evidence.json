@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "runId": "intro-threshold-preview-2",
+  "captures": [
+    {
+      "mode": "desktop",
+      "state": "final-name",
+      "report": "artifacts/intro-threshold-preview-2/desktop-final-name.json"
+    },
+    {
+      "mode": "mobile",
+      "state": "final-name",
+      "report": "artifacts/intro-threshold-preview-2/mobile-final-name.json"
+    },
+    {
+      "mode": "desktop",
+      "state": "final-door",
+      "report": "artifacts/intro-threshold-preview-2/desktop-final-door.json"
+    },
+    {
+      "mode": "mobile",
+      "state": "final-door",
+      "report": "artifacts/intro-threshold-preview-2/mobile-final-door.json"
+    }
+  ]
+}

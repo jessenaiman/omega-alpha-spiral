@@ -1,5 +1,17 @@
 # Omega Spiral — Game Director Progress
 
+## Active small increment — 2026-09-23
+
+- Full skill/setup audit: `artifacts/intro-direction/threejs-workflow-audit.md`. All nine skills/agent entries and declared npm packages present; Python helpers launch; Blender MCP live. Playwright Chromium missing; installation blocked by automatic approval review, specific permission requested. Existing bot also needs bounded updates for Begin, physical choices, forward travel and current port before a run.
+- Luna gameplay delivered and lead inspected removal of the explicit avatar teleport in commitChoice. No motion verification yet. Luna graphics delivered source-grounded stationary depth-anchor recommendation; no graphics edits. Both worker tasks complete.
+
+- Workflow correction: use actual packaged starters and specialist agents. Luna `opening_gameplay_piece` and `opening_spatial_review` each read one skill and asked three questions before work. Both are drafting read-only recommendations; parent owns shared integration. Contract: `artifacts/intro-direction/first-question-slice.md`. Starter CameraRig/InputController/Game and both agent entry YAML files inspected. Approved direction corrected for galaxy-first and three concurrent storylines.
+
+- Owner rejected expanding or auditing the unfinished opening before its interaction feels right. Apply gameplay-systems in small pieces; current piece is first-question movement and camera follow only.
+- Read gameplay-systems/SKILL.md and its game-feel reference. Fixed camera ignoring avatar position during path choice and instantaneous gaze changes between phases. Enabled avatar locomotion during choice/door movement as well as travel.
+- Source inspected; current page loads with no captured console errors and Begin was clicked. Motion quality and choice-to-response continuity need owner gameplay review. No new tests or suite execution. Historical bot results do not cover this patch.
+- Next: hold forward/back and steer at the first question, release to stop, observe the camera on contact. Resolve that result before expanding backgrounds, later encounters, or quantum companions.
+
 Updated: 2026-09-22
 
 ## Session rule — 2026-09-22
@@ -40,6 +52,20 @@ for SFX, Blender + procedural Three.js for 3D. No high-res custom art needed.
 
 ## Pending jobs
 
+- **Slice 1 of the Floor One rerun — DONE (2026-09-22):** inspector-compatible
+  hooks + named capture states + diagnostics for Floor One.
+  Files: `src/floor-one/capture-states.ts` (drivers), `src/floor-one/main.ts`
+  (hooks/freeze/diagnostics), probe `scratch/probe-floor-states.ts`.
+  8 named states, each reached through real `stepFloor` rules:
+  entry, pause, guard-intent, pickup-resolved, door-open (seed `door-1`),
+  exit-ready, escaped, defeat. Defeat = the player moves on (retry), never a
+  final ending — fight feedback is placeholder while assets still load.
+  Verified: typecheck clean, 23/23 unit, inspector PASS on
+  entry/pickup-resolved/door-open/exit-ready/escaped/defeat/pause
+  (0 console/page errors, within budget) in
+  `artifacts/floor-one-hooks-20260922/` run `hooks-1`.
+- Next slice candidates: declare `artifacts/evidence.json` capture set for
+  Floor One and run `verify:visual`; or unit tests for the rules (#20).
 - Issue 47 is ready for review.
 - Handoff: `project-management/Handoffs/47.md`.
 - Verified capture directory: `artifacts/team-foundation-20260922/`.
@@ -283,6 +309,7 @@ like Omega, iteration one is meant to read like a bash script. No Blender, no gl
 - Owner correction: no extra unit tests. Normal commit hook passed TypeScript and 22/23 existing tests; existing finale wording assertion blocked commit. Owner approved a single documented hook skip.
 - Preview: http://127.0.0.1:5191/intro-type-prototype.html . Human visual choice remains open. See `artifacts/ghost-type-study/README.md` and `project-management/Handoffs/54.md`.
 
+- Ghost typing follow-up: scene-owned universal era added in src/core/sceneTypography.ts. Opening/Omega, Floor 1/Light, Floor 2/Shadow, Floor 3/Ambition. All study voices inherit glyph era while preserving cadence and geometry. Floor-era assignments remain editable; live prototype only, game-scene integration pending. No tests run for this follow-up.
 
 ## Omega Dialogue Studio checkpoint — September 23, 2026
 
@@ -291,3 +318,30 @@ like Omega, iteration one is meant to read like a bash script. No Blender, no gl
 - Three declared artifacts passed the evidence coverage checker. Real controls and Omega's post-answer revision were exercised; a short typing/revision recording is saved. No frame-time or complete gameplay claim.
 - [Studio release notes and captures](omega-dialogue-studio/README.md), [manifest](omega-dialogue-studio/evidence.json). No additional unit tests. Next: commit/push, then design the gameplay integration before more studio features.
 
+## Studio authoring-model review — September 23, 2026
+
+- Full studio expansion goal remains active; design is under review, not approved. Owner requested detailed Dialogic and existing Godot schema/dialogue review first.
+- Located original schemas, NPC data, Dialogic timelines and character resources. Structural/execution findings and drift: [authoring review](omega-dialogue-studio/godot-authoring-review.md). [Era research prompt](omega-dialogue-studio/era-research-prompt.md) delivered. #53 lead ownership noted on GitHub.
+- VoiceStudio subtask on hold at owner request; do not resume setup or generation until asked. Existing Codex CLI reports not logged in; desktop login status is not inferred. No model downloads, runtime changes or tests this pass.
+
+## Omega Studio opening block
+
+Owner requested adapting the authored Omega opening as the first editor iteration. Added dialogue JSON/schema, minimal sequential runner and edit/preview/import/export UI using existing lettering. Live studio reached before-choices; DOS glyph overlap corrected. No unit tests/build run. Evidence limits: artifacts/omega-dialogue-studio/opening-block.md.
+
+- Studio persistence follow-up: schema validation via Ajv; scene/era/layout/cadence in the document; undo/redo and source view. Four existing era sketches now explain their rendering and historical limits. Owner asked to check export/reopen. No tests/build run. See omega-dialogue-studio/opening-block.md.
+
+## Studio integration check — 2026-09-23
+
+Owner confirmed Apply to game propagates the selected era and Continue reaches paths. Fresh studio/intro loaded without captured errors. Fixed save snapshot bookkeeping and selection restoration after rejected structural edits. Full later gameplay remains unverified. Contract: omega-dialogue-studio/gameplay-contract.md; report: omega-dialogue-studio/integration-check.md. Qwen editor assignment published as #57.
+
+## Playable opening / asset return — 2026-09-23
+
+New explicit Begin menu plus native OpenAI background plate, existing logo, and control instructions. Current authored direction: intro-direction/approved-design.md. Restored Blender floor/strands at first path reveal, and travel now obeys forward/back input. Live MCP asset intake: intro-direction/asset-intake.md. Luna image review: /image-asset-review.html. Bot random/repeat work pending; no full progression claim.
+
+## Filament motion correction
+
+Owner rejected the bot-test rewrite; its two files were restored without execution. Owner also rejected the three background-motion contact sheets. Gallery marks them rejected. Current work is live reusable shader line art, flat-to-spatial shapes, convergence, shatter/reform, with offscreen streams following the reference. Shared by menu and opening presences; review at /filament-study.html. Details and verification limits: intro-direction/filament-motion.md. No automated tests or release claim.
+
+- First-question review baseline corrected: artifacts/intro-direction/first-question-slice.md links QA motion, debug reproduction and director evidence requirements. Current manifest now declares pending entry-to-contact evidence; old run archived without relabeling. Live overlap confirmed; lead demonstration precedes further delegation. Chromium verified installed; build passed; updated existing bot remains unrun.
+
+- Lead demonstrated and reviewed first-question Light route to question two using existing headed bot's bounded review mode. Video, frame sequences and prioritized findings: artifacts/intro-direction/first-question-slice.md. Functional progression passes, visual continuity fails. No scene changes or new unit tests; canvas-inspector report remains pending.

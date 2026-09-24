@@ -1,6 +1,28 @@
-# Chronicle intro — playable visual handoff
+# Intro review evidence
+
+## Current baseline — first question and its lead-in
+
+✅ **Latest result:** lead ran the existing headed bot from real menu entry through Light's first path to the second question and personally inspected the motion frames. Functional slice passed; visual continuity failed review. [Findings, video, input report and repeat command](intro-direction/first-question-slice.md#lead-review-completed--entry-through-question-two). No gameplay-source changes in this review. Earlier missing-motion statements below describe the baseline before this run; canvas-inspector coverage remains pending.
+
+✅ Review specification and exact skill references: [first-question baseline](intro-direction/first-question-slice.md). Target: `http://127.0.0.1:5191/intro.html`; branch `prototype/ghost-typing-voices`, with local uncommitted changes. Current declaration: [evidence.json](evidence.json), run `first-question-review-20260923-a`.
+
+✅ Lead opened the actual intro and confirmed the overlapping Light/Shadow lettering visible in the [user's before image](first-question-review-20260923-a/user-before.png). Screenshot framing is 947×874; supplemental live observation was 971×910. These are visual observations, not matching regression captures.
+
+❌ Current unpaused entry-to-contact recording and canvas/runtime report are missing. The manifest deliberately declares those outstanding artifacts; no checker success, complete gameplay, or approved visual baseline is claimed.
+
+✅ Next review is bounded to boot → Omega question → three speaker turns → walking/start-stop → first contact/response. Lead demonstrates and inspects it before further delegation. Preserve failures, fix the owning module, restart and compare the same sequence. Existing bot updates are prepared but have not run.
+
+✅ Production build/typecheck passed before this documentation update. Chromium executable existence was verified with browser-cache access; the earlier restricted-filesystem check was misleading. No further installation is needed for this baseline.
+
+## Historical handoff — obsolete controls and previous revision below
+
+The following sections are preserved history, including old number-key/path-button controls, earlier art assumptions and older verification results. They are not current instructions or certification. Original manifest: [previous-evidence.json](first-question-review-20260923-a/previous-evidence.json).
+
+> Historical evidence below predates the current menu, movement and filament edits. Those changes are not release-verified. Current bounded visual iteration: [filament motion](intro-direction/filament-motion.md). No new bot/test pass was run; the rejected bot rewrite was removed.
 
 Run: `intro-flow-20260923-c` · Page: `http://127.0.0.1:5188/intro.html` · Bot seed: `472`
+
+**Current camera increment (5191, uncommitted):** choice movement now influences camera position; gaze interpolates across phases; avatar locomotion includes path choice. Page loaded without captured console errors and Begin was exercised. Sustained movement, contact and visual quality remain unverified. The historical results below do not certify these changes.
 
 ## What plays
 
@@ -64,3 +86,13 @@ Live browser showed Floor 1 owned by Light while Shadow spoke in DOS glyphs; swi
 - TypeScript/Vite production build passed. Requested QA skill captured desktop 1280×720 and mobile 390×664 on the hardware NVIDIA GPU. Both final reports have no console or page errors. Initial favicon 404 was fixed and its failed evidence retained.
 - Three declared artifacts passed the evidence coverage checker. Real controls and Omega's post-answer revision were exercised; a short typing/revision recording is saved. No frame-time or complete gameplay claim.
 - [Studio release notes and captures](omega-dialogue-studio/README.md), [manifest](omega-dialogue-studio/evidence.json). No additional unit tests. Next: commit/push, then design the gameplay integration before more studio features.
+
+## Later studio opening slice — separate from the intro run above
+
+See [opening block observations](omega-dialogue-studio/opening-block.md). Live loading and rendered text observed; export/import, build and motion capture remain unverified. No additional tests run.
+
+- Later persistence controls (schema-backed presentation, undo/redo, JSON source) are implemented but not runtime-verified in this follow-up. Owner round-trip check pending; earlier visual evidence does not cover these controls.
+
+## Current opening adapter — 2026-09-23
+
+Owner reports saved studio era appears in the real intro and Continue works. Direct fresh-load observation confirms styled shader lettering with no captured browser errors. This does not establish the remaining five-question/name/door progression. No test suite ran this pass. Integration remains uncommitted. Detailed limits: omega-dialogue-studio/integration-check.md.

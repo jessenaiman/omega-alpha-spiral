@@ -1,88 +1,38 @@
 {
   "version": 1,
-  "runId": "intro-flow-20260923-c",
-  "artifacts": [
-    "assets/references/intro-first-question.png",
-    "assets/references/intro-door-finale.png",
-    "assets/references/intro-strand-detail.png",
-    "public/assets/intro/void-background.glb",
-    "public/assets/intro/dreamweaver-strands.glb",
-    "public/assets/intro/intro-door-assemble.glb",
-    "public/assets/intro/intro-portal.glb",
-    "public/assets/intro/intro-floor-glyph.glb",
-    "artifacts/intro-bot-playtest-report.json",
-    "artifacts/intro-flow-20260923-c/bot-playthrough.webm",
-    "artifacts/intro-flow-20260923-c/intro-travel-1.png",
-    "artifacts/intro-flow-20260923-c/intro-travel-2.png",
-    "artifacts/intro-flow-20260923-c/intro-travel-3.png"
-  ],
+  "runId": "first-question-review-20260923-a",
+  "status": "real-input-reviewed-visual-defects-canvas-inspection-pending",
+  "url": "http://127.0.0.1:5191/intro.html",
+  "review": "artifacts/intro-direction/first-question-slice.md",
+  "historicalManifest": "artifacts/first-question-review-20260923-a/previous-evidence.json",
+  "currentWorkNote": "Lead executed actual entry through first Light contact/travel to second question and inspected recorded motion. This slice progresses; visual continuity defects remain. Canvas inspector report is still missing; no manifest checker or full-game pass claimed.",
+  "viewport": {
+    "width": 947,
+    "height": 874,
+    "mode": "desktop",
+    "dpr": "record at capture"
+  },
   "captures": [
     {
-      "report": "artifacts/intro-flow-20260923-c/desktop-question-1.json",
       "mode": "desktop",
-      "state": "question-1"
-    },
-    {
-      "report": "artifacts/intro-flow-20260923-c/mobile-question-1.json",
-      "mode": "mobile",
-      "state": "question-1"
-    },
-    {
-      "mode": "desktop",
-      "state": "question-2",
-      "report": "artifacts/intro-flow-20260923-c/desktop-question-2.json"
-    },
-    {
-      "mode": "desktop",
-      "state": "question-3",
-      "report": "artifacts/intro-flow-20260923-c/desktop-question-3.json"
-    },
-    {
-      "mode": "desktop",
-      "state": "question-4",
-      "report": "artifacts/intro-flow-20260923-c/desktop-question-4.json"
-    },
-    {
-      "mode": "desktop",
-      "state": "final-name",
-      "report": "artifacts/intro-flow-20260923-c/desktop-final-name.json"
-    },
-    {
-      "mode": "mobile",
-      "state": "final-name",
-      "report": "artifacts/intro-flow-20260923-c/mobile-final-name.json"
-    },
-    {
-      "mode": "desktop",
-      "state": "final-door",
-      "report": "artifacts/intro-flow-20260923-c/desktop-final-door.json"
-    },
-    {
-      "mode": "mobile",
-      "state": "final-door",
-      "report": "artifacts/intro-flow-20260923-c/mobile-final-door.json"
+      "state": null,
+      "report": "artifacts/first-question-review-20260923-a/desktop-current-view.json",
+      "observedMoment": "First question: all three Dreamweaver turns finished, reached through actual entry. Null state deliberately claims no named-hook acknowledgement."
     }
   ],
-  "supplementalStudies": [
-    {
-      "missingEvidence": ["persistent viewport captures", "motion capture"],
-      "note": "Historical intro captures above do not verify this isolated study.",
-      "report": "artifacts/ghost-type-study/README.md",
-      "runId": "ghost-type-study-20260923",
-      "expectedViewportStates": [
-        "desktop-manuscript",
-        "desktop-fragments",
-        "desktop-passage",
-        "mobile-fragments"
-      ],
-      "status": "partial-browser-observation"
-    },
-    {
-      "runId": "omega-dialogue-studio-20260923-b",
-      "report": "artifacts/omega-dialogue-studio/README.md",
-      "manifest": "artifacts/omega-dialogue-studio/evidence.json",
-      "status": "focused-production-qa-passed",
-      "note": "Desktop/mobile passage checks; actual game integration pending."
-    }
+  "artifacts": [
+    "artifacts/first-question-review-20260923-a/user-before.png",
+    "artifacts/first-question-review-20260923-a/play/bot-playtest-bot-playtest--0b5ea--retries-the-playable-route/video.webm",
+    "artifacts/first-question-review-20260923-a/play/bot-playtest-bot-playtest--0b5ea--retries-the-playable-route/first-question-review.json",
+    "artifacts/first-question-review-20260923-a/contact-detail.jpg",
+    "artifacts/first-question-review-20260923-a/arrival-detail.jpg"
+  ],
+  "requiredMotionMoments": [
+    "entry and authored boot",
+    "Omega writing and revisions",
+    "Light then Shadow then Ambition reveal",
+    "choice-ready composition",
+    "movement start, steer, stop and resume",
+    "first route contact and selected-speaker response"
   ]
 }

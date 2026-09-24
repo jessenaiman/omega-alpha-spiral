@@ -15,15 +15,17 @@ The editor implementation and research reports are not prerequisites for a game 
 
 UTF-8 `.dialogue.json`, `schemaVersion: 1`. `parseDialogue(raw)` validates the schema and unique event IDs. Documents carry a title, source provenance and ordered events. Presentation optionally selects scene, era, layout and voice timing overrides.
 
-| Instruction | Runner advances when |
-| --- | --- |
-| `line` with explicit speaker and text | Host reports lettering finished |
-| `wait` with duration in milliseconds | Host's unpaused clock reaches the duration |
-| `continue` with prompt label | Host explicitly calls `proceed()` |
+| Instruction                           | Runner advances when                       |
+| ------------------------------------- | ------------------------------------------ |
+| `line` with explicit speaker and text | Host reports lettering finished            |
+| `wait` with duration in milliseconds  | Host's unpaused clock reaches the duration |
+| `continue` with prompt label          | Host explicitly calls `proceed()`          |
 
 The runner never infers an answer, speaker or script call from the wording. No arbitrary script execution is supported. Current rendering accepts Omega, Light, Shadow and Ambition; arbitrary NPC rendering is still outstanding even though the schema allows speaker IDs.
 
 Scene owner determines the shared era, independently of question number. Voice settings determine cadence, mistakes and corrections. The game owns input, movement, camera, world effects, player choices and stage transitions. The same `WritingPlayback` and `GhostLetters` implementation serves the editor and opening presentation.
+
+Authored `word|replacement` cues mean write the first word, pause, erase it and type its replacement before continuing. `[first span|replacement span]` supports the original bracketed phrase notation. These intentional revisions always run, regardless of random mistake frequency, using the speaker's revision delay, correction delay and typing interval. Preserve cues in saved JSON; use `resolveWritingText` for settled displays. Timeline completion waits for replacements to finish. Reduced-motion opening playback settles directly on replacement text.
 
 ## Current host API
 
