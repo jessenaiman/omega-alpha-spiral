@@ -6,7 +6,10 @@ import {
 
 const definition: MiddleFloorDefinition = {
   floor: 5,
-  title: "The Moving Archive",
+  overallFloor: 9,
+  sceneId: "never-go-alone-floor-02",
+  eraShaderId: "ibm-pc-vga",
+  title: "Second Reflection",
   era: "16-bit",
   bounds: { minX: -22, maxX: 22, minZ: -20, maxZ: 22 },
   spawn: { x: 0, z: 19 },
@@ -67,8 +70,8 @@ const definition: MiddleFloorDefinition = {
     {
       id: "future-offers",
       role: "offer",
-      position: { x: -13, z: -13 },
-      reach: 2.8,
+      position: { x: 0, z: 19 },
+      reach: 3.2,
       visual:
         "three small moving emblems imply future companions without assigning them",
     },

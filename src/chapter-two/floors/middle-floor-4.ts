@@ -6,7 +6,10 @@ import {
 
 const definition: MiddleFloorDefinition = {
   floor: 4,
-  title: "The Echo Vault",
+  overallFloor: 8,
+  sceneId: "never-go-alone-floor-01",
+  eraShaderId: "ansi-bbs-dos-art",
+  title: "First Reflection",
   era: "8-bit-nintendo",
   bounds: { minX: -20, maxX: 20, minZ: -18, maxZ: 22 },
   spawn: { x: 0, z: 18 },
@@ -67,8 +70,8 @@ const definition: MiddleFloorDefinition = {
     {
       id: "future-offers",
       role: "offer",
-      position: { x: 11, z: -10 },
-      reach: 2.8,
+      position: { x: 0, z: 18 },
+      reach: 3.2,
       visual:
         "three distinct empty silhouettes with no roster or recruitment UI",
     },

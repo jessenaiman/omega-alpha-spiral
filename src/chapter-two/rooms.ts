@@ -2,6 +2,7 @@ import { createFloor2ShadowLayout } from "./floors/early-shadow";
 import { createFloor3AmbitionLayout } from "./floors/early-ambition";
 import type { EarlyFloorLayout, FloorPoint } from "./floors/early-layout";
 import { createRng } from "../core/random";
+import { CHAPTER_ZERO_LEVELS_BY_ID } from "../dialogue/chapter-zero-vite";
 
 export type ObjectKind = "door" | "monster" | "chest";
 export type Guide = "Light" | "Shadow" | "Ambition";
@@ -21,6 +22,8 @@ export interface RoomBlock {
   rotationRadians?: number;
 }
 export interface EchoRoom {
+  levelId: string;
+  eraShaderId?: string;
   owner: Guide;
   objects: RoomObject[];
   blocks?: RoomBlock[];
@@ -29,9 +32,37 @@ export interface EchoRoom {
   routes?: Readonly<Record<ObjectKind, readonly FloorPoint[]>>;
 }
 
+function guideFromOwner(owner: string): Guide {
+  if (owner === "light") return "Light";
+  if (owner === "shadow") return "Shadow";
+  if (owner === "ambition") return "Ambition";
+  throw new Error(`Unknown Dreamweaver owner: ${owner}`);
+}
+
+function applyAuthoredDialogue(room: EchoRoom): EchoRoom {
+  const level = CHAPTER_ZERO_LEVELS_BY_ID.get(room.levelId);
+  if (!level) throw new Error(`Missing authored OML scene: ${room.levelId}`);
+  const choices = new Map(level.choices.map((choice) => [choice.id, choice]));
+  return {
+    ...room,
+    eraShaderId: level.scene.era_shader,
+    objects: room.objects.map((object) => {
+      const choice = choices.get(object.kind);
+      if (!choice)
+        throw new Error(`${room.levelId} has no ${object.kind} choice.`);
+      return {
+        ...object,
+        alignment: guideFromOwner(choice.owner),
+        text: choice.text,
+      };
+    }),
+  };
+}
+
 // Authored copy of stage_2/nethack-scene.md:119-237, interpreted as data, NOT
 // executed pseudocode. Colors, code architecture and movement are our graybox.
 const LIGHT_ROOM: EchoRoom = {
+  levelId: "nethack-floor-01",
   owner: "Light",
   heroStart: { x: 0, z: 12 },
   blocks: [
@@ -64,6 +95,7 @@ const LIGHT_ROOM: EchoRoom = {
 };
 
 const SHADOW_ROOM: EchoRoom = {
+  levelId: "nethack-floor-02",
   owner: "Shadow",
   objects: [
     {
@@ -91,6 +123,7 @@ const SHADOW_ROOM: EchoRoom = {
 };
 
 const AMBITION_ROOM: EchoRoom = {
+  levelId: "nethack-floor-03",
   owner: "Ambition",
   objects: [
     {
@@ -144,11 +177,14 @@ function placeRoom(room: EchoRoom, layout: EarlyFloorLayout): EchoRoom {
 
 /** Seeded room set with stable identities and randomized physical exit slots. */
 export function createEchoRooms(variationSeed: number = 0): EchoRoom[] {
+  const authoredLightRoom = applyAuthoredDialogue(LIGHT_ROOM);
+  const authoredShadowRoom = applyAuthoredDialogue(SHADOW_ROOM);
+  const authoredAmbitionRoom = applyAuthoredDialogue(AMBITION_ROOM);
   const lightSlots = createRng(variationSeed)
     .fork("floor-1-light:exit-slots")
-    .shuffle(LIGHT_ROOM.objects.map(({ x, z }) => ({ x, z })));
+    .shuffle(authoredLightRoom.objects.map(({ x, z }) => ({ x, z })));
   const lightKinds: ObjectKind[] = ["door", "monster", "chest"];
-  const lightObjects = LIGHT_ROOM.objects.map((object) => {
+  const lightObjects = authoredLightRoom.objects.map((object) => {
     const slotIndex = lightKinds.indexOf(object.kind);
     const slot = lightSlots[slotIndex];
     return { ...object, x: slot.x, z: slot.z };
@@ -166,13 +202,13 @@ export function createEchoRooms(variationSeed: number = 0): EchoRoom[] {
   ) as Record<ObjectKind, FloorPoint[]>;
   return [
     {
-      ...LIGHT_ROOM,
+      ...authoredLightRoom,
       objects: lightObjects,
       routes: lightRoutes,
-      blocks: LIGHT_ROOM.blocks?.map((block) => ({ ...block })),
+      blocks: authoredLightRoom.blocks?.map((block) => ({ ...block })),
     },
-    placeRoom(SHADOW_ROOM, createFloor2ShadowLayout(variationSeed)),
-    placeRoom(AMBITION_ROOM, createFloor3AmbitionLayout(variationSeed)),
+    placeRoom(authoredShadowRoom, createFloor2ShadowLayout(variationSeed)),
+    placeRoom(authoredAmbitionRoom, createFloor3AmbitionLayout(variationSeed)),
   ];
 }
 

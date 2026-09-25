@@ -6,7 +6,10 @@ import {
 
 const definition: MiddleFloorDefinition = {
   floor: 6,
-  title: "The Depth Passage",
+  overallFloor: 10,
+  sceneId: "never-go-alone-floor-03",
+  eraShaderId: "xerox-star-bitmap-gui",
+  title: "Ambition's Final Test",
   era: "early-3d",
   bounds: { minX: -24, maxX: 24, minZ: -22, maxZ: 24 },
   spawn: { x: 0, z: 21 },
@@ -69,8 +72,8 @@ const definition: MiddleFloorDefinition = {
     {
       id: "future-forms",
       role: "offer",
-      position: { x: 14, z: -17 },
-      reach: 2.8,
+      position: { x: 0, z: 21 },
+      reach: 3.2,
       visual: "three low-poly silhouettes stand apart on a lit terrace",
     },
     {

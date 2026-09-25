@@ -22,13 +22,15 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { WalkField } from "./WalkField";
 import {
   MiddleFloorRuntime,
-  type RecruitGuide,
+  type DreamweaverGuide,
 } from "./floors/MiddleFloorRuntime";
+import { TownWakeRuntime } from "./floors/TownWakeRuntime";
 import { LateFloorRuntime } from "./floors/LateFloorRuntime";
 import { FLOOR_7_TOWN } from "./floors/late-floor-7-town";
 import { FLOOR_8_FINALE } from "./floors/late-floor-8-finale";
 import { ECHO_ROOMS } from "./rooms";
 import { createRng } from "../core/random";
+import { applyEraShaderCss } from "../era-shaders";
 import "./styles.css";
 
 const FIELD_SIZE: number = 48;
@@ -56,6 +58,7 @@ export class ChapterTwoScene {
   private _roomKit: Group = new Group();
   private _middle: MiddleFloorRuntime | null = null;
   private _late: LateFloorRuntime | null = null;
+  private _townWake: TownWakeRuntime | null = null;
   private _floorMesh: Mesh | null = null;
   private _handoffDelay: number = -1;
   private _marker: Mesh<BoxGeometry, MeshStandardMaterial> = new Mesh(
@@ -146,7 +149,7 @@ export class ChapterTwoScene {
     this._hud.className = "echo-hud";
     this._hud.hidden = true;
     this._hud.setAttribute("aria-label", "Echo chamber gameplay");
-    this._hud.innerHTML = `<header><strong id="echo-title"></strong><span>WASD / arrows · E interact · Esc pause · R restart</span><button id="echo-pause" type="button">Pause</button><button id="echo-restart" type="button">Restart journey</button></header><section class="echo-prompt"><p id="echo-copy" aria-live="polite"></p><pre id="echo-script" aria-label="Next floor script" hidden></pre><form id="echo-form" hidden><label for="echo-answer">Your answer</label><input id="echo-answer" name="answer" required maxlength="240" autocomplete="off"><button type="submit">Answer</button></form><button id="echo-interact" type="button">E · Interact</button><button id="echo-next" type="button" hidden>Continue</button><button id="echo-hit" type="button" hidden>Space · Hit</button><button id="echo-run" type="button" hidden>Shift · Run</button><div id="echo-recruits" hidden><span>Choose whose companion recommendation to follow:</span><button type="button" data-recruit="Light">1 · Light</button><button type="button" data-recruit="Shadow">2 · Shadow</button><button type="button" data-recruit="Ambition">3 · Ambition</button></div><div id="echo-routes" hidden><span>Choose an escape idea at the plaza:</span><button type="button" data-route="exit-boulevard">1 · Together</button><button type="button" data-route="exit-alleys">2 · Slip through</button><button type="button" data-route="exit-core">3 · Break the lock</button></div></section>`;
+    this._hud.innerHTML = `<header><strong id="echo-title"></strong><span>WASD / arrows · E interact · Esc pause · R restart</span><button id="echo-pause" type="button">Pause</button><button id="echo-restart" type="button">Restart journey</button></header><section class="echo-prompt"><p id="echo-copy" aria-live="polite"></p><pre id="echo-script" aria-label="Next floor script" hidden></pre><form id="echo-form" hidden><label for="echo-answer">Your answer</label><input id="echo-answer" name="answer" required maxlength="240" autocomplete="off"><button type="submit">Answer</button></form><button id="echo-interact" type="button">E · Interact</button><button id="echo-next" type="button" hidden>Continue</button><button id="echo-hit" type="button" hidden>Space · Hit</button><button id="echo-run" type="button" hidden>Shift · Run</button><div id="echo-answers" hidden><span data-answer-question></span><button type="button" data-answer="Light">1 · Light</button><button type="button" data-answer="Shadow">2 · Shadow</button><button type="button" data-answer="Ambition">3 · Ambition</button></div><div id="echo-routes" hidden><span>Choose an escape idea at the plaza:</span><button type="button" data-route="exit-boulevard">1 · Together</button><button type="button" data-route="exit-alleys">2 · Slip through</button><button type="button" data-route="exit-core">3 · Break the lock</button></div></section>`;
     root.append(this._hud);
     const signal: AbortSignal = this._abort.signal;
     this._element("echo-interact").addEventListener(
@@ -187,14 +190,14 @@ export class ChapterTwoScene {
       },
       { signal }
     );
-    this._element("echo-recruits").addEventListener(
+    this._element("echo-answers").addEventListener(
       "click",
       (event: Event): void => {
         if (!this.active || this._paused || !this._middle) return;
         const target = event.target;
         if (!(target instanceof HTMLButtonElement)) return;
-        const guide = target.dataset.recruit as RecruitGuide | undefined;
-        if (guide) this._middle.chooseRecruit(guide);
+        const guide = target.dataset.answer as DreamweaverGuide | undefined;
+        if (guide) this._middle.chooseAnswer(guide);
       },
       { signal }
     );
@@ -271,6 +274,7 @@ export class ChapterTwoScene {
             const middleStatus = middle?.status;
             const late = this._late;
             const lateStatus = late?.status;
+            const townWake = this._townWake;
             return {
               active: this.active,
               phase: this._world.phase,
@@ -296,7 +300,9 @@ export class ChapterTwoScene {
                 null,
               blocks: this._world.activeRoom.blocks ?? [],
               paused: this._paused,
-              journey: middle && middleStatus
+              journey: townWake
+                ? { kind: "town-wake", status: townWake.status }
+                : middle && middleStatus
                 ? {
                     kind: "middle",
                     floor: middleStatus.floor,
@@ -322,7 +328,7 @@ export class ChapterTwoScene {
                     }
                   : {
                       kind: "early",
-                      floor: this._world.roomIndex + 1,
+                      floor: this._world.roomIndex + 5,
                       phase: this._world.phase,
                       player: { ...this._world.player },
                     },
@@ -358,6 +364,11 @@ export class ChapterTwoScene {
       this._late.dispose();
       this._late = null;
     }
+    if (this._townWake) {
+      this._scene.remove(this._townWake.group);
+      this._townWake.dispose();
+      this._townWake = null;
+    }
     this._roomKit.visible = true;
     this._door.visible = true;
     this._monster.visible = true;
@@ -377,6 +388,7 @@ export class ChapterTwoScene {
     this._fallenFlash = 0;
     this._lastEarlyPhase = "exploring";
     this._hero.scale.setScalar(1);
+    this._hero.rotation.set(0, 0, 0);
     this._input().value = "";
     if (this._hud) this._hud.hidden = false;
     if (this._root) this._root.dataset.chapter = "2";
@@ -487,10 +499,10 @@ export class ChapterTwoScene {
         return;
       }
       if (["1", "2", "3"].includes(key) && !event.repeat && !this._paused) {
-        const guide: RecruitGuide = (["Light", "Shadow", "Ambition"] as const)[
-          Number(key) - 1
-        ];
-        this._middle.chooseRecruit(guide);
+        const guide: DreamweaverGuide = (
+          ["Light", "Shadow", "Ambition"] as const
+        )[Number(key) - 1];
+        this._middle.chooseAnswer(guide);
         return;
       }
     }
@@ -526,6 +538,10 @@ export class ChapterTwoScene {
     const axis = (positive: string[], negative: string[]): number =>
       Number(positive.some((key) => this._keys.has(key))) -
       Number(negative.some((key) => this._keys.has(key)));
+    if (this._townWake) {
+      this._updateTownWake(delta, renderer);
+      return;
+    }
     if (this._late) {
       this._updateLate(delta, renderer, reduced);
       return;
@@ -654,8 +670,8 @@ export class ChapterTwoScene {
     const next = middle.transitionSignal;
     if (next === 7) {
       middle.consumeTransitionSignal();
-      this._enterLate();
-      this._updateLate(delta, renderer, reduced);
+      this._enterTownWake();
+      this._updateTownWake(delta, renderer);
       return;
     }
     if (next === 5 || next === 6) {
@@ -682,11 +698,16 @@ export class ChapterTwoScene {
     this._camera.updateProjectionMatrix();
     const status = middle.status;
     if (status) {
-      const key = `${status.floor}:${status.encounterPhase}:${status.playerHealth}:${status.nearOffer}:${status.recruitChoice}:${status.objective}:${this._paused}`;
+      const key = `${status.floor}:${status.encounterPhase}:${status.playerHealth}:${status.nearOffer}:${status.selectedAnswer}:${status.objective}:${this._paused}`;
       if (key !== this._lastUi) {
         this._lastUi = key;
+        if (this._hud)
+          applyEraShaderCss(this._hud, {
+            id: status.eraShaderId,
+            surface: "hud",
+          });
         this._element("echo-title").textContent =
-          `FLOOR ${status.floor} — ${status.title.toUpperCase()}`;
+          `FLOOR ${status.overallFloor} — ${status.title.toUpperCase()}`;
         this._element("echo-copy").textContent = this._paused
           ? "Paused"
           : `${status.objective}${status.playerHealth === null ? "" : `  HP ${status.playerHealth}/${status.playerMaxHealth}`}`;
@@ -695,11 +716,26 @@ export class ChapterTwoScene {
         this._element("echo-next").hidden = true;
         this._element("echo-interact").hidden = true;
         this._element("echo-hit").hidden =
-          status.encounterPhase !== "active" || this._paused;
+          !status.hitEnabled ||
+          status.encounterPhase !== "active" ||
+          this._paused;
         this._element("echo-run").hidden =
           status.encounterPhase !== "active" || this._paused;
-        this._element("echo-recruits").hidden =
+        const answers = this._element("echo-answers");
+        answers.hidden =
           !status.nearOffer || this._paused;
+        const question = answers.querySelector("[data-answer-question]");
+        if (question) question.textContent = status.question;
+        for (const button of answers.querySelectorAll<HTMLButtonElement>(
+          "button[data-answer]"
+        )) {
+          const guide = button.dataset.answer as DreamweaverGuide;
+          const choice = status.choices.find((item) => item.guide === guide);
+          button.textContent = choice
+            ? `${Number([...answers.querySelectorAll("button")].indexOf(button)) + 1} · ${guide}: ${choice.text}`
+            : guide;
+          button.disabled = status.selectedAnswer !== null;
+        }
         this._element("echo-pause").textContent = this._paused
           ? "Resume"
           : "Pause";
@@ -708,8 +744,79 @@ export class ChapterTwoScene {
     renderer.render(this._scene, this._camera);
   }
 
+  private _enterTownWake(): void {
+    if (this._middle) {
+      this._scene.remove(this._middle.group);
+      this._middle.dispose();
+      this._middle = null;
+    }
+    if (this._late) {
+      this._scene.remove(this._late.group);
+      this._late.dispose();
+      this._late = null;
+    }
+    const townWake = new TownWakeRuntime();
+    this._townWake = townWake;
+    this._scene.add(townWake.group);
+    this._roomKit.visible = false;
+    this._door.visible = false;
+    this._monster.visible = false;
+    this._chest.visible = false;
+    this._marker.visible = false;
+    if (this._questionLabel) this._questionLabel.visible = false;
+    if (this._floorMesh) this._floorMesh.visible = false;
+    this._scene.background = new Color(0x8c765f);
+    this._scene.fog = null;
+    this._scene.visible = true;
+    this._hero.position.set(0, 1.65, 0.25);
+    this._hero.rotation.set(Math.PI / 2, 0, 0);
+    this._keys.clear();
+    this._lastUi = "";
+  }
+
+  private _updateTownWake(delta: number, renderer: WebGLRenderer): void {
+    const townWake = this._townWake;
+    if (!townWake) return;
+    if (!this._paused) townWake.update(Math.max(0, delta) * 1000);
+    const status = townWake.status;
+    const key = `${status.text}:${status.complete}:${this._paused}`;
+    if (key !== this._lastUi) {
+      this._lastUi = key;
+      if (this._hud)
+        applyEraShaderCss(this._hud, {
+          id: status.eraShaderId,
+          surface: "hud",
+        });
+      this._element("echo-title").textContent = status.title.toUpperCase();
+      this._element("echo-copy").textContent = this._paused
+        ? "Paused"
+        : status.text;
+      this._element("echo-form").hidden = true;
+      this._element("echo-script").hidden = true;
+      this._element("echo-next").hidden = true;
+      this._element("echo-interact").hidden = true;
+      this._element("echo-hit").hidden = true;
+      this._element("echo-run").hidden = true;
+      this._element("echo-answers").hidden = true;
+      this._element("echo-routes").hidden = true;
+      this._element("echo-pause").textContent = this._paused
+        ? "Resume"
+        : "Pause";
+    }
+    const aspect = innerWidth / innerHeight;
+    const halfHeight = Math.max(7, 10 / aspect);
+    this._camera.left = -halfHeight * aspect;
+    this._camera.right = halfHeight * aspect;
+    this._camera.top = halfHeight;
+    this._camera.bottom = -halfHeight;
+    this._camera.position.set(10, 14, 14);
+    this._camera.lookAt(0, 0.5, 0);
+    this._camera.updateProjectionMatrix();
+    renderer.render(this._scene, this._camera);
+  }
+
   private _enterLate(): void {
-    const recruitChoices = { ...(this._middle?.recruitChoices ?? {}) };
+    const recruitChoices = { ...(this._middle?.dreamweaverAnswers ?? {}) };
     if (this._middle) {
       this._scene.remove(this._middle.group);
       this._middle.dispose();
@@ -771,7 +878,7 @@ export class ChapterTwoScene {
     this._element("echo-form").hidden = true;
     this._element("echo-script").hidden = true;
     this._element("echo-next").hidden = true;
-    this._element("echo-recruits").hidden = true;
+    this._element("echo-answers").hidden = true;
     this._element("echo-run").hidden = true;
     this._element("echo-hit").hidden = status.floor !== 7 || this._paused;
     const nearDreamweaver =
@@ -803,14 +910,19 @@ export class ChapterTwoScene {
     const roomChanged: boolean =
       this._lastUi.split(":")[0] !== String(world.roomIndex);
     this._lastUi = key;
+    if (this._hud && world.activeRoom.eraShaderId)
+      applyEraShaderCss(this._hud, {
+        id: world.activeRoom.eraShaderId,
+        surface: "hud",
+      });
     this._element("echo-title").textContent =
-      `FLOOR ${world.roomIndex + 1} — ${world.activeRoom.owner.toUpperCase()}`;
+      `FLOOR ${world.roomIndex + 5} — ${world.activeRoom.owner.toUpperCase()}`;
     this._element("echo-copy").textContent = this._paused
       ? "Paused"
       : world.phase === "rewriting"
         ? "Floor ended. Next script ready."
         : world.phase === "complete"
-          ? `${world.guide}: “I’m coming with you. Don’t lose me this time.”`
+          ? `${world.guide} claims the path shaped by your three choices.`
           : world.phase === "result" && world.selected
             ? world.choices[world.roomIndex]?.combatOutcome === "fallen"
               ? "You fell. The room remembers your choice. Walk through its exit."
@@ -827,7 +939,7 @@ export class ChapterTwoScene {
     this._element("echo-next").hidden = true;
     this._element("echo-hit").hidden = true;
     this._element("echo-run").hidden = true;
-    this._element("echo-recruits").hidden = true;
+    this._element("echo-answers").hidden = true;
     this._element("echo-routes").hidden = true;
     this._element("echo-next").textContent =
       world.phase === "rewriting" ? "Reboot into next floor" : "Continue";
@@ -1149,6 +1261,11 @@ export class ChapterTwoScene {
       this._scene.remove(this._late.group);
       this._late.dispose();
       this._late = null;
+    }
+    if (this._townWake) {
+      this._scene.remove(this._townWake.group);
+      this._townWake.dispose();
+      this._townWake = null;
     }
     if (this._middle) {
       this._scene.remove(this._middle.group);
