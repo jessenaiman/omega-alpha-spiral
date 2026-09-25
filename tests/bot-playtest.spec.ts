@@ -24,7 +24,7 @@ type RoomKind = "door" | "monster" | "chest";
 type ChapterPoint = { x: number; z: number };
 
 type JourneyState = {
-  kind: "early" | "middle" | "late";
+  kind: "early" | "middle" | "late" | "town-wake";
   floor: number;
   phase: string | null;
   player: ChapterPoint;
@@ -32,7 +32,8 @@ type JourneyState = {
     encounterOutcome?: "won" | "fallen" | null;
     exitUnlocked?: boolean;
     nearOffer?: boolean;
-    recruitChoice?: string | null;
+    selectedAnswer?: string | null;
+    complete?: boolean;
     enemies?: Array<{
       id: string;
       health: number;
@@ -145,11 +146,16 @@ const sample = (page: Page): Promise<BotSnapshot> =>
       frame: intro.frame,
       score: intro.objectiveProgress + (chapter?.choices.length ?? 0),
       complete:
-        chapter?.journey.kind === "late" &&
-        chapter.journey.floor === 8 &&
+        chapter?.journey.kind === "town-wake" &&
         chapter.journey.phase === "complete",
-      x: chapter?.active ? chapter.journey.player.x : intro.playerPosition.x,
-      z: chapter?.active ? chapter.journey.player.z : intro.playerPosition.z,
+      x:
+        chapter?.active && chapter.journey.player
+          ? chapter.journey.player.x
+          : intro.playerPosition.x,
+      z:
+        chapter?.active && chapter.journey.player
+          ? chapter.journey.player.z
+          : intro.playerPosition.z,
     };
   });
 
@@ -741,60 +747,28 @@ async function playMiddleFloor(
   const main = start.routes?.find(
     (route) => route.destinationLandmarkId === exit?.id
   )?.points;
-  const branch = start.routes?.find(
-    (route) => route.destinationLandmarkId === offer?.id
-  )?.points;
-  if (
-    !exit ||
-    !offer ||
-    !main ||
-    !branch ||
-    main.length < 2 ||
-    branch.length < 2
-  )
+  if (!exit || !offer || !main || main.length < 2)
     throw new Error(`Floor ${floor} is missing its authored route diagnostics`);
-  const branchIndex = main.findIndex(
-    (point) => Math.hypot(point.x - branch[0]!.x, point.z - branch[0]!.z) < 0.5
-  );
-  if (branchIndex < 0)
-    throw new Error(`Floor ${floor} offer route does not join its exit route`);
+  let state = (await readChapter(page)).journey;
+  expect(
+    state.status?.nearOffer,
+    `Floor ${floor} must begin at its authored Dreamweaver choices`
+  ).toBe(true);
+  const answerKey = floor === 10 ? "2" : "1";
+  const answer = floor === 10 ? "Shadow" : "Light";
+  await page.keyboard.press(answerKey);
+  await expect
+    .poll(async () => (await readChapter(page)).journey.status?.selectedAnswer)
+    .toBe(answer);
+  routeSequence.push(`floor-${floor}:answer-${answer}`);
 
-  for (const point of main.slice(1, branchIndex + 1)) {
+  for (const point of main.slice(1)) {
     await steerJourneyTo(page, point, { kind: "middle", floor }, metrics);
     const current = (await readChapter(page)).journey;
-    if (current.kind !== "middle" || current.floor !== floor) return;
+    if (current.kind !== "middle" || current.floor !== floor) break;
     if (current.phase === "active")
       await resolveMiddleEncounter(page, floor, routeSequence, metrics);
   }
-  let state = (await readChapter(page)).journey;
-  if (state.kind !== "middle" || state.floor !== floor) return;
-  if (state.phase === "active")
-    await resolveMiddleEncounter(page, floor, routeSequence, metrics);
-  if (!state.status?.encounterOutcome)
-    state = (await readChapter(page)).journey;
-  if (!state.status?.encounterOutcome)
-    throw new Error(
-      `Floor ${floor} route reached its offer without resolving combat`
-    );
-
-  for (const point of branch.slice(1))
-    await steerJourneyTo(page, point, { kind: "middle", floor }, metrics);
-  state = (await readChapter(page)).journey;
-  if (state.kind !== "middle" || state.floor !== floor) return;
-  expect(
-    state.status?.nearOffer,
-    `Floor ${floor} offer must be reachable`
-  ).toBe(true);
-  await page.keyboard.press("1");
-  await expect
-    .poll(async () => (await readChapter(page)).journey.status?.recruitChoice)
-    .toBe("Light");
-  routeSequence.push(`floor-${floor}:recommendation-Light`);
-
-  for (const point of branch.slice(0, -1).reverse())
-    await steerJourneyTo(page, point, { kind: "middle", floor }, metrics);
-  for (const point of main.slice(branchIndex + 1))
-    await steerJourneyTo(page, point, { kind: "middle", floor }, metrics);
   await expect
     .poll(
       async () => {
@@ -1117,7 +1091,7 @@ test("bot playtest: real input reaches the actual ending from Begin", async ({
     );
     routeMetrics.distance += chapterResults[index].distance;
     routeSequence.push(
-      `floor-${chapterResults[index].roomIndex + 1}:exit-crossed-by-input`
+      `floor-${chapterResults[index].roomIndex + 5}:exit-crossed-by-input`
     );
     await recordStep(introSteps.length + index);
   }
@@ -1128,60 +1102,56 @@ test("bot playtest: real input reaches the actual ending from Begin", async ({
     .poll(
       async () => {
         const journey = (await readChapter(page)).journey;
-        return journey.kind === "middle" && journey.floor === 4;
+        return journey.kind === "middle" && journey.floor === 8;
       },
       { timeout: 15_000 }
     )
     .toBe(true);
-  routeSequence.push("floor-4:entered-after-floor-3-handoff");
-  await playMiddleFloor(page, 4, routeMetrics, routeSequence);
+  routeSequence.push("floor-8:entered-after-floor-7-handoff");
+  await playMiddleFloor(page, 8, routeMetrics, routeSequence);
   await expect
     .poll(
       async () => {
         const journey = (await readChapter(page)).journey;
         return (
           journey.kind === "middle" &&
-          journey.floor === 5 &&
+          journey.floor === 9 &&
           journey.phase === null
         );
       },
       { timeout: 15_000 }
     )
     .toBe(true);
-  routeSequence.push("floor-5:stable-entry");
-  await playMiddleFloor(page, 5, routeMetrics, routeSequence);
+  routeSequence.push("floor-9:stable-entry");
+  await playMiddleFloor(page, 9, routeMetrics, routeSequence);
   await expect
     .poll(
       async () => {
         const journey = (await readChapter(page)).journey;
         return (
           journey.kind === "middle" &&
-          journey.floor === 6 &&
+          journey.floor === 10 &&
           journey.phase === null
         );
       },
       { timeout: 15_000 }
     )
     .toBe(true);
-  routeSequence.push("floor-6:stable-entry");
-  await playMiddleFloor(page, 6, routeMetrics, routeSequence);
+  routeSequence.push("floor-10:stable-entry");
+  await playMiddleFloor(page, 10, routeMetrics, routeSequence);
   await expect
     .poll(
       async () => {
         const journey = (await readChapter(page)).journey;
         return (
-          journey.kind === "late" &&
-          journey.floor === 7 &&
-          journey.phase === "exploring"
+          journey.kind === "town-wake" &&
+          journey.phase === "complete"
         );
       },
       { timeout: 15_000 }
     )
     .toBe(true);
-  routeSequence.push("floor-7:stable-town-entry");
-  await gatherTownDreamweavers(page, routeMetrics, routeSequence);
-  await chooseTownExit(page, routeMetrics, routeSequence);
-  await completeFinale(page, routeMetrics, routeSequence);
+  routeSequence.push("amnesia-town:awake-alone");
   const completedChapter = await readChapter(page);
   const after = await sample(page);
   await page.keyboard.press("KeyR");
@@ -1250,8 +1220,8 @@ test("bot playtest: real input reaches the actual ending from Begin", async ({
   ).toBeGreaterThanOrEqual(0);
   expect(
     routeSequence.at(-1),
-    "real input must reach the healing core and actual ending"
-  ).toBe("floor-8:healing-core-complete");
+    "real input must reach the authored Town wake stopping scene"
+  ).toBe("amnesia-town:awake-alone");
   expect(report.complete, "the runtime must enter its actual ending state").toBe(
     true
   );

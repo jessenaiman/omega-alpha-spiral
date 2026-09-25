@@ -1231,12 +1231,8 @@ export class BootScene {
       else if (completion.event?.type === "cue" && completion.eventFinished) {
         this._beginDoorway(completion.event);
       }
-      const phase: BootFrame["phase"] =
-        this._storyMode === "name"
-          ? "name"
-          : this._storyMode === "doorway"
-            ? "doorway"
-            : "final";
+      // The completion callbacks above synchronously move final into name or doorway.
+      const phase = this._storyMode as BootFrame["phase"];
       const hint =
         completion.event?.type === "input"
           ? completion.event.hint

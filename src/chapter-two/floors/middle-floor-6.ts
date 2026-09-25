@@ -6,15 +6,17 @@ import {
 
 const definition: MiddleFloorDefinition = {
   floor: 6,
-  title: "The Depth Passage",
+  overallFloor: 10,
+  sceneId: "never-go-alone-floor-03",
+  eraShaderId: "xerox-star-bitmap-gui",
   era: "early-3d",
   bounds: { minX: -24, maxX: 24, minZ: -22, maxZ: 24 },
   spawn: { x: 0, z: 21 },
   exit: { x: 0, z: -19 },
   routes: [
     {
-      id: "depth-passage",
-      label: "Depth Passage",
+      id: "ambition-core-test-route",
+      label: "The Core Test",
       points: [
         { x: 0, z: 21 },
         { x: -5, z: 14 },
@@ -24,11 +26,11 @@ const definition: MiddleFloorDefinition = {
         { x: 0, z: -19 },
       ],
       width: 6,
-      destinationLandmarkId: "depth-exit",
+      destinationLandmarkId: "amnesia-threshold",
     },
     {
-      id: "lookout-loop",
-      label: "Lookout",
+      id: "final-reflection-branch",
+      label: "Final Reflections",
       points: [
         { x: -5, z: 14 },
         { x: -14, z: 10 },
@@ -36,45 +38,45 @@ const definition: MiddleFloorDefinition = {
         { x: -5, z: 7 },
       ],
       width: 4,
-      destinationLandmarkId: "depth-lookout",
+      destinationLandmarkId: "final-reflection-mirror",
     },
     {
-      id: "offer-terrace",
-      label: "Unfinished Forms",
+      id: "dreamweaver-answer-route",
+      label: "Dreamweaver Answers",
       points: [
-        { x: 4, z: -8 },
-        { x: 12, z: -12 },
-        { x: 14, z: -17 },
+        { x: 0, z: 21 },
+        { x: 3, z: 19 },
+        { x: 0, z: 18 },
       ],
       width: 4,
-      destinationLandmarkId: "future-forms",
+      destinationLandmarkId: "dreamweaver-answers",
     },
   ],
   landmarks: [
     {
-      id: "depth-entry",
+      id: "ambition-core-test-entry",
       role: "orientation",
       position: { x: 0, z: 17 },
       reach: 2,
-      visual: "large faceted floor arrow and repeating perspective ribs",
+      visual: "large floor arrow points from Ambition's answer toward the core test",
     },
     {
-      id: "depth-lookout",
+      id: "final-reflection-mirror",
       role: "discovery",
       position: { x: -15, z: 4 },
       reach: 2.6,
       visual:
-        "open rail frames a distant layered vista; no gameplay platform is implied",
+        "the final reflection waits inside a distorted mirror",
     },
     {
-      id: "future-forms",
+      id: "dreamweaver-answers",
       role: "offer",
-      position: { x: 14, z: -17 },
-      reach: 2.8,
+      position: { x: 0, z: 18 },
+      reach: 3.2,
       visual: "three low-poly silhouettes stand apart on a lit terrace",
     },
     {
-      id: "depth-exit",
+      id: "amnesia-threshold",
       role: "exit",
       position: { x: 0, z: -19 },
       reach: 3,
@@ -90,7 +92,7 @@ const definition: MiddleFloorDefinition = {
     { kind: "rect", center: { x: 7, z: -15 }, width: 1.5, depth: 7 },
   ],
   encounter: {
-    id: "depth-passage-encounter",
+    id: "ambition-core-test",
     required: true,
     checkpoint: { x: -5, z: 9 },
     arena: {
@@ -104,7 +106,7 @@ const definition: MiddleFloorDefinition = {
     },
     enemies: [
       {
-        id: "depth-charger",
+        id: "code-guardian",
         role: "charger",
         spawn: { x: 4, z: -1 },
         health: 3,
@@ -116,7 +118,7 @@ const definition: MiddleFloorDefinition = {
           "a faceted floor strip traces its charge lane before it moves",
       },
       {
-        id: "depth-slinger",
+        id: "code-fragment",
         role: "ranged",
         spawn: { x: 11, z: -6 },
         health: 2,
@@ -143,10 +145,10 @@ const definition: MiddleFloorDefinition = {
   },
   effects: [
     {
-      id: "depth-charger-lane",
+      id: "code-guardian-telegraph",
       trigger: "enemy-telegraph",
-      enemyId: "depth-charger",
-      encounterId: "depth-passage-encounter",
+      enemyId: "code-guardian",
+      encounterId: "ambition-core-test",
       visual: {
         treatment:
           "a floor strip and the charger's forward silhouette mark the attack lane",
@@ -168,9 +170,9 @@ const definition: MiddleFloorDefinition = {
       },
     },
     {
-      id: "depth-outcome-threshold",
+      id: "ambition-core-test-outcome",
       trigger: "encounter-resolved",
-      encounterId: "depth-passage-encounter",
+      encounterId: "ambition-core-test",
       visual: {
         treatment:
           "faceted frame pieces settle into a square doorway; floor strip remains bright",

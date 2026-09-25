@@ -1,0 +1,62 @@
+# NetHack Floor 03 - Ambition's dungeon
+# Creative source:
+# https://github.com/jessenaiman/omega-alpha-spiral/blob/main/project-management/official%20game%20docs%20(read-only)/chapter-zero-stages/stage_2/nethack-scene.md
+
+[voice Light]
+file = Light.omd
+
+[voice Shadow]
+file = Shadow.omd
+
+[voice Ambition]
+file = Ambition.omd
+
+[scene]
+id = nethack-floor-03
+title = Ambition's Dungeon
+era_shader = amiga-workbench
+layout = rogue-room-ambition
+next = never-go-alone-floor-01
+
+[question]
+text = Three exits wait in Ambition's dungeon. Which one do you choose?
+
+[choice door]
+owner = ambition
+text = Would you burn the world to save one soul?
+response = > You answer the door and cross its threshold.
+set = nethack.floor3.exit = door
+increment = dreamweavers.ambition.affinity = 2
+emit = nethack.floor3.exit.selected
+transition = never-go-alone-floor-01
+
+[choice monster]
+owner = shadow
+text = A trickster imp cackles and attacks!
+response = > You meet the trickster imp in a basic auto-fight.
+set = nethack.floor3.exit = monster
+increment = dreamweavers.shadow.affinity = 1
+emit = nethack.floor3.exit.selected
+transition = never-go-alone-floor-01
+
+[choice chest]
+owner = light
+text = Inside: a shard glowing with ancient hope.
+response = > You carry the glowing shard forward.
+set = nethack.floor3.exit = chest
+increment = dreamweavers.light.affinity = 1
+emit = nethack.floor3.exit.selected
+transition = never-go-alone-floor-01
+
+[script]
+Ambition: Carry me out, and I'll show you what's real.
+[show question]
+[show choice door]
+[show choice monster]
+[show choice chest]
+
+[completion]
+[set nethack.complete = true]
+[emit nethack.claim.ready]
+[continue Leave the final dungeon]
+[transition never-go-alone-floor-01]

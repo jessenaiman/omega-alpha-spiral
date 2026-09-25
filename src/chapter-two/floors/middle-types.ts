@@ -1,5 +1,6 @@
-/** Shared data contract for the Floor 4–6 traversal modules. */
+/** Shared data contract for the three Never Go Alone floors. */
 export type MiddleFloorNumber = 4 | 5 | 6;
+export type ChapterZeroFloorNumber = 8 | 9 | 10;
 export type FloorEra = "8-bit-nintendo" | "16-bit" | "early-3d";
 
 export interface FloorPoint {
@@ -90,7 +91,9 @@ export interface MiddleFloorEncounter {
 }
 export interface MiddleFloorLayout {
   floor: MiddleFloorNumber;
-  title: string;
+  overallFloor: ChapterZeroFloorNumber;
+  sceneId: string;
+  eraShaderId: string;
   era: FloorEra;
   bounds: { minX: number; maxX: number; minZ: number; maxZ: number };
   spawn: FloorPoint;

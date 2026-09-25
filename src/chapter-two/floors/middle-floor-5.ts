@@ -6,15 +6,17 @@ import {
 
 const definition: MiddleFloorDefinition = {
   floor: 5,
-  title: "The Moving Archive",
+  overallFloor: 9,
+  sceneId: "never-go-alone-floor-02",
+  eraShaderId: "ibm-pc-vga",
   era: "16-bit",
   bounds: { minX: -22, maxX: 22, minZ: -20, maxZ: 22 },
   spawn: { x: 0, z: 19 },
   exit: { x: 0, z: -17 },
   routes: [
     {
-      id: "archive-run",
-      label: "Archive Run",
+      id: "second-test-route",
+      label: "Second Test",
       points: [
         { x: 0, z: 19 },
         { x: 0, z: 11 },
@@ -24,56 +26,56 @@ const definition: MiddleFloorDefinition = {
         { x: 0, z: -17 },
       ],
       width: 5.5,
-      destinationLandmarkId: "archive-exit",
+      destinationLandmarkId: "second-test-exit",
     },
     {
-      id: "upper-index",
-      label: "Upper Index",
+      id: "second-reflection-branch",
+      label: "Second Reflection",
       points: [
         { x: 6, z: 6 },
         { x: 13, z: 9 },
         { x: 14, z: 13 },
       ],
       width: 3.5,
-      destinationLandmarkId: "index-mark",
+      destinationLandmarkId: "second-reflection-mirror",
     },
     {
-      id: "offer-gallery",
-      label: "Gallery of Possibilities",
+      id: "dreamweaver-answer-route",
+      label: "Dreamweaver Answers",
       points: [
-        { x: 0, z: -5 },
-        { x: -8, z: -8 },
-        { x: -13, z: -13 },
+        { x: 0, z: 19 },
+        { x: -3, z: 17 },
+        { x: 0, z: 16 },
       ],
       width: 4,
-      destinationLandmarkId: "future-offers",
+      destinationLandmarkId: "dreamweaver-answers",
     },
   ],
   landmarks: [
     {
-      id: "archive-entry",
+      id: "second-test-entry",
       role: "orientation",
       position: { x: 0, z: 15 },
       reach: 2,
-      visual: "wide floor arrows and layered distant archive shelves",
+      visual: "wide floor arrows point from the second reflection toward its test",
     },
     {
-      id: "index-mark",
+      id: "second-reflection-mirror",
       role: "discovery",
       position: { x: 14, z: 13 },
       reach: 2.5,
-      visual: "a floating index page with chunky animated color bands",
+      visual: "the second reflection waits inside a distorted mirror",
     },
     {
-      id: "future-offers",
+      id: "dreamweaver-answers",
       role: "offer",
-      position: { x: -13, z: -13 },
-      reach: 2.8,
+      position: { x: 0, z: 16 },
+      reach: 3.2,
       visual:
         "three small moving emblems imply future companions without assigning them",
     },
     {
-      id: "archive-exit",
+      id: "second-test-exit",
       role: "exit",
       position: { x: 0, z: -17 },
       reach: 3,
@@ -89,7 +91,7 @@ const definition: MiddleFloorDefinition = {
     { kind: "rect", center: { x: 10, z: -14 }, width: 2, depth: 1.4 },
   ],
   encounter: {
-    id: "archive-crossfire-encounter",
+    id: "second-test",
     required: true,
     checkpoint: { x: 0, z: 9 },
     arena: {
@@ -103,7 +105,7 @@ const definition: MiddleFloorDefinition = {
     },
     enemies: [
       {
-        id: "archive-charger",
+        id: "wolf-claw-hybrid",
         role: "charger",
         spawn: { x: 6, z: 0 },
         health: 3,
@@ -114,7 +116,7 @@ const definition: MiddleFloorDefinition = {
         telegraph: "a bright horizontal band points down its short charge lane",
       },
       {
-        id: "archive-slinger",
+        id: "code-fragment",
         role: "ranged",
         spawn: { x: 12, z: 5 },
         health: 2,
@@ -141,10 +143,10 @@ const definition: MiddleFloorDefinition = {
   },
   effects: [
     {
-      id: "slinger-aim-bands",
+      id: "code-fragment-telegraph",
       trigger: "enemy-telegraph",
-      enemyId: "archive-slinger",
-      encounterId: "archive-crossfire-encounter",
+      enemyId: "code-fragment",
+      encounterId: "second-test",
       visual: {
         treatment:
           "three bright bands gather on the targeted tile, leaving the approach route visible",
@@ -166,12 +168,12 @@ const definition: MiddleFloorDefinition = {
       },
     },
     {
-      id: "crossfire-outcome-mark",
+      id: "second-test-outcome",
       trigger: "encounter-resolved",
-      encounterId: "archive-crossfire-encounter",
+      encounterId: "second-test",
       visual: {
         treatment:
-          "archive bands settle into a steady marker toward the open exit",
+          "the second test settles into a steady marker toward the open exit",
         durationMs: 950,
         intensity: 0.26,
       },

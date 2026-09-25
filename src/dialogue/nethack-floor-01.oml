@@ -1,0 +1,60 @@
+# NetHack Floor 01 - Light's dungeon
+# Creative source:
+# https://github.com/jessenaiman/omega-alpha-spiral/blob/main/project-management/official%20game%20docs%20(read-only)/chapter-zero-stages/stage_2/nethack-scene.md
+
+[voice Light]
+file = Light.omd
+
+[voice Shadow]
+file = Shadow.omd
+
+[voice Ambition]
+file = Ambition.omd
+
+[scene]
+id = nethack-floor-01
+title = Light's Dungeon
+era_shader = home-micro-rom
+layout = rogue-room-light
+next = nethack-floor-02
+
+[question]
+text = Three exits wait in Light's dungeon. Which one do you choose?
+
+[choice door]
+owner = light
+text = What is the first story you ever loved?
+response = > You answer the door and cross its threshold.
+set = nethack.floor1.exit = door
+increment = dreamweavers.light.affinity = 2
+emit = nethack.floor1.exit.selected
+transition = nethack-floor-02
+
+[choice monster]
+owner = ambition
+text = A spectral wolf appears! It lunges...
+response = > You meet the spectral wolf in a basic auto-fight.
+set = nethack.floor1.exit = monster
+increment = dreamweavers.ambition.affinity = 1
+emit = nethack.floor1.exit.selected
+transition = nethack-floor-02
+
+[choice chest]
+owner = shadow
+text = You open the chest. Inside: a broken compass.
+response = > You carry the broken compass forward.
+set = nethack.floor1.exit = chest
+increment = dreamweavers.shadow.affinity = 1
+emit = nethack.floor1.exit.selected
+transition = nethack-floor-02
+
+[script]
+Light: I've never seen you before.
+[show question]
+[show choice door]
+[show choice monster]
+[show choice chest]
+
+[completion]
+[continue Cross the chosen exit]
+[transition nethack-floor-02]

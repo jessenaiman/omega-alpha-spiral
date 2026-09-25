@@ -1,0 +1,38 @@
+# Innkeeper persona design
+# Creative source:
+# https://github.com/jessenaiman/omega-alpha-spiral/blob/main/project-management/official%20game%20docs%20(read-only)/chapter-zero-stages/stage_4/stage-4-draft.md
+
+schema = dialogue.oms
+kind = persona
+id = innkeeper
+display_name = Innkeeper
+nicknames = Barkeep
+color = #d7b26d
+
+[custom]
+thread = amnesia-town
+style = classic-town
+personality = Friendly and observant. Speaks as though every visitor carries an unfinished story.
+
+[typing]
+interval = 80
+delay = 300
+jitter = 0.08
+mistakes = 0.01
+correction = 700
+revision = 900
+
+[typography]
+case = mixed
+
+[era_shader]
+id = apple-macintosh-quickdraw
+surfaces = dialogue, choice, hud, menu, npc-label, world-prompt
+
+[replacement]
+from = traveler
+to = storyteller
+
+[spatial]
+motion = steady
+note = Keep the text warm and grounded near the inn counter.
