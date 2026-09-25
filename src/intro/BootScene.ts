@@ -19,18 +19,23 @@ import {
 } from "../core/input";
 import type { GhostInterlude, GhostQuestion } from "../dialogue/ghost";
 import {
-  GHOST_FINAL,
   createGhostQuestions,
   getGhostInterlude,
 } from "../dialogue/ghost-vite";
 import { DialogueState, type DialogueStateSnapshot } from "../dialogue/state";
+import type { DialogueEvent } from "../dialogue/timeline";
 import { createBootFrames, type BootFrame } from "./ghostwriting";
 import { getIntroEra } from "./IntroEraDesign";
 import { IntroAudio } from "./IntroAudio";
 import type { IntroPhysicsDiagnostics } from "./IntroPhysics";
 import { BOOT_EFFECTS, SpatialBootScene } from "./SpatialBootScene";
 import { ChapterTwoScene } from "../chapter-two/ChapterTwoScene";
-import { StudioOpening, studioOpeningDocument } from "./StudioOpening";
+import {
+  ghostFloor04Document,
+  ghostFloor04Script,
+  StudioOpening,
+  studioOpeningDocument,
+} from "./StudioOpening";
 import { WritingPlayback } from "../dialogue/writing";
 import { PROFILES, SPEAKERS } from "../dialogue/personas";
 import { applyEraShaderCss } from "../era-shaders";
@@ -63,8 +68,8 @@ type StoryMode =
   | "name"
   | "doorway"
   | "complete";
-const OMEGA_NAME_QUESTION = "What is your name?";
-const OMEGA_DOOR_WORDS = "I had a name once,\nwas it mine?";
+type DialogueInputEvent = Extract<DialogueEvent, { type: "input" }>;
+type DialogueCueEvent = Extract<DialogueEvent, { type: "cue" }>;
 
 interface IntroDiagnosticState {
   frame: number;
@@ -144,6 +149,9 @@ export class BootScene {
   private _abort: AbortController = new AbortController();
   private _questions: readonly GhostQuestion[] = createGhostQuestions(SEED);
   private _studioOpening = new StudioOpening();
+  private _studioCompletion = new StudioOpening(ghostFloor04Document);
+  private _activeInput: DialogueInputEvent | null = null;
+  private _activeCue: DialogueCueEvent | null = null;
   private _typing = new WritingPlayback();
   private _typingKey = "";
   private _typingElapsed = 0;
@@ -518,6 +526,9 @@ export class BootScene {
     this._nextLevel = "";
     this._typingKey = "";
     this._studioOpening = new StudioOpening();
+    this._studioCompletion = new StudioOpening(ghostFloor04Document);
+    this._activeInput = null;
+    this._activeCue = null;
     this._questions = this._questions.map((question, index) =>
       index === 0 ? this._studioOpening.applyTo(question) : question
     );
@@ -615,7 +626,7 @@ export class BootScene {
       }
       const displayMs: number = this._elapsedMs;
       if (!["boot", "waiting", "doorway"].includes(this._storyMode))
-        this._updateStory(now);
+        this._updateStory(now, delta * 1000);
       const spatialEvent: number = this._spatial.update(
         this._motionMs,
         this._isReduced
@@ -958,39 +969,57 @@ export class BootScene {
     this._selectedChoice = -1;
     this._spatial.select(-1);
     this._clearNativeChoices();
+    this._activeInput = null;
+    this._activeCue = null;
+    this._studioCompletion.startCompletion();
     this._audio.threshold();
   }
 
-  private _beginNaming(): void {
+  private _beginNaming(event: DialogueInputEvent): void {
+    this._activeInput = event;
     this._storyMode = "name";
     this._storyStartedAt = performance.now();
     this._canContinue = false;
-    this._applyFrame(
-      this._storyFrame(OMEGA_NAME_QUESTION, "name", 5, "Type a name", 0)
-    );
     requestAnimationFrame((): void => {
-      getElement("#os-name-input-ts", HTMLInputElement).focus();
+      const input = getElement("#os-name-input-ts", HTMLInputElement);
+      input.maxLength = event.maxLength;
+      input.focus();
     });
   }
 
   private _acceptName(): void {
     if (this._storyMode !== "name") return;
+    const authoredInput = this._activeInput;
+    if (!authoredInput) throw new Error("Name input is missing from Floor 4 OML.");
     const input = getElement("#os-name-input-ts", HTMLInputElement);
-    const name = input.value.trim().slice(0, 32);
+    const name = input.value.trim().slice(0, authoredInput.maxLength);
     if (!name) {
       input.setCustomValidity("Give the character a name to open the way.");
       input.reportValidity();
       return;
     }
     this._playerName = name;
+    this._dialogueState.apply([
+      {
+        operation: "set",
+        path: authoredInput.statePath,
+        value: name,
+      },
+    ]);
     if (this._root) this._root.dataset.osPlayerNameTs = name;
+    if (!this._studioCompletion.resolveInput(authoredInput.inputId))
+      throw new Error(`Cannot resolve OML input: ${authoredInput.inputId}`);
+    this._activeInput = null;
+    this._storyMode = "final";
+    this._storyStartedAt = performance.now();
+    input.blur();
+  }
+
+  private _beginDoorway(event: DialogueCueEvent): void {
+    this._activeCue = event;
     this._storyMode = "doorway";
     this._storyStartedAt = performance.now();
-    this._spatial.beginDoorway(name);
-    this._applyFrame(
-      this._storyFrame(OMEGA_DOOR_WORDS, "doorway", 5, "Walk forward", 0)
-    );
-    input.blur();
+    this._spatial.beginDoorway(this._playerName);
   }
 
   private _advanceStory(): void {
@@ -1020,17 +1049,18 @@ export class BootScene {
 
   private _enterDoor(): void {
     if (this._storyMode !== "doorway") return;
+    const cue = this._activeCue;
+    if (!cue || !this._studioCompletion.resolveCue("doorway-entered"))
+      throw new Error("Doorway cue is missing from Floor 4 OML.");
     this._storyMode = "complete";
     this._storyStartedAt = performance.now();
     this._chapterTwoStarted = false;
     this._canContinue = false;
     this._clearMovement();
-    this._applyFrame(
-      this._storyFrame(OMEGA_DOOR_WORDS, "complete", 5, "Entering", 0)
-    );
+    getElement("#os-hint-ts", HTMLElement).textContent = "Entering";
   }
 
-  private _updateStory(now: number): void {
+  private _updateStory(now: number, deltaMs: number): void {
     const elapsedMs: number = Math.max(0, now - this._storyStartedAt);
     const question: GhostQuestion =
       this._questions[
@@ -1183,26 +1213,60 @@ export class BootScene {
       return;
     }
     if (this._storyMode === "final") {
-      const text: string = this._finalText(elapsedMs);
-      const complete: boolean = this._isReduced || this._typingComplete;
-      if (
-        complete &&
-        elapsedMs >= this._typingCompleteAt + (this._isReduced ? 0 : 1900)
-      ) {
-        this._beginNaming();
-        return;
-      }
-      this._applyFrame(
-        this._storyFrame(text, "final", 4, undefined, elapsedMs)
+      const completion = this._studioCompletion.advance(
+        deltaMs,
+        this._isReduced
       );
+      if (completion.event?.type === "input" && completion.eventFinished) {
+        this._beginNaming(completion.event);
+      }
+      else if (completion.event?.type === "cue" && completion.eventFinished) {
+        this._beginDoorway(completion.event);
+      }
+      const phase: BootFrame["phase"] =
+        this._storyMode === "name"
+          ? "name"
+          : this._storyMode === "doorway"
+            ? "doorway"
+            : "final";
+      const hint =
+        completion.event?.type === "input"
+          ? completion.event.hint
+          : completion.event?.type === "cue"
+            ? completion.event.hint
+            : undefined;
+      const frame = this._storyFrame(
+        completion.text,
+        phase,
+        4,
+        hint,
+        elapsedMs
+      );
+      frame.studioSpeaker = completion.speaker;
+      this._applyFrame(frame);
       return;
     }
     if (this._storyMode === "complete") {
-      const crossingMs: number = this._isReduced ? 0 : 2800;
-      this._applyFrame(
-        this._storyFrame(OMEGA_DOOR_WORDS, "complete", 5, undefined, elapsedMs)
+      const completion = this._studioCompletion.advance(
+        this._isReduced ? 1e9 : deltaMs,
+        this._isReduced
       );
-      if (!this._chapterTwoStarted && elapsedMs >= crossingMs) {
+      this._applyFrame(
+        this._storyFrame(completion.text, "complete", 5, undefined, elapsedMs)
+      );
+      if (
+        completion.event?.type === "transition" &&
+        !this._chapterTwoStarted
+      ) {
+        this._nextLevel = completion.event.level;
+        if (this._root)
+          this._root.dataset.osNextLevelTs = completion.event.level;
+        if (completion.event.level !== ghostFloor04Script.scene.next) {
+          this._showError(
+            `Unknown Floor 4 transition: ${completion.event.level}`
+          );
+          return;
+        }
         this._chapterTwoStarted = true;
         this._chapterTwo.start(this._lastThreadName);
       }
@@ -1329,14 +1393,6 @@ export class BootScene {
     if (owner === 2 && Math.floor(elapsedMs / 180) % 17 === 0)
       return `${text}>`;
     return text;
-  }
-
-  private _finalScript(): string {
-    return GHOST_FINAL.replace("{{THREAD_NAME}}", this._lastThreadName);
-  }
-
-  private _finalText(elapsedMs: number): string {
-    return this._typed(this._finalScript(), elapsedMs, 34);
   }
 
   private _setChoicesEnabled(enabled: boolean): void {
@@ -1819,9 +1875,12 @@ export class BootScene {
     this._answersCommitted = this._questions.length;
     this._spatial.setStoryProgressForTest(4);
     if (name === "final-name") {
+      const event = this._floorFourInput();
+      this._startCompletionAt(event);
+      this._activeInput = event;
       this._storyMode = "name";
       this._applyFrame(
-        this._storyFrame(OMEGA_NAME_QUESTION, "name", 5, "Type a name", 0)
+        this._storyFrame(event.prompt, "name", 5, event.hint, 0)
       );
       this._spatial.settleForTestState(this._motionMs);
       this._updateCamera(100);
@@ -1829,25 +1888,60 @@ export class BootScene {
       return;
     }
     this._playerName = "Traveler";
+    const playerNameInput = this._floorFourInput();
+    this._dialogueState.apply([
+      {
+        operation: "set",
+        path: playerNameInput.statePath,
+        value: this._playerName,
+      },
+    ]);
     this._root.dataset.osPlayerNameTs = this._playerName;
     if (name === "final-door") {
+      const event = this._floorFourCue();
+      this._startCompletionAt(event);
+      this._activeCue = event;
       this._storyMode = "doorway";
       this._spatial.beginDoorway(this._playerName);
       this._applyFrame(
-        this._storyFrame(OMEGA_DOOR_WORDS, "doorway", 5, "Walk forward", 12000)
+        this._storyFrame(event.text, "doorway", 5, event.hint, 12000)
       );
       this._spatial.settleForTestState(this._motionMs);
       this._updateCamera(100);
       this._refreshStaticFrame();
       return;
     }
+    const event = this._floorFourCue();
     this._storyMode = "complete";
     this._applyFrame(
-      this._storyFrame(OMEGA_DOOR_WORDS, "complete", 5, undefined, 12000)
+      this._storyFrame(event.text, "complete", 5, undefined, 12000)
     );
     this._spatial.settleForTestState(this._motionMs);
     this._updateCamera(100);
     this._refreshStaticFrame();
+  }
+
+  private _floorFourInput(): DialogueInputEvent {
+    const event = ghostFloor04Document.completion?.find(
+      (candidate): candidate is DialogueInputEvent => candidate.type === "input"
+    );
+    if (!event) throw new Error("Floor 4 OML has no player input event.");
+    return event;
+  }
+
+  private _floorFourCue(): DialogueCueEvent {
+    const event = ghostFloor04Document.completion?.find(
+      (candidate): candidate is DialogueCueEvent => candidate.type === "cue"
+    );
+    if (!event) throw new Error("Floor 4 OML has no doorway cue event.");
+    return event;
+  }
+
+  private _startCompletionAt(event: DialogueEvent): void {
+    const index = ghostFloor04Document.completion?.indexOf(event) ?? -1;
+    if (index < 0) throw new Error("Floor 4 OML event is not in completion.");
+    this._studioCompletion = new StudioOpening(ghostFloor04Document);
+    this._studioCompletion.startCompletion(index);
   }
 
   private _refreshStaticFrame(): void {

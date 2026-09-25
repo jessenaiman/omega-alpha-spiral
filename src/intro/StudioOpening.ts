@@ -1,8 +1,10 @@
 import ghostFloor01 from "../dialogue/ghost-floor-01.oml?raw";
+import ghostFloor04 from "../dialogue/ghost-floor-04.oml?raw";
 import {
   DialogueTimeline,
   dialogueDocumentFromOml,
   type DialogueDocument,
+  type DialogueEvent,
 } from "../dialogue/timeline";
 import { WritingPlayback, resolveWritingText } from "../dialogue/writing";
 import { parseOml } from "../core/oml";
@@ -30,7 +32,26 @@ export const studioOpeningDocument = dialogueDocumentFromOml(
     voices: {},
   }
 );
-for (const event of studioOpeningDocument.events)
+export const ghostFloor04Script = parseOml(ghostFloor04);
+export const ghostFloor04Document = dialogueDocumentFromOml(
+  ghostFloor04Script,
+  "src/dialogue/ghost-floor-04.oml",
+  {
+    levelId: ghostFloor04Script.scene.id ?? "ghost-floor-04",
+    eraShaderId:
+      ghostFloor04Script.scene.era_shader ?? "apple-macintosh-quickdraw",
+    layout: layouts.includes(ghostFloor04Script.scene.layout as Layout)
+      ? (ghostFloor04Script.scene.layout as Layout)
+      : "passage",
+    voices: {},
+  }
+);
+for (const event of [
+  ...studioOpeningDocument.events,
+  ...(studioOpeningDocument.completion ?? []),
+  ...ghostFloor04Document.events,
+  ...(ghostFloor04Document.completion ?? []),
+])
   if (event.type === "line" && !SPEAKERS.includes(event.speaker as SpeakerId))
     throw new Error(
       `Opening references an unsupported writing profile: ${event.speaker}`
@@ -50,16 +71,23 @@ export class StudioOpening {
       if (
         event?.type === "line" ||
         event?.type === "question" ||
-        event?.type === "choice"
+        event?.type === "choice" ||
+        event?.type === "input" ||
+        event?.type === "cue"
       ) {
         this.speaker =
-          event.type === "question" ? "omega" : (event.speaker as SpeakerId);
+          event.type === "question" ||
+          event.type === "input" ||
+          event.type === "cue"
+            ? "omega"
+            : (event.speaker as SpeakerId);
+        const text = event.type === "input" ? event.prompt : event.text;
         this.writing.restart(
           {
             ...PROFILES[this.speaker],
             ...document.presentation?.voices[this.speaker],
           },
-          event.text
+          text
         );
         this.text = "";
       }
@@ -101,7 +129,9 @@ export class StudioOpening {
     if (
       event?.type === "line" ||
       event?.type === "question" ||
-      event?.type === "choice"
+      event?.type === "choice" ||
+      event?.type === "input" ||
+      event?.type === "cue"
     ) {
       const frame = this.writing.advance(reduced ? 1e9 : ms);
       this.text = frame.text;
@@ -111,18 +141,35 @@ export class StudioOpening {
       finished = frame.done;
     }
     this.timeline.tick(ms, finished);
+    const activeEvent = this.timeline.current;
     return {
       text: this.text,
       speaker: this.speaker,
       question: this.questionText,
       choiceLines: [...this.revealed],
       presentingChoices: this.speaker !== "omega",
-      awaiting: this.timeline.current?.type === "continue",
-      done: !this.timeline.current,
+      awaiting: activeEvent?.type === "continue",
+      event:
+        activeEvent ?? (event?.type === "transition" ? event : undefined),
+      eventFinished: activeEvent === event && finished,
+      done: !activeEvent,
     };
   }
   proceed() {
     this.timeline.proceed();
+  }
+  resolveInput(inputId: string): boolean {
+    return this.timeline.resolveInput(inputId);
+  }
+  resolveCue(awaitedEvent: string): boolean {
+    return this.timeline.resolveCue(awaitedEvent);
+  }
+  startCompletion(index = 0) {
+    this.started = true;
+    this.text = "";
+    this.questionText = "";
+    this.revealed = ["", "", ""];
+    this.timeline.startCompletion(index);
   }
   static choices(lines: readonly string[]): StudioOpening {
     return new StudioOpening({

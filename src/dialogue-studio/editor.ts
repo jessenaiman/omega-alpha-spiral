@@ -36,6 +36,9 @@ export function createDialogueEditor(host: DialogueEditorHost) {
     <p class="script-source">The game and this preview read the same .oml level file.</p>
     <ol id="script-outline" aria-label="Dialogue sequence"></ol>
     <pre id="script-event-details" aria-label="Current OML event"></pre>
+    <input id="script-input-value" aria-label="Preview player input" hidden>
+    <p id="script-hint" aria-label="Authored gameplay hint"></p>
+    <pre id="script-values" aria-label="Preview dialogue state"></pre>
     <div class="actions"><button id="script-play">Play level dialogue</button><button id="script-play-completion" disabled>Play completion</button><button id="script-continue" disabled>Continue</button></div>
     <p id="script-state" role="status"></p>
     <p id="script-error" role="alert"></p>
@@ -48,6 +51,7 @@ export function createDialogueEditor(host: DialogueEditorHost) {
   let active = false;
   let selectedIndex = -1;
   let activeOffset = 0;
+  const previewValues: Record<string, string> = {};
   let document = documentFromText(ghostFloor01);
   let timeline = new DialogueTimeline(document, enter);
   const completionButton = el<HTMLButtonElement>("script-play-completion");
@@ -103,6 +107,10 @@ export function createDialogueEditor(host: DialogueEditorHost) {
                 ? `${event.durationMs} ms`
                 : event.type === "continue"
                   ? event.label
+                  : event.type === "input"
+                    ? `${event.prompt} → ${event.statePath}`
+                    : event.type === "cue"
+                      ? `${event.text} → ${event.await}`
                   : event.type === "set-state"
                     ? `${event.operation} ${event.path} = ${event.value}`
                     : event.type === "emit"
@@ -124,7 +132,25 @@ export function createDialogueEditor(host: DialogueEditorHost) {
 
   function enter(event: DialogueEvent | undefined) {
     selectedIndex = event ? activeOffset + timeline.index : -1;
-    proceed.disabled = event?.type !== "continue";
+    const input = el<HTMLInputElement>("script-input-value");
+    input.hidden = event?.type !== "input";
+    if (event?.type === "input") {
+      input.value = "";
+      input.placeholder = event.hint;
+      input.maxLength = event.maxLength;
+    }
+    el("script-hint").textContent =
+      event?.type === "input" || event?.type === "cue" ? event.hint : "";
+    proceed.disabled =
+      event?.type !== "continue" &&
+      event?.type !== "input" &&
+      event?.type !== "cue";
+    proceed.textContent =
+      event?.type === "input"
+        ? "Submit input"
+        : event?.type === "cue"
+          ? "Complete cue"
+          : "Continue";
     el("script-event-details").textContent = event
       ? JSON.stringify(event, null, 2) ?? ""
       : "";
@@ -140,23 +166,29 @@ export function createDialogueEditor(host: DialogueEditorHost) {
           ? `Waiting ${event.durationMs / 1000}s · ${event.id}`
           : event.type === "continue"
             ? event.label
+            : event.type === "input"
+              ? `Input · ${event.inputId}`
+              : event.type === "cue"
+                ? `Cue · ${event.cueId}`
             : `${event.type} · ${event.id}`;
     outline();
     if (event?.type === "line" || event?.type === "choice")
       host.line(event.speaker, event.text);
     else if (event?.type === "question") host.line("omega", event.text);
+    else if (event?.type === "input") host.line("omega", event.prompt);
+    else if (event?.type === "cue") host.line("omega", event.text);
   }
 
   function start(index = 0, completion = false) {
     active = true;
     panel.hidden = false;
     activeOffset = completion ? document.events.length : 0;
-    const events = completion ? document.completion ?? [] : document.events;
-    timeline = new DialogueTimeline({ ...document, events }, enter);
+    timeline = new DialogueTimeline(document, enter);
     if (document.presentation) host.restore(document.presentation);
     document.presentation = host.presentation();
     host.resume();
-    timeline.start(index);
+    if (completion) timeline.startCompletion(index);
+    else timeline.start(index);
     el("script-error").textContent = "";
   }
 
@@ -178,7 +210,24 @@ export function createDialogueEditor(host: DialogueEditorHost) {
   completionButton.disabled = !document.completion?.length;
   el("script-play").onclick = () => start();
   completionButton.onclick = () => start(0, true);
-  proceed.onclick = () => timeline.proceed();
+  proceed.onclick = () => {
+    const event = timeline.current;
+    if (event?.type === "continue") timeline.proceed();
+    else if (event?.type === "input") {
+      const input = el<HTMLInputElement>("script-input-value");
+      const value = input.value.trim().slice(0, event.maxLength);
+      if (!value) {
+        input.setCustomValidity("Enter a value to preview this input event.");
+        input.reportValidity();
+        return;
+      }
+      input.setCustomValidity("");
+      previewValues[event.statePath] = value;
+      el("script-values").textContent = JSON.stringify(previewValues, null, 2);
+      timeline.resolveInput(event.inputId);
+    }
+    else if (event?.type === "cue") timeline.resolveCue(event.await);
+  };
   el("script-samples").onclick = () => {
     active = false;
     panel.hidden = true;
