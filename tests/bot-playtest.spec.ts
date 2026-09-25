@@ -44,6 +44,8 @@ type JourneyState = {
   };
   routes?: Array<{
     id?: string;
+    from?: ChapterPoint;
+    to?: ChapterPoint;
     points?: ChapterPoint[];
     waypoints?: ChapterPoint[];
     destinationLandmarkId?: string;
@@ -786,44 +788,58 @@ async function gatherTownDreamweavers(
   routeSequence.push("town:ready-to-choose-after-gathering");
 }
 
+async function chooseTownExit(
+  page: Page,
+  metrics: { distance: number; softlocks: number },
+  routeSequence: string[]
+): Promise<void> {
+  const state = (await readChapter(page)).journey;
+  expect(state.kind).toBe("late");
+  expect(state.floor).toBe(7);
+  expect(state.phase).toBe("ready-to-choose");
+  const routes = state.routes ?? [];
+  const townRoute = routes.find((route) => route.id === "alleys");
+  if (!townRoute?.from || !townRoute.to || !townRoute.waypoints?.length)
+    throw new Error("Town has no authored plaza exit route diagnostics");
+  await steerJourneyTo(
+    page,
+    { x: 4, z: townRoute.from.z },
+    { kind: "late", floor: 7 },
+    metrics
+  );
+  await steerJourneyTo(page, townRoute.from, { kind: "late", floor: 7 }, metrics);
+  await page.keyboard.press("2");
+  await expect
+    .poll(async () => (await readChapter(page)).journey.status?.selectedRoute)
+    .toBe("alleys");
+  routeSequence.push("town:route-alleys-selected");
+  for (const point of [...townRoute.waypoints, townRoute.to])
+    await steerJourneyTo(page, point, { kind: "late", floor: 7 }, metrics);
+  await expect
+    .poll(
+      async () => {
+        const current = (await readChapter(page)).journey;
+        return (
+          current.kind === "late" &&
+          current.floor === 8 &&
+          current.phase === "core-approach"
+        );
+      },
+      { timeout: 15_000 }
+    )
+    .toBe(true);
+  routeSequence.push("floor-7:exit-crossed");
+  routeSequence.push("floor-8:stable-core-approach-entry");
+}
+
 async function playTownAndFinale(
   page: Page,
   metrics: { distance: number; softlocks: number },
   routeSequence: string[]
 ): Promise<void> {
   await gatherTownDreamweavers(page, metrics, routeSequence);
-  let state = (await readChapter(page)).journey;
-  const routes = state.routes ?? [];
-  const townRoute = routes.find((route) => route.id === "alleys");
-  const plaza = routes[0]?.waypoints?.[0] ? { x: 0, z: 5 } : null;
-  if (!townRoute || !plaza || !townRoute.waypoints?.length)
-    throw new Error("Town has no authored plaza exit route diagnostics");
-  await steerJourneyTo(page, plaza, { kind: "late", floor: 7 }, metrics);
-  await page.keyboard.press("2");
-  await expect
-    .poll(async () => (await readChapter(page)).journey.status?.selectedRoute)
-    .toBe("alleys");
-  routeSequence.push("town:route-alleys-selected");
-  for (const point of townRoute.waypoints)
-    await steerJourneyTo(page, point, { kind: "late", floor: 7 }, metrics);
-  await steerJourneyTo(
-    page,
-    townRoute.waypoints.at(-1)!,
-    { kind: "late", floor: 7 },
-    metrics
-  );
-  await expect
-    .poll(
-      async () => {
-        const current = (await readChapter(page)).journey;
-        return current.kind === "late" && current.floor === 8;
-      },
-      { timeout: 15_000 }
-    )
-    .toBe(true);
-  routeSequence.push("floor-7:exit-crossed");
-
-  state = (await readChapter(page)).journey;
+  await chooseTownExit(page, metrics, routeSequence);
+  const state = (await readChapter(page)).journey;
   const core = state.landmarks?.find(
     (landmark) => landmark.id === "healing-core"
   );
@@ -843,10 +859,10 @@ async function playTownAndFinale(
   routeSequence.push("floor-8:healing-core-complete");
 }
 
-test("bot playtest: real input gathers the town party from Begin", async ({
+test("bot playtest: real input reaches Floor 8 from Begin", async ({
   page,
 }, testInfo: TestInfo) => {
-  test.setTimeout(420_000);
+  test.setTimeout(480_000);
   const pageErrors: string[] = [];
   const consoleErrors: string[] = [];
   const networkErrors: string[] = [];
@@ -1095,6 +1111,7 @@ test("bot playtest: real input gathers the town party from Begin", async ({
     .toBe(true);
   routeSequence.push("floor-7:stable-town-entry");
   await gatherTownDreamweavers(page, routeMetrics, routeSequence);
+  await chooseTownExit(page, routeMetrics, routeSequence);
   const completedChapter = await readChapter(page);
   const after = await sample(page);
   await page.keyboard.press("KeyR");
@@ -1163,8 +1180,8 @@ test("bot playtest: real input gathers the town party from Begin", async ({
   ).toBeGreaterThanOrEqual(0);
   expect(
     routeSequence.at(-1),
-    "real input must gather the town party and reach the route choice"
-  ).toBe("town:ready-to-choose-after-gathering");
+    "real input must choose a town exit and reach Floor 8"
+  ).toBe("floor-8:stable-core-approach-entry");
   expect(report.retryVerified, "restart must restore playable state").toBe(
     true
   );
