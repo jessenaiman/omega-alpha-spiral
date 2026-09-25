@@ -150,7 +150,21 @@ export function validateDialogueDocument(value: unknown): DialogueDocument {
         typeof unknownEvent.text !== "string" ||
         !Array.isArray(unknownEvent.responses) ||
         !unknownEvent.responses.every((response) => typeof response === "string") ||
-        !Array.isArray(unknownEvent.effects)
+        !Array.isArray(unknownEvent.effects) ||
+        !unknownEvent.effects.every(
+          (effect) =>
+            isRecord(effect) &&
+            (effect.operation === "set" || effect.operation === "increment") &&
+            typeof effect.path === "string" &&
+            effect.path.trim().length > 0 &&
+            (typeof effect.value === "string" ||
+              typeof effect.value === "number" ||
+              typeof effect.value === "boolean")
+        ) ||
+        (unknownEvent.emit !== undefined &&
+          typeof unknownEvent.emit !== "string") ||
+        (unknownEvent.transition !== undefined &&
+          typeof unknownEvent.transition !== "string")
       )
         throw new Error(`Choice event ${unknownEvent.id} is incomplete.`);
     } else if (unknownEvent.type === "set-state") {
