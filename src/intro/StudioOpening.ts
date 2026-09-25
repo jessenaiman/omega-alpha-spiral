@@ -47,8 +47,13 @@ export class StudioOpening {
   private timeline: DialogueTimeline;
   constructor(private document: DialogueDocument = studioOpeningDocument) {
     this.timeline = new DialogueTimeline(document, (event) => {
-      if (event?.type === "line") {
-        this.speaker = event.speaker as SpeakerId;
+      if (
+        event?.type === "line" ||
+        event?.type === "question" ||
+        event?.type === "choice"
+      ) {
+        this.speaker =
+          event.type === "question" ? "omega" : (event.speaker as SpeakerId);
         this.writing.restart(
           {
             ...PROFILES[this.speaker],
@@ -93,10 +98,15 @@ export class StudioOpening {
     }
     const event = this.timeline.current;
     let finished = false;
-    if (event?.type === "line") {
+    if (
+      event?.type === "line" ||
+      event?.type === "question" ||
+      event?.type === "choice"
+    ) {
       const frame = this.writing.advance(reduced ? 1e9 : ms);
       this.text = frame.text;
-      if (this.speaker === "omega") this.questionText = frame.text;
+      if (event.type === "question" || this.speaker === "omega")
+        this.questionText = frame.text;
       else this.revealed[SPEAKERS.indexOf(this.speaker) - 1] = frame.text;
       finished = frame.done;
     }
