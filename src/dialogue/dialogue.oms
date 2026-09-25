@@ -260,7 +260,7 @@
         "voices": { "type": "array", "items": { "type": "object" } },
         "scene": {
           "type": "object",
-          "required": ["id", "era_shader", "layout", "next"],
+          "required": ["id", "era_shader", "layout"],
           "properties": {
             "id": { "type": "string", "minLength": 1 },
             "era_shader": { "type": "string", "minLength": 1 },
@@ -271,7 +271,6 @@
         },
         "question": {
           "type": "object",
-          "required": ["text"],
           "properties": {
             "text": { "type": "string", "minLength": 1 }
           },
@@ -280,7 +279,7 @@
         "choices": {
           "type": "array",
           "items": { "$ref": "#/$defs/choice" },
-          "minItems": 3,
+          "minItems": 0,
           "maxItems": 3
         },
         "events": {

@@ -1,0 +1,22 @@
+# Amnesia town wake - the demo stopping point after Floor 10
+# Creative source:
+# https://github.com/jessenaiman/omega-alpha-spiral/blob/main/project-management/official%20game%20docs%20(read-only)/chapter-zero-stages/stage_4/stage-4-draft.md
+
+[voice System]
+file = System.omd
+
+[scene]
+id = amnesia-town
+era_shader = apple-macintosh-quickdraw
+layout = classic-town-bedroom
+
+[script]
+System: The world shifts and fades. The harsh digital light dissolves into a warm, golden glow.
+[wait 900]
+System: You wake in a bed inside a small, familiar town. The architecture is classic and inviting.
+[wait 900]
+System: Your party... they were with you, weren't they?
+[wait 900]
+System: You are alone.
+[set demo.complete = true]
+[emit amnesia-town.awake]

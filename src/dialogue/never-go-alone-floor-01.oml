@@ -1,0 +1,66 @@
+# Never Go Alone Floor 01 - first reflection and unwinnable first test
+# Creative source:
+# https://github.com/jessenaiman/omega-alpha-spiral/blob/main/project-management/official%20game%20docs%20(read-only)/chapter-zero-stages/stage_3/never_go_alone.json
+# Mischief and Wrath draft names are translated to the approved Shadow and Ambition names.
+
+[voice Light]
+file = Light.omd
+
+[voice Shadow]
+file = Shadow.omd
+
+[voice Ambition]
+file = Ambition.omd
+
+[scene]
+id = never-go-alone-floor-01
+era_shader = ansi-bbs-dos-art
+layout = mirror-arena-first-test
+next = never-go-alone-floor-02
+
+[question]
+text = Choose your first reflection. What strength will you wield?
+
+[choice light]
+owner = light
+text = Fighter — Strong and resilient. The bulwark against the storm.
+response = A solid choice. This echo resonates with potential.
+set = party.reflection1 = fighter
+increment = dreamweavers.light.affinity = 1
+emit = never-go-alone.floor1.reflection.selected
+transition = never-go-alone-floor-02
+
+[choice shadow]
+owner = shadow
+text = Thief — Swift and cunning. The shadow's edge.
+response = Hope you can handle the heat.
+set = party.reflection1 = thief
+increment = dreamweavers.shadow.affinity = 1
+emit = never-go-alone.floor1.reflection.selected
+transition = never-go-alone-floor-02
+
+[choice ambition]
+owner = ambition
+text = Wizard — Master of arcane. The wielder of hidden power.
+response = Strength... but you'll need more.
+set = party.reflection1 = wizard
+increment = dreamweavers.ambition.affinity = 1
+emit = never-go-alone.floor1.reflection.selected
+transition = never-go-alone-floor-02
+
+[script]
+Light: Look into the first mirror. See the strength you might wield.
+Shadow: Choose your first echo. Don't pick boring.
+Ambition: Choose. Now. The code watches. We have little time.
+[set gameplay.hit.enabled = false]
+[set gameplay.weapon.enabled = false]
+[set combat.outcome = forced-loss]
+[show question]
+[show choice light]
+[show choice shadow]
+[show choice ambition]
+
+[completion]
+Ambition: You cannot face the echoes alone. The loop will claim you.
+[continue Return to the mirrors]
+[transition never-go-alone-floor-02]

@@ -1,0 +1,66 @@
+# Never Go Alone Floor 02 - Hit unlocked, no weapon, nearly impossible second test
+# Creative source:
+# https://github.com/jessenaiman/omega-alpha-spiral/blob/main/project-management/official%20game%20docs%20(read-only)/chapter-zero-stages/stage_3/never_go_alone.json
+# Mischief and Wrath draft names are translated to the approved Shadow and Ambition names.
+
+[voice Light]
+file = Light.omd
+
+[voice Shadow]
+file = Shadow.omd
+
+[voice Ambition]
+file = Ambition.omd
+
+[scene]
+id = never-go-alone-floor-02
+era_shader = ibm-pc-vga
+layout = mirror-arena-second-test
+next = never-go-alone-floor-03
+
+[question]
+text = The first echo stands ready. Choose your second. What do you need?
+
+[choice light]
+owner = light
+text = Scribe — Keeper of echoes. The bridge between stories.
+response = Good. You're building a foundation.
+set = party.reflection2 = scribe
+increment = dreamweavers.light.affinity = 1
+emit = never-go-alone.floor2.reflection.selected
+transition = never-go-alone-floor-03
+
+[choice shadow]
+owner = shadow
+text = Thief — Swift and cunning. The shadow's edge.
+response = Now we're working with a different trick.
+set = party.reflection2 = thief
+increment = dreamweavers.shadow.affinity = 1
+emit = never-go-alone.floor2.reflection.selected
+transition = never-go-alone-floor-03
+
+[choice ambition]
+owner = ambition
+text = Wizard — Master of arcane. The wielder of hidden power.
+response = Better. But still not enough. The code fights back.
+set = party.reflection2 = wizard
+increment = dreamweavers.ambition.affinity = 1
+emit = never-go-alone.floor2.reflection.selected
+transition = never-go-alone-floor-03
+
+[script]
+Light: The first echo is strong, but the path is dark. Choose your second reflection.
+Shadow: Pick someone to back you up. Someone with a different trick.
+Ambition: Choose speed, or magic to augment your strength. The code grows restless.
+[set gameplay.hit.enabled = true]
+[set gameplay.weapon.enabled = false]
+[set combat.outcome = nearly-impossible]
+[show question]
+[show choice light]
+[show choice shadow]
+[show choice ambition]
+
+[completion]
+Light: Still not enough. You need more strength.
+[continue Return to the mirrors]
+[transition never-go-alone-floor-03]
