@@ -445,6 +445,14 @@ select {
   content: " · PLAYHEAD";
   color: #b0dcc0;
 }
+#script-event-details {
+  max-height: 120px;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: #8c9fae;
+  font-size: 10px;
+}
 #dialogue-editor input {
   width: 100%;
   min-height: 34px;
