@@ -164,12 +164,12 @@ export class StudioOpening {
   resolveCue(awaitedEvent: string): boolean {
     return this.timeline.resolveCue(awaitedEvent);
   }
-  startCompletion() {
+  startCompletion(index = 0) {
     this.started = true;
     this.text = "";
     this.questionText = "";
     this.revealed = ["", "", ""];
-    this.timeline.startCompletion();
+    this.timeline.startCompletion(index);
   }
   static choices(lines: readonly string[]): StudioOpening {
     return new StudioOpening({

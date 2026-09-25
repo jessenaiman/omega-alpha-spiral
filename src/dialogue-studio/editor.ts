@@ -36,6 +36,8 @@ export function createDialogueEditor(host: DialogueEditorHost) {
     <p class="script-source">The game and this preview read the same .oml level file.</p>
     <ol id="script-outline" aria-label="Dialogue sequence"></ol>
     <pre id="script-event-details" aria-label="Current OML event"></pre>
+    <input id="script-input-value" aria-label="Preview player input" hidden>
+    <pre id="script-values" aria-label="Preview dialogue state"></pre>
     <div class="actions"><button id="script-play">Play level dialogue</button><button id="script-play-completion" disabled>Play completion</button><button id="script-continue" disabled>Continue</button></div>
     <p id="script-state" role="status"></p>
     <p id="script-error" role="alert"></p>
@@ -48,6 +50,7 @@ export function createDialogueEditor(host: DialogueEditorHost) {
   let active = false;
   let selectedIndex = -1;
   let activeOffset = 0;
+  const previewValues: Record<string, string> = {};
   let document = documentFromText(ghostFloor01);
   let timeline = new DialogueTimeline(document, enter);
   const completionButton = el<HTMLButtonElement>("script-play-completion");
@@ -128,13 +131,20 @@ export function createDialogueEditor(host: DialogueEditorHost) {
 
   function enter(event: DialogueEvent | undefined) {
     selectedIndex = event ? activeOffset + timeline.index : -1;
+    const input = el<HTMLInputElement>("script-input-value");
+    input.hidden = event?.type !== "input";
+    if (event?.type === "input") {
+      input.value = "";
+      input.placeholder = event.hint;
+      input.maxLength = event.maxLength;
+    }
     proceed.disabled =
       event?.type !== "continue" &&
       event?.type !== "input" &&
       event?.type !== "cue";
     proceed.textContent =
       event?.type === "input"
-        ? "Submit sample input"
+        ? "Submit input"
         : event?.type === "cue"
           ? "Complete cue"
           : "Continue";
@@ -200,7 +210,19 @@ export function createDialogueEditor(host: DialogueEditorHost) {
   proceed.onclick = () => {
     const event = timeline.current;
     if (event?.type === "continue") timeline.proceed();
-    else if (event?.type === "input") timeline.resolveInput(event.inputId);
+    else if (event?.type === "input") {
+      const input = el<HTMLInputElement>("script-input-value");
+      const value = input.value.trim().slice(0, event.maxLength);
+      if (!value) {
+        input.setCustomValidity("Enter a value to preview this input event.");
+        input.reportValidity();
+        return;
+      }
+      input.setCustomValidity("");
+      previewValues[event.statePath] = value;
+      el("script-values").textContent = JSON.stringify(previewValues, null, 2);
+      timeline.resolveInput(event.inputId);
+    }
     else if (event?.type === "cue") timeline.resolveCue(event.await);
   };
   el("script-samples").onclick = () => {

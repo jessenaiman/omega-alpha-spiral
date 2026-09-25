@@ -980,9 +980,6 @@ export class BootScene {
     this._storyMode = "name";
     this._storyStartedAt = performance.now();
     this._canContinue = false;
-    this._applyFrame(
-      this._storyFrame(event.prompt, "name", 5, event.hint, 0)
-    );
     requestAnimationFrame((): void => {
       const input = getElement("#os-name-input-ts", HTMLInputElement);
       input.maxLength = event.maxLength;
@@ -1023,7 +1020,6 @@ export class BootScene {
     this._storyMode = "doorway";
     this._storyStartedAt = performance.now();
     this._spatial.beginDoorway(this._playerName);
-    this._applyFrame(this._storyFrame(event.text, "doorway", 5, event.hint, 0));
   }
 
   private _advanceStory(): void {
@@ -1054,14 +1050,14 @@ export class BootScene {
   private _enterDoor(): void {
     if (this._storyMode !== "doorway") return;
     const cue = this._activeCue;
-    if (!cue || !this._studioCompletion.resolveCue(cue.await))
+    if (!cue || !this._studioCompletion.resolveCue("doorway-entered"))
       throw new Error("Doorway cue is missing from Floor 4 OML.");
     this._storyMode = "complete";
     this._storyStartedAt = performance.now();
     this._chapterTwoStarted = false;
     this._canContinue = false;
     this._clearMovement();
-    this._applyFrame(this._storyFrame(cue.text, "complete", 5, "Entering", 0));
+    getElement("#os-hint-ts", HTMLElement).textContent = "Entering";
   }
 
   private _updateStory(now: number, deltaMs: number): void {
@@ -1223,17 +1219,27 @@ export class BootScene {
       );
       if (completion.event?.type === "input" && completion.eventFinished) {
         this._beginNaming(completion.event);
-        return;
       }
-      if (completion.event?.type === "cue" && completion.eventFinished) {
+      else if (completion.event?.type === "cue" && completion.eventFinished) {
         this._beginDoorway(completion.event);
-        return;
       }
+      const phase: BootFrame["phase"] =
+        this._storyMode === "name"
+          ? "name"
+          : this._storyMode === "doorway"
+            ? "doorway"
+            : "final";
+      const hint =
+        completion.event?.type === "input"
+          ? completion.event.hint
+          : completion.event?.type === "cue"
+            ? completion.event.hint
+            : undefined;
       const frame = this._storyFrame(
         completion.text,
-        "final",
+        phase,
         4,
-        undefined,
+        hint,
         elapsedMs
       );
       frame.studioSpeaker = completion.speaker;
@@ -1870,6 +1876,8 @@ export class BootScene {
     this._spatial.setStoryProgressForTest(4);
     if (name === "final-name") {
       const event = this._floorFourInput();
+      this._startCompletionAt(event);
+      this._activeInput = event;
       this._storyMode = "name";
       this._applyFrame(
         this._storyFrame(event.prompt, "name", 5, event.hint, 0)
@@ -1883,6 +1891,8 @@ export class BootScene {
     this._root.dataset.osPlayerNameTs = this._playerName;
     if (name === "final-door") {
       const event = this._floorFourCue();
+      this._startCompletionAt(event);
+      this._activeCue = event;
       this._storyMode = "doorway";
       this._spatial.beginDoorway(this._playerName);
       this._applyFrame(
@@ -1917,6 +1927,13 @@ export class BootScene {
     );
     if (!event) throw new Error("Floor 4 OML has no doorway cue event.");
     return event;
+  }
+
+  private _startCompletionAt(event: DialogueEvent): void {
+    const index = ghostFloor04Document.completion?.indexOf(event) ?? -1;
+    if (index < 0) throw new Error("Floor 4 OML event is not in completion.");
+    this._studioCompletion = new StudioOpening(ghostFloor04Document);
+    this._studioCompletion.startCompletion(index);
   }
 
   private _refreshStaticFrame(): void {
