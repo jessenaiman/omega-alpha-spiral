@@ -94,7 +94,6 @@ export interface MiddleFloorLayout {
   overallFloor: ChapterZeroFloorNumber;
   sceneId: string;
   eraShaderId: string;
-  title: string;
   era: FloorEra;
   bounds: { minX: number; maxX: number; minZ: number; maxZ: number };
   spawn: FloorPoint;

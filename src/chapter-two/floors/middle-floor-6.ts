@@ -9,7 +9,6 @@ const definition: MiddleFloorDefinition = {
   overallFloor: 10,
   sceneId: "never-go-alone-floor-03",
   eraShaderId: "xerox-star-bitmap-gui",
-  title: "Ambition's Final Test",
   era: "early-3d",
   bounds: { minX: -24, maxX: 24, minZ: -22, maxZ: 24 },
   spawn: { x: 0, z: 21 },

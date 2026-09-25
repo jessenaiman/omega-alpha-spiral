@@ -14,6 +14,7 @@ file = Ambition.omd
 
 [scene]
 id = never-go-alone-floor-03
+title = Ambition's Final Test
 era_shader = xerox-star-bitmap-gui
 layout = ambition-core-test
 next = amnesia-town

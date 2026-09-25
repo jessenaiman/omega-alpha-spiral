@@ -9,7 +9,6 @@ const definition: MiddleFloorDefinition = {
   overallFloor: 8,
   sceneId: "never-go-alone-floor-01",
   eraShaderId: "ansi-bbs-dos-art",
-  title: "First Reflection",
   era: "8-bit-nintendo",
   bounds: { minX: -20, maxX: 20, minZ: -18, maxZ: 22 },
   spawn: { x: 0, z: 18 },

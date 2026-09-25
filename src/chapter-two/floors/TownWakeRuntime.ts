@@ -8,7 +8,7 @@ if (!scene) throw new Error("Missing authored OML scene: amnesia-town");
 export interface TownWakeStatus {
   readonly sceneId: "amnesia-town";
   readonly eraShaderId: string;
-  readonly title: "Amnesia: Classic Town";
+  readonly title: string;
   readonly text: string;
   readonly complete: boolean;
 }
@@ -56,7 +56,7 @@ export class TownWakeRuntime {
     return {
       sceneId: "amnesia-town",
       eraShaderId: scene.scene.era_shader ?? "apple-macintosh-quickdraw",
-      title: "Amnesia: Classic Town",
+      title: scene.scene.title ?? "Amnesia: Classic Town",
       text: this._lines.join("\n\n"),
       complete: this._eventIndex >= this._events.length,
     };

@@ -14,6 +14,7 @@ file = Ambition.omd
 
 [scene]
 id = never-go-alone-floor-02
+title = Second Reflection
 era_shader = ibm-pc-vga
 layout = mirror-arena-second-test
 next = never-go-alone-floor-03

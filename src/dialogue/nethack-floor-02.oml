@@ -13,6 +13,7 @@ file = Ambition.omd
 
 [scene]
 id = nethack-floor-02
+title = Shadow's Dungeon
 era_shader = ibm-pc-cga
 layout = rogue-room-shadow
 next = nethack-floor-03

@@ -66,6 +66,7 @@ export interface Oml {
   voices: VoiceDef[];
   scene: {
     id?: string;
+    title?: string;
     era_shader?: string;
     layout?: string;
     next?: string;
@@ -266,7 +267,7 @@ export function parseOml(text: string): Oml {
 
     if (where === "scene") {
       const [key, value] = parseValues(line.trim());
-      if (["id", "era_shader", "layout", "next"].includes(key))
+      if (["id", "title", "era_shader", "layout", "next"].includes(key))
         oml.scene[key as keyof Oml["scene"]] = value;
       continue;
     }

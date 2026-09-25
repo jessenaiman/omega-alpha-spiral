@@ -230,7 +230,7 @@ export class MiddleFloorRuntime {
       overallFloor: this._layout.overallFloor,
       sceneId: level.scene.id ?? this._layout.sceneId,
       eraShaderId: level.scene.era_shader ?? this._layout.eraShaderId,
-      title: this._layout.title,
+      title: level.scene.title ?? level.scene.id ?? "Never Go Alone",
       question: level.question.text ?? "",
       choices: level.choices.map((choice) => ({
         guide: guideFromOwner(choice.owner),

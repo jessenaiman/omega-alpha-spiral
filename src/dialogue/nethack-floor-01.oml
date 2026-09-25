@@ -13,6 +13,7 @@ file = Ambition.omd
 
 [scene]
 id = nethack-floor-01
+title = Light's Dungeon
 era_shader = home-micro-rom
 layout = rogue-room-light
 next = nethack-floor-02

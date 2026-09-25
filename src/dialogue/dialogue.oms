@@ -260,9 +260,10 @@
         "voices": { "type": "array", "items": { "type": "object" } },
         "scene": {
           "type": "object",
-          "required": ["id", "era_shader", "layout"],
+          "required": ["id", "title", "era_shader", "layout"],
           "properties": {
             "id": { "type": "string", "minLength": 1 },
+            "title": { "type": "string", "minLength": 1 },
             "era_shader": { "type": "string", "minLength": 1 },
             "layout": { "type": "string", "minLength": 1 },
             "next": { "type": "string", "minLength": 1 }

@@ -13,6 +13,7 @@ file = Ambition.omd
 
 [scene]
 id = nethack-floor-03
+title = Ambition's Dungeon
 era_shader = amiga-workbench
 layout = rogue-room-ambition
 next = never-go-alone-floor-01

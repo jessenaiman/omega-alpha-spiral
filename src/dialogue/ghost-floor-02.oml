@@ -15,6 +15,7 @@ file = Ambition.omd
 
 [scene]
 id = ghost-floor-02
+title = Question 2
 era_shader = ibm-pc-cga
 layout = passage
 next = ghost-floor-03

@@ -13,6 +13,7 @@ export interface RoomObject {
   alignment: Guide;
   text: string;
 }
+type RoomObjectPlacement = Pick<RoomObject, "kind" | "x" | "z">;
 export interface RoomBlock {
   id?: string;
   x: number;
@@ -31,6 +32,9 @@ export interface EchoRoom {
   layout?: EarlyFloorLayout;
   routes?: Readonly<Record<ObjectKind, readonly FloorPoint[]>>;
 }
+type AuthoredRoomGeometry = Omit<EchoRoom, "eraShaderId" | "objects"> & {
+  objects: RoomObjectPlacement[];
+};
 
 function guideFromOwner(owner: string): Guide {
   if (owner === "light") return "Light";
@@ -39,7 +43,7 @@ function guideFromOwner(owner: string): Guide {
   throw new Error(`Unknown Dreamweaver owner: ${owner}`);
 }
 
-function applyAuthoredDialogue(room: EchoRoom): EchoRoom {
+function applyAuthoredDialogue(room: AuthoredRoomGeometry): EchoRoom {
   const level = CHAPTER_ZERO_LEVELS_BY_ID.get(room.levelId);
   if (!level) throw new Error(`Missing authored OML scene: ${room.levelId}`);
   const choices = new Map(level.choices.map((choice) => [choice.id, choice]));
@@ -61,7 +65,7 @@ function applyAuthoredDialogue(room: EchoRoom): EchoRoom {
 
 // Authored copy of stage_2/nethack-scene.md:119-237, interpreted as data, NOT
 // executed pseudocode. Colors, code architecture and movement are our graybox.
-const LIGHT_ROOM: EchoRoom = {
+const LIGHT_ROOM: AuthoredRoomGeometry = {
   levelId: "nethack-floor-01",
   owner: "Light",
   heroStart: { x: 0, z: 12 },
@@ -74,27 +78,21 @@ const LIGHT_ROOM: EchoRoom = {
       kind: "door",
       x: -8,
       z: 0,
-      alignment: "Light",
-      text: "What is the first story you ever loved?",
     },
     {
       kind: "monster",
       x: 0,
       z: 0,
-      alignment: "Ambition",
-      text: "A spectral wolf appears! It lunges...",
     },
     {
       kind: "chest",
       x: 8,
       z: 0,
-      alignment: "Shadow",
-      text: "You open the chest. Inside: a broken compass.",
     },
   ],
 };
 
-const SHADOW_ROOM: EchoRoom = {
+const SHADOW_ROOM: AuthoredRoomGeometry = {
   levelId: "nethack-floor-02",
   owner: "Shadow",
   objects: [
@@ -102,27 +100,21 @@ const SHADOW_ROOM: EchoRoom = {
       kind: "door",
       x: -8,
       z: 0,
-      alignment: "Shadow",
-      text: "Is chaos kinder than order?",
     },
     {
       kind: "monster",
       x: 0,
       z: 0,
-      alignment: "Light",
-      text: "A guardian of light blocks your path!",
     },
     {
       kind: "chest",
       x: 8,
       z: 0,
-      alignment: "Ambition",
-      text: "The chest giggles. It’s empty... or is it?",
     },
   ],
 };
 
-const AMBITION_ROOM: EchoRoom = {
+const AMBITION_ROOM: AuthoredRoomGeometry = {
   levelId: "nethack-floor-03",
   owner: "Ambition",
   objects: [
@@ -130,22 +122,16 @@ const AMBITION_ROOM: EchoRoom = {
       kind: "door",
       x: -8,
       z: 0,
-      alignment: "Ambition",
-      text: "Would you burn the world to save one soul?",
     },
     {
       kind: "monster",
       x: 0,
       z: 0,
-      alignment: "Shadow",
-      text: "A trickster imp cackles and attacks!",
     },
     {
       kind: "chest",
       x: 8,
       z: 0,
-      alignment: "Light",
-      text: "Inside: a shard glowing with ancient hope.",
     },
   ],
 };
