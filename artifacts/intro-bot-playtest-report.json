@@ -35,16 +35,17 @@
     "town:ready-to-choose-after-gathering",
     "town:route-alleys-selected",
     "floor-7:exit-crossed",
-    "floor-8:stable-core-approach-entry"
+    "floor-8:stable-core-approach-entry",
+    "floor-8:healing-core-complete"
   ],
-  "framesAdvanced": 15818,
+  "framesAdvanced": 13217,
   "scoreBefore": 0,
   "scoreAfter": 7,
-  "complete": false,
-  "distanceTravelled": 1214.55,
+  "complete": true,
+  "distanceTravelled": 948.38,
   "stepOfFirstScore": 0,
   "softlockWindows": 0,
-  "physicsSteps": 919,
+  "physicsSteps": 867,
   "failureAvailable": false,
   "retryVerified": true,
   "chapterChoices": 3,
@@ -57,7 +58,7 @@
       },
       "chosen": "door",
       "outcome": null,
-      "distance": 20.555400000000024
+      "distance": 19.226400000000073
     },
     {
       "roomIndex": 1,
@@ -67,7 +68,7 @@
       },
       "chosen": "monster",
       "outcome": "fallen",
-      "distance": 50.18340000000039
+      "distance": 49.20720000000019
     },
     {
       "roomIndex": 2,
@@ -77,7 +78,7 @@
       },
       "chosen": "chest",
       "outcome": null,
-      "distance": 53.0430000000017
+      "distance": 57.25920000000198
     }
   ],
   "consoleErrors": [],
