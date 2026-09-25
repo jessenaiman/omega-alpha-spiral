@@ -1,6 +1,6 @@
 import { Color, DoubleSide, ShaderMaterial, type CanvasTexture } from "three";
-import { assertEraShaderBuilt } from "./registry";
-import type { EraShaderDefinition } from "./types";
+import { createEraShaderMaterial } from "./css";
+import type { EraShaderMaterialRequest } from "./types";
 
 const ERA_TEXT_VERTEX = `attribute float aGlyph; varying vec2 vUv; varying float vGlyph;
   void main(){vUv=uv; vGlyph=aGlyph; gl_Position=projectionMatrix*modelViewMatrix*instanceMatrix*vec4(position,1.0);}`;
@@ -22,12 +22,12 @@ const ERA_TEXT_FRAGMENT = `uniform sampler2D uAtlas; uniform vec3 uColor; unifor
   }`;
 
 export function createEraTextMaterial(
-  shader: EraShaderDefinition,
+  request: EraShaderMaterialRequest,
   atlas: CanvasTexture,
   color: string
 ): ShaderMaterial {
-  assertEraShaderBuilt(shader);
-  return new ShaderMaterial({
+  const { shader, surface } = createEraShaderMaterial(request);
+  const material = new ShaderMaterial({
     transparent: true,
     depthWrite: false,
     side: DoubleSide,
@@ -44,17 +44,22 @@ export function createEraTextMaterial(
     vertexShader: ERA_TEXT_VERTEX,
     fragmentShader: ERA_TEXT_FRAGMENT,
   });
+  material.userData.eraShaderId = shader.id;
+  material.userData.eraSurface = surface;
+  return material;
 }
 
 export function applyEraTextMaterial(
   material: ShaderMaterial,
-  shader: EraShaderDefinition,
+  request: EraShaderMaterialRequest,
   atlas: CanvasTexture
 ): void {
-  assertEraShaderBuilt(shader);
+  const { shader, surface } = createEraShaderMaterial(request);
   material.uniforms.uAtlas.value = atlas;
   material.uniforms.uScan.value = shader.effects.scan;
   material.uniforms.uDots.value = shader.effects.dots;
   material.uniforms.uHalo.value = shader.effects.halo;
   material.uniforms.uCell.value = [...shader.cell];
+  material.userData.eraShaderId = shader.id;
+  material.userData.eraSurface = surface;
 }

@@ -17,6 +17,7 @@ import {
   createEraTextMaterial,
   resolveEraShader,
   type EraShaderDefinition,
+  type EraShaderSurface,
 } from ".";
 
 export type Layout = "manuscript" | "fragments" | "passage";
@@ -30,6 +31,7 @@ export class GhostLetters {
   private glyphs = new InstancedBufferAttribute(new Float32Array(CAPACITY), 1);
   private material: ShaderMaterial;
   private mesh: InstancedMesh;
+  private surface: EraShaderSurface;
   private dummy = new Object3D();
   private text = "";
   opacity = 1;
@@ -37,12 +39,18 @@ export class GhostLetters {
   constructor(
     readonly speaker: SpeakerId,
     color: string,
-    eraShaderId = "dec-vt100-ascii-terminal"
+    eraShaderId = "dec-vt100-ascii-terminal",
+    surface: EraShaderSurface = "dialogue"
   ) {
+    this.surface = surface;
     this.eraShader = resolveEraShader(eraShaderId);
     this.atlas = makeAtlas(this.eraShader);
     this.geometry.setAttribute("aGlyph", this.glyphs);
-    this.material = createEraTextMaterial(this.eraShader, this.atlas, color);
+    this.material = createEraTextMaterial(
+      { id: this.eraShader.id, surface: this.surface },
+      this.atlas,
+      color
+    );
     this.mesh = new InstancedMesh(this.geometry, this.material, CAPACITY);
     this.mesh.instanceMatrix.setUsage(DynamicDrawUsage);
     this.mesh.frustumCulled = false;
@@ -54,7 +62,7 @@ export class GhostLetters {
     (this.material.uniforms.uColor.value as Color).set(color);
   }
 
-  /** Accepts a canonical era-shader id or an explicit legacy alias. */
+  /** Accepts a canonical era-shader id. */
   setEra(id: string) {
     if (this.eraShader.id === id) return;
     const next = resolveEraShader(id);
@@ -62,7 +70,11 @@ export class GhostLetters {
     this.eraShader = next;
     this.atlas.dispose();
     this.atlas = makeAtlas(next);
-    applyEraTextMaterial(this.material, next, this.atlas);
+    applyEraTextMaterial(
+      this.material,
+      { id: next.id, surface: this.surface },
+      this.atlas
+    );
   }
 
   setText(text: string) {

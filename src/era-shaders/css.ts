@@ -37,7 +37,9 @@ export function createEraShaderMaterial(
 }
 
 export function eraShaderCssVariables(id: string): EraShaderCssVariables {
-  return cssVariables(resolveEraShader(id));
+  const shader = resolveEraShader(id);
+  assertEraShaderBuilt(shader);
+  return cssVariables(shader);
 }
 
 /** Apply the shared material request to a DOM presentation surface. */

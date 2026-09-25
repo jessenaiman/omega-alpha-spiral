@@ -19,13 +19,6 @@ const ERA_SHADER_BY_ID = new Map(
   ERA_SHADERS.map((shader) => [shader.id, shader])
 );
 
-const LEGACY_ERA_ALIAS: Readonly<Record<string, string>> = {
-  phosphor: "dec-vt100-ascii-terminal",
-  dos: "ibm-pc-vga",
-  gui: "os2-presentation-manager",
-  smooth: "freetype-lcd-modern",
-};
-
 export const BUILT_ERA_SHADER_METHODS: readonly EraShaderRenderMethod[] = [
   "character-cell",
   "bitmap-gui",
@@ -41,8 +34,7 @@ const REJECTED_ERA_SHADER_METHODS: Readonly<
 };
 
 export function resolveEraShader(id: string): EraShaderDefinition {
-  const canonicalId = LEGACY_ERA_ALIAS[id] ?? id;
-  const shader = ERA_SHADER_BY_ID.get(canonicalId);
+  const shader = ERA_SHADER_BY_ID.get(id);
   if (!shader) {
     throw new Error(
       `Unknown era shader "${id}". Expected one of: ${ERA_SHADERS.map((entry) => entry.id).join(", ")}`
