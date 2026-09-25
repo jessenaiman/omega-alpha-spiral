@@ -1,14 +1,27 @@
 {
   "seed": "472",
   "steps": 9,
-  "framesAdvanced": 3124,
+  "routeSequence": [
+    "begin:clicked",
+    "ghost-question-1:choice-0",
+    "ghost-question-2:choice-1",
+    "ghost-question-3:choice-2",
+    "ghost-question-4:choice-0",
+    "name-entered:Astra",
+    "doorway:crossed-by-input",
+    "floor-1:exit-crossed-by-input",
+    "floor-2:exit-crossed-by-input",
+    "floor-3:exit-crossed-by-input",
+    "floor-4:entered-after-floor-3-handoff"
+  ],
+  "framesAdvanced": 3307,
   "scoreBefore": 0,
   "scoreAfter": 7,
   "complete": false,
-  "distanceTravelled": 160.13,
+  "distanceTravelled": 151.01,
   "stepOfFirstScore": 0,
   "softlockWindows": 0,
-  "physicsSteps": 845,
+  "physicsSteps": 822,
   "failureAvailable": false,
   "retryVerified": true,
   "chapterChoices": 3,
@@ -21,7 +34,7 @@
       },
       "chosen": "door",
       "outcome": null,
-      "distance": 23.729400000000066
+      "distance": 22.267800000000047
     },
     {
       "roomIndex": 1,
@@ -31,7 +44,7 @@
       },
       "chosen": "monster",
       "outcome": "fallen",
-      "distance": 49.03500000000031
+      "distance": 46.00800000000008
     },
     {
       "roomIndex": 2,
@@ -41,7 +54,7 @@
       },
       "chosen": "chest",
       "outcome": null,
-      "distance": 52.63080000000181
+      "distance": 51.96120000000185
     }
   ],
   "consoleErrors": [],
