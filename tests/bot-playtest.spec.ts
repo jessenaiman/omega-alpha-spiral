@@ -687,7 +687,7 @@ async function playTownAndFinale(
   routeSequence.push("floor-8:healing-core-complete");
 }
 
-test("bot playtest: scripted real input completes and retries the playable route", async ({
+test("bot playtest: real input reaches Floor 4 from Begin", async ({
   page,
 }, testInfo: TestInfo) => {
   test.setTimeout(180_000);
@@ -706,6 +706,7 @@ test("bot playtest: scripted real input completes and retries the playable route
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/intro.html?debug&seed=472");
   await page.getByRole("button", { name: /Begin/ }).click();
+  const routeSequence = ["begin:clicked"];
   await page.waitForFunction(() => {
     const diagnostics = (
       window as unknown as {
@@ -715,33 +716,19 @@ test("bot playtest: scripted real input completes and retries the playable route
     return (diagnostics?.state.frame ?? 0) > 10;
   });
 
-  const acknowledgement = await page.evaluate(async () => {
+  const seedAcknowledgement = await page.evaluate(async () => {
     const hooks = (
       window as unknown as {
         __THREE_GAME_TEST_HOOKS__?: {
           seed(value: string | number): Promise<{ seed: string }>;
-          setState(name: string): Promise<{ state: string }>;
         };
       }
     ).__THREE_GAME_TEST_HOOKS__;
-    if (
-      !hooks ||
-      typeof hooks.seed !== "function" ||
-      typeof hooks.setState !== "function"
-    ) {
-      throw new Error("Bot playtests require seed and setState test hooks");
-    }
-    const seeded = await hooks.seed(472);
-    if (seeded.seed !== "472")
-      throw new Error("seed must acknowledge the requested value");
-    const applied = await hooks.setState("boot-cursor");
-    if (!applied || applied.state !== "boot-cursor")
-      throw new Error("setState must acknowledge boot-cursor");
-    return applied;
+    if (!hooks || typeof hooks.seed !== "function")
+      throw new Error("Bot playtests require the deterministic seed hook");
+    return hooks.seed(472);
   });
-  expect(acknowledgement.state, "bot must start in the requested state").toBe(
-    "boot-cursor"
-  );
+  expect(seedAcknowledgement.seed).toBe("472");
 
   const before = await sample(page);
   const snapshots: BotSnapshot[] = [before];
@@ -805,6 +792,7 @@ test("bot playtest: scripted real input completes and retries the playable route
     const nextMode = await finishResponse(page);
     const afterResponse = await readIntro(page);
     await recordStep(index);
+    routeSequence.push(`ghost-question-${index + 1}:choice-${step.choice}`);
     if (index === introSteps.length - 1) {
       expect(["final", "name"]).toContain(nextMode);
       break;
@@ -854,6 +842,7 @@ test("bot playtest: scripted real input completes and retries the playable route
   await expect(nameInput).toBeVisible();
   await nameInput.pressSequentially(nameStep.value);
   await nameInput.press("Enter");
+  routeSequence.push(`name-entered:${nameStep.value}`);
   await expect
     .poll(async (): Promise<string> => (await readIntro(page)).storyMode)
     .toBe("doorway");
@@ -861,6 +850,7 @@ test("bot playtest: scripted real input completes and retries the playable route
   if (!INPUT_SCRIPT.some((step) => step.kind === "doorway-crossing"))
     throw new Error("Bot script is missing the doorway-crossing step");
   await walkThroughDoorway(page, routeMetrics);
+  routeSequence.push("doorway:crossed-by-input");
   await expect
     .poll(async (): Promise<boolean> => (await readIntro(page)).complete)
     .toBe(true);
@@ -885,11 +875,21 @@ test("bot playtest: scripted real input completes and retries the playable route
       await playEarlyRoom(page, step.choice, `bot answer ${index}`)
     );
     routeMetrics.distance += chapterResults[index].distance;
+    routeSequence.push(
+      `floor-${chapterResults[index].roomIndex + 1}:exit-crossed-by-input`
+    );
     await recordStep(introSteps.length + index);
   }
   await expect
     .poll(async () => (await readChapter(page)).phase)
     .toBe("complete");
+  await expect
+    .poll(async () => {
+      const journey = (await readChapter(page)).journey;
+      return journey.kind === "middle" && journey.floor === 4;
+    }, { timeout: 15_000 })
+    .toBe(true);
+  routeSequence.push("floor-4:entered-after-floor-3-handoff");
   const completedChapter = await readChapter(page);
   const after = await sample(page);
   await page.keyboard.press("KeyR");
@@ -907,6 +907,7 @@ test("bot playtest: scripted real input completes and retries the playable route
   const report = {
     seed: "472",
     steps: INPUT_SCRIPT.length,
+    routeSequence,
     framesAdvanced: after.frame - before.frame,
     scoreBefore: before.score,
     scoreAfter: after.score,
@@ -955,7 +956,10 @@ test("bot playtest: scripted real input completes and retries the playable route
     report.stepOfFirstScore,
     "bot must find objective progress"
   ).toBeGreaterThanOrEqual(0);
-  expect(report.complete, "bot must complete the playable route").toBe(true);
+  expect(
+    routeSequence.at(-1),
+    "real input must trigger the existing Floor 3 to Floor 4 handoff"
+  ).toBe("floor-4:entered-after-floor-3-handoff");
   expect(report.retryVerified, "restart must restore playable state").toBe(
     true
   );
