@@ -822,7 +822,7 @@ async function playTownAndFinale(
   routeSequence.push("floor-8:healing-core-complete");
 }
 
-test("bot playtest: real input reaches stable Floor 5 from Begin", async ({
+test("bot playtest: real input reaches stable Floor 6 from Begin", async ({
   page,
 }, testInfo: TestInfo) => {
   test.setTimeout(180_000);
@@ -1043,6 +1043,21 @@ test("bot playtest: real input reaches stable Floor 5 from Begin", async ({
     )
     .toBe(true);
   routeSequence.push("floor-5:stable-entry");
+  await playMiddleFloor(page, 5, routeMetrics, routeSequence);
+  await expect
+    .poll(
+      async () => {
+        const journey = (await readChapter(page)).journey;
+        return (
+          journey.kind === "middle" &&
+          journey.floor === 6 &&
+          journey.phase === null
+        );
+      },
+      { timeout: 15_000 }
+    )
+    .toBe(true);
+  routeSequence.push("floor-6:stable-entry");
   const completedChapter = await readChapter(page);
   const after = await sample(page);
   await page.keyboard.press("KeyR");
@@ -1111,8 +1126,8 @@ test("bot playtest: real input reaches stable Floor 5 from Begin", async ({
   ).toBeGreaterThanOrEqual(0);
   expect(
     routeSequence.at(-1),
-    "real input must cross Floor 4 and reach stable Floor 5"
-  ).toBe("floor-5:stable-entry");
+    "real input must cross Floor 5 and reach stable Floor 6"
+  ).toBe("floor-6:stable-entry");
   expect(report.retryVerified, "restart must restore playable state").toBe(
     true
   );
