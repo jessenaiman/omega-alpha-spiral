@@ -832,14 +832,15 @@ async function chooseTownExit(
   routeSequence.push("floor-8:stable-core-approach-entry");
 }
 
-async function playTownAndFinale(
+async function completeFinale(
   page: Page,
   metrics: { distance: number; softlocks: number },
   routeSequence: string[]
 ): Promise<void> {
-  await gatherTownDreamweavers(page, metrics, routeSequence);
-  await chooseTownExit(page, metrics, routeSequence);
   const state = (await readChapter(page)).journey;
+  expect(state.kind).toBe("late");
+  expect(state.floor).toBe(8);
+  expect(state.phase).toBe("core-approach");
   const core = state.landmarks?.find(
     (landmark) => landmark.id === "healing-core"
   );
@@ -852,14 +853,21 @@ async function playTownAndFinale(
     2.3
   );
   await expect
-    .poll(async () => (await readChapter(page)).journey.phase, {
+    .poll(async () => {
+      const journey = (await readChapter(page)).journey;
+      return (
+        journey.kind === "late" &&
+        journey.floor === 8 &&
+        journey.phase === "complete"
+      );
+    }, {
       timeout: 10_000,
     })
-    .toBe("complete");
+    .toBe(true);
   routeSequence.push("floor-8:healing-core-complete");
 }
 
-test("bot playtest: real input reaches Floor 8 from Begin", async ({
+test("bot playtest: real input reaches the actual ending from Begin", async ({
   page,
 }, testInfo: TestInfo) => {
   test.setTimeout(480_000);
@@ -1112,6 +1120,7 @@ test("bot playtest: real input reaches Floor 8 from Begin", async ({
   routeSequence.push("floor-7:stable-town-entry");
   await gatherTownDreamweavers(page, routeMetrics, routeSequence);
   await chooseTownExit(page, routeMetrics, routeSequence);
+  await completeFinale(page, routeMetrics, routeSequence);
   const completedChapter = await readChapter(page);
   const after = await sample(page);
   await page.keyboard.press("KeyR");
@@ -1180,8 +1189,11 @@ test("bot playtest: real input reaches Floor 8 from Begin", async ({
   ).toBeGreaterThanOrEqual(0);
   expect(
     routeSequence.at(-1),
-    "real input must choose a town exit and reach Floor 8"
-  ).toBe("floor-8:stable-core-approach-entry");
+    "real input must reach the healing core and actual ending"
+  ).toBe("floor-8:healing-core-complete");
+  expect(report.complete, "the runtime must enter its actual ending state").toBe(
+    true
+  );
   expect(report.retryVerified, "restart must restore playable state").toBe(
     true
   );
