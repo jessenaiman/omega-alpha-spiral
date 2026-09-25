@@ -1,36 +1,36 @@
 {
   "version": 1,
-  "runId": "stage1-visual-20260924-d",
+  "runId": "stage1-visual-20260924-e",
   "captures": [
     {
       "mode": "desktop",
       "state": "question-1",
-      "report": "artifacts/stage1-visual-20260924-d/desktop-question-1.json"
+      "report": "artifacts/stage1-visual-20260924-e/desktop-question-1.json"
     },
     {
       "mode": "desktop",
       "state": "question-2",
-      "report": "artifacts/stage1-visual-20260924-d/desktop-question-2.json"
+      "report": "artifacts/stage1-visual-20260924-e/desktop-question-2.json"
     },
     {
       "mode": "desktop",
       "state": "question-3",
-      "report": "artifacts/stage1-visual-20260924-d/desktop-question-3.json"
+      "report": "artifacts/stage1-visual-20260924-e/desktop-question-3.json"
     },
     {
       "mode": "desktop",
       "state": "question-4",
-      "report": "artifacts/stage1-visual-20260924-d/desktop-question-4.json"
+      "report": "artifacts/stage1-visual-20260924-e/desktop-question-4.json"
     }
   ],
   "artifacts": [
-    "artifacts/stage1-visual-20260924-d/arrival.webm",
-    "artifacts/stage1-visual-20260924-d/arrival.json",
-    "artifacts/stage1-visual-20260924-d/arrival-question-1.png",
-    "artifacts/stage1-visual-20260924-d/arrival-contact-response.png",
-    "artifacts/stage1-visual-20260924-d/arrival-travel-start.png",
-    "artifacts/stage1-visual-20260924-d/arrival-travel-middle.png",
-    "artifacts/stage1-visual-20260924-d/arrival-travel-near.png",
-    "artifacts/stage1-visual-20260924-d/arrival-question-2-prelude.png"
+    "artifacts/stage1-visual-20260924-e/arrival.webm",
+    "artifacts/stage1-visual-20260924-e/arrival.json",
+    "artifacts/stage1-visual-20260924-e/arrival-question-1.png",
+    "artifacts/stage1-visual-20260924-e/arrival-contact-response.png",
+    "artifacts/stage1-visual-20260924-e/arrival-travel-start.png",
+    "artifacts/stage1-visual-20260924-e/arrival-travel-middle.png",
+    "artifacts/stage1-visual-20260924-e/arrival-travel-near.png",
+    "artifacts/stage1-visual-20260924-e/arrival-question-2-prelude.png"
   ]
 }

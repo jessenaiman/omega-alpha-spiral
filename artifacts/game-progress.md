@@ -4,12 +4,13 @@ Updated: 2026-09-24
 
 ## Current task — Stage 1 four-floor redesign
 
-- Branch: `codex/feature-stage-one-redesign` in the isolated `stage-one-redesign` worktree. Source checkpoints through `546d70a`; current evidence run `stage1-visual-20260924-d`.
+- Branch: `codex/feature-stage-one-redesign` in the isolated `stage-one-redesign` worktree. Source checkpoints through `b529609`; current evidence run `stage1-visual-20260924-e`.
 - ✅ Gameplay consumes the four authored Ghost OML files for question, choice consequences, transitions, and era IDs. The shared era shader registry supplies the four 3D glyph treatments. Earlier glyph samples remain composited at later questions.
 - ✅ The selected Dreamweaver's `.omd` color drives the intro path and the player's accumulating imprint, the progress cue, and the Chapter Two hero handoff.
-- ✅ All four current question captures opened and rendered nonblank without reported browser errors. Real input reached the second question after 87 unpaused travel samples; largest sampled position step was 0.628 units. The Question 2 prelude now keeps the player on-screen and shows the next terminal destination.
-- ❌ Visual review still rejects terminal border crossings through choice text, player overlap with Shadow on Question 4, and weak cumulative era differentiation. The three path texts fit inside the viewport.
-- Next: correct the three remaining visual failures against the approved direction, then recapture. Keep authored dialogue and Dialogue Studio separate. No later-stage content is in scope here.
+- ✅ All four current question captures opened and rendered nonblank without reported browser errors. Real input reached the second question after 66 unpaused travel samples; largest sampled position step was 0.603 units. The Question 2 prelude keeps the player on-screen and shows the next terminal destination.
+- ✅ Waiting terminal edges are hidden, the Question 4 player stays below choice copy, and distinct reached era structures accumulate across Questions 2–4.
+- ❌ Path and era lines still cross choice glyphs, especially on Questions 3–4. The three path texts fit inside the viewport.
+- Next: clear the remaining line crossings against the approved direction, then recapture. Keep authored dialogue and Dialogue Studio separate. No later-stage content is in scope here.
 
 ## Current task — OML dialogue ownership and reusable era shaders
 
