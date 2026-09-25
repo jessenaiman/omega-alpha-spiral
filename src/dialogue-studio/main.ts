@@ -485,6 +485,7 @@ el<HTMLSelectElement>("era").onchange = (e) => {
   era = (e.target as HTMLSelectElement).value as Era;
   selectedFileEra = era;
   applySceneTypography();
+  updateLoadedOmlEraShader(era);
   savePresentation();
 };
 el<HTMLSelectElement>("persona-era").onchange = async (event) => {
@@ -686,6 +687,48 @@ function setFileState(
 ) {
   fileState.dataset.state = state;
   fileState.textContent = message;
+}
+function updateLoadedOmlEraShader(eraShaderId: string) {
+  if (!scriptEditor || !currentFile.toLowerCase().endsWith(".oml")) return;
+
+  const source = scriptEditor.getText();
+  const sceneHeader = /^([ \t]*\[scene\][ \t]*)(\r?\n|$)/im.exec(source);
+  let updated: string;
+  if (!sceneHeader) {
+    const separator = source.length > 0 && !/[\r\n]$/.test(source) ? "\n" : "";
+    updated = `${source}${separator}[scene]\nera_shader = ${eraShaderId}\n`;
+  } else {
+    const bodyStart = sceneHeader.index + sceneHeader[0].length;
+    const nextHeader = /^[ \t]*\[[^\]\r\n]+\][ \t]*(?:\r?\n|$)/gm;
+    nextHeader.lastIndex = bodyStart;
+    const nextSection = nextHeader.exec(source);
+    const bodyEnd = nextSection?.index ?? source.length;
+    const body = source.slice(bodyStart, bodyEnd);
+    const eraProperty = /^([ \t]*era_shader[ \t]*=[ \t]*)[^#\r\n]*(#[^\r\n]*)?(\r?)$/im;
+    if (eraProperty.test(body)) {
+      updated =
+        source.slice(0, bodyStart) +
+        body.replace(
+          eraProperty,
+          (_line, assignment: string, comment = "", carriageReturn = "") =>
+            `${assignment}${eraShaderId}${comment}${carriageReturn}`
+        ) +
+        source.slice(bodyEnd);
+    } else {
+      const newline = sceneHeader[2] || "\n";
+      updated =
+        source.slice(0, bodyStart) +
+        `era_shader = ${eraShaderId}${newline}` +
+        source.slice(bodyStart);
+    }
+  }
+
+  if (updated === source) return;
+  scriptEditor.setText(updated);
+  setFileState(
+    "pending",
+    `Unsaved era shader change in ${currentFile}. Save to project when ready.`
+  );
 }
 scriptEditor = createScriptEditor(el("script-lines"), (text) => {
   if (currentFile.toLowerCase().endsWith(".oml")) dialogue.loadText(text);
