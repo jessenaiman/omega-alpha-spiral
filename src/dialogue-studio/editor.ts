@@ -151,12 +151,12 @@ export function createDialogueEditor(host: DialogueEditorHost) {
     active = true;
     panel.hidden = false;
     activeOffset = completion ? document.events.length : 0;
-    const events = completion ? document.completion ?? [] : document.events;
-    timeline = new DialogueTimeline({ ...document, events }, enter);
+    timeline = new DialogueTimeline(document, enter);
     if (document.presentation) host.restore(document.presentation);
     document.presentation = host.presentation();
     host.resume();
-    timeline.start(index);
+    if (completion) timeline.startCompletion(index);
+    else timeline.start(index);
     el("script-error").textContent = "";
   }
 

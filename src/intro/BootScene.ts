@@ -19,7 +19,6 @@ import {
 } from "../core/input";
 import type { GhostInterlude, GhostQuestion } from "../dialogue/ghost";
 import {
-  GHOST_FINAL,
   createGhostQuestions,
   getGhostInterlude,
 } from "../dialogue/ghost-vite";
@@ -30,7 +29,11 @@ import { IntroAudio } from "./IntroAudio";
 import type { IntroPhysicsDiagnostics } from "./IntroPhysics";
 import { BOOT_EFFECTS, SpatialBootScene } from "./SpatialBootScene";
 import { ChapterTwoScene } from "../chapter-two/ChapterTwoScene";
-import { StudioOpening, studioOpeningDocument } from "./StudioOpening";
+import {
+  ghostFloor04Document,
+  StudioOpening,
+  studioOpeningDocument,
+} from "./StudioOpening";
 import { WritingPlayback } from "../dialogue/writing";
 import { PROFILES, SPEAKERS } from "../dialogue/personas";
 import { applyEraShaderCss } from "../era-shaders";
@@ -144,6 +147,8 @@ export class BootScene {
   private _abort: AbortController = new AbortController();
   private _questions: readonly GhostQuestion[] = createGhostQuestions(SEED);
   private _studioOpening = new StudioOpening();
+  private _studioCompletion = new StudioOpening(ghostFloor04Document);
+  private _completionDoneAt = -1;
   private _typing = new WritingPlayback();
   private _typingKey = "";
   private _typingElapsed = 0;
@@ -518,6 +523,8 @@ export class BootScene {
     this._nextLevel = "";
     this._typingKey = "";
     this._studioOpening = new StudioOpening();
+    this._studioCompletion = new StudioOpening(ghostFloor04Document);
+    this._completionDoneAt = -1;
     this._questions = this._questions.map((question, index) =>
       index === 0 ? this._studioOpening.applyTo(question) : question
     );
@@ -615,7 +622,7 @@ export class BootScene {
       }
       const displayMs: number = this._elapsedMs;
       if (!["boot", "waiting", "doorway"].includes(this._storyMode))
-        this._updateStory(now);
+        this._updateStory(now, delta * 1000);
       const spatialEvent: number = this._spatial.update(
         this._motionMs,
         this._isReduced
@@ -958,6 +965,8 @@ export class BootScene {
     this._selectedChoice = -1;
     this._spatial.select(-1);
     this._clearNativeChoices();
+    this._completionDoneAt = -1;
+    this._studioCompletion.startCompletion();
     this._audio.threshold();
   }
 
@@ -1030,7 +1039,7 @@ export class BootScene {
     );
   }
 
-  private _updateStory(now: number): void {
+  private _updateStory(now: number, deltaMs: number): void {
     const elapsedMs: number = Math.max(0, now - this._storyStartedAt);
     const question: GhostQuestion =
       this._questions[
@@ -1183,18 +1192,29 @@ export class BootScene {
       return;
     }
     if (this._storyMode === "final") {
-      const text: string = this._finalText(elapsedMs);
-      const complete: boolean = this._isReduced || this._typingComplete;
+      const completion = this._studioCompletion.advance(
+        deltaMs,
+        this._isReduced
+      );
+      const complete: boolean = completion.done;
+      if (complete && this._completionDoneAt < 0)
+        this._completionDoneAt = elapsedMs;
       if (
         complete &&
-        elapsedMs >= this._typingCompleteAt + (this._isReduced ? 0 : 1900)
+        elapsedMs >= this._completionDoneAt + (this._isReduced ? 0 : 1900)
       ) {
         this._beginNaming();
         return;
       }
-      this._applyFrame(
-        this._storyFrame(text, "final", 4, undefined, elapsedMs)
+      const frame = this._storyFrame(
+        completion.text,
+        "final",
+        4,
+        undefined,
+        elapsedMs
       );
+      frame.studioSpeaker = completion.speaker;
+      this._applyFrame(frame);
       return;
     }
     if (this._storyMode === "complete") {
@@ -1329,14 +1349,6 @@ export class BootScene {
     if (owner === 2 && Math.floor(elapsedMs / 180) % 17 === 0)
       return `${text}>`;
     return text;
-  }
-
-  private _finalScript(): string {
-    return GHOST_FINAL.replace("{{THREAD_NAME}}", this._lastThreadName);
-  }
-
-  private _finalText(elapsedMs: number): string {
-    return this._typed(this._finalScript(), elapsedMs, 34);
   }
 
   private _setChoicesEnabled(enabled: boolean): void {

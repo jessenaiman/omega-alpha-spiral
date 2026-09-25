@@ -1,4 +1,5 @@
 import ghostFloor01 from "../dialogue/ghost-floor-01.oml?raw";
+import ghostFloor04 from "../dialogue/ghost-floor-04.oml?raw";
 import {
   DialogueTimeline,
   dialogueDocumentFromOml,
@@ -30,7 +31,26 @@ export const studioOpeningDocument = dialogueDocumentFromOml(
     voices: {},
   }
 );
-for (const event of studioOpeningDocument.events)
+export const ghostFloor04Script = parseOml(ghostFloor04);
+export const ghostFloor04Document = dialogueDocumentFromOml(
+  ghostFloor04Script,
+  "src/dialogue/ghost-floor-04.oml",
+  {
+    levelId: ghostFloor04Script.scene.id ?? "ghost-floor-04",
+    eraShaderId:
+      ghostFloor04Script.scene.era_shader ?? "apple-macintosh-quickdraw",
+    layout: layouts.includes(ghostFloor04Script.scene.layout as Layout)
+      ? (ghostFloor04Script.scene.layout as Layout)
+      : "passage",
+    voices: {},
+  }
+);
+for (const event of [
+  ...studioOpeningDocument.events,
+  ...(studioOpeningDocument.completion ?? []),
+  ...ghostFloor04Document.events,
+  ...(ghostFloor04Document.completion ?? []),
+])
   if (event.type === "line" && !SPEAKERS.includes(event.speaker as SpeakerId))
     throw new Error(
       `Opening references an unsupported writing profile: ${event.speaker}`
@@ -123,6 +143,13 @@ export class StudioOpening {
   }
   proceed() {
     this.timeline.proceed();
+  }
+  startCompletion() {
+    this.started = true;
+    this.text = "";
+    this.questionText = "";
+    this.revealed = ["", "", ""];
+    this.timeline.startCompletion();
   }
   static choices(lines: readonly string[]): StudioOpening {
     return new StudioOpening({

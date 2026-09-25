@@ -48,6 +48,8 @@ export type DialogueDocument = {
   presentation?: DialoguePresentation;
 };
 
+export type DialogueSection = "script" | "completion";
+
 const eventForTimeline = (
   level: Oml,
   event: OmlEvent,
@@ -201,6 +203,7 @@ export function validateDialogueDocument(value: unknown): DialogueDocument {
 // Renderer-independent order and waits. All time comes from the host's paused clock.
 export class DialogueTimeline {
   index = -1;
+  section: DialogueSection = "script";
   private elapsed = 0;
 
   constructor(
@@ -209,10 +212,26 @@ export class DialogueTimeline {
   ) {}
 
   get current() {
-    return this.document.events[this.index];
+    return this.activeEvents[this.index];
   }
 
   start(index = 0) {
+    this.section = "script";
+    this.moveTo(index);
+  }
+
+  startCompletion(index = 0) {
+    this.section = "completion";
+    this.moveTo(index);
+  }
+
+  private get activeEvents(): DialogueEvent[] {
+    return this.section === "completion"
+      ? (this.document.completion ?? [])
+      : this.document.events;
+  }
+
+  private moveTo(index: number) {
     this.index = index;
     this.elapsed = 0;
     this.enter(this.current);
@@ -226,16 +245,16 @@ export class DialogueTimeline {
       ((event.type === "line" || event.type === "question" || event.type === "choice") && lineFinished) ||
       (event.type === "wait" && this.elapsed >= event.durationMs)
     )
-      this.start(this.index + 1);
+      this.moveTo(this.index + 1);
     else if (
       event.type === "set-state" ||
       event.type === "emit" ||
       event.type === "transition"
     )
-      this.start(this.index + 1);
+      this.moveTo(this.index + 1);
   }
 
   proceed() {
-    if (this.current?.type === "continue") this.start(this.index + 1);
+    if (this.current?.type === "continue") this.moveTo(this.index + 1);
   }
 }
