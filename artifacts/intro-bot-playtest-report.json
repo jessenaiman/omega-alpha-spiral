@@ -22,16 +22,21 @@
     "floor-5:encounter-won",
     "floor-5:recommendation-Light",
     "floor-5:exit-crossed",
-    "floor-6:stable-entry"
+    "floor-6:stable-entry",
+    "floor-6:enter",
+    "floor-6:encounter-won",
+    "floor-6:recommendation-Light",
+    "floor-6:exit-crossed",
+    "floor-7:stable-town-entry"
   ],
-  "framesAdvanced": 9019,
+  "framesAdvanced": 13087,
   "scoreBefore": 0,
   "scoreAfter": 7,
   "complete": false,
-  "distanceTravelled": 594.82,
+  "distanceTravelled": 953.57,
   "stepOfFirstScore": 0,
   "softlockWindows": 0,
-  "physicsSteps": 861,
+  "physicsSteps": 873,
   "failureAvailable": false,
   "retryVerified": true,
   "chapterChoices": 3,
@@ -44,7 +49,7 @@
       },
       "chosen": "door",
       "outcome": null,
-      "distance": 26.934000000000093
+      "distance": 24.947400000000044
     },
     {
       "roomIndex": 1,
@@ -54,7 +59,7 @@
       },
       "chosen": "monster",
       "outcome": "fallen",
-      "distance": 46.161000000000314
+      "distance": 45.385200000000225
     },
     {
       "roomIndex": 2,
@@ -64,7 +69,7 @@
       },
       "chosen": "chest",
       "outcome": null,
-      "distance": 50.18880000000175
+      "distance": 58.61880000000188
     }
   ],
   "consoleErrors": [],
