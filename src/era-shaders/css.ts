@@ -2,7 +2,6 @@ import { assertEraShaderBuilt, resolveEraShader } from "./registry";
 import type {
   EraShaderMaterial,
   EraShaderMaterialRequest,
-  EraShaderSurface,
 } from "./types";
 
 export type EraShaderCssVariables = Record<`--omega-era-${string}`, string>;
@@ -45,10 +44,9 @@ export function eraShaderCssVariables(id: string): EraShaderCssVariables {
 /** Apply the shared material request to a DOM presentation surface. */
 export function applyEraShaderCss(
   element: HTMLElement,
-  id: string,
-  surface: EraShaderSurface = "dialogue"
+  request: EraShaderMaterialRequest
 ): void {
-  const material = createEraShaderMaterial({ id, surface });
+  const material = createEraShaderMaterial(request);
   for (const [name, value] of Object.entries(material.cssVariables))
     element.style.setProperty(name, value);
   element.dataset.eraShader = material.shader.id;

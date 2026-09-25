@@ -67,14 +67,16 @@ export class GhostLetters {
     if (this.eraShader.id === id) return;
     const next = resolveEraShader(id);
     if (next.id === this.eraShader.id) return;
-    this.eraShader = next;
-    this.atlas.dispose();
-    this.atlas = makeAtlas(next);
+    const nextAtlas = makeAtlas(next);
     applyEraTextMaterial(
       this.material,
       { id: next.id, surface: this.surface },
-      this.atlas
+      nextAtlas
     );
+    const previousAtlas = this.atlas;
+    this.eraShader = next;
+    this.atlas = nextAtlas;
+    previousAtlas.dispose();
   }
 
   setText(text: string) {
