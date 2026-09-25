@@ -246,10 +246,11 @@ export function validateDialogueDocument(value: unknown): DialogueDocument {
         typeof unknownEvent.cueId !== "string" ||
         typeof unknownEvent.text !== "string" ||
         typeof unknownEvent.hint !== "string" ||
-        typeof unknownEvent.await !== "string" ||
-        !unknownEvent.await
+        unknownEvent.await !== "doorway-entered"
       )
-        throw new Error(`Cue event ${unknownEvent.id} is incomplete.`);
+        throw new Error(
+          `Cue event ${unknownEvent.id} must await a registered gameplay event.`
+        );
     } else throw new Error(`Event ${unknownEvent.id} has an unknown type.`);
   }
   if (value.completion !== undefined && !Array.isArray(value.completion))

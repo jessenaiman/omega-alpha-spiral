@@ -1888,6 +1888,14 @@ export class BootScene {
       return;
     }
     this._playerName = "Traveler";
+    const playerNameInput = this._floorFourInput();
+    this._dialogueState.apply([
+      {
+        operation: "set",
+        path: playerNameInput.statePath,
+        value: this._playerName,
+      },
+    ]);
     this._root.dataset.osPlayerNameTs = this._playerName;
     if (name === "final-door") {
       const event = this._floorFourCue();

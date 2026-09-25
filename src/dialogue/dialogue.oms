@@ -210,7 +210,7 @@
             "id": { "type": "string", "minLength": 1 },
             "text": { "type": "string", "minLength": 1 },
             "hint": { "type": "string", "minLength": 1 },
-            "await": { "type": "string", "minLength": 1 }
+            "await": { "enum": ["doorway-entered"] }
           },
           "additionalProperties": false
         },

@@ -37,6 +37,7 @@ export function createDialogueEditor(host: DialogueEditorHost) {
     <ol id="script-outline" aria-label="Dialogue sequence"></ol>
     <pre id="script-event-details" aria-label="Current OML event"></pre>
     <input id="script-input-value" aria-label="Preview player input" hidden>
+    <p id="script-hint" aria-label="Authored gameplay hint"></p>
     <pre id="script-values" aria-label="Preview dialogue state"></pre>
     <div class="actions"><button id="script-play">Play level dialogue</button><button id="script-play-completion" disabled>Play completion</button><button id="script-continue" disabled>Continue</button></div>
     <p id="script-state" role="status"></p>
@@ -138,6 +139,8 @@ export function createDialogueEditor(host: DialogueEditorHost) {
       input.placeholder = event.hint;
       input.maxLength = event.maxLength;
     }
+    el("script-hint").textContent =
+      event?.type === "input" || event?.type === "cue" ? event.hint : "";
     proceed.disabled =
       event?.type !== "continue" &&
       event?.type !== "input" &&
