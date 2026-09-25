@@ -744,12 +744,12 @@ async function playMiddleFloor(
   routeSequence.push(`floor-${floor}:exit-crossed`);
 }
 
-async function playTownAndFinale(
+async function gatherTownDreamweavers(
   page: Page,
   metrics: { distance: number; softlocks: number },
   routeSequence: string[]
 ): Promise<void> {
-  let state = (await readChapter(page)).journey;
+  const state = (await readChapter(page)).journey;
   expect(state.kind).toBe("late");
   expect(state.floor).toBe(7);
   routeSequence.push("floor-7:town-entry");
@@ -772,6 +772,27 @@ async function playTownAndFinale(
       .toBeGreaterThan(dreamweavers.indexOf(dreamweaver));
     routeSequence.push(`town:gathered-${dreamweaver.id}`);
   }
+  await expect
+    .poll(async () => {
+      const journey = (await readChapter(page)).journey;
+      return (
+        journey.kind === "late" &&
+        journey.floor === 7 &&
+        journey.phase === "ready-to-choose" &&
+        journey.status?.gatheredDreamweavers?.length === 3
+      );
+    })
+    .toBe(true);
+  routeSequence.push("town:ready-to-choose-after-gathering");
+}
+
+async function playTownAndFinale(
+  page: Page,
+  metrics: { distance: number; softlocks: number },
+  routeSequence: string[]
+): Promise<void> {
+  await gatherTownDreamweavers(page, metrics, routeSequence);
+  let state = (await readChapter(page)).journey;
   const routes = state.routes ?? [];
   const townRoute = routes.find((route) => route.id === "alleys");
   const plaza = routes[0]?.waypoints?.[0] ? { x: 0, z: 5 } : null;
@@ -822,10 +843,10 @@ async function playTownAndFinale(
   routeSequence.push("floor-8:healing-core-complete");
 }
 
-test("bot playtest: real input reaches Floor 7 town from Begin", async ({
+test("bot playtest: real input gathers the town party from Begin", async ({
   page,
 }, testInfo: TestInfo) => {
-  test.setTimeout(300_000);
+  test.setTimeout(420_000);
   const pageErrors: string[] = [];
   const consoleErrors: string[] = [];
   const networkErrors: string[] = [];
@@ -1073,6 +1094,7 @@ test("bot playtest: real input reaches Floor 7 town from Begin", async ({
     )
     .toBe(true);
   routeSequence.push("floor-7:stable-town-entry");
+  await gatherTownDreamweavers(page, routeMetrics, routeSequence);
   const completedChapter = await readChapter(page);
   const after = await sample(page);
   await page.keyboard.press("KeyR");
@@ -1141,8 +1163,8 @@ test("bot playtest: real input reaches Floor 7 town from Begin", async ({
   ).toBeGreaterThanOrEqual(0);
   expect(
     routeSequence.at(-1),
-    "real input must cross Floor 6 and reach the stable Floor 7 town"
-  ).toBe("floor-7:stable-town-entry");
+    "real input must gather the town party and reach the route choice"
+  ).toBe("town:ready-to-choose-after-gathering");
   expect(report.retryVerified, "restart must restore playable state").toBe(
     true
   );
