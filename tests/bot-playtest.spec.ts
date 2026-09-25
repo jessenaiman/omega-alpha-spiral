@@ -570,6 +570,8 @@ async function resolveMiddleEncounter(
   let stuck = 0;
   let nextAttackAt = 0;
   let dodgedTell = "";
+  let detourWaypoints: ChapterPoint[] = [];
+  let detourAttempts = 0;
   const setAxes = async (
     x: "KeyA" | "KeyD" | null,
     z: "KeyW" | "KeyS" | null
@@ -610,8 +612,33 @@ async function resolveMiddleEncounter(
               right.position.z - state.player.z
             )
         );
+      const nextDetour = detourWaypoints[0];
+      if (
+        nextDetour &&
+        Math.hypot(
+          nextDetour.x - state.player.x,
+          nextDetour.z - state.player.z
+        ) < 0.25
+      ) {
+        detourWaypoints.shift();
+      }
+      const activeDetour = detourWaypoints[0];
       const threat = live.find((enemy) => enemy.telegraph);
-      if (threat?.telegraph) {
+      if (activeDetour) {
+        dodgedTell = "";
+        await setAxes(
+          Math.abs(activeDetour.x - state.player.x) > 0.2
+            ? activeDetour.x > state.player.x
+              ? "KeyD"
+              : "KeyA"
+            : null,
+          Math.abs(activeDetour.z - state.player.z) > 0.2
+            ? activeDetour.z > state.player.z
+              ? "KeyS"
+              : "KeyW"
+            : null
+        );
+      } else if (threat?.telegraph) {
         const dx = state.player.x - threat.telegraph.target.x;
         const dz = state.player.z - threat.telegraph.target.z;
         const awayX = Math.abs(dx) > 0.2 ? (dx > 0 ? "KeyD" : "KeyA") : null;
@@ -648,9 +675,39 @@ async function resolveMiddleEncounter(
       else stuck = 0;
       if (stuck >= 18) {
         metrics.softlocks += 1;
-        throw new Error(
-          `Floor ${floor} combat input stalled at ${JSON.stringify(state.player)}; status=${JSON.stringify(state.status)}`
-        );
+        if (live[0] && detourAttempts < 2) {
+          const blockedAxis = heldX && !heldZ ? "x" : "z";
+          const sideAxis = blockedAxis === "x" ? "z" : "x";
+          const meanSide =
+            live.reduce((sum, enemy) => sum + enemy.position[sideAxis], 0) /
+            live.length;
+          const sideDelta = meanSide - state.player[sideAxis];
+          const sideTarget =
+            Math.abs(sideDelta) > 0.5
+              ? meanSide
+              : state.player[sideAxis] + (sideDelta < 0 ? -1 : 1) * 2.5;
+          const forwardDelta =
+            live[0].position[blockedAxis] - state.player[blockedAxis];
+          const forwardTarget =
+            live[0].position[blockedAxis] +
+            Math.sign(forwardDelta || 1) * 1.5;
+          detourWaypoints =
+            sideAxis === "x"
+              ? [
+                  { x: sideTarget, z: state.player.z },
+                  { x: sideTarget, z: forwardTarget },
+                ]
+              : [
+                  { x: state.player.x, z: sideTarget },
+                  { x: forwardTarget, z: sideTarget },
+                ];
+          detourAttempts += 1;
+          stuck = 0;
+        } else {
+          throw new Error(
+            `Floor ${floor} combat input stalled at ${JSON.stringify(state.player)}; status=${JSON.stringify(state.status)}`
+          );
+        }
       }
       last = state.player;
       await page.waitForTimeout(45);
