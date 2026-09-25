@@ -73,7 +73,7 @@ const questionOf = (level: Oml, index: number): GhostQuestion => {
     GhostChoice,
   ];
   return {
-    era: index + 1,
+    era: index,
     eraShaderId: level.scene.era_shader ?? "",
     levelId: level.scene.id ?? "",
     prelude: level.events

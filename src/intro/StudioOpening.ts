@@ -1,5 +1,3 @@
-import ghostFloor01 from "../dialogue/ghost-floor-01.oml?raw";
-import ghostFloor04 from "../dialogue/ghost-floor-04.oml?raw";
 import {
   DialogueTimeline,
   dialogueDocumentFromOml,
@@ -7,55 +5,44 @@ import {
   type DialogueEvent,
 } from "../dialogue/timeline";
 import { WritingPlayback, resolveWritingText } from "../dialogue/writing";
-import { parseOml } from "../core/oml";
 import type { GhostQuestion } from "../dialogue/ghost";
+import { GHOST_LEVELS } from "../dialogue/ghost-vite";
 import { PROFILES, SPEAKERS, type SpeakerId } from "../dialogue/personas";
 import type { Layout } from "../era-shaders/text";
 
 const layouts: readonly Layout[] = ["manuscript", "fragments", "passage"];
 
-/** The game plays the same .oml the studio edits. One file, one parser. */
-export const ghostFloor01Script = parseOml(ghostFloor01);
-const openingLayout = layouts.includes(
-  ghostFloor01Script.scene.layout as Layout
-)
-  ? (ghostFloor01Script.scene.layout as Layout)
-  : "passage";
-export const studioOpeningDocument = dialogueDocumentFromOml(
-  ghostFloor01Script,
-  "src/dialogue/ghost-floor-01.oml",
-  {
-    levelId: ghostFloor01Script.scene.id ?? "ghost-floor-01",
-    eraShaderId:
-      ghostFloor01Script.scene.era_shader ?? "dec-vt100-ascii-terminal",
-    layout: openingLayout,
-    voices: {},
-  }
-);
-export const ghostFloor04Script = parseOml(ghostFloor04);
-export const ghostFloor04Document = dialogueDocumentFromOml(
-  ghostFloor04Script,
-  "src/dialogue/ghost-floor-04.oml",
-  {
-    levelId: ghostFloor04Script.scene.id ?? "ghost-floor-04",
-    eraShaderId:
-      ghostFloor04Script.scene.era_shader ?? "apple-macintosh-quickdraw",
-    layout: layouts.includes(ghostFloor04Script.scene.layout as Layout)
-      ? (ghostFloor04Script.scene.layout as Layout)
-      : "passage",
-    voices: {},
-  }
-);
-for (const event of [
-  ...studioOpeningDocument.events,
-  ...(studioOpeningDocument.completion ?? []),
-  ...ghostFloor04Document.events,
-  ...(ghostFloor04Document.completion ?? []),
-])
-  if (event.type === "line" && !SPEAKERS.includes(event.speaker as SpeakerId))
-    throw new Error(
-      `Opening references an unsupported writing profile: ${event.speaker}`
+// The four authored files are gameplay's source as well as the studio's source:
+// https://github.com/jessenaiman/omega-alpha-spiral/tree/main/src/dialogue
+export const studioOpeningDocuments: readonly DialogueDocument[] = GHOST_LEVELS.map(
+  (script, index) => {
+    const layout = layouts.includes(script.scene.layout as Layout)
+      ? (script.scene.layout as Layout)
+      : "passage";
+    const document = dialogueDocumentFromOml(
+      script,
+      `src/dialogue/ghost-floor-0${index + 1}.oml`,
+      {
+        levelId: script.scene.id ?? `ghost-floor-0${index + 1}`,
+        eraShaderId: script.scene.era_shader ?? "",
+        layout,
+        voices: {},
+      }
     );
+    for (const event of [
+      ...document.events,
+      ...(document.completion ?? []),
+    ])
+      if (event.type === "line" && !SPEAKERS.includes(event.speaker as SpeakerId))
+        throw new Error(
+          `Opening references an unsupported writing profile: ${event.speaker}`
+        );
+    return document;
+  }
+);
+export const studioOpeningDocument = studioOpeningDocuments[0];
+export const ghostFloor04Script = GHOST_LEVELS[3];
+export const ghostFloor04Document = studioOpeningDocuments[3];
 
 /** Same ordered runner and glyph reveal as the studio; gameplay owns the handoff. */
 export class StudioOpening {
@@ -94,16 +81,23 @@ export class StudioOpening {
     });
   }
   get choices(): string[] {
-    return ghostFloor01Script.choices.map((choice) =>
+    return this.script.choices.map((choice) =>
       resolveWritingText(choice.text)
     );
   }
   get questionPrompt(): string {
-    return resolveWritingText(ghostFloor01Script.question.text ?? "");
+    return resolveWritingText(this.script.question.text ?? "");
+  }
+  private get script() {
+    const script = GHOST_LEVELS.find(
+      (level) => level.scene.id === this.document.presentation?.levelId
+    );
+    if (!script) throw new Error(`Unknown opening floor: ${this.document.presentation?.levelId}`);
+    return script;
   }
   applyTo(question: GhostQuestion): GhostQuestion {
     const choice = (index: 0 | 1 | 2) => {
-      const authored = ghostFloor01Script.choices[index];
+      const authored = this.script.choices[index];
       return {
         ...question.choices[index],
         text: resolveWritingText(authored.text),

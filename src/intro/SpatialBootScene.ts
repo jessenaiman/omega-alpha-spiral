@@ -77,11 +77,11 @@ const GLYPHS: string =
 const ATLAS_COLUMNS: number = 16;
 const ATLAS_ROWS: number = 7;
 const GLYPH_CAPACITY: number = 256;
-// Owner order follows the Ghost .oml: Light, Shadow, Ambition.
-// Palette is lore, taken from the logo (official game docs index.md:12 —
-// "Hero (light blue), Ambition (red), Shadow (yellow)"): Light is blue-white,
-// Shadow is gold-amber, Ambition is crimson. The last two were swapped here.
-const INK: number[] = [0xdcefff, 0xe7b45a, 0xff6478];
+// Ghost OML owns choice order; the authored .omd personas own each color.
+// https://github.com/jessenaiman/omega-alpha-spiral/tree/main/src/dialogue
+const INK: number[] = (["light", "shadow", "ambition"] as const).map(
+  (id) => Number.parseInt(PROFILES[id].color.slice(1), 16)
+);
 const BACK_INK: number[] = [0x395057, 0x4a3510, 0x050103];
 const VOICE_NAMES: string[] = [
   "LIGHT // WITNESS",
@@ -94,6 +94,7 @@ const ASIDES: string[] = [
   "Let them try.",
 ];
 const CURSOR_PERIOD_MS: number = 1150;
+const QUESTION_SPACING: number = 6.52;
 const ASIDE_HOLD_MS: number = 4300;
 const VOICE_COOLDOWN_MS: number = 2500;
 const PATH_VERTEX_CAPACITY: number = 96;
@@ -129,21 +130,15 @@ const GLYPH_FRAGMENT: string = `
   uniform sampler2D uMap1;
   uniform sampler2D uMap2;
   uniform sampler2D uMap3;
-  uniform sampler2D uMap4;
-  uniform sampler2D uMap5;
   uniform vec3 uColor;
   uniform vec3 uInk0;
   uniform vec3 uInk1;
   uniform vec3 uInk2;
   uniform vec3 uInk3;
-  uniform vec3 uInk4;
-  uniform vec3 uInk5;
   uniform float uKeep0;
   uniform float uKeep1;
   uniform float uKeep2;
   uniform float uKeep3;
-  uniform float uKeep4;
-  uniform float uKeep5;
   uniform float uUseOverride;
   uniform float uEra;
   uniform float uTime;
@@ -177,23 +172,17 @@ const GLYPH_FRAGMENT: string = `
     vec4 s1 = texture2D(uMap1, damagedUv);
     vec4 s2 = texture2D(uMap2, damagedUv);
     vec4 s3 = texture2D(uMap3, damagedUv);
-    vec4 s4 = texture2D(uMap4, damagedUv);
-    vec4 s5 = texture2D(uMap5, damagedUv);
     float w0 = isReached(0.0) * mix(uKeep0, 1.0, isCurrent(0.0));
     float w1 = isReached(1.0) * mix(uKeep1, 1.0, isCurrent(1.0));
     float w2 = isReached(2.0) * mix(uKeep2, 1.0, isCurrent(2.0));
     float w3 = isReached(3.0) * mix(uKeep3, 1.0, isCurrent(3.0));
-    float w4 = isReached(4.0) * mix(uKeep4, 1.0, isCurrent(4.0));
-    float w5 = isReached(5.0) * mix(uKeep5, 1.0, isCurrent(5.0));
     float a0 = s0.a * w0;
     float a1 = s1.a * w1;
     float a2 = s2.a * w2;
     float a3 = s3.a * w3;
-    float a4 = s4.a * w4;
-    float a5 = s5.a * w5;
-    float energy = a0 + a1 + a2 + a3 + a4 + a5;
-    float alpha = 1.0 - (1.0 - a0) * (1.0 - a1) * (1.0 - a2) * (1.0 - a3) * (1.0 - a4) * (1.0 - a5);
-    vec3 layeredColor = (uInk0 * a0 + uInk1 * a1 + uInk2 * a2 + uInk3 * a3 + uInk4 * a4 + uInk5 * a5) / max(energy, 0.001);
+    float energy = a0 + a1 + a2 + a3;
+    float alpha = 1.0 - (1.0 - a0) * (1.0 - a1) * (1.0 - a2) * (1.0 - a3);
+    vec3 layeredColor = (uInk0 * a0 + uInk1 * a1 + uInk2 * a2 + uInk3 * a3) / max(energy, 0.001);
     vec3 ink = mix(layeredColor, uColor, uUseOverride);
     float paletteLevels = max(2.0, exp2(min(6.0, uBitDepth)));
     ink = floor(ink * paletteLevels + 0.5) / paletteLevels;
@@ -201,9 +190,9 @@ const GLYPH_FRAGMENT: string = `
     float scan = 1.0 - uScanline * step(0.5, row);
     float dropout = step(0.08 + uDamage * 0.2, hash21(vec2(floor(gl_FragCoord.x * 0.18), floor(uTime * 5.0) + gl_FragCoord.y)));
     float unstable = mix(1.0, dropout, uDamage * damageBand);
-    float atari = isCurrent(0.0);
+    float cellDither = isCurrent(2.0);
     float dither = step(0.34, fract(gl_FragCoord.x * 0.25) + fract(gl_FragCoord.y * 0.25));
-    alpha *= scan * unstable * mix(1.0, dither, atari * 0.22);
+    alpha *= scan * unstable * mix(1.0, dither, cellDither * 0.22);
     if (alpha < 0.035) discard;
     gl_FragColor = vec4(ink * mix(0.82, 1.0, scan), alpha);
     #include <colorspace_fragment>
@@ -265,21 +254,15 @@ export class GlyphRibbon {
       uMap1: { value: atlases[1] },
       uMap2: { value: atlases[2] },
       uMap3: { value: atlases[3] },
-      uMap4: { value: atlases[4] },
-      uMap5: { value: atlases[5] },
       uColor: { value: new Color(era.ink) },
       uInk0: { value: new Color(INTRO_ERAS[0].ink) },
       uInk1: { value: new Color(INTRO_ERAS[1].ink) },
       uInk2: { value: new Color(INTRO_ERAS[2].ink) },
       uInk3: { value: new Color(INTRO_ERAS[3].ink) },
-      uInk4: { value: new Color(INTRO_ERAS[4].ink) },
-      uInk5: { value: new Color(INTRO_ERAS[5].ink) },
       uKeep0: { value: INTRO_ERAS[0].retention },
       uKeep1: { value: INTRO_ERAS[1].retention },
       uKeep2: { value: INTRO_ERAS[2].retention },
       uKeep3: { value: INTRO_ERAS[3].retention },
-      uKeep4: { value: INTRO_ERAS[4].retention },
-      uKeep5: { value: INTRO_ERAS[5].retention },
       uUseOverride: { value: 0 },
       uEra: { value: 0 },
       uTime: { value: 0 },
@@ -497,13 +480,19 @@ export class SpatialBootScene {
   private _voiceAppearedAt: number[] = [-1, -1, -1];
   private _targets: Mesh<BoxGeometry, MeshBasicMaterial>[] = [];
   private _player: Group = new Group();
+  private _playerDisplay: Group = new Group();
   private _avatar: IntroAvatar = new IntroAvatar();
   private _omegaDisplay: IntroOmegaDisplay = new IntroOmegaDisplay();
   private _studioPresentation: DialoguePresentation | undefined;
   private _studioLetters = Object.fromEntries(
     SPEAKERS.map((id) => [
       id,
-      new GhostLetters(id, PROFILES[id].color, PROFILES[id].eraShaderId),
+      new GhostLetters(
+        id,
+        PROFILES[id].color,
+        PROFILES[id].eraShaderId,
+        id === "omega" ? "dialogue" : "choice"
+      ),
     ])
   ) as Record<SpeakerId, GhostLetters>;
   private _worldEvolution: IntroWorldEvolution = new IntroWorldEvolution();
@@ -835,7 +824,12 @@ export class SpatialBootScene {
       toneMapped: false,
     });
     this._playerOutline = new LineSegments(outlineGeometry, outlineMaterial);
-    this._player.add(this._avatar.root, this._playerOutline, this._playerCore);
+    this._playerDisplay.add(
+      this._avatar.root,
+      this._playerOutline,
+      this._playerCore
+    );
+    this._player.add(this._playerDisplay);
     const memoryPositions: readonly [number, number, number][] = [
       [-0.25, 0.25, 0.08],
       [0.25, 0.25, 0.08],
@@ -857,9 +851,10 @@ export class SpatialBootScene {
       memory.rotation.z = index % 2 === 0 ? Math.PI * 0.25 : -Math.PI * 0.25;
       memory.visible = false;
       this._playerMemories.push(memory);
-      this._player.add(memory);
+      this._playerDisplay.add(memory);
     }
     this._player.position.set(0, -2.55, 0.52);
+    this._playerDisplay.position.y = 0;
     this._root.add(this._player);
   }
 
@@ -944,9 +939,9 @@ export class SpatialBootScene {
   }
 
   public arriveAtNextQuestion(): void {
-    // Rebase the next constructed station around the same world-space point.
-    // The character keeps moving into space instead of teleporting back.
-    this._stationDepth -= 6.52;
+    // The station has moved throughout the walk. Arrival only finalizes the
+    // coordinates; it does not suddenly relocate the visible world.
+    this._stationDepth -= QUESTION_SPACING;
     this._root.position.z = this._stationDepth;
     this._player.position.set(0, -2.55, 0.52);
     this._journeyActive = false;
@@ -1108,7 +1103,11 @@ export class SpatialBootScene {
 
   public getPlayerPosition(): { x: number; y: number; z: number } {
     const position: Vector3 = this._player.position;
-    return { x: position.x, y: position.y, z: position.z + this._stationDepth };
+    return { x: position.x, y: position.y, z: position.z + this._root.position.z };
+  }
+
+  public getPlayerColor(): number {
+    return this._playerCore?.material.color.getHex() ?? 0xbfd5df;
   }
 
   public getChoiceTargets(): Array<{ x: number; y: number; z: number }> {
@@ -1118,7 +1117,7 @@ export class SpatialBootScene {
       ): { x: number; y: number; z: number } => ({
         x: target.position.x,
         y: target.position.y - 0.46,
-        z: target.position.z + this._stationDepth,
+        z: target.position.z + this._root.position.z,
       })
     );
   }
@@ -1170,7 +1169,7 @@ export class SpatialBootScene {
       0,
       Math.max(0, Math.min(4, choicesMade))
     );
-    this._stationDepth = -6.52 * Math.min(3, this._choiceHistory.length);
+    this._stationDepth = -QUESTION_SPACING * Math.min(3, this._choiceHistory.length);
     this._root.position.z = this._stationDepth;
     this.setPlayerStage(this._choiceHistory.length);
     this._retunePlayer();
@@ -1232,6 +1231,7 @@ export class SpatialBootScene {
     this._doorCrossed = false;
     this._physicsX = 0;
     this._player.position.set(0, -2.55, 0.52);
+    this._playerDisplay.position.y = 0;
     this.setPlayerStage(0);
     this._retunePlayer();
     this._particles.reset();
@@ -1489,9 +1489,8 @@ export class SpatialBootScene {
       const visible: boolean =
         activeCall || isWaiting || activeTravel || isThreshold;
       path.visible = visible;
-      echo.visible = visible;
-      this._sigils[owner].root.visible =
-        (isWaiting || activeTravel) && !isThreshold;
+      echo.visible = visible && !isWaiting;
+      this._sigils[owner].root.visible = activeTravel && !isThreshold;
       this._pathLights[owner].visible = visible;
       if (!visible) {
         this._pathLights[owner].intensity = 0;
@@ -1512,7 +1511,11 @@ export class SpatialBootScene {
       else {
         if (!isThreshold) {
           const target: Vector3 = this._targets[owner].position;
-          this._pathGoal.set(target.x, target.y - 0.48, -2.1);
+          this._pathGoal.set(
+            target.x,
+            isWaiting ? -2.58 : target.y - 0.48,
+            isWaiting ? 0.08 : -2.1
+          );
         }
       }
       if (!isThreshold)
@@ -1655,7 +1658,15 @@ export class SpatialBootScene {
       const showLayers =
         this._choiceHistory.length > 0 || frame.phase === "waiting";
       this._blenderLayers.background.visible = showLayers;
-      this._blenderLayers.strands.visible = showLayers;
+      const voidFloor = this._blenderLayers.background.getObjectByName(
+        "VoidFloor_MESH"
+      );
+      if (voidFloor) voidFloor.visible = frame.phase !== "waiting";
+      this._blenderLayers.strands.visible =
+        frame.phase === "final" ||
+        frame.phase === "name" ||
+        frame.phase === "doorway" ||
+        frame.phase === "complete";
       if (this._blenderStars)
         this._blenderStars.visible = this._choiceHistory.length > 0;
     }
@@ -1677,10 +1688,30 @@ export class SpatialBootScene {
         frame.phase === "complete"
     );
     const isWaiting: boolean = frame.phase === "waiting";
+    const isPrelude: boolean = frame.phase === "prelude";
+    const sceneEraShaderId: string = getIntroEra(frame.format).eraShaderId;
     const isChoiceTurns = frame.phase === "choices";
     const isBoot: boolean =
       frame.phase === "cursor" || frame.phase === "command";
     const isTravel: boolean = frame.phase === "travel";
+    const travelProgress: number = isTravel
+      ? Math.min(
+          1,
+          Math.max(
+            0,
+            (this._stationDepth - this._root.position.z) / QUESTION_SPACING
+          )
+        )
+      : 0;
+    const arrivalRaw: number = Math.min(
+      1,
+      Math.max(0, (travelProgress - 0.55) / 0.45)
+    );
+    const arrivalReveal: number = isPrelude
+      ? 1
+      : isTravel
+        ? arrivalRaw * arrivalRaw * (3 - 2 * arrivalRaw)
+        : 0;
     const isStory: boolean =
       frame.phase !== "cursor" &&
       frame.phase !== "command" &&
@@ -1712,8 +1743,23 @@ export class SpatialBootScene {
       isName || frame.phase === "doorway" || isCrossing,
       isReduced
     );
+    // Compress reached display eras into the lower field below every choice.
+    this._worldEvolution.root.scale.set(
+      isWaiting ? 0.78 : 1,
+      isWaiting ? 0.28 : 1,
+      isWaiting ? 0.78 : 1
+    );
+    this._worldEvolution.root.position.y = isWaiting ? -2.7 : 0;
+    this._worldEvolution.root.position.z = isWaiting ? 2.1 : 0;
+    if (isWaiting) {
+      this._worldEvolution.root.children.slice(0, 4).forEach((era): void => {
+        const structure = era.children[0];
+        if (structure instanceof LineSegments)
+          structure.material.opacity = Math.min(0.62, structure.material.opacity * 2.4);
+      });
+    }
     this._walkPlane.visible =
-      isWaiting || isTravel || isName || frame.phase === "doorway";
+      isTravel || isName || frame.phase === "doorway";
     if (this._door) {
       this._door.visible = isThreshold && !isName;
       const rawAssembly = isName
@@ -1874,7 +1920,7 @@ export class SpatialBootScene {
       if (voiceVisible && this._voiceAppearedAt[index] < 0)
         this._voiceAppearedAt[index] = elapsedMs;
       voice.visible = voiceVisible;
-      trail.visible = trailVisible;
+      trail.visible = trailVisible && !isWaiting;
       const entrance: number = isReduced
         ? 1
         : Math.min(
@@ -1898,6 +1944,7 @@ export class SpatialBootScene {
         seconds,
         isReduced || isWaiting || (isSpeaking && index === 0)
       );
+      resting.y -= arrivalReveal * 1.15;
       const finalProgress: number =
         frame.phase === "final"
           ? Math.min(Math.max((frame.phaseElapsedMs ?? 0) / 9200, 0), 1)
@@ -2016,7 +2063,9 @@ export class SpatialBootScene {
           ? -this._width * 0.14
           : isName
             ? -this._width * 0.22
-            : left + this._width * 0.14 * this._questionRecede,
+            : isWaiting || isPrelude
+              ? -this._width * 0.28
+              : left + this._width * 0.14 * this._questionRecede,
       frame.phase === "doorway" || frame.phase === "complete"
         ? 0.1
         : isName
@@ -2025,18 +2074,22 @@ export class SpatialBootScene {
             ? 2.55
             : responseAnchor
               ? responseAnchor.y - 0.96
-              : isWaiting
-                ? 1.18 + this._questionRecede * 0.12
-                : isChoiceTurns
-                  ? -0.05 + this._questionRecede * 0.22
-                  : -0.8 + Math.min(Math.max((seconds - 13) / 16, 0), 1) * 1.45,
+              : isPrelude
+                ? -0.2
+                : isWaiting
+                  ? -0.15
+                  : isChoiceTurns
+                    ? -0.05 + this._questionRecede * 0.22
+                    : -0.8 + Math.min(Math.max((seconds - 13) / 16, 0), 1) * 1.45,
       responseAnchor
         ? responseAnchor.z + 0.14
         : frame.phase === "doorway" || frame.phase === "complete"
           ? 2.2
           : isName
             ? 1.85
-            : 0.25 - this._questionRecede * 1.2
+            : isWaiting || isPrelude
+              ? 0.35
+              : 0.25 - this._questionRecede * 1.2
     );
     question.scale.setScalar(
       frame.phase === "doorway" || frame.phase === "complete"
@@ -2050,10 +2103,11 @@ export class SpatialBootScene {
               : scale *
                 (this._isNarrow ? 0.92 : 1.48 - this._questionRecede * 0.48)
     );
-    if (responseOwner === 0) question.rotation.set(0, 0, 0);
+    if (isWaiting || isChoiceTurns || responseOwner === 0)
+      question.rotation.set(0, 0, 0);
     if (responseOwner === 1) question.rotation.set(-0.08, -0.14, 0.025);
     if (responseOwner === 2) question.rotation.set(-0.16, 0.18, -0.035);
-    if (!isReduced && !isSettled && responseOwner !== 0) {
+    if (!isReduced && !isSettled && !isPrelude && responseOwner !== 0) {
       question.position.x += Math.sin(seconds * 0.16) * 0.3;
       question.position.z +=
         Math.sin(seconds * 0.25) * BOOT_EFFECTS.depthDrift * 2.5;
@@ -2066,13 +2120,27 @@ export class SpatialBootScene {
         );
     }
     this._omegaDisplay.update(
-      frame,
+      isPrelude && !frame.question ? { ...frame, question: " " } : frame,
       question.position,
       this._width,
       this._questionRecede,
       seconds,
       isReduced
     );
+    // The waiting question needs the dark face, without edges through the paths.
+    this._omegaDisplay.root.children.slice(2).forEach((edge): void => {
+      edge.visible = !isWaiting;
+    });
+    if (isWaiting || isPrelude) {
+      this._omegaDisplay.root.position.x = 0;
+      this._omegaDisplay.root.position.y = question.position.y - 0.08;
+      this._omegaDisplay.root.scale.set(
+        this._width * 0.68,
+        isWaiting ? 0.78 : 1.12,
+        1
+      );
+      this._omegaDisplay.root.rotation.set(0, 0, 0);
+    }
     for (const letters of Object.values(this._studioLetters))
       letters.root.visible = false;
     if (this._studioPresentation && !isThreshold && frame.question) {
@@ -2087,10 +2155,9 @@ export class SpatialBootScene {
         (1 - this._questionRecede * 0.18);
       letters.root.visible = true;
       letters.root.position.copy(question.position);
-      const speakerEraShader = PROFILES[speaker].eraShaderId;
-      letters.setEra(speakerEraShader);
+      letters.setEra(sceneEraShaderId);
       letters.root.position.x +=
-        12 * resolveEraShader(speakerEraShader).tracking * glyphScale;
+        12 * resolveEraShader(sceneEraShaderId).tracking * glyphScale;
       letters.root.position.y -= 0.5 * glyphScale;
       letters.root.scale.setScalar(glyphScale);
       letters.root.rotation.set(0, 0, 0);
@@ -2101,30 +2168,30 @@ export class SpatialBootScene {
       question.visible = false;
     }
     if (frame.choiceLines && (isChoiceTurns || isWaiting)) {
-      const columnWidth = this._width * 0.27;
+      const columnWidth = this._width * 0.2;
       for (let owner = 0; owner < 3; owner++) {
         const speaker = SPEAKERS[owner + 1];
         const letters = this._studioLetters[speaker];
-        const eraShaderId = PROFILES[speaker].eraShaderId;
+        const eraShaderId = sceneEraShaderId;
         const glyphScale =
           columnWidth / (18 * resolveEraShader(eraShaderId).tracking);
         const text = frame.choiceLines[owner] ?? "";
         letters.root.visible = text.length > 0;
         letters.setEra(eraShaderId);
-        letters.setText(wrapAtWords(text, 16));
+        letters.setText(wrapAtWords(text, 12));
         letters.opacity = frame.choiceSpeaker === owner || isWaiting ? 1 : 0.68;
         letters.root.position.set(
-          (owner - 1) * this._width * 0.36 -
+          (owner - 1) * this._width * 0.23 -
             columnWidth * 0.5 +
             12 * resolveEraShader(eraShaderId).tracking * glyphScale,
-          -0.9,
-          0.45
+          isWaiting ? -1.62 : -0.9,
+          isWaiting ? 0.55 : 0.45
         );
         letters.root.scale.setScalar(glyphScale);
         letters.root.rotation.set(0, 0, 0);
         letters.update(
           seconds,
-          this._studioPresentation?.layout ?? "passage",
+          isWaiting ? "manuscript" : (this._studioPresentation?.layout ?? "passage"),
           isReduced
         );
       }
@@ -2354,7 +2421,10 @@ export class SpatialBootScene {
           seconds,
           this._pathCurrent
         );
+        const stationShift = QUESTION_SPACING * progress;
+        this._root.position.z = this._stationDepth - stationShift;
         this._player.position.copy(this._pathCurrent);
+        this._player.position.z += stationShift;
         if (
           !this._journeyComplete &&
           physicsStep.sensor === INTRO_JOURNEY_SENSOR_INDEX
@@ -2399,7 +2469,22 @@ export class SpatialBootScene {
         (isReduced ? 1 : 1 + Math.sin(seconds * 4.2) * 0.045) *
         waitingPulse *
         (isCrossing ? 1 - crossingProgress * 0.72 : 1);
-      this._player.scale.setScalar(pulse);
+      const displayY: number = isPrelude
+        ? 1.05
+        : isTravel
+          ? arrivalReveal * 1.05
+          : isWaiting
+            ? -0.36 - Math.min(this._playerStage, 3) * 0.28
+            : frame.phase === "question"
+              ? -0.36
+            : 0;
+      this._playerDisplay.position.y +=
+        (displayY - this._playerDisplay.position.y) *
+        (isReduced ? 1 : 1 - Math.exp(-delta * 9));
+      this._player.scale.setScalar(
+        pulse *
+          (1 - this._questionRecede * (this._playerStage > 0 ? 0.42 : 0))
+      );
     }
     const stagedChoice: Group | null =
       isWaiting && this._awaitingAction >= 0

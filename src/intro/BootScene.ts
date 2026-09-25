@@ -34,7 +34,7 @@ import {
   ghostFloor04Document,
   ghostFloor04Script,
   StudioOpening,
-  studioOpeningDocument,
+  studioOpeningDocuments,
 } from "./StudioOpening";
 import { WritingPlayback } from "../dialogue/writing";
 import { PROFILES, SPEAKERS } from "../dialogue/personas";
@@ -148,7 +148,7 @@ export class BootScene {
   private _dust: ThreeVfxEffectInstance | null = null;
   private _abort: AbortController = new AbortController();
   private _questions: readonly GhostQuestion[] = createGhostQuestions(SEED);
-  private _studioOpening = new StudioOpening();
+  private _studioOpening = new StudioOpening(studioOpeningDocuments[0]);
   private _studioCompletion = new StudioOpening(ghostFloor04Document);
   private _activeInput: DialogueInputEvent | null = null;
   private _activeCue: DialogueCueEvent | null = null;
@@ -209,11 +209,14 @@ export class BootScene {
   private _dialogueState = new DialogueState();
   private _dialogueEvent = "";
   private _nextLevel = "";
+  private get _finalEra(): number {
+    return this._questions.at(-1)?.era ?? 0;
+  }
 
   public init(): void {
-    this._spatial.setStudioPresentation(studioOpeningDocument.presentation);
+    this._spatial.setStudioPresentation(studioOpeningDocuments[0].presentation);
     this._questions = this._questions.map((question, index) =>
-      index === 0 ? this._studioOpening.applyTo(question) : question
+      new StudioOpening(studioOpeningDocuments[index]).applyTo(question)
     );
     this._root = getElement("main", HTMLElement);
     this._prelude = getElement("#os-prelude-ts", HTMLElement);
@@ -525,12 +528,12 @@ export class BootScene {
     this._dialogueEvent = "";
     this._nextLevel = "";
     this._typingKey = "";
-    this._studioOpening = new StudioOpening();
+    this._studioOpening = new StudioOpening(studioOpeningDocuments[0]);
     this._studioCompletion = new StudioOpening(ghostFloor04Document);
     this._activeInput = null;
     this._activeCue = null;
     this._questions = this._questions.map((question, index) =>
-      index === 0 ? this._studioOpening.applyTo(question) : question
+      new StudioOpening(studioOpeningDocuments[index]).applyTo(question)
     );
     this._chapterTwo.stop();
     this._elapsedMs = 0;
@@ -563,6 +566,7 @@ export class BootScene {
     this._chapterTwoStarted = false;
     this._clearMovement();
     this._spatial.reset();
+    getElement("#os-progress-ts", HTMLElement).style.color = "";
     this._activeChoice = 0;
     getElement("#os-aside-ts", HTMLElement).textContent = "";
     getElement("#os-name-input-ts", HTMLInputElement).value = "";
@@ -892,6 +896,9 @@ export class BootScene {
     this._lastThreadName = ["Light", "Shadow", "Ambition"][index] ?? "Light";
     this._spatial.commitChoice(index);
     this._spatial.setPlayerStage(this._answersCommitted);
+    const playerColor = `#${this._spatial.getPlayerColor().toString(16).padStart(6, "0")}`;
+    getElement("#os-progress-ts", HTMLElement).style.color = playerColor;
+    if (this._root) this._root.dataset.osPlayerColorTs = playerColor;
     this._spatial.archive(question.choices[index].text, question.era, index);
     this._audio.choose(index);
     this._audio.dreamweaver(index);
@@ -913,6 +920,7 @@ export class BootScene {
 
   private _beginPrelude(index: number): void {
     this._questionIndex = index;
+    this._spatial.setStudioPresentation(studioOpeningDocuments[index].presentation);
     if (this._root)
       applyEraShaderCss(this._root, {
         id: this._questions[index].eraShaderId,
@@ -1098,7 +1106,7 @@ export class BootScene {
       const completeAt: number = this._typingCompleteAt;
       const complete: boolean = this._isReduced || this._typingComplete;
       if (
-        !studioOpeningDocument.presentation &&
+        !studioOpeningDocuments[this._questionIndex].presentation &&
         !complete &&
         text.length > 4 &&
         Math.floor(elapsedMs / 230) % 17 === 0
@@ -1145,7 +1153,7 @@ export class BootScene {
       );
       const complete: boolean = beat.complete;
       this._canContinue = complete;
-      const responseEnd: number = studioOpeningDocument.presentation
+      const responseEnd: number = studioOpeningDocuments[this._questionIndex].presentation
         ? this._typingCompleteAt
         : this._isReduced
           ? 0
@@ -1238,7 +1246,7 @@ export class BootScene {
       const frame = this._storyFrame(
         completion.text,
         phase,
-        4,
+        this._finalEra,
         hint,
         elapsedMs
       );
@@ -1252,7 +1260,13 @@ export class BootScene {
         this._isReduced
       );
       this._applyFrame(
-        this._storyFrame(completion.text, "complete", 5, undefined, elapsedMs)
+        this._storyFrame(
+          completion.text,
+          "complete",
+          this._finalEra,
+          undefined,
+          elapsedMs
+        )
       );
       if (
         completion.event?.type === "transition" &&
@@ -1268,7 +1282,7 @@ export class BootScene {
           return;
         }
         this._chapterTwoStarted = true;
-        this._chapterTwo.start(this._lastThreadName);
+        this._chapterTwo.start(this._lastThreadName, this._spatial.getPlayerColor());
       }
     }
   }
@@ -1320,7 +1334,8 @@ export class BootScene {
       this._typingCompleteAt = 0;
       return text;
     }
-    if (studioOpeningDocument.presentation) {
+    const presentation = studioOpeningDocuments[this._questionIndex].presentation;
+    if (presentation) {
       const speaker =
         this._storyMode === "response" && this._selectedChoice >= 0
           ? SPEAKERS[this._selectedChoice + 1]
@@ -1334,7 +1349,7 @@ export class BootScene {
         this._typing.restart(
           {
             ...PROFILES[speaker],
-            ...studioOpeningDocument.presentation.voices[speaker],
+            ...presentation.voices[speaker],
           },
           text
         );
@@ -1362,7 +1377,7 @@ export class BootScene {
     owner: number
   ): { text: string; complete: boolean } {
     if (this._isReduced) return { text: response, complete: true };
-    if (studioOpeningDocument.presentation) {
+    if (studioOpeningDocuments[this._questionIndex].presentation) {
       const text = this._typed(response, elapsedMs, 0);
       return { text, complete: this._typingComplete };
     }
@@ -1384,7 +1399,7 @@ export class BootScene {
     owner: number,
     complete: boolean
   ): string {
-    if (studioOpeningDocument.presentation) return text;
+    if (studioOpeningDocuments[this._questionIndex].presentation) return text;
     if (complete || this._isReduced || text.length < 4) return text;
     if (owner === 0 && Math.floor(elapsedMs / 410) % 11 === 0)
       return `${text}\n${text.slice(Math.max(0, text.lastIndexOf("\n") + 1), -1)}`;
@@ -1880,7 +1895,7 @@ export class BootScene {
       this._activeInput = event;
       this._storyMode = "name";
       this._applyFrame(
-        this._storyFrame(event.prompt, "name", 5, event.hint, 0)
+        this._storyFrame(event.prompt, "name", this._finalEra, event.hint, 0)
       );
       this._spatial.settleForTestState(this._motionMs);
       this._updateCamera(100);
@@ -1904,7 +1919,7 @@ export class BootScene {
       this._storyMode = "doorway";
       this._spatial.beginDoorway(this._playerName);
       this._applyFrame(
-        this._storyFrame(event.text, "doorway", 5, event.hint, 12000)
+        this._storyFrame(event.text, "doorway", this._finalEra, event.hint, 12000)
       );
       this._spatial.settleForTestState(this._motionMs);
       this._updateCamera(100);
@@ -1914,7 +1929,7 @@ export class BootScene {
     const event = this._floorFourCue();
     this._storyMode = "complete";
     this._applyFrame(
-      this._storyFrame(event.text, "complete", 5, undefined, 12000)
+      this._storyFrame(event.text, "complete", this._finalEra, undefined, 12000)
     );
     this._spatial.settleForTestState(this._motionMs);
     this._updateCamera(100);
