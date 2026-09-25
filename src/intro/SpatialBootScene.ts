@@ -1513,7 +1513,7 @@ export class SpatialBootScene {
           const target: Vector3 = this._targets[owner].position;
           this._pathGoal.set(
             target.x,
-            isWaiting ? -2.02 : target.y - 0.48,
+            isWaiting ? -2.58 : target.y - 0.48,
             isWaiting ? 0.08 : -2.1
           );
         }
@@ -1743,9 +1743,13 @@ export class SpatialBootScene {
       isName || frame.phase === "doorway" || isCrossing,
       isReduced
     );
-    // Keep reached display eras together in the lower field, away from the copy.
-    this._worldEvolution.root.scale.setScalar(isWaiting ? 0.78 : 1);
-    this._worldEvolution.root.position.y = isWaiting ? -0.7 : 0;
+    // Compress reached display eras into the lower field below every choice.
+    this._worldEvolution.root.scale.set(
+      isWaiting ? 0.78 : 1,
+      isWaiting ? 0.28 : 1,
+      isWaiting ? 0.78 : 1
+    );
+    this._worldEvolution.root.position.y = isWaiting ? -2.7 : 0;
     this._worldEvolution.root.position.z = isWaiting ? 2.1 : 0;
     if (isWaiting) {
       this._worldEvolution.root.children.slice(0, 4).forEach((era): void => {
