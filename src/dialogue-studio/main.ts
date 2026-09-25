@@ -910,7 +910,7 @@ restart();
 tab = params.get("tab") === "script" ? "script" : "stage";
 applyTab();
 if (params.get("mode") !== "samples") {
-  era = params.get("scene") === "opening" ? era : "dos";
+  era = params.get("scene") === "opening" ? era : "ibm-pc-vga";
   sceneId = "opening";
   applySceneTypography();
   dialogue.start();

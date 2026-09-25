@@ -1,5 +1,6 @@
 // Skeleton → atlas. One authored skeleton, rasterised at each era shader's fidelity.
 import { CanvasTexture, LinearFilter, NearestFilter } from "three";
+import { assertEraShaderBuilt } from "../../era-shaders/registry";
 import { SKELETON, type Glyph } from "./skeleton";
 import type { EraShaderDefinition } from "../../era-shaders";
 
@@ -53,6 +54,7 @@ function harden(ctx: CanvasRenderingContext2D, w: number, h: number) {
 }
 
 export function makeAtlas(eraShader: EraShaderDefinition): CanvasTexture {
+  assertEraShaderBuilt(eraShader);
   const [cw, ch] = eraShader.cell;
   const smooth = eraShader.round > 0.5;
   const canvas = document.createElement("canvas");
