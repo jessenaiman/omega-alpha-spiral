@@ -26,6 +26,7 @@ import {
 } from "./floors/MiddleFloorRuntime";
 import { LateFloorRuntime } from "./floors/LateFloorRuntime";
 import { FLOOR_7_TOWN } from "./floors/late-floor-7-town";
+import { FLOOR_8_FINALE } from "./floors/late-floor-8-finale";
 import { ECHO_ROOMS } from "./rooms";
 import { createRng } from "../core/random";
 import "./styles.css";
@@ -263,31 +264,67 @@ export class ChapterTwoScene {
     if (debug)
       Object.assign(window, {
         __CHAPTER_TWO_DIAGNOSTICS__: {
-          getState: (): object => ({
-            active: this.active,
-            phase: this._world.phase,
-            roomIndex: this._world.roomIndex,
-            scriptRevision: this._world.scriptRevision,
-            player: { ...this._world.player },
-            framesAdvanced: this._world.framesAdvanced,
-            distanceTravelled: this._world.distanceTravelled,
-            thread: this._world.thread,
-            guide: this._world.guide,
-            choices: this._world.choices.map((choice) => ({ ...choice })),
-            variationSeed: this._variationSeed,
-            objects: this._world.activeRoom.objects.map(({ kind, x, z }) => ({
-              kind,
-              x,
-              z,
-            })),
-            nearest: this._world.nearest?.kind ?? null,
-            routes:
-              this._world.activeRoom.layout?.routes ??
-              this._world.activeRoom.routes ??
-              null,
-            blocks: this._world.activeRoom.blocks ?? [],
-            paused: this._paused,
-          }),
+          getState: (): object => {
+            const middle = this._middle;
+            const middleStatus = middle?.status;
+            const late = this._late;
+            const lateStatus = late?.status;
+            return {
+              active: this.active,
+              phase: this._world.phase,
+              roomIndex: this._world.roomIndex,
+              scriptRevision: this._world.scriptRevision,
+              player: { ...this._world.player },
+              framesAdvanced: this._world.framesAdvanced,
+              distanceTravelled: this._world.distanceTravelled,
+              thread: this._world.thread,
+              guide: this._world.guide,
+              choices: this._world.choices.map((choice) => ({ ...choice })),
+              variationSeed: this._variationSeed,
+              objects: this._world.activeRoom.objects.map(({ kind, x, z }) => ({
+                kind,
+                x,
+                z,
+              })),
+              nearest: this._world.nearest?.kind ?? null,
+              routes:
+                this._world.activeRoom.layout?.routes ??
+                this._world.activeRoom.routes ??
+                null,
+              blocks: this._world.activeRoom.blocks ?? [],
+              paused: this._paused,
+              journey: middle && middleStatus
+                ? {
+                    kind: "middle",
+                    floor: middleStatus.floor,
+                    phase: middleStatus.encounterPhase,
+                    player: middleStatus.playerPosition,
+                    status: middleStatus,
+                    routes: middle.layout?.routes ?? [],
+                    landmarks: middle.layout?.landmarks ?? [],
+                  }
+                : late && lateStatus
+                  ? {
+                      kind: "late",
+                      floor: lateStatus.floor,
+                      phase: lateStatus.phase,
+                      player: late.playerPosition,
+                      status: lateStatus,
+                      landmarks:
+                        lateStatus.floor === 7
+                          ? FLOOR_7_TOWN.landmarks
+                          : FLOOR_8_FINALE.landmarks,
+                      routes:
+                        lateStatus.floor === 7 ? FLOOR_7_TOWN.routes : [],
+                    }
+                  : {
+                      kind: "early",
+                      floor: this._world.roomIndex + 1,
+                      phase: this._world.phase,
+                      player: { ...this._world.player },
+                    },
+            };
+          },
         },
       });
   }
