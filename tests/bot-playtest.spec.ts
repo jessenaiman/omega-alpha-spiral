@@ -822,7 +822,7 @@ async function playTownAndFinale(
   routeSequence.push("floor-8:healing-core-complete");
 }
 
-test("bot playtest: real input reaches Floor 4 from Begin", async ({
+test("bot playtest: real input reaches stable Floor 5 from Begin", async ({
   page,
 }, testInfo: TestInfo) => {
   test.setTimeout(180_000);
@@ -1111,8 +1111,8 @@ test("bot playtest: real input reaches Floor 4 from Begin", async ({
   ).toBeGreaterThanOrEqual(0);
   expect(
     routeSequence.at(-1),
-    "real input must trigger the existing Floor 3 to Floor 4 handoff"
-  ).toBe("floor-4:entered-after-floor-3-handoff");
+    "real input must cross Floor 4 and reach stable Floor 5"
+  ).toBe("floor-5:stable-entry");
   expect(report.retryVerified, "restart must restore playable state").toBe(
     true
   );

@@ -12,16 +12,21 @@
     "floor-1:exit-crossed-by-input",
     "floor-2:exit-crossed-by-input",
     "floor-3:exit-crossed-by-input",
-    "floor-4:entered-after-floor-3-handoff"
+    "floor-4:entered-after-floor-3-handoff",
+    "floor-4:enter",
+    "floor-4:encounter-won",
+    "floor-4:recommendation-Light",
+    "floor-4:exit-crossed",
+    "floor-5:stable-entry"
   ],
-  "framesAdvanced": 3307,
+  "framesAdvanced": 5040,
   "scoreBefore": 0,
   "scoreAfter": 7,
   "complete": false,
-  "distanceTravelled": 151.01,
+  "distanceTravelled": 269.82,
   "stepOfFirstScore": 0,
   "softlockWindows": 0,
-  "physicsSteps": 822,
+  "physicsSteps": 895,
   "failureAvailable": false,
   "retryVerified": true,
   "chapterChoices": 3,
@@ -34,7 +39,7 @@
       },
       "chosen": "door",
       "outcome": null,
-      "distance": 22.267800000000047
+      "distance": 18.948600000000056
     },
     {
       "roomIndex": 1,
@@ -44,7 +49,7 @@
       },
       "chosen": "monster",
       "outcome": "fallen",
-      "distance": 46.00800000000008
+      "distance": 55.08300000000041
     },
     {
       "roomIndex": 2,
@@ -54,7 +59,7 @@
       },
       "chosen": "chest",
       "outcome": null,
-      "distance": 51.96120000000185
+      "distance": 49.42860000000175
     }
   ],
   "consoleErrors": [],
