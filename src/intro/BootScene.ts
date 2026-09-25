@@ -217,12 +217,19 @@ export class BootScene {
       HTMLElement
     );
     this._choices = getElement("#os-choices-ts", HTMLFieldSetElement);
-    applyEraShaderCss(this._root, this._questions[0].eraShaderId);
+    applyEraShaderCss(this._root, {
+      id: this._questions[0].eraShaderId,
+      surface: "dialogue",
+    });
     document
       .querySelectorAll<HTMLElement>(".os-choice")
       .forEach((element, index) => {
         const speaker = SPEAKERS[index + 1];
-        if (speaker) applyEraShaderCss(element, PROFILES[speaker].eraShaderId);
+        if (speaker)
+          applyEraShaderCss(element, {
+            id: PROFILES[speaker].eraShaderId,
+            surface: "choice",
+          });
       });
     this._isDebug = new URLSearchParams(location.search).has("debug");
     this._chapterTwo.init(this._root, this._isDebug);
@@ -896,7 +903,10 @@ export class BootScene {
   private _beginPrelude(index: number): void {
     this._questionIndex = index;
     if (this._root)
-      applyEraShaderCss(this._root, this._questions[index].eraShaderId);
+      applyEraShaderCss(this._root, {
+        id: this._questions[index].eraShaderId,
+        surface: "dialogue",
+      });
     this._storyMode = "prelude";
     this._storyStartedAt = performance.now();
     this._canContinue = false;

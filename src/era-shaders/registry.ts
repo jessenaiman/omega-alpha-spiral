@@ -19,13 +19,6 @@ const ERA_SHADER_BY_ID = new Map(
   ERA_SHADERS.map((shader) => [shader.id, shader])
 );
 
-const LEGACY_ERA_ALIAS: Readonly<Record<string, string>> = {
-  phosphor: "dec-vt100-ascii-terminal",
-  dos: "ibm-pc-vga",
-  gui: "os2-presentation-manager",
-  smooth: "freetype-lcd-modern",
-};
-
 export const BUILT_ERA_SHADER_METHODS: readonly EraShaderRenderMethod[] = [
   "character-cell",
   "bitmap-gui",
@@ -33,9 +26,15 @@ export const BUILT_ERA_SHADER_METHODS: readonly EraShaderRenderMethod[] = [
   "subpixel",
 ];
 
+const REJECTED_ERA_SHADER_METHODS: Readonly<
+  Partial<Record<EraShaderRenderMethod, string>>
+> = {
+  "vector-stroke": "vector-stroke requires an authored stroke renderer",
+  impact: "impact requires a print-surface renderer",
+};
+
 export function resolveEraShader(id: string): EraShaderDefinition {
-  const canonicalId = LEGACY_ERA_ALIAS[id] ?? id;
-  const shader = ERA_SHADER_BY_ID.get(canonicalId);
+  const shader = ERA_SHADER_BY_ID.get(id);
   if (!shader) {
     throw new Error(
       `Unknown era shader "${id}". Expected one of: ${ERA_SHADERS.map((entry) => entry.id).join(", ")}`
@@ -46,3 +45,17 @@ export function resolveEraShader(id: string): EraShaderDefinition {
 
 export const isEraShaderBuilt = (shader: EraShaderDefinition): boolean =>
   BUILT_ERA_SHADER_METHODS.includes(shader.renderMethod);
+
+export function assertEraShaderBuilt(shader: EraShaderDefinition): void {
+  const reason = REJECTED_ERA_SHADER_METHODS[shader.renderMethod];
+  if (reason) {
+    throw new Error(
+      `Era shader "${shader.id}" uses unsupported render method "${shader.renderMethod}": ${reason}. Choose a built render method: ${BUILT_ERA_SHADER_METHODS.join(", ")}.`
+    );
+  }
+  if (!isEraShaderBuilt(shader)) {
+    throw new Error(
+      `Era shader "${shader.id}" uses unregistered render method "${shader.renderMethod}".`
+    );
+  }
+}
