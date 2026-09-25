@@ -43,9 +43,9 @@ const definition: MiddleFloorDefinition = {
       id: "offer-gallery",
       label: "Gallery of Possibilities",
       points: [
-        { x: 0, z: -5 },
-        { x: -8, z: -8 },
-        { x: -13, z: -13 },
+        { x: 0, z: 19 },
+        { x: -3, z: 17 },
+        { x: 0, z: 16 },
       ],
       width: 4,
       destinationLandmarkId: "future-offers",
@@ -69,7 +69,7 @@ const definition: MiddleFloorDefinition = {
     {
       id: "future-offers",
       role: "offer",
-      position: { x: 0, z: 19 },
+      position: { x: 0, z: 16 },
       reach: 3.2,
       visual:
         "three small moving emblems imply future companions without assigning them",

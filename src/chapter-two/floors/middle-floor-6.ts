@@ -44,9 +44,9 @@ const definition: MiddleFloorDefinition = {
       id: "offer-terrace",
       label: "Unfinished Forms",
       points: [
-        { x: 4, z: -8 },
-        { x: 12, z: -12 },
-        { x: 14, z: -17 },
+        { x: 0, z: 21 },
+        { x: 3, z: 19 },
+        { x: 0, z: 18 },
       ],
       width: 4,
       destinationLandmarkId: "future-forms",
@@ -71,7 +71,7 @@ const definition: MiddleFloorDefinition = {
     {
       id: "future-forms",
       role: "offer",
-      position: { x: 0, z: 21 },
+      position: { x: 0, z: 18 },
       reach: 3.2,
       visual: "three low-poly silhouettes stand apart on a lit terrace",
     },

@@ -43,9 +43,9 @@ const definition: MiddleFloorDefinition = {
       id: "offer-arc",
       label: "Three Imprints",
       points: [
-        { x: 0, z: -3 },
-        { x: 7, z: -5 },
-        { x: 11, z: -10 },
+        { x: 0, z: 18 },
+        { x: 3, z: 16 },
+        { x: 0, z: 15 },
       ],
       width: 3.5,
       destinationLandmarkId: "future-offers",
@@ -69,7 +69,7 @@ const definition: MiddleFloorDefinition = {
     {
       id: "future-offers",
       role: "offer",
-      position: { x: 0, z: 18 },
+      position: { x: 0, z: 15 },
       reach: 3.2,
       visual:
         "three distinct empty silhouettes with no roster or recruitment UI",

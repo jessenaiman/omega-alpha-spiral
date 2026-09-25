@@ -32,7 +32,10 @@ export function studioDialogueSave(): Plugin {
         if (!file?.toLowerCase().endsWith(".omd"))
           throw new Error(`${voice.name} needs a declared .omd file.`);
         const design = parseOmd(await readFile(join(dir, file), "utf8"));
-        if (speakerId(voice.name) !== speakerId(design.id ?? ""))
+        if (
+          speakerId(voice.name).toLowerCase() !==
+          speakerId(design.id ?? "").toLowerCase()
+        )
           throw new Error(`${file} does not define ${voice.name}.`);
       }
       for (const npc of script.npcs) {
