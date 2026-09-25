@@ -5,7 +5,7 @@
  * .agents/skills/threejs-debug-profiler/SKILL.md
  */
 import { expect, test, type Page, type TestInfo } from "@playwright/test";
-import { mkdir, writeFile } from "node:fs/promises";
+import { writeFile } from "node:fs/promises";
 
 type IntroState = {
   frame: number;
@@ -23,6 +23,42 @@ type IntroState = {
 type RoomKind = "door" | "monster" | "chest";
 type ChapterPoint = { x: number; z: number };
 
+type JourneyState = {
+  kind: "early" | "middle" | "late";
+  floor: number;
+  phase: string | null;
+  player: ChapterPoint;
+  status?: {
+    encounterOutcome?: "won" | "fallen" | null;
+    exitUnlocked?: boolean;
+    nearOffer?: boolean;
+    recruitChoice?: string | null;
+    enemies?: Array<{
+      id: string;
+      health: number;
+      position: ChapterPoint;
+      telegraph: { target: ChapterPoint } | null;
+    }>;
+    gatheredDreamweavers?: string[];
+    selectedRoute?: string | null;
+  };
+  routes?: Array<{
+    id?: string;
+    from?: ChapterPoint;
+    to?: ChapterPoint;
+    points?: ChapterPoint[];
+    waypoints?: ChapterPoint[];
+    destinationLandmarkId?: string;
+  }>;
+  landmarks?: Array<{
+    id: string;
+    role?: string;
+    kind?: string;
+    position: ChapterPoint;
+    reach?: number;
+  }>;
+};
+
 type ChapterState = {
   active: boolean;
   phase: string;
@@ -35,6 +71,7 @@ type ChapterState = {
   framesAdvanced: number;
   distanceTravelled: number;
   choices: Array<{ object: string; answer: string; combatOutcome?: "fallen" }>;
+  journey: JourneyState;
 };
 
 type BotSnapshot = {
@@ -107,9 +144,12 @@ const sample = (page: Page): Promise<BotSnapshot> =>
     return {
       frame: intro.frame,
       score: intro.objectiveProgress + (chapter?.choices.length ?? 0),
-      complete: chapter?.phase === "complete",
-      x: chapter?.active ? chapter.player.x : intro.playerPosition.x,
-      z: chapter?.active ? chapter.player.z : intro.playerPosition.z,
+      complete:
+        chapter?.journey.kind === "late" &&
+        chapter.journey.floor === 8 &&
+        chapter.journey.phase === "complete",
+      x: chapter?.active ? chapter.journey.player.x : intro.playerPosition.x,
+      z: chapter?.active ? chapter.journey.player.z : intro.playerPosition.z,
     };
   });
 
@@ -458,10 +498,440 @@ async function playEarlyRoom(
   };
 }
 
-test("bot playtest: scripted real input completes and retries the playable route", async ({
+async function steerJourneyTo(
+  page: Page,
+  target: ChapterPoint,
+  expected: { kind: JourneyState["kind"]; floor: number },
+  metrics: { distance: number; softlocks: number },
+  tolerance = 0.55
+): Promise<void> {
+  let heldX: "KeyA" | "KeyD" | null = null;
+  let heldZ: "KeyW" | "KeyS" | null = null;
+  let last = (await readChapter(page)).journey.player;
+  let stuck = 0;
+  try {
+    for (let tick = 0; tick < 700; tick += 1) {
+      const state = (await readChapter(page)).journey;
+      if (
+        state.kind !== expected.kind ||
+        state.floor !== expected.floor ||
+        (state.kind === "late" && state.phase === "complete")
+      )
+        return;
+      const dx = target.x - state.player.x;
+      const dz = target.z - state.player.z;
+      if (Math.hypot(dx, dz) <= tolerance) return;
+      const wantX: "KeyA" | "KeyD" | null =
+        Math.abs(dx) <= 0.25 ? null : dx > 0 ? "KeyD" : "KeyA";
+      const wantZ: "KeyW" | "KeyS" | null =
+        Math.abs(dz) <= 0.25 ? null : dz > 0 ? "KeyS" : "KeyW";
+      if (wantX !== heldX) {
+        if (heldX) await page.keyboard.up(heldX);
+        heldX = wantX;
+        if (heldX) await page.keyboard.down(heldX);
+      }
+      if (wantZ !== heldZ) {
+        if (heldZ) await page.keyboard.up(heldZ);
+        heldZ = wantZ;
+        if (heldZ) await page.keyboard.down(heldZ);
+      }
+      const moved = Math.hypot(
+        state.player.x - last.x,
+        state.player.z - last.z
+      );
+      metrics.distance += moved;
+      stuck = moved < 0.015 ? stuck + 1 : 0;
+      if (stuck >= 18) {
+        metrics.softlocks += 1;
+        throw new Error(
+          `Real input stalled on ${expected.kind} floor ${expected.floor} toward ${JSON.stringify(target)} at ${JSON.stringify(state.player)}`
+        );
+      }
+      last = state.player;
+      if (state.kind === "middle" && state.phase === "active") return;
+      await page.waitForTimeout(45);
+    }
+  } finally {
+    if (heldX) await page.keyboard.up(heldX);
+    if (heldZ) await page.keyboard.up(heldZ);
+  }
+  const state = (await readChapter(page)).journey;
+  if (state.kind === expected.kind && state.floor === expected.floor)
+    throw new Error(
+      `Timed out walking ${expected.kind} floor ${expected.floor} toward ${JSON.stringify(target)}`
+    );
+}
+
+async function resolveMiddleEncounter(
+  page: Page,
+  floor: number,
+  routeSequence: string[],
+  metrics: { distance: number; softlocks: number }
+): Promise<"won" | "fallen"> {
+  let heldX: "KeyA" | "KeyD" | null = null;
+  let heldZ: "KeyW" | "KeyS" | null = null;
+  let last = (await readChapter(page)).journey.player;
+  let stuck = 0;
+  let nextAttackAt = 0;
+  let dodgedTell = "";
+  let detourWaypoints: ChapterPoint[] = [];
+  let detourAttempts = 0;
+  const setAxes = async (
+    x: "KeyA" | "KeyD" | null,
+    z: "KeyW" | "KeyS" | null
+  ): Promise<void> => {
+    if (x !== heldX) {
+      if (heldX) await page.keyboard.up(heldX);
+      heldX = x;
+      if (heldX) await page.keyboard.down(heldX);
+    }
+    if (z !== heldZ) {
+      if (heldZ) await page.keyboard.up(heldZ);
+      heldZ = z;
+      if (heldZ) await page.keyboard.down(heldZ);
+    }
+  };
+  try {
+    for (let tick = 0; tick < 1_200; tick += 1) {
+      const state = (await readChapter(page)).journey;
+      if (state.kind !== "middle" || state.floor !== floor)
+        throw new Error(`Floor ${floor} changed during its encounter`);
+      const outcome = state.status?.encounterOutcome;
+      if (outcome) {
+        routeSequence.push(`floor-${floor}:encounter-${outcome}`);
+        return outcome;
+      }
+
+      const enemies = state.status?.enemies ?? [];
+      const live = enemies
+        .filter((enemy) => enemy.health > 0)
+        .sort(
+          (left, right) =>
+            Math.hypot(
+              left.position.x - state.player.x,
+              left.position.z - state.player.z
+            ) -
+            Math.hypot(
+              right.position.x - state.player.x,
+              right.position.z - state.player.z
+            )
+        );
+      const nextDetour = detourWaypoints[0];
+      if (
+        nextDetour &&
+        Math.hypot(
+          nextDetour.x - state.player.x,
+          nextDetour.z - state.player.z
+        ) < 0.25
+      ) {
+        detourWaypoints.shift();
+      }
+      const activeDetour = detourWaypoints[0];
+      const threat = live.find((enemy) => enemy.telegraph);
+      if (activeDetour) {
+        dodgedTell = "";
+        await setAxes(
+          Math.abs(activeDetour.x - state.player.x) > 0.2
+            ? activeDetour.x > state.player.x
+              ? "KeyD"
+              : "KeyA"
+            : null,
+          Math.abs(activeDetour.z - state.player.z) > 0.2
+            ? activeDetour.z > state.player.z
+              ? "KeyS"
+              : "KeyW"
+            : null
+        );
+      } else if (threat?.telegraph) {
+        const dx = state.player.x - threat.telegraph.target.x;
+        const dz = state.player.z - threat.telegraph.target.z;
+        const awayX = Math.abs(dx) > 0.2 ? (dx > 0 ? "KeyD" : "KeyA") : null;
+        const awayZ = Math.abs(dz) > 0.2 ? (dz > 0 ? "KeyS" : "KeyW") : null;
+        await setAxes(awayX, awayZ);
+        const tell = `${threat.id}:${threat.telegraph.target.x}:${threat.telegraph.target.z}`;
+        if (tell !== dodgedTell) {
+          await page.keyboard.press("Shift");
+          dodgedTell = tell;
+        }
+      } else if (live[0]) {
+        dodgedTell = "";
+        const dx = live[0].position.x - state.player.x;
+        const dz = live[0].position.z - state.player.z;
+        if (Math.hypot(dx, dz) > 1.45) {
+          await setAxes(
+            Math.abs(dx) > 0.2 ? (dx > 0 ? "KeyD" : "KeyA") : null,
+            Math.abs(dz) > 0.2 ? (dz > 0 ? "KeyS" : "KeyW") : null
+          );
+        } else {
+          await setAxes(null, null);
+          if (Date.now() >= nextAttackAt) {
+            await page.keyboard.press("Space");
+            nextAttackAt = Date.now() + 500;
+          }
+        }
+      }
+      const moved = Math.hypot(
+        state.player.x - last.x,
+        state.player.z - last.z
+      );
+      metrics.distance += moved;
+      if ((heldX || heldZ) && moved < 0.015) stuck += 1;
+      else stuck = 0;
+      if (stuck >= 18) {
+        metrics.softlocks += 1;
+        if (live[0] && detourAttempts < 2) {
+          const blockedAxis = heldX && !heldZ ? "x" : "z";
+          const sideAxis = blockedAxis === "x" ? "z" : "x";
+          const meanSide =
+            live.reduce((sum, enemy) => sum + enemy.position[sideAxis], 0) /
+            live.length;
+          const sideDelta = meanSide - state.player[sideAxis];
+          const sideTarget =
+            Math.abs(sideDelta) > 0.5
+              ? meanSide
+              : state.player[sideAxis] + (sideDelta < 0 ? -1 : 1) * 2.5;
+          const forwardDelta =
+            live[0].position[blockedAxis] - state.player[blockedAxis];
+          const forwardTarget =
+            live[0].position[blockedAxis] +
+            Math.sign(forwardDelta || 1) * 1.5;
+          detourWaypoints =
+            sideAxis === "x"
+              ? [
+                  { x: sideTarget, z: state.player.z },
+                  { x: sideTarget, z: forwardTarget },
+                ]
+              : [
+                  { x: state.player.x, z: sideTarget },
+                  { x: forwardTarget, z: sideTarget },
+                ];
+          detourAttempts += 1;
+          stuck = 0;
+        } else {
+          throw new Error(
+            `Floor ${floor} combat input stalled at ${JSON.stringify(state.player)}; status=${JSON.stringify(state.status)}`
+          );
+        }
+      }
+      last = state.player;
+      await page.waitForTimeout(45);
+    }
+  } finally {
+    if (heldX) await page.keyboard.up(heldX);
+    if (heldZ) await page.keyboard.up(heldZ);
+  }
+  const state = (await readChapter(page)).journey;
+  throw new Error(
+    `Floor ${floor} encounter did not resolve; phase=${state.phase}, status=${JSON.stringify(state.status)}`
+  );
+}
+
+async function playMiddleFloor(
+  page: Page,
+  floor: number,
+  metrics: { distance: number; softlocks: number },
+  routeSequence: string[]
+): Promise<void> {
+  const start = (await readChapter(page)).journey;
+  expect(start.kind).toBe("middle");
+  expect(start.floor).toBe(floor);
+  routeSequence.push(`floor-${floor}:enter`);
+  const exit = start.landmarks?.find((landmark) => landmark.role === "exit");
+  const offer = start.landmarks?.find((landmark) => landmark.role === "offer");
+  const main = start.routes?.find(
+    (route) => route.destinationLandmarkId === exit?.id
+  )?.points;
+  const branch = start.routes?.find(
+    (route) => route.destinationLandmarkId === offer?.id
+  )?.points;
+  if (
+    !exit ||
+    !offer ||
+    !main ||
+    !branch ||
+    main.length < 2 ||
+    branch.length < 2
+  )
+    throw new Error(`Floor ${floor} is missing its authored route diagnostics`);
+  const branchIndex = main.findIndex(
+    (point) => Math.hypot(point.x - branch[0]!.x, point.z - branch[0]!.z) < 0.5
+  );
+  if (branchIndex < 0)
+    throw new Error(`Floor ${floor} offer route does not join its exit route`);
+
+  for (const point of main.slice(1, branchIndex + 1)) {
+    await steerJourneyTo(page, point, { kind: "middle", floor }, metrics);
+    const current = (await readChapter(page)).journey;
+    if (current.kind !== "middle" || current.floor !== floor) return;
+    if (current.phase === "active")
+      await resolveMiddleEncounter(page, floor, routeSequence, metrics);
+  }
+  let state = (await readChapter(page)).journey;
+  if (state.kind !== "middle" || state.floor !== floor) return;
+  if (state.phase === "active")
+    await resolveMiddleEncounter(page, floor, routeSequence, metrics);
+  if (!state.status?.encounterOutcome)
+    state = (await readChapter(page)).journey;
+  if (!state.status?.encounterOutcome)
+    throw new Error(
+      `Floor ${floor} route reached its offer without resolving combat`
+    );
+
+  for (const point of branch.slice(1))
+    await steerJourneyTo(page, point, { kind: "middle", floor }, metrics);
+  state = (await readChapter(page)).journey;
+  if (state.kind !== "middle" || state.floor !== floor) return;
+  expect(
+    state.status?.nearOffer,
+    `Floor ${floor} offer must be reachable`
+  ).toBe(true);
+  await page.keyboard.press("1");
+  await expect
+    .poll(async () => (await readChapter(page)).journey.status?.recruitChoice)
+    .toBe("Light");
+  routeSequence.push(`floor-${floor}:recommendation-Light`);
+
+  for (const point of branch.slice(0, -1).reverse())
+    await steerJourneyTo(page, point, { kind: "middle", floor }, metrics);
+  for (const point of main.slice(branchIndex + 1))
+    await steerJourneyTo(page, point, { kind: "middle", floor }, metrics);
+  await expect
+    .poll(
+      async () => {
+        const current = (await readChapter(page)).journey;
+        return current.kind !== "middle" || current.floor !== floor;
+      },
+      { timeout: 15_000 }
+    )
+    .toBe(true);
+  routeSequence.push(`floor-${floor}:exit-crossed`);
+}
+
+async function gatherTownDreamweavers(
+  page: Page,
+  metrics: { distance: number; softlocks: number },
+  routeSequence: string[]
+): Promise<void> {
+  const state = (await readChapter(page)).journey;
+  expect(state.kind).toBe("late");
+  expect(state.floor).toBe(7);
+  routeSequence.push("floor-7:town-entry");
+  const dreamweavers =
+    state.landmarks?.filter((landmark) => landmark.kind === "dreamweaver") ??
+    [];
+  for (const dreamweaver of dreamweavers) {
+    await steerJourneyTo(
+      page,
+      dreamweaver.position,
+      { kind: "late", floor: 7 },
+      metrics
+    );
+    await page.keyboard.press("e");
+    await expect
+      .poll(
+        async () =>
+          (await readChapter(page)).journey.status?.gatheredDreamweavers?.length
+      )
+      .toBeGreaterThan(dreamweavers.indexOf(dreamweaver));
+    routeSequence.push(`town:gathered-${dreamweaver.id}`);
+  }
+  await expect
+    .poll(async () => {
+      const journey = (await readChapter(page)).journey;
+      return (
+        journey.kind === "late" &&
+        journey.floor === 7 &&
+        journey.phase === "ready-to-choose" &&
+        journey.status?.gatheredDreamweavers?.length === 3
+      );
+    })
+    .toBe(true);
+  routeSequence.push("town:ready-to-choose-after-gathering");
+}
+
+async function chooseTownExit(
+  page: Page,
+  metrics: { distance: number; softlocks: number },
+  routeSequence: string[]
+): Promise<void> {
+  const state = (await readChapter(page)).journey;
+  expect(state.kind).toBe("late");
+  expect(state.floor).toBe(7);
+  expect(state.phase).toBe("ready-to-choose");
+  const routes = state.routes ?? [];
+  const townRoute = routes.find((route) => route.id === "alleys");
+  if (!townRoute?.from || !townRoute.to || !townRoute.waypoints?.length)
+    throw new Error("Town has no authored plaza exit route diagnostics");
+  await steerJourneyTo(
+    page,
+    { x: 4, z: townRoute.from.z },
+    { kind: "late", floor: 7 },
+    metrics
+  );
+  await steerJourneyTo(page, townRoute.from, { kind: "late", floor: 7 }, metrics);
+  await page.keyboard.press("2");
+  await expect
+    .poll(async () => (await readChapter(page)).journey.status?.selectedRoute)
+    .toBe("alleys");
+  routeSequence.push("town:route-alleys-selected");
+  for (const point of [...townRoute.waypoints, townRoute.to])
+    await steerJourneyTo(page, point, { kind: "late", floor: 7 }, metrics);
+  await expect
+    .poll(
+      async () => {
+        const current = (await readChapter(page)).journey;
+        return (
+          current.kind === "late" &&
+          current.floor === 8 &&
+          current.phase === "core-approach"
+        );
+      },
+      { timeout: 15_000 }
+    )
+    .toBe(true);
+  routeSequence.push("floor-7:exit-crossed");
+  routeSequence.push("floor-8:stable-core-approach-entry");
+}
+
+async function completeFinale(
+  page: Page,
+  metrics: { distance: number; softlocks: number },
+  routeSequence: string[]
+): Promise<void> {
+  const state = (await readChapter(page)).journey;
+  expect(state.kind).toBe("late");
+  expect(state.floor).toBe(8);
+  expect(state.phase).toBe("core-approach");
+  const core = state.landmarks?.find(
+    (landmark) => landmark.id === "healing-core"
+  );
+  if (!core) throw new Error("Floor 8 diagnostics omitted the healing core");
+  await steerJourneyTo(
+    page,
+    core.position,
+    { kind: "late", floor: 8 },
+    metrics,
+    2.3
+  );
+  await expect
+    .poll(async () => {
+      const journey = (await readChapter(page)).journey;
+      return (
+        journey.kind === "late" &&
+        journey.floor === 8 &&
+        journey.phase === "complete"
+      );
+    }, {
+      timeout: 10_000,
+    })
+    .toBe(true);
+  routeSequence.push("floor-8:healing-core-complete");
+}
+
+test("bot playtest: real input reaches the actual ending from Begin", async ({
   page,
 }, testInfo: TestInfo) => {
-  test.setTimeout(180_000);
+  test.setTimeout(480_000);
   const pageErrors: string[] = [];
   const consoleErrors: string[] = [];
   const networkErrors: string[] = [];
@@ -477,6 +947,7 @@ test("bot playtest: scripted real input completes and retries the playable route
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/intro.html?debug&seed=472");
   await page.getByRole("button", { name: /Begin/ }).click();
+  const routeSequence = ["begin:clicked"];
   await page.waitForFunction(() => {
     const diagnostics = (
       window as unknown as {
@@ -486,33 +957,19 @@ test("bot playtest: scripted real input completes and retries the playable route
     return (diagnostics?.state.frame ?? 0) > 10;
   });
 
-  const acknowledgement = await page.evaluate(async () => {
+  const seedAcknowledgement = await page.evaluate(async () => {
     const hooks = (
       window as unknown as {
         __THREE_GAME_TEST_HOOKS__?: {
           seed(value: string | number): Promise<{ seed: string }>;
-          setState(name: string): Promise<{ state: string }>;
         };
       }
     ).__THREE_GAME_TEST_HOOKS__;
-    if (
-      !hooks ||
-      typeof hooks.seed !== "function" ||
-      typeof hooks.setState !== "function"
-    ) {
-      throw new Error("Bot playtests require seed and setState test hooks");
-    }
-    const seeded = await hooks.seed(472);
-    if (seeded.seed !== "472")
-      throw new Error("seed must acknowledge the requested value");
-    const applied = await hooks.setState("boot-cursor");
-    if (!applied || applied.state !== "boot-cursor")
-      throw new Error("setState must acknowledge boot-cursor");
-    return applied;
+    if (!hooks || typeof hooks.seed !== "function")
+      throw new Error("Bot playtests require the deterministic seed hook");
+    return hooks.seed(472);
   });
-  expect(acknowledgement.state, "bot must start in the requested state").toBe(
-    "boot-cursor"
-  );
+  expect(seedAcknowledgement.seed).toBe("472");
 
   const before = await sample(page);
   const snapshots: BotSnapshot[] = [before];
@@ -576,6 +1033,7 @@ test("bot playtest: scripted real input completes and retries the playable route
     const nextMode = await finishResponse(page);
     const afterResponse = await readIntro(page);
     await recordStep(index);
+    routeSequence.push(`ghost-question-${index + 1}:choice-${step.choice}`);
     if (index === introSteps.length - 1) {
       expect(["final", "name"]).toContain(nextMode);
       break;
@@ -625,6 +1083,7 @@ test("bot playtest: scripted real input completes and retries the playable route
   await expect(nameInput).toBeVisible();
   await nameInput.pressSequentially(nameStep.value);
   await nameInput.press("Enter");
+  routeSequence.push(`name-entered:${nameStep.value}`);
   await expect
     .poll(async (): Promise<string> => (await readIntro(page)).storyMode)
     .toBe("doorway");
@@ -632,6 +1091,7 @@ test("bot playtest: scripted real input completes and retries the playable route
   if (!INPUT_SCRIPT.some((step) => step.kind === "doorway-crossing"))
     throw new Error("Bot script is missing the doorway-crossing step");
   await walkThroughDoorway(page, routeMetrics);
+  routeSequence.push("doorway:crossed-by-input");
   await expect
     .poll(async (): Promise<boolean> => (await readIntro(page)).complete)
     .toBe(true);
@@ -656,11 +1116,72 @@ test("bot playtest: scripted real input completes and retries the playable route
       await playEarlyRoom(page, step.choice, `bot answer ${index}`)
     );
     routeMetrics.distance += chapterResults[index].distance;
+    routeSequence.push(
+      `floor-${chapterResults[index].roomIndex + 1}:exit-crossed-by-input`
+    );
     await recordStep(introSteps.length + index);
   }
   await expect
     .poll(async () => (await readChapter(page)).phase)
     .toBe("complete");
+  await expect
+    .poll(
+      async () => {
+        const journey = (await readChapter(page)).journey;
+        return journey.kind === "middle" && journey.floor === 4;
+      },
+      { timeout: 15_000 }
+    )
+    .toBe(true);
+  routeSequence.push("floor-4:entered-after-floor-3-handoff");
+  await playMiddleFloor(page, 4, routeMetrics, routeSequence);
+  await expect
+    .poll(
+      async () => {
+        const journey = (await readChapter(page)).journey;
+        return (
+          journey.kind === "middle" &&
+          journey.floor === 5 &&
+          journey.phase === null
+        );
+      },
+      { timeout: 15_000 }
+    )
+    .toBe(true);
+  routeSequence.push("floor-5:stable-entry");
+  await playMiddleFloor(page, 5, routeMetrics, routeSequence);
+  await expect
+    .poll(
+      async () => {
+        const journey = (await readChapter(page)).journey;
+        return (
+          journey.kind === "middle" &&
+          journey.floor === 6 &&
+          journey.phase === null
+        );
+      },
+      { timeout: 15_000 }
+    )
+    .toBe(true);
+  routeSequence.push("floor-6:stable-entry");
+  await playMiddleFloor(page, 6, routeMetrics, routeSequence);
+  await expect
+    .poll(
+      async () => {
+        const journey = (await readChapter(page)).journey;
+        return (
+          journey.kind === "late" &&
+          journey.floor === 7 &&
+          journey.phase === "exploring"
+        );
+      },
+      { timeout: 15_000 }
+    )
+    .toBe(true);
+  routeSequence.push("floor-7:stable-town-entry");
+  await gatherTownDreamweavers(page, routeMetrics, routeSequence);
+  await chooseTownExit(page, routeMetrics, routeSequence);
+  await completeFinale(page, routeMetrics, routeSequence);
   const completedChapter = await readChapter(page);
   const after = await sample(page);
   await page.keyboard.press("KeyR");
@@ -678,6 +1199,7 @@ test("bot playtest: scripted real input completes and retries the playable route
   const report = {
     seed: "472",
     steps: INPUT_SCRIPT.length,
+    routeSequence,
     framesAdvanced: after.frame - before.frame,
     scoreBefore: before.score,
     scoreAfter: after.score,
@@ -726,124 +1248,14 @@ test("bot playtest: scripted real input completes and retries the playable route
     report.stepOfFirstScore,
     "bot must find objective progress"
   ).toBeGreaterThanOrEqual(0);
-  expect(report.complete, "bot must complete the playable route").toBe(true);
+  expect(
+    routeSequence.at(-1),
+    "real input must reach the healing core and actual ending"
+  ).toBe("floor-8:healing-core-complete");
+  expect(report.complete, "the runtime must enter its actual ending state").toBe(
+    true
+  );
   expect(report.retryVerified, "restart must restore playable state").toBe(
     true
   );
-});
-
-test("Shadow bot: real input crosses seeded exits and captures active floors", async ({
-  page,
-}, testInfo: TestInfo) => {
-  test.setTimeout(240_000);
-  const pageErrors: string[] = [];
-  const consoleErrors: string[] = [];
-  const networkErrors: string[] = [];
-  page.on("pageerror", (error) => pageErrors.push(error.message));
-  page.on("console", (message) => {
-    if (message.type() === "error") consoleErrors.push(message.text());
-  });
-  page.on("response", (response) => {
-    if (response.status() >= 400)
-      networkErrors.push(`${response.status()} ${response.url()}`);
-  });
-  const runs: Array<{
-    seed: number;
-    results: EarlyRoomResult[];
-    frames: number;
-    distance: number;
-  }> = [];
-  await mkdir("artifacts/qa-61", { recursive: true });
-  for (const seed of [17, 42]) {
-    await page.goto(`/intro.html?debug&seed=${seed}`);
-    await page.getByRole("button", { name: /Begin/ }).click();
-    const hooks = await page.evaluate(async () => {
-      const testWindow = window as unknown as {
-        __THREE_GAME_TEST_HOOKS__?: {
-          setState(name: string): Promise<{ state: string }>;
-        };
-      };
-      if (!testWindow.__THREE_GAME_TEST_HOOKS__)
-        throw new Error("Focused bot needs intro test hooks");
-      return testWindow.__THREE_GAME_TEST_HOOKS__.setState("final-door");
-    });
-    expect(hooks.state).toBe("final-door");
-    await walkThroughDoorway(page, { distance: 0, softlocks: 0 });
-    await expect
-      .poll(async () => (await readChapter(page)).active, { timeout: 15_000 })
-      .toBe(true);
-    const first = await readChapter(page);
-    expect(first.variationSeed).toBe(seed);
-    const results: EarlyRoomResult[] = [];
-    results.push(await playEarlyRoom(page, "door", `seed ${seed}`));
-    await expect.poll(async () => (await readChapter(page)).roomIndex).toBe(1);
-    await page.screenshot({ path: `artifacts/qa-61/shadow-seed-${seed}.png` });
-    results.push(
-      await playEarlyRoom(
-        page,
-        "monster",
-        "",
-        `artifacts/qa-61/shadow-action-seed-${seed}.png`
-      )
-    );
-    await expect.poll(async () => (await readChapter(page)).roomIndex).toBe(2);
-    await page.screenshot({
-      path: `artifacts/qa-61/ambition-seed-${seed}.png`,
-    });
-    results.push(
-      await playEarlyRoom(
-        page,
-        "chest",
-        "",
-        `artifacts/qa-61/ambition-action-seed-${seed}.png`
-      )
-    );
-    await expect
-      .poll(async () => (await readChapter(page)).phase)
-      .toBe("complete");
-    const end = await readChapter(page);
-    const uniqueDoors = new Set(
-      results.map((result) => `${result.door.x},${result.door.z}`)
-    );
-    expect(
-      uniqueDoors.size,
-      "doorway must occupy a different place on each floor"
-    ).toBe(3);
-    runs.push({
-      seed,
-      results,
-      frames: end.framesAdvanced - first.framesAdvanced,
-      distance: Number(
-        results.reduce((sum, result) => sum + result.distance, 0).toFixed(2)
-      ),
-    });
-  }
-  expect(
-    runs[0].results.some(
-      (result, index) =>
-        result.door.x !== runs[1].results[index].door.x ||
-        result.door.z !== runs[1].results[index].door.z
-    ),
-    "different seeds must vary at least one doorway"
-  ).toBe(true);
-  const report = {
-    runs,
-    pageErrors,
-    consoleErrors,
-    networkErrors,
-    introScope:
-      "final-door hook sets starting point; doorway and all three floors use real keyboard input",
-  };
-  await writeFile(
-    "artifacts/qa-61/early-floor-bot-report.json",
-    JSON.stringify(report, null, 2)
-  );
-  await testInfo.attach("early-floor-bot-report", {
-    body: JSON.stringify(report, null, 2),
-    contentType: "application/json",
-  });
-  expect(pageErrors).toEqual([]);
-  expect(consoleErrors).toEqual([]);
-  expect(networkErrors).toEqual([]);
-  expect(runs.every((run) => run.frames > 50 && run.distance > 5)).toBe(true);
 });

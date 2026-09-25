@@ -191,6 +191,31 @@
         },
         {
           "type": "object",
+          "required": ["type", "id", "prompt", "hint", "statePath", "maxLength"],
+          "properties": {
+            "type": { "const": "input" },
+            "id": { "type": "string", "minLength": 1 },
+            "prompt": { "type": "string", "minLength": 1 },
+            "hint": { "type": "string", "minLength": 1 },
+            "statePath": { "type": "string", "minLength": 1 },
+            "maxLength": { "type": "integer", "minimum": 1 }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["type", "id", "text", "hint", "await"],
+          "properties": {
+            "type": { "const": "cue" },
+            "id": { "type": "string", "minLength": 1 },
+            "text": { "type": "string", "minLength": 1 },
+            "hint": { "type": "string", "minLength": 1 },
+            "await": { "enum": ["doorway-entered"] }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
           "required": ["type", "operation", "path", "value"],
           "properties": {
             "type": { "const": "set-state" },

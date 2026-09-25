@@ -1,14 +1,51 @@
 {
   "seed": "472",
   "steps": 9,
-  "framesAdvanced": 2392,
+  "routeSequence": [
+    "begin:clicked",
+    "ghost-question-1:choice-0",
+    "ghost-question-2:choice-1",
+    "ghost-question-3:choice-2",
+    "ghost-question-4:choice-0",
+    "name-entered:Astra",
+    "doorway:crossed-by-input",
+    "floor-1:exit-crossed-by-input",
+    "floor-2:exit-crossed-by-input",
+    "floor-3:exit-crossed-by-input",
+    "floor-4:entered-after-floor-3-handoff",
+    "floor-4:enter",
+    "floor-4:encounter-won",
+    "floor-4:recommendation-Light",
+    "floor-4:exit-crossed",
+    "floor-5:stable-entry",
+    "floor-5:enter",
+    "floor-5:encounter-won",
+    "floor-5:recommendation-Light",
+    "floor-5:exit-crossed",
+    "floor-6:stable-entry",
+    "floor-6:enter",
+    "floor-6:encounter-won",
+    "floor-6:recommendation-Light",
+    "floor-6:exit-crossed",
+    "floor-7:stable-town-entry",
+    "floor-7:town-entry",
+    "town:gathered-dw-light",
+    "town:gathered-dw-shadow",
+    "town:gathered-dw-ambition",
+    "town:ready-to-choose-after-gathering",
+    "town:route-alleys-selected",
+    "floor-7:exit-crossed",
+    "floor-8:stable-core-approach-entry",
+    "floor-8:healing-core-complete"
+  ],
+  "framesAdvanced": 13217,
   "scoreBefore": 0,
   "scoreAfter": 7,
   "complete": true,
-  "distanceTravelled": 147.62,
+  "distanceTravelled": 948.38,
   "stepOfFirstScore": 0,
   "softlockWindows": 0,
-  "physicsSteps": 767,
+  "physicsSteps": 867,
   "failureAvailable": false,
   "retryVerified": true,
   "chapterChoices": 3,
@@ -21,7 +58,7 @@
       },
       "chosen": "door",
       "outcome": null,
-      "distance": 18.90060000000004
+      "distance": 19.226400000000073
     },
     {
       "roomIndex": 1,
@@ -31,7 +68,7 @@
       },
       "chosen": "monster",
       "outcome": "fallen",
-      "distance": 44.79959999999968
+      "distance": 49.20720000000019
     },
     {
       "roomIndex": 2,
@@ -41,7 +78,7 @@
       },
       "chosen": "chest",
       "outcome": null,
-      "distance": 48.89940000000182
+      "distance": 57.25920000000198
     }
   ],
   "consoleErrors": [],

@@ -41,6 +41,21 @@ export type OmlEvent =
   | { type: "show-choice"; id: string }
   | { type: "wait"; durationMs: number }
   | { type: "continue"; label: string }
+  | {
+      type: "input";
+      id: string;
+      prompt: string;
+      hint: string;
+      statePath: string;
+      maxLength: number;
+    }
+  | {
+      type: "cue";
+      id: string;
+      text: string;
+      hint: string;
+      await: string;
+    }
   | ({ type: "set-state" } & OmlStateEffect)
   | { type: "emit"; name: string }
   | { type: "transition"; level: string };
@@ -301,6 +316,8 @@ export function parseOml(text: string): Oml {
 const TIMED =
   /^\[(wait|timer_delay|delay)(?:\s+([^\]]+)|\(([^)]*)\)|\[([^\]]*)\])\]$/i;
 const CONTINUE = /^\[continue\s+(.+?)\]$/i;
+const INPUT = /^\[input\s+([^\s\]]+)(?:\s+(.+))?\]$/i;
+const CUE = /^\[cue\s+([^\s\]]+)(?:\s+(.+))?\]$/i;
 const SHOW = /^\[show\s+(question|choice)(?:\s+([^\]]+))?\]$/i;
 const STATE = /^\[(set|increment)\s+(.+?)\]$/i;
 const EMIT = /^\[emit\s+(.+?)\]$/i;
@@ -317,6 +334,28 @@ export function parseDurationMs(value: string): number | null {
   );
 }
 
+const directiveAttributes = (source: string | undefined): Record<string, string> => {
+  const values: Record<string, string> = {};
+  if (!source) return values;
+  const attribute = /([a-z_]+)=(?:"((?:\\.|[^"])*)"|([^\s]+))/gi;
+  for (const match of source.matchAll(attribute))
+    values[match[1].toLowerCase()] = (match[2] ?? match[3] ?? "")
+      .replace(/\\n/g, "\n")
+      .replace(/\\"/g, '"')
+      .replace(/\\\\/g, "\\");
+  return values;
+};
+
+const requiredAttribute = (
+  attributes: Record<string, string>,
+  name: string,
+  directive: string
+): string => {
+  const value = attributes[name];
+  if (!value) throw new Error(`${directive} requires ${name}.`);
+  return value;
+};
+
 function readEvent(line: string): OmlEvent {
   const timed = line.match(TIMED);
   if (timed) {
@@ -325,6 +364,34 @@ function readEvent(line: string): OmlEvent {
   }
   const proceed = line.match(CONTINUE);
   if (proceed) return { type: "continue", label: proceed[1] };
+  const input = line.match(INPUT);
+  if (input) {
+    const attributes = directiveAttributes(input[2]);
+    const maxLength = Number(
+      requiredAttribute(attributes, "max_length", `[input ${input[1]}]`)
+    );
+    if (!Number.isInteger(maxLength) || maxLength < 1)
+      throw new Error(`[input ${input[1]}] max_length must be a positive integer.`);
+    return {
+      type: "input",
+      id: input[1],
+      prompt: requiredAttribute(attributes, "prompt", `[input ${input[1]}]`),
+      hint: requiredAttribute(attributes, "hint", `[input ${input[1]}]`),
+      statePath: requiredAttribute(attributes, "state", `[input ${input[1]}]`),
+      maxLength,
+    };
+  }
+  const cue = line.match(CUE);
+  if (cue) {
+    const attributes = directiveAttributes(cue[2]);
+    return {
+      type: "cue",
+      id: cue[1],
+      text: requiredAttribute(attributes, "text", `[cue ${cue[1]}]`),
+      hint: requiredAttribute(attributes, "hint", `[cue ${cue[1]}]`),
+      await: requiredAttribute(attributes, "await", `[cue ${cue[1]}]`),
+    };
+  }
   const show = line.match(SHOW);
   if (show?.[1].toLowerCase() === "question") return { type: "show-question" };
   if (show?.[1].toLowerCase() === "choice" && show[2])
@@ -351,6 +418,28 @@ function readEvent(line: string): OmlEvent {
 }
 
 const writeStateValue = (value: OmlStateValue) => String(value);
+
+const directiveValue = (value: string): string =>
+  `"${value
+    .replace(/\\/g, "\\\\")
+    .replace(/"/g, '\\"')
+    .replace(/\n/g, "\\n")}"`;
+
+const writeEvent = (event: OmlEvent): string => {
+  if (event.type === "wait") return `[wait ${event.durationMs}]`;
+  if (event.type === "show-question") return "[show question]";
+  if (event.type === "show-choice") return `[show choice ${event.id}]`;
+  if (event.type === "continue") return `[continue ${event.label}]`;
+  if (event.type === "input")
+    return `[input ${event.id} prompt=${directiveValue(event.prompt)} hint=${directiveValue(event.hint)} state=${event.statePath} max_length=${event.maxLength}]`;
+  if (event.type === "cue")
+    return `[cue ${event.id} text=${directiveValue(event.text)} hint=${directiveValue(event.hint)} await=${event.await}]`;
+  if (event.type === "set-state")
+    return `[${event.operation} ${event.path} = ${writeStateValue(event.value)}]`;
+  if (event.type === "emit") return `[emit ${event.name}]`;
+  if (event.type === "transition") return `[transition ${event.level}]`;
+  return `${speakerName(event.speaker)}: ${event.text.replace(/\n/g, "\\n")}`;
+};
 
 export function writeOml(oml: Oml): string {
   const out: string[] = [
@@ -403,44 +492,10 @@ export function writeOml(oml: Oml): string {
   }
 
   out.push("[script]");
-  for (const event of oml.events) {
-    if (event.type === "wait") out.push(`[wait ${event.durationMs}]`);
-    else if (event.type === "show-question") out.push("[show question]");
-    else if (event.type === "show-choice")
-      out.push(`[show choice ${event.id}]`);
-    else if (event.type === "continue") out.push(`[continue ${event.label}]`);
-    else if (event.type === "set-state")
-      out.push(
-        `[${event.operation} ${event.path} = ${writeStateValue(event.value)}]`
-      );
-    else if (event.type === "emit") out.push(`[emit ${event.name}]`);
-    else if (event.type === "transition")
-      out.push(`[transition ${event.level}]`);
-    else
-      out.push(
-        `${speakerName(event.speaker)}: ${event.text.replace(/\n/g, "\\n")}`
-      );
-  }
+  for (const event of oml.events) out.push(writeEvent(event));
   if (oml.completion.length) {
     out.push("", "[completion]");
-    for (const event of oml.completion) {
-      if (event.type === "wait") out.push(`[wait ${event.durationMs}]`);
-      else if (event.type === "show-question") out.push("[show question]");
-      else if (event.type === "show-choice")
-        out.push(`[show choice ${event.id}]`);
-      else if (event.type === "continue") out.push(`[continue ${event.label}]`);
-      else if (event.type === "set-state")
-        out.push(
-          `[${event.operation} ${event.path} = ${writeStateValue(event.value)}]`
-        );
-      else if (event.type === "emit") out.push(`[emit ${event.name}]`);
-      else if (event.type === "transition")
-        out.push(`[transition ${event.level}]`);
-      else
-        out.push(
-          `${speakerName(event.speaker)}: ${event.text.replace(/\n/g, "\\n")}`
-        );
-    }
+    for (const event of oml.completion) out.push(writeEvent(event));
   }
   return out.join("\n") + "\n";
 }
