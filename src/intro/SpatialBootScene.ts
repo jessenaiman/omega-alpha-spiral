@@ -1743,8 +1743,17 @@ export class SpatialBootScene {
       isName || frame.phase === "doorway" || isCrossing,
       isReduced
     );
-    this._worldEvolution.root.scale.setScalar(isWaiting ? 0.62 : 1);
+    // Keep reached display eras together in the lower field, away from the copy.
+    this._worldEvolution.root.scale.setScalar(isWaiting ? 0.78 : 1);
+    this._worldEvolution.root.position.y = isWaiting ? -0.7 : 0;
     this._worldEvolution.root.position.z = isWaiting ? 2.1 : 0;
+    if (isWaiting) {
+      this._worldEvolution.root.children.slice(0, 4).forEach((era): void => {
+        const structure = era.children[0];
+        if (structure instanceof LineSegments)
+          structure.material.opacity = Math.min(0.62, structure.material.opacity * 2.4);
+      });
+    }
     this._walkPlane.visible =
       isTravel || isName || frame.phase === "doorway";
     if (this._door) {
@@ -2114,6 +2123,10 @@ export class SpatialBootScene {
       seconds,
       isReduced
     );
+    // The waiting question needs the dark face, without edges through the paths.
+    this._omegaDisplay.root.children.slice(2).forEach((edge): void => {
+      edge.visible = !isWaiting;
+    });
     if (isWaiting || isPrelude) {
       this._omegaDisplay.root.position.x = 0;
       this._omegaDisplay.root.position.y = question.position.y - 0.08;
@@ -2452,8 +2465,10 @@ export class SpatialBootScene {
         ? 1.05
         : isTravel
           ? arrivalReveal * 1.05
-          : isWaiting || frame.phase === "question"
-            ? -0.36
+          : isWaiting
+            ? -0.36 - Math.min(this._playerStage, 3) * 0.28
+            : frame.phase === "question"
+              ? -0.36
             : 0;
       this._playerDisplay.position.y +=
         (displayY - this._playerDisplay.position.y) *
