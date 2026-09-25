@@ -15,8 +15,8 @@ const definition: MiddleFloorDefinition = {
   exit: { x: 0, z: -15 },
   routes: [
     {
-      id: "vault-spine",
-      label: "Vault Spine",
+      id: "first-test-route",
+      label: "First Test",
       points: [
         { x: 0, z: 18 },
         { x: 0, z: 12 },
@@ -26,48 +26,48 @@ const definition: MiddleFloorDefinition = {
         { x: 0, z: -15 },
       ],
       width: 5,
-      destinationLandmarkId: "vault-exit",
+      destinationLandmarkId: "first-test-exit",
     },
     {
-      id: "echo-niche",
-      label: "Echo Niche",
+      id: "first-reflection-branch",
+      label: "First Reflection",
       points: [
         { x: -4, z: 8 },
         { x: -11, z: 5 },
         { x: -11, z: 1 },
       ],
       width: 3.5,
-      destinationLandmarkId: "echo-record",
+      destinationLandmarkId: "first-reflection-mirror",
     },
     {
-      id: "offer-arc",
-      label: "Three Imprints",
+      id: "dreamweaver-answer-route",
+      label: "Dreamweaver Answers",
       points: [
         { x: 0, z: 18 },
         { x: 3, z: 16 },
         { x: 0, z: 15 },
       ],
       width: 3.5,
-      destinationLandmarkId: "future-offers",
+      destinationLandmarkId: "dreamweaver-answers",
     },
   ],
   landmarks: [
     {
-      id: "entry-mark",
+      id: "first-test-entry",
       role: "orientation",
       position: { x: 0, z: 14 },
       reach: 2,
-      visual: "large stepped floor chevron points down the vault spine",
+      visual: "large stepped floor chevron points toward the first test",
     },
     {
-      id: "echo-record",
+      id: "first-reflection-mirror",
       role: "discovery",
       position: { x: -11, z: 1 },
       reach: 2.4,
-      visual: "three compact memory tiles; glyphs stay abstract at a distance",
+      visual: "the first reflection waits inside a distorted mirror",
     },
     {
-      id: "future-offers",
+      id: "dreamweaver-answers",
       role: "offer",
       position: { x: 0, z: 15 },
       reach: 3.2,
@@ -75,11 +75,11 @@ const definition: MiddleFloorDefinition = {
         "three distinct empty silhouettes with no roster or recruitment UI",
     },
     {
-      id: "vault-exit",
+      id: "first-test-exit",
       role: "exit",
       position: { x: 0, z: -15 },
       reach: 3,
-      visual: "bright rectangular threshold framed by stable tile columns",
+      visual: "bright threshold framed by the first test's mirror shards",
     },
   ],
   collision: [
@@ -90,7 +90,7 @@ const definition: MiddleFloorDefinition = {
     { kind: "rect", center: { x: 10, z: -12 }, width: 2, depth: 1.2 },
   ],
   encounter: {
-    id: "vault-sentinel-encounter",
+    id: "first-test",
     required: true,
     checkpoint: { x: 0, z: 7 },
     arena: {
@@ -104,7 +104,7 @@ const definition: MiddleFloorDefinition = {
     },
     enemies: [
       {
-        id: "vault-sentinel",
+        id: "wolf-claw-hybrid",
         role: "charger",
         spawn: { x: -4, z: 1 },
         health: 3,
@@ -131,10 +131,10 @@ const definition: MiddleFloorDefinition = {
   },
   effects: [
     {
-      id: "sentinel-charge-tell",
+      id: "wolf-claw-telegraph",
       trigger: "enemy-telegraph",
-      enemyId: "vault-sentinel",
-      encounterId: "vault-sentinel-encounter",
+      enemyId: "wolf-claw-hybrid",
+      encounterId: "first-test",
       visual: {
         treatment:
           "large block arrow lights across the charge lane with a two-beat edge pulse",
@@ -156,9 +156,9 @@ const definition: MiddleFloorDefinition = {
       },
     },
     {
-      id: "sentinel-outcome-mark",
+      id: "first-test-outcome",
       trigger: "encounter-resolved",
-      encounterId: "vault-sentinel-encounter",
+      encounterId: "first-test",
       visual: {
         treatment: "the encounter seal resolves to a steady exit-facing marker",
         durationMs: 900,
