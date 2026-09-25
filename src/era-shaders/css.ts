@@ -1,10 +1,15 @@
-import { resolveEraShader } from "./registry";
+import { assertEraShaderBuilt, resolveEraShader } from "./registry";
+import type {
+  EraShaderMaterial,
+  EraShaderMaterialRequest,
+  EraShaderSurface,
+} from "./types";
 
 export type EraShaderCssVariables = Record<`--omega-era-${string}`, string>;
 
-/** DOM gameplay UI consumes the same era definition as Three.js text materials. */
-export function eraShaderCssVariables(id: string): EraShaderCssVariables {
-  const shader = resolveEraShader(id);
+function cssVariables(
+  shader: ReturnType<typeof resolveEraShader>
+): EraShaderCssVariables {
   return {
     "--omega-era-cell-width": `${shader.cell[0]}px`,
     "--omega-era-cell-height": `${shader.cell[1]}px`,
@@ -18,9 +23,32 @@ export function eraShaderCssVariables(id: string): EraShaderCssVariables {
   };
 }
 
-export function applyEraShaderCss(element: HTMLElement, id: string): void {
-  const variables = eraShaderCssVariables(id);
-  for (const [name, value] of Object.entries(variables))
+/** Resolve one canonical material request for all presentation surfaces. */
+export function createEraShaderMaterial(
+  request: EraShaderMaterialRequest
+): EraShaderMaterial {
+  const shader = resolveEraShader(request.id);
+  assertEraShaderBuilt(shader);
+  return {
+    shader,
+    surface: request.surface,
+    cssVariables: cssVariables(shader),
+  };
+}
+
+export function eraShaderCssVariables(id: string): EraShaderCssVariables {
+  return cssVariables(resolveEraShader(id));
+}
+
+/** Apply the shared material request to a DOM presentation surface. */
+export function applyEraShaderCss(
+  element: HTMLElement,
+  id: string,
+  surface: EraShaderSurface = "dialogue"
+): void {
+  const material = createEraShaderMaterial({ id, surface });
+  for (const [name, value] of Object.entries(material.cssVariables))
     element.style.setProperty(name, value);
-  element.dataset.eraShader = resolveEraShader(id).id;
+  element.dataset.eraShader = material.shader.id;
+  element.dataset.eraSurface = material.surface;
 }

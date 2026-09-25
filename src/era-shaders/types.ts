@@ -18,6 +18,19 @@ export const ERA_SHADER_SURFACES: readonly EraShaderSurface[] = [
   "world-prompt",
 ] as const;
 
+/** Shared request shape for every game presentation surface. */
+export interface EraShaderMaterialRequest {
+  readonly id: string;
+  readonly surface: EraShaderSurface;
+}
+
+/** Canonical era styling prepared for DOM or Three.js text presentation. */
+export interface EraShaderMaterial {
+  readonly shader: EraShaderDefinition;
+  readonly surface: EraShaderSurface;
+  readonly cssVariables: Readonly<Record<`--omega-era-${string}`, string>>;
+}
+
 /** A reusable visual treatment. Speaker timing and personality stay in .omd files. */
 export interface EraShaderDefinition {
   readonly id: string;

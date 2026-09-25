@@ -1,4 +1,5 @@
 import { Color, DoubleSide, ShaderMaterial, type CanvasTexture } from "three";
+import { assertEraShaderBuilt } from "./registry";
 import type { EraShaderDefinition } from "./types";
 
 const ERA_TEXT_VERTEX = `attribute float aGlyph; varying vec2 vUv; varying float vGlyph;
@@ -25,6 +26,7 @@ export function createEraTextMaterial(
   atlas: CanvasTexture,
   color: string
 ): ShaderMaterial {
+  assertEraShaderBuilt(shader);
   return new ShaderMaterial({
     transparent: true,
     depthWrite: false,
@@ -49,6 +51,7 @@ export function applyEraTextMaterial(
   shader: EraShaderDefinition,
   atlas: CanvasTexture
 ): void {
+  assertEraShaderBuilt(shader);
   material.uniforms.uAtlas.value = atlas;
   material.uniforms.uScan.value = shader.effects.scan;
   material.uniforms.uDots.value = shader.effects.dots;

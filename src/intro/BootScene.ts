@@ -222,7 +222,8 @@ export class BootScene {
       .querySelectorAll<HTMLElement>(".os-choice")
       .forEach((element, index) => {
         const speaker = SPEAKERS[index + 1];
-        if (speaker) applyEraShaderCss(element, PROFILES[speaker].eraShaderId);
+        if (speaker)
+          applyEraShaderCss(element, PROFILES[speaker].eraShaderId, "choice");
       });
     this._isDebug = new URLSearchParams(location.search).has("debug");
     this._chapterTwo.init(this._root, this._isDebug);
