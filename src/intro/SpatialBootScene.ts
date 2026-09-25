@@ -480,13 +480,19 @@ export class SpatialBootScene {
   private _voiceAppearedAt: number[] = [-1, -1, -1];
   private _targets: Mesh<BoxGeometry, MeshBasicMaterial>[] = [];
   private _player: Group = new Group();
+  private _playerDisplay: Group = new Group();
   private _avatar: IntroAvatar = new IntroAvatar();
   private _omegaDisplay: IntroOmegaDisplay = new IntroOmegaDisplay();
   private _studioPresentation: DialoguePresentation | undefined;
   private _studioLetters = Object.fromEntries(
     SPEAKERS.map((id) => [
       id,
-      new GhostLetters(id, PROFILES[id].color, PROFILES[id].eraShaderId),
+      new GhostLetters(
+        id,
+        PROFILES[id].color,
+        PROFILES[id].eraShaderId,
+        id === "omega" ? "dialogue" : "choice"
+      ),
     ])
   ) as Record<SpeakerId, GhostLetters>;
   private _worldEvolution: IntroWorldEvolution = new IntroWorldEvolution();
@@ -818,7 +824,12 @@ export class SpatialBootScene {
       toneMapped: false,
     });
     this._playerOutline = new LineSegments(outlineGeometry, outlineMaterial);
-    this._player.add(this._avatar.root, this._playerOutline, this._playerCore);
+    this._playerDisplay.add(
+      this._avatar.root,
+      this._playerOutline,
+      this._playerCore
+    );
+    this._player.add(this._playerDisplay);
     const memoryPositions: readonly [number, number, number][] = [
       [-0.25, 0.25, 0.08],
       [0.25, 0.25, 0.08],
@@ -840,9 +851,10 @@ export class SpatialBootScene {
       memory.rotation.z = index % 2 === 0 ? Math.PI * 0.25 : -Math.PI * 0.25;
       memory.visible = false;
       this._playerMemories.push(memory);
-      this._player.add(memory);
+      this._playerDisplay.add(memory);
     }
     this._player.position.set(0, -2.55, 0.52);
+    this._playerDisplay.position.y = 0;
     this._root.add(this._player);
   }
 
@@ -1219,6 +1231,7 @@ export class SpatialBootScene {
     this._doorCrossed = false;
     this._physicsX = 0;
     this._player.position.set(0, -2.55, 0.52);
+    this._playerDisplay.position.y = 0;
     this.setPlayerStage(0);
     this._retunePlayer();
     this._particles.reset();
@@ -1476,7 +1489,7 @@ export class SpatialBootScene {
       const visible: boolean =
         activeCall || isWaiting || activeTravel || isThreshold;
       path.visible = visible;
-      echo.visible = visible;
+      echo.visible = visible && !isWaiting;
       this._sigils[owner].root.visible = activeTravel && !isThreshold;
       this._pathLights[owner].visible = visible;
       if (!visible) {
@@ -1498,7 +1511,11 @@ export class SpatialBootScene {
       else {
         if (!isThreshold) {
           const target: Vector3 = this._targets[owner].position;
-          this._pathGoal.set(target.x, target.y - 0.48, -2.1);
+          this._pathGoal.set(
+            target.x,
+            isWaiting ? -2.02 : target.y - 0.48,
+            isWaiting ? 0.08 : -2.1
+          );
         }
       }
       if (!isThreshold)
@@ -1641,6 +1658,10 @@ export class SpatialBootScene {
       const showLayers =
         this._choiceHistory.length > 0 || frame.phase === "waiting";
       this._blenderLayers.background.visible = showLayers;
+      const voidFloor = this._blenderLayers.background.getObjectByName(
+        "VoidFloor_MESH"
+      );
+      if (voidFloor) voidFloor.visible = frame.phase !== "waiting";
       this._blenderLayers.strands.visible =
         frame.phase === "final" ||
         frame.phase === "name" ||
@@ -1667,10 +1688,30 @@ export class SpatialBootScene {
         frame.phase === "complete"
     );
     const isWaiting: boolean = frame.phase === "waiting";
+    const isPrelude: boolean = frame.phase === "prelude";
+    const sceneEraShaderId: string = getIntroEra(frame.format).eraShaderId;
     const isChoiceTurns = frame.phase === "choices";
     const isBoot: boolean =
       frame.phase === "cursor" || frame.phase === "command";
     const isTravel: boolean = frame.phase === "travel";
+    const travelProgress: number = isTravel
+      ? Math.min(
+          1,
+          Math.max(
+            0,
+            (this._stationDepth - this._root.position.z) / QUESTION_SPACING
+          )
+        )
+      : 0;
+    const arrivalRaw: number = Math.min(
+      1,
+      Math.max(0, (travelProgress - 0.55) / 0.45)
+    );
+    const arrivalReveal: number = isPrelude
+      ? 1
+      : isTravel
+        ? arrivalRaw * arrivalRaw * (3 - 2 * arrivalRaw)
+        : 0;
     const isStory: boolean =
       frame.phase !== "cursor" &&
       frame.phase !== "command" &&
@@ -1702,6 +1743,8 @@ export class SpatialBootScene {
       isName || frame.phase === "doorway" || isCrossing,
       isReduced
     );
+    this._worldEvolution.root.scale.setScalar(isWaiting ? 0.62 : 1);
+    this._worldEvolution.root.position.z = isWaiting ? 2.1 : 0;
     this._walkPlane.visible =
       isTravel || isName || frame.phase === "doorway";
     if (this._door) {
@@ -1888,6 +1931,7 @@ export class SpatialBootScene {
         seconds,
         isReduced || isWaiting || (isSpeaking && index === 0)
       );
+      resting.y -= arrivalReveal * 1.15;
       const finalProgress: number =
         frame.phase === "final"
           ? Math.min(Math.max((frame.phaseElapsedMs ?? 0) / 9200, 0), 1)
@@ -2006,7 +2050,7 @@ export class SpatialBootScene {
           ? -this._width * 0.14
           : isName
             ? -this._width * 0.22
-            : isWaiting
+            : isWaiting || isPrelude
               ? -this._width * 0.28
               : left + this._width * 0.14 * this._questionRecede,
       frame.phase === "doorway" || frame.phase === "complete"
@@ -2017,18 +2061,20 @@ export class SpatialBootScene {
             ? 2.55
             : responseAnchor
               ? responseAnchor.y - 0.96
-              : isWaiting
-                ? -0.8
-                : isChoiceTurns
-                  ? -0.05 + this._questionRecede * 0.22
-                  : -0.8 + Math.min(Math.max((seconds - 13) / 16, 0), 1) * 1.45,
+              : isPrelude
+                ? -0.2
+                : isWaiting
+                  ? -1.03
+                  : isChoiceTurns
+                    ? -0.05 + this._questionRecede * 0.22
+                    : -0.8 + Math.min(Math.max((seconds - 13) / 16, 0), 1) * 1.45,
       responseAnchor
         ? responseAnchor.z + 0.14
         : frame.phase === "doorway" || frame.phase === "complete"
           ? 2.2
           : isName
             ? 1.85
-            : isWaiting
+            : isWaiting || isPrelude
               ? 0.35
               : 0.25 - this._questionRecede * 1.2
     );
@@ -2048,7 +2094,7 @@ export class SpatialBootScene {
       question.rotation.set(0, 0, 0);
     if (responseOwner === 1) question.rotation.set(-0.08, -0.14, 0.025);
     if (responseOwner === 2) question.rotation.set(-0.16, 0.18, -0.035);
-    if (!isReduced && !isSettled && responseOwner !== 0) {
+    if (!isReduced && !isSettled && !isPrelude && responseOwner !== 0) {
       question.position.x += Math.sin(seconds * 0.16) * 0.3;
       question.position.z +=
         Math.sin(seconds * 0.25) * BOOT_EFFECTS.depthDrift * 2.5;
@@ -2061,13 +2107,19 @@ export class SpatialBootScene {
         );
     }
     this._omegaDisplay.update(
-      frame,
+      isPrelude && !frame.question ? { ...frame, question: " " } : frame,
       question.position,
       this._width,
       this._questionRecede,
       seconds,
       isReduced
     );
+    if (isWaiting || isPrelude) {
+      this._omegaDisplay.root.position.x = 0;
+      this._omegaDisplay.root.position.y = question.position.y - 0.08;
+      this._omegaDisplay.root.scale.set(this._width * 0.68, 1.12, 1);
+      this._omegaDisplay.root.rotation.set(0, 0, 0);
+    }
     for (const letters of Object.values(this._studioLetters))
       letters.root.visible = false;
     if (this._studioPresentation && !isThreshold && frame.question) {
@@ -2082,10 +2134,9 @@ export class SpatialBootScene {
         (1 - this._questionRecede * 0.18);
       letters.root.visible = true;
       letters.root.position.copy(question.position);
-      const speakerEraShader = PROFILES[speaker].eraShaderId;
-      letters.setEra(speakerEraShader);
+      letters.setEra(sceneEraShaderId);
       letters.root.position.x +=
-        12 * resolveEraShader(speakerEraShader).tracking * glyphScale;
+        12 * resolveEraShader(sceneEraShaderId).tracking * glyphScale;
       letters.root.position.y -= 0.5 * glyphScale;
       letters.root.scale.setScalar(glyphScale);
       letters.root.rotation.set(0, 0, 0);
@@ -2100,7 +2151,7 @@ export class SpatialBootScene {
       for (let owner = 0; owner < 3; owner++) {
         const speaker = SPEAKERS[owner + 1];
         const letters = this._studioLetters[speaker];
-        const eraShaderId = PROFILES[speaker].eraShaderId;
+        const eraShaderId = sceneEraShaderId;
         const glyphScale =
           columnWidth / (18 * resolveEraShader(eraShaderId).tracking);
         const text = frame.choiceLines[owner] ?? "";
@@ -2397,6 +2448,16 @@ export class SpatialBootScene {
         (isReduced ? 1 : 1 + Math.sin(seconds * 4.2) * 0.045) *
         waitingPulse *
         (isCrossing ? 1 - crossingProgress * 0.72 : 1);
+      const displayY: number = isPrelude
+        ? 1.05
+        : isTravel
+          ? arrivalReveal * 1.05
+          : isWaiting || frame.phase === "question"
+            ? -0.36
+            : 0;
+      this._playerDisplay.position.y +=
+        (displayY - this._playerDisplay.position.y) *
+        (isReduced ? 1 : 1 - Math.exp(-delta * 9));
       this._player.scale.setScalar(
         pulse *
           (1 - this._questionRecede * (this._playerStage > 0 ? 0.42 : 0))
