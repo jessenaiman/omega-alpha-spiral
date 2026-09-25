@@ -512,7 +512,11 @@ async function steerJourneyTo(
   try {
     for (let tick = 0; tick < 700; tick += 1) {
       const state = (await readChapter(page)).journey;
-      if (state.kind !== expected.kind || state.floor !== expected.floor)
+      if (
+        state.kind !== expected.kind ||
+        state.floor !== expected.floor ||
+        (state.kind === "late" && state.phase === "complete")
+      )
         return;
       const dx = target.x - state.player.x;
       const dz = target.z - state.player.z;
