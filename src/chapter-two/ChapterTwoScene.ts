@@ -30,7 +30,11 @@ import { FLOOR_7_TOWN } from "./floors/late-floor-7-town";
 import { FLOOR_8_FINALE } from "./floors/late-floor-8-finale";
 import { ECHO_ROOMS } from "./rooms";
 import { createRng } from "../core/random";
-import { applyEraShaderCss } from "../era-shaders";
+import {
+  applyEraShaderCss,
+  assertEraShaderBuilt,
+  resolveEraShader,
+} from "../era-shaders";
 import "./styles.css";
 
 const FIELD_SIZE: number = 48;
@@ -980,7 +984,8 @@ export class ChapterTwoScene {
         world.activeRoom.objects[0].x,
         5.8,
         world.activeRoom.objects[0].z,
-        7
+        7,
+        world.activeRoom.eraShaderId
       );
       this._scene.add(this._questionLabel);
     }
@@ -1223,7 +1228,8 @@ export class ChapterTwoScene {
     x: number,
     y: number,
     z: number,
-    width: number
+    width: number,
+    eraShaderId?: string
   ): Sprite {
     const canvas: HTMLCanvasElement = document.createElement("canvas");
     canvas.width = 640;
@@ -1234,11 +1240,21 @@ export class ChapterTwoScene {
     ctx.fillRect(0, 0, 640, 150);
     ctx.strokeStyle = "#9aabbc";
     ctx.strokeRect(2, 2, 636, 146);
+    const eraShader = eraShaderId ? resolveEraShader(eraShaderId) : null;
+    if (eraShader) assertEraShaderBuilt(eraShader);
     ctx.fillStyle = "#eee8db";
-    ctx.font = "28px monospace";
+    ctx.font = `${eraShader && eraShader.weight >= 0.65 ? "bold " : ""}28px monospace`;
+    ctx.shadowColor = "#eee8db";
+    ctx.shadowBlur = (eraShader?.effects.halo ?? 0) * 12;
     ctx.textAlign = "center";
+    if (eraShader && "letterSpacing" in ctx)
+      (
+        ctx as CanvasRenderingContext2D & { letterSpacing: string }
+      ).letterSpacing = `${eraShader.tracking}em`;
+    const displayText =
+      eraShader?.casePolicy === "upper" ? text.toUpperCase() : text;
     const lines: string[] = [""];
-    for (const word of text.split(" ")) {
+    for (const word of displayText.split(" ")) {
       const last: number = lines.length - 1;
       if ((lines[last] + word).length > 32) lines.push(word + " ");
       else lines[last] += word + " ";
@@ -1246,12 +1262,25 @@ export class ChapterTwoScene {
     lines.forEach((line: string, index: number): void =>
       ctx.fillText(line.trim(), 320, 57 + index * 35)
     );
+    ctx.shadowBlur = 0;
+    if (eraShader) {
+      ctx.fillStyle = `rgba(238,232,219,${eraShader.effects.scan * 0.16})`;
+      for (let y = eraShader.cell[1]; y < canvas.height; y += eraShader.cell[1])
+        ctx.fillRect(0, y, canvas.width, 1);
+      ctx.fillStyle = `rgba(238,232,219,${eraShader.effects.dots * 0.14})`;
+      for (let y = eraShader.cell[1] / 2; y < canvas.height; y += eraShader.cell[1])
+        for (let x = eraShader.cell[0] / 2; x < canvas.width; x += eraShader.cell[0])
+          ctx.fillRect(x, y, 1, 1);
+    }
     const texture: CanvasTexture = new CanvasTexture(canvas);
     texture.colorSpace = SRGBColorSpace;
     this._textures.push(texture);
-    const label: Sprite = new Sprite(
-      new SpriteMaterial({ map: texture, depthTest: false })
-    );
+    const material = new SpriteMaterial({ map: texture, depthTest: false });
+    if (eraShader) {
+      material.userData.eraShaderId = eraShader.id;
+      material.userData.eraSurface = "world-prompt";
+    }
+    const label: Sprite = new Sprite(material);
     label.position.set(x, y, z);
     label.scale.set(width, (width * 150) / 640, 1);
     return label;
