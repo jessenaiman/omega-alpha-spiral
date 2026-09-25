@@ -69,3 +69,7 @@ System: Can I tell you a secret?\n[GLITCH]\n[A sequence of symbols burns into th
 
 [completion]
 System: \n[SYSTEM: Dreamweaver threads following - 03]\n\nGood.\nThen that is the name I will wear.\nUntil you unmake it.\n\n[GLITCH]\n\nWelcome to the game that chose you.\nI hope you survive what comes next.\n\n[TERMINAL SHUTS DOWN]\n[STAGE 1 COMPLETE]
+[input player-name prompt="What is your name?" hint="Type a name" state=player.name max_length=32]
+[cue doorway text="I had a name once,\nwas it mine?" hint="Walk forward" await=doorway-entered]
+[wait 2800]
+[transition nethack-floor-01]

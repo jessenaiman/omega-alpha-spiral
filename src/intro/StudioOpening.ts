@@ -4,6 +4,7 @@ import {
   DialogueTimeline,
   dialogueDocumentFromOml,
   type DialogueDocument,
+  type DialogueEvent,
 } from "../dialogue/timeline";
 import { WritingPlayback, resolveWritingText } from "../dialogue/writing";
 import { parseOml } from "../core/oml";
@@ -70,16 +71,23 @@ export class StudioOpening {
       if (
         event?.type === "line" ||
         event?.type === "question" ||
-        event?.type === "choice"
+        event?.type === "choice" ||
+        event?.type === "input" ||
+        event?.type === "cue"
       ) {
         this.speaker =
-          event.type === "question" ? "omega" : (event.speaker as SpeakerId);
+          event.type === "question" ||
+          event.type === "input" ||
+          event.type === "cue"
+            ? "omega"
+            : (event.speaker as SpeakerId);
+        const text = event.type === "input" ? event.prompt : event.text;
         this.writing.restart(
           {
             ...PROFILES[this.speaker],
             ...document.presentation?.voices[this.speaker],
           },
-          event.text
+          text
         );
         this.text = "";
       }
@@ -121,7 +129,9 @@ export class StudioOpening {
     if (
       event?.type === "line" ||
       event?.type === "question" ||
-      event?.type === "choice"
+      event?.type === "choice" ||
+      event?.type === "input" ||
+      event?.type === "cue"
     ) {
       const frame = this.writing.advance(reduced ? 1e9 : ms);
       this.text = frame.text;
@@ -131,18 +141,28 @@ export class StudioOpening {
       finished = frame.done;
     }
     this.timeline.tick(ms, finished);
+    const activeEvent = this.timeline.current;
     return {
       text: this.text,
       speaker: this.speaker,
       question: this.questionText,
       choiceLines: [...this.revealed],
       presentingChoices: this.speaker !== "omega",
-      awaiting: this.timeline.current?.type === "continue",
-      done: !this.timeline.current,
+      awaiting: activeEvent?.type === "continue",
+      event:
+        activeEvent ?? (event?.type === "transition" ? event : undefined),
+      eventFinished: activeEvent === event && finished,
+      done: !activeEvent,
     };
   }
   proceed() {
     this.timeline.proceed();
+  }
+  resolveInput(inputId: string): boolean {
+    return this.timeline.resolveInput(inputId);
+  }
+  resolveCue(awaitedEvent: string): boolean {
+    return this.timeline.resolveCue(awaitedEvent);
   }
   startCompletion() {
     this.started = true;

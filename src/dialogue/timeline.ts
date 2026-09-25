@@ -35,6 +35,23 @@ export type DialogueEvent =
     }
   | { id: string; type: "wait"; durationMs: number }
   | { id: string; type: "continue"; label: string }
+  | {
+      id: string;
+      type: "input";
+      inputId: string;
+      prompt: string;
+      hint: string;
+      statePath: string;
+      maxLength: number;
+    }
+  | {
+      id: string;
+      type: "cue";
+      cueId: string;
+      text: string;
+      hint: string;
+      await: string;
+    }
   | ({ id: string; type: "set-state" } & OmlStateEffect)
   | { id: string; type: "emit"; name: string }
   | { id: string; type: "transition"; level: string };
@@ -63,6 +80,25 @@ const eventForTimeline = (
     return { id, type: "wait", durationMs: event.durationMs };
   if (event.type === "continue")
     return { id, type: "continue", label: event.label };
+  if (event.type === "input")
+    return {
+      id,
+      type: "input",
+      inputId: event.id,
+      prompt: event.prompt,
+      hint: event.hint,
+      statePath: event.statePath,
+      maxLength: event.maxLength,
+    };
+  if (event.type === "cue")
+    return {
+      id,
+      type: "cue",
+      cueId: event.id,
+      text: event.text,
+      hint: event.hint,
+      await: event.await,
+    };
   if (event.type === "show-question")
     return { id, type: "question", text: level.question.text ?? "" };
   if (event.type === "show-choice") {
@@ -193,6 +229,27 @@ export function validateDialogueDocument(value: unknown): DialogueDocument {
     } else if (unknownEvent.type === "continue") {
       if (typeof unknownEvent.label !== "string" || !unknownEvent.label)
         throw new Error(`Continue event ${unknownEvent.id} needs a label.`);
+    } else if (unknownEvent.type === "input") {
+      if (
+        typeof unknownEvent.inputId !== "string" ||
+        typeof unknownEvent.prompt !== "string" ||
+        typeof unknownEvent.hint !== "string" ||
+        typeof unknownEvent.statePath !== "string" ||
+        !unknownEvent.statePath ||
+        typeof unknownEvent.maxLength !== "number" ||
+        !Number.isInteger(unknownEvent.maxLength) ||
+        unknownEvent.maxLength < 1
+      )
+        throw new Error(`Input event ${unknownEvent.id} is incomplete.`);
+    } else if (unknownEvent.type === "cue") {
+      if (
+        typeof unknownEvent.cueId !== "string" ||
+        typeof unknownEvent.text !== "string" ||
+        typeof unknownEvent.hint !== "string" ||
+        typeof unknownEvent.await !== "string" ||
+        !unknownEvent.await
+      )
+        throw new Error(`Cue event ${unknownEvent.id} is incomplete.`);
     } else throw new Error(`Event ${unknownEvent.id} has an unknown type.`);
   }
   if (value.completion !== undefined && !Array.isArray(value.completion))
@@ -256,5 +313,19 @@ export class DialogueTimeline {
 
   proceed() {
     if (this.current?.type === "continue") this.moveTo(this.index + 1);
+  }
+
+  resolveInput(inputId: string): boolean {
+    if (this.current?.type !== "input" || this.current.inputId !== inputId)
+      return false;
+    this.moveTo(this.index + 1);
+    return true;
+  }
+
+  resolveCue(awaitedEvent: string): boolean {
+    if (this.current?.type !== "cue" || this.current.await !== awaitedEvent)
+      return false;
+    this.moveTo(this.index + 1);
+    return true;
   }
 }

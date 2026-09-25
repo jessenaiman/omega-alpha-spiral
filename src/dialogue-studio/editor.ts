@@ -103,6 +103,10 @@ export function createDialogueEditor(host: DialogueEditorHost) {
                 ? `${event.durationMs} ms`
                 : event.type === "continue"
                   ? event.label
+                  : event.type === "input"
+                    ? `${event.prompt} → ${event.statePath}`
+                    : event.type === "cue"
+                      ? `${event.text} → ${event.await}`
                   : event.type === "set-state"
                     ? `${event.operation} ${event.path} = ${event.value}`
                     : event.type === "emit"
@@ -124,7 +128,16 @@ export function createDialogueEditor(host: DialogueEditorHost) {
 
   function enter(event: DialogueEvent | undefined) {
     selectedIndex = event ? activeOffset + timeline.index : -1;
-    proceed.disabled = event?.type !== "continue";
+    proceed.disabled =
+      event?.type !== "continue" &&
+      event?.type !== "input" &&
+      event?.type !== "cue";
+    proceed.textContent =
+      event?.type === "input"
+        ? "Submit sample input"
+        : event?.type === "cue"
+          ? "Complete cue"
+          : "Continue";
     el("script-event-details").textContent = event
       ? JSON.stringify(event, null, 2) ?? ""
       : "";
@@ -140,11 +153,17 @@ export function createDialogueEditor(host: DialogueEditorHost) {
           ? `Waiting ${event.durationMs / 1000}s · ${event.id}`
           : event.type === "continue"
             ? event.label
+            : event.type === "input"
+              ? `Input · ${event.inputId}`
+              : event.type === "cue"
+                ? `Cue · ${event.cueId}`
             : `${event.type} · ${event.id}`;
     outline();
     if (event?.type === "line" || event?.type === "choice")
       host.line(event.speaker, event.text);
     else if (event?.type === "question") host.line("omega", event.text);
+    else if (event?.type === "input") host.line("omega", event.prompt);
+    else if (event?.type === "cue") host.line("omega", event.text);
   }
 
   function start(index = 0, completion = false) {
@@ -178,7 +197,12 @@ export function createDialogueEditor(host: DialogueEditorHost) {
   completionButton.disabled = !document.completion?.length;
   el("script-play").onclick = () => start();
   completionButton.onclick = () => start(0, true);
-  proceed.onclick = () => timeline.proceed();
+  proceed.onclick = () => {
+    const event = timeline.current;
+    if (event?.type === "continue") timeline.proceed();
+    else if (event?.type === "input") timeline.resolveInput(event.inputId);
+    else if (event?.type === "cue") timeline.resolveCue(event.await);
+  };
   el("script-samples").onclick = () => {
     active = false;
     panel.hidden = true;
