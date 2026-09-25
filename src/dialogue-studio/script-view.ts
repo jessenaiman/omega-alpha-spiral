@@ -36,6 +36,38 @@ function highlight(text: string, tags: Oml["tags"]): string {
   return out + escape(text.slice(cursor));
 }
 
+const DIRECTIVE =
+  /^\s*(\[(?:wait|timer_delay|delay|continue|input|cue|show|set|increment|emit|transition)\b[^\]]*\])\s*$/i;
+
+function highlightedLine(line: string, tags: Oml["tags"]): string {
+  const section = /^\s*\[(tag|voice|scene|question|choice|script|completion)(?:\s+([^\]]+))?\]\s*$/i.exec(
+    line
+  );
+  if (section) {
+    const owner = section[1].toLowerCase() === "choice" ? section[2] : undefined;
+    const accent = owner
+      ? PROFILES[owner.toLowerCase() as keyof typeof PROFILES]?.color
+      : undefined;
+    return `<span class="tok-section"${accent ? ` style="--section-accent:${accent}"` : ""}>${escape(line)}</span>`;
+  }
+  const directive = DIRECTIVE.exec(line);
+  if (directive)
+    return `<span class="tok-directive">${escape(directive[1])}</span>`;
+  const assignment = /^\s*([a-z_]+)(\s*=\s*)(.*)$/i.exec(line);
+  if (assignment)
+    return `<span class="tok-key">${escape(assignment[1])}</span>${escape(assignment[2])}<span class="tok-value">${highlight(assignment[3], tags)}</span>`;
+  const spoken = /^([A-Za-z][A-Za-z ]{0,20}?)(:)/.exec(line);
+  if (spoken) {
+    const key = spoken[1].trim().toLowerCase() as keyof typeof PROFILES;
+    const accent = PROFILES[key]?.color ?? "#9fb4c2";
+    const head = line.slice(0, spoken[1].length);
+    return `<span class="script-speaker" style="--accent:${accent}">${escape(
+      head
+    )}</span>${highlight(line.slice(head.length), tags)}`;
+  }
+  return highlight(line, tags);
+}
+
 export function createScriptEditor(
   root: HTMLElement,
   onChange: (text: string) => void
@@ -60,25 +92,7 @@ export function createScriptEditor(
     mirror.innerHTML =
       input.value
         .split("\n")
-        .map((line) => {
-          const head = /^\s*\[(tag|voice|script)\b/.exec(line);
-          if (head) return `<span class="tok-section">${escape(line)}</span>`;
-          const assignment = /^\s*(\w+)\s*=/.exec(line);
-          if (assignment)
-            return `<span class="tok-key">${escape(
-              line.slice(0, assignment[0].length - 1)
-            )}</span>${escape(line.slice(assignment[0].length - 1))}`;
-          const spoken = /^([A-Za-z][A-Za-z ]{0,20}?)(:)/.exec(line);
-          if (spoken) {
-            const key = spoken[1].trim().toLowerCase() as keyof typeof PROFILES;
-            const accent = PROFILES[key]?.color ?? "#9fb4c2";
-            const head = line.slice(0, spoken[1].length);
-            return `<span class="script-speaker" style="--accent:${accent}">${escape(
-              head
-            )}</span>${highlight(line.slice(head.length), tags)}`;
-          }
-          return highlight(line, tags);
-        })
+        .map((line) => highlightedLine(line, tags))
         .join("\n") + "\n";
   };
 

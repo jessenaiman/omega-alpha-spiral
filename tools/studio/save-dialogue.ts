@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import Ajv from "ajv";
 import type { Plugin } from "vite";
 import { parseOmd, parseOml, speakerId } from "../../src/core/oml";
+import { assertEraShaderBuilt, resolveEraShader } from "../../src/era-shaders";
 
 /** Local-only authoring endpoint. The game imports dialogue files, never this plugin. */
 export function studioDialogueSave(): Plugin {
@@ -19,13 +20,23 @@ export function studioDialogueSave(): Plugin {
       const script = parseOml(text);
       if (!/^\s*\[script\]\s*$/m.test(text) || !script.events.length)
         throw new Error("Scene needs a [script] section with dialogue events.");
-      if (name.toLowerCase() === "scene1.oml")
-        for (const id of ["omega", "light", "shadow", "ambition"]) {
-          const file = script.voices.find((voice) => speakerId(voice.name) === id)?.file;
-          if (!file || !safeName(file)?.toLowerCase().endsWith(".omd"))
-            throw new Error(`Scene 1 needs a declared .omd file for ${id}.`);
-          await readFile(join(dir, file), "utf8");
-        }
+      const schemaText = await readFile(join(dir, "dialogue.oms"), "utf8");
+      const check = ajv.compile(JSON.parse(schemaText));
+      if (!check(script))
+        throw new Error(
+          `${name} does not match dialogue.oms: ${ajv.errorsText(check.errors)}`
+        );
+      assertEraShaderBuilt(resolveEraShader(script.scene.era_shader ?? ""));
+      for (const voice of script.voices) {
+        const file = safeName(voice.file ?? "");
+        if (!file?.toLowerCase().endsWith(".omd"))
+          throw new Error(`${voice.name} needs a declared .omd file.`);
+        const design = parseOmd(await readFile(join(dir, file), "utf8"));
+        if (speakerId(voice.name) !== speakerId(design.id ?? ""))
+          throw new Error(`${file} does not define ${voice.name}.`);
+      }
+      const next = script.scene.next;
+      if (next) await readFile(join(dir, `${next}.oml`), "utf8");
       return;
     }
     if (kind === ".omd") {
@@ -40,10 +51,19 @@ export function studioDialogueSave(): Plugin {
     }
     const candidate = ajv.compile(JSON.parse(text));
     for (const file of await readdir(dir)) {
-      if (!file.endsWith(".omd")) continue;
-      const design = parseOmd(await readFile(join(dir, file), "utf8"));
-      if (design.schema === name && !candidate(design))
-        throw new Error(`${file} does not match ${name}: ${ajv.errorsText(candidate.errors)}`);
+      if (file.endsWith(".omd")) {
+        const design = parseOmd(await readFile(join(dir, file), "utf8"));
+        if (design.schema === name && !candidate(design))
+          throw new Error(
+            `${file} does not match ${name}: ${ajv.errorsText(candidate.errors)}`
+          );
+      } else if (file.endsWith(".oml")) {
+        const level = parseOml(await readFile(join(dir, file), "utf8"));
+        if (!candidate(level))
+          throw new Error(
+            `${file} does not match ${name}: ${ajv.errorsText(candidate.errors)}`
+          );
+      }
     }
   }
 
