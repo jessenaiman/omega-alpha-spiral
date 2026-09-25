@@ -301,11 +301,17 @@ export class ChapterTwoScene {
               blocks: this._world.activeRoom.blocks ?? [],
               paused: this._paused,
               journey: townWake
-                ? { kind: "town-wake", status: townWake.status }
-                : middle && middleStatus
                 ? {
-                    kind: "middle",
-                    floor: middleStatus.floor,
+                    kind: "town-wake",
+                    floor: 10,
+                    phase: townWake.status.complete ? "complete" : "awakening",
+                    player: { x: 0, z: 0 },
+                    status: townWake.status,
+                  }
+                : middle && middleStatus
+                  ? {
+                      kind: "middle",
+                      floor: middleStatus.overallFloor,
                     phase: middleStatus.encounterPhase,
                     player: middleStatus.playerPosition,
                     status: middleStatus,
