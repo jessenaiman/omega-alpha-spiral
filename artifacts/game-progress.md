@@ -4,12 +4,12 @@ Updated: 2026-09-24
 
 ## Current task — Stage 1 four-floor redesign
 
-- Branch: `codex/feature-stage-one-redesign` in the isolated `stage-one-redesign` worktree. Source checkpoints through `505c2a9`; current evidence run `stage1-visual-20260924-c`.
+- Branch: `codex/feature-stage-one-redesign` in the isolated `stage-one-redesign` worktree. Source checkpoints through `546d70a`; current evidence run `stage1-visual-20260924-d`.
 - ✅ Gameplay consumes the four authored Ghost OML files for question, choice consequences, transitions, and era IDs. The shared era shader registry supplies the four 3D glyph treatments. Earlier glyph samples remain composited at later questions.
 - ✅ The selected Dreamweaver's `.omd` color drives the intro path and the player's accumulating imprint, the progress cue, and the Chapter Two hero handoff.
-- ✅ The build passed at `505c2a9`; all four current question captures opened and rendered nonblank without reported browser errors. Real input reached the second question after 104 unpaused travel samples; largest sampled position step was 0.640 units.
-- ❌ Visual review still rejects bright linework across question and choices, player overlap at later questions, weak era differentiation, and an almost empty Question 2 arrival frame. The three path texts now fit inside the viewport.
-- Next: correct the four visible failures against the approved direction, then recapture. Keep authored dialogue and Dialogue Studio separate. No later-stage content is in scope here.
+- ✅ All four current question captures opened and rendered nonblank without reported browser errors. Real input reached the second question after 87 unpaused travel samples; largest sampled position step was 0.628 units. The Question 2 prelude now keeps the player on-screen and shows the next terminal destination.
+- ❌ Visual review still rejects terminal border crossings through choice text, player overlap with Shadow on Question 4, and weak cumulative era differentiation. The three path texts fit inside the viewport.
+- Next: correct the three remaining visual failures against the approved direction, then recapture. Keep authored dialogue and Dialogue Studio separate. No later-stage content is in scope here.
 
 ## Current task — OML dialogue ownership and reusable era shaders
 
