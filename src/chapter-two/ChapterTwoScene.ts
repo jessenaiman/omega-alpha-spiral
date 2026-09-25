@@ -291,6 +291,8 @@ export class ChapterTwoScene {
               playerColor: this._heroColor,
               guide: this._world.guide,
               choices: this._world.choices.map((choice) => ({ ...choice })),
+              gameState: { ...this._world.state },
+              emittedEvents: [...this._world.emittedEvents],
               variationSeed: this._variationSeed,
               objects: this._world.activeRoom.objects.map(({ kind, x, z }) => ({
                 kind,

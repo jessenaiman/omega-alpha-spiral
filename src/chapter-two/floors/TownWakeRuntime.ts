@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import type { OmlEvent } from "../../core/oml";
+import type { OmlEvent, OmlStateValue } from "../../core/oml";
 import { CHAPTER_ZERO_LEVELS_BY_ID } from "../../dialogue/chapter-zero-vite";
 
 const scene = CHAPTER_ZERO_LEVELS_BY_ID.get("amnesia-town");
@@ -11,6 +11,8 @@ export interface TownWakeStatus {
   readonly title: string;
   readonly text: string;
   readonly complete: boolean;
+  readonly gameState: Readonly<Record<string, OmlStateValue>>;
+  readonly emittedEvents: readonly string[];
 }
 
 /** The authored stopping scene: a quiet bedroom in town, with no party present. */
@@ -20,6 +22,8 @@ export class TownWakeRuntime {
   private readonly _materials: THREE.Material[] = [];
   private readonly _events: readonly OmlEvent[] = scene.events;
   private readonly _lines: string[] = [];
+  private readonly _state: Record<string, OmlStateValue> = {};
+  private readonly _emittedEvents: string[] = [];
   private _eventIndex = 0;
   private _waitRemainingMs = 0;
   private _disposed = false;
@@ -59,6 +63,8 @@ export class TownWakeRuntime {
       title: scene.scene.title ?? "Amnesia: Classic Town",
       text: this._lines.join("\n\n"),
       complete: this._eventIndex >= this._events.length,
+      gameState: { ...this._state },
+      emittedEvents: [...this._emittedEvents],
     };
   }
 
@@ -75,6 +81,8 @@ export class TownWakeRuntime {
       const event = this._events[this._eventIndex++];
       if (event.type === "line") this._lines.push(event.text);
       else if (event.type === "wait") this._waitRemainingMs = event.durationMs;
+      else if (event.type === "set-state") this._applyEffect(event);
+      else if (event.type === "emit") this._emittedEvents.push(event.name);
       if (remaining <= 0 && event.type === "wait") return;
     }
   }
@@ -85,6 +93,21 @@ export class TownWakeRuntime {
     for (const geometry of this._geometries) geometry.dispose();
     for (const material of this._materials) material.dispose();
     this.group.clear();
+  }
+
+  private _applyEffect(effect: {
+    operation: "set" | "increment";
+    path: string;
+    value: OmlStateValue;
+  }): void {
+    if (effect.operation === "set") {
+      this._state[effect.path] = effect.value;
+      return;
+    }
+    const current = this._state[effect.path];
+    const increment = typeof effect.value === "number" ? effect.value : 0;
+    this._state[effect.path] =
+      (typeof current === "number" ? current : 0) + increment;
   }
 
   private _material(

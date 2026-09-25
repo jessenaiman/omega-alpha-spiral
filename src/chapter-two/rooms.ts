@@ -3,6 +3,7 @@ import { createFloor3AmbitionLayout } from "./floors/early-ambition";
 import type { EarlyFloorLayout, FloorPoint } from "./floors/early-layout";
 import { createRng } from "../core/random";
 import { CHAPTER_ZERO_LEVELS_BY_ID } from "../dialogue/chapter-zero-vite";
+import type { OmlStateEffect } from "../core/oml";
 
 export type ObjectKind = "door" | "monster" | "chest";
 export type Guide = "Light" | "Shadow" | "Ambition";
@@ -12,6 +13,9 @@ export interface RoomObject {
   z: number;
   alignment: Guide;
   text: string;
+  effects: readonly OmlStateEffect[];
+  emit: string;
+  transition: string;
 }
 type RoomObjectPlacement = Pick<RoomObject, "kind" | "x" | "z">;
 export interface RoomBlock {
@@ -58,6 +62,9 @@ function applyAuthoredDialogue(room: AuthoredRoomGeometry): EchoRoom {
         ...object,
         alignment: guideFromOwner(choice.owner),
         text: choice.text,
+        effects: choice.effects.map((effect) => ({ ...effect })),
+        emit: choice.emit ?? "",
+        transition: choice.transition ?? "",
       };
     }),
   };

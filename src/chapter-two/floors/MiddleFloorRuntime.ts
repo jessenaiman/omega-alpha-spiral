@@ -64,6 +64,8 @@ export interface MiddleFloorRuntimeStatus {
   readonly selectedAnswer: DreamweaverGuide | null;
   readonly hitEnabled: boolean;
   readonly weaponEnabled: boolean;
+  readonly gameState: Readonly<Record<string, OmlStateValue>>;
+  readonly emittedEvents: readonly string[];
   readonly transitionTo: MiddleFloorTransition | null;
 }
 
@@ -148,6 +150,8 @@ export class MiddleFloorRuntime {
   private readonly _dreamweaverAnswers: Partial<
     Record<MiddleFloorNumber, DreamweaverGuide>
   > = {};
+  private readonly _state: Record<string, OmlStateValue> = {};
+  private readonly _emittedEvents: string[] = [];
   private _audioContext: AudioContext | null = null;
 
   public constructor(seed: number = 0) {
@@ -251,6 +255,8 @@ export class MiddleFloorRuntime {
       selectedAnswer,
       hitEnabled,
       weaponEnabled,
+      gameState: { ...this._state },
+      emittedEvents: [...this._emittedEvents],
       transitionTo: this._transitionSignal,
     };
   }
@@ -386,9 +392,26 @@ export class MiddleFloorRuntime {
     if (!offer || !DREAMWEAVERS.includes(guide)) return false;
     if (distanceBetween(this.playerPosition, offer.position) > offer.reach)
       return false;
-    authoredChoice(authoredLevel(this._layout!), guide);
+    const choice = authoredChoice(authoredLevel(this._layout!), guide);
     this._dreamweaverAnswers[this._layout!.floor] = guide;
+    for (const effect of choice.effects) this._applyEffect(effect);
+    if (choice.emit) this._emittedEvents.push(choice.emit);
     return true;
+  }
+
+  private _applyEffect(effect: {
+    operation: "set" | "increment";
+    path: string;
+    value: OmlStateValue;
+  }): void {
+    if (effect.operation === "set") {
+      this._state[effect.path] = effect.value;
+      return;
+    }
+    const current = this._state[effect.path];
+    const increment = typeof effect.value === "number" ? effect.value : 0;
+    this._state[effect.path] =
+      (typeof current === "number" ? current : 0) + increment;
   }
 
   /** Must be called from a user gesture before the first audio cue is scheduled. */
