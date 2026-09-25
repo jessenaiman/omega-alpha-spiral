@@ -32,16 +32,19 @@
     "town:gathered-dw-light",
     "town:gathered-dw-shadow",
     "town:gathered-dw-ambition",
-    "town:ready-to-choose-after-gathering"
+    "town:ready-to-choose-after-gathering",
+    "town:route-alleys-selected",
+    "floor-7:exit-crossed",
+    "floor-8:stable-core-approach-entry"
   ],
-  "framesAdvanced": 19450,
+  "framesAdvanced": 15818,
   "scoreBefore": 0,
   "scoreAfter": 7,
   "complete": false,
-  "distanceTravelled": 1511.09,
+  "distanceTravelled": 1214.55,
   "stepOfFirstScore": 0,
   "softlockWindows": 0,
-  "physicsSteps": 839,
+  "physicsSteps": 919,
   "failureAvailable": false,
   "retryVerified": true,
   "chapterChoices": 3,
@@ -54,7 +57,7 @@
       },
       "chosen": "door",
       "outcome": null,
-      "distance": 24.28740000000008
+      "distance": 20.555400000000024
     },
     {
       "roomIndex": 1,
@@ -64,7 +67,7 @@
       },
       "chosen": "monster",
       "outcome": "fallen",
-      "distance": 56.311200000000596
+      "distance": 50.18340000000039
     },
     {
       "roomIndex": 2,
@@ -74,7 +77,7 @@
       },
       "chosen": "chest",
       "outcome": null,
-      "distance": 51.61380000000152
+      "distance": 53.0430000000017
     }
   ],
   "consoleErrors": [],
