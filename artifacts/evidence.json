@@ -1,26 +1,26 @@
 {
   "version": 1,
-  "runId": "stage1-visual-20260924-e",
+  "runId": "stage1-visual-20260924-f",
   "captures": [
     {
       "mode": "desktop",
       "state": "question-1",
-      "report": "artifacts/stage1-visual-20260924-e/desktop-question-1.json"
+      "report": "artifacts/stage1-visual-20260924-f/desktop-question-1.json"
     },
     {
       "mode": "desktop",
       "state": "question-2",
-      "report": "artifacts/stage1-visual-20260924-e/desktop-question-2.json"
+      "report": "artifacts/stage1-visual-20260924-f/desktop-question-2.json"
     },
     {
       "mode": "desktop",
       "state": "question-3",
-      "report": "artifacts/stage1-visual-20260924-e/desktop-question-3.json"
+      "report": "artifacts/stage1-visual-20260924-f/desktop-question-3.json"
     },
     {
       "mode": "desktop",
       "state": "question-4",
-      "report": "artifacts/stage1-visual-20260924-e/desktop-question-4.json"
+      "report": "artifacts/stage1-visual-20260924-f/desktop-question-4.json"
     }
   ],
   "artifacts": [

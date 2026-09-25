@@ -1,0 +1,154 @@
+{
+  "url": "http://127.0.0.1:5193/intro.html?debug",
+  "mode": "desktop",
+  "state": "question-2",
+  "requestedState": "question-2",
+  "appliedState": "question-2",
+  "runId": "stage1-visual-20260924-f",
+  "seed": null,
+  "screenshotPath": "artifacts\\stage1-visual-20260924-f\\desktop-question-2.png",
+  "gpu": {
+    "renderer": "ANGLE (NVIDIA, NVIDIA GeForce GTX 1660 (0x00002184) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+    "vendor": "Google Inc. (NVIDIA)",
+    "softwareRendered": false
+  },
+  "result": {
+    "ok": true,
+    "reason": "nonblank",
+    "rect": {
+      "x": 0,
+      "y": 0,
+      "width": 1280,
+      "height": 720
+    },
+    "drawingBuffer": {
+      "width": 1280,
+      "height": 720
+    },
+    "alphaPixels": 4096,
+    "variance": 255,
+    "colorBuckets": 51,
+    "metrics": {
+      "colorBuckets": 67,
+      "colorEntropyBits": 0.4,
+      "edgeDensity": 0.074,
+      "luminance": {
+        "mean": 6.6,
+        "p5": 0,
+        "p95": 10.7,
+        "contrast": 10.7
+      },
+      "dominantColorShare": 0.965,
+      "nonBackgroundShare": 0.035
+    },
+    "renderBudget": {
+      "tier": "desktop",
+      "note": "starting-point budget; adjust per game and document overrides",
+      "rows": [
+        {
+          "metric": "calls",
+          "actual": 41,
+          "limit": 300,
+          "ok": true
+        },
+        {
+          "metric": "triangles",
+          "actual": 1904,
+          "limit": 750000,
+          "ok": true
+        },
+        {
+          "metric": "geometries",
+          "actual": 101,
+          "limit": 300,
+          "ok": true
+        },
+        {
+          "metric": "textures",
+          "actual": 12,
+          "limit": 60,
+          "ok": true
+        }
+      ],
+      "withinBudget": true
+    },
+    "diagnostics": {
+      "renderer": {
+        "calls": 41,
+        "triangles": 1904,
+        "geometries": 101,
+        "textures": 12
+      },
+      "state": {
+        "frame": 167,
+        "phase": "waiting",
+        "storyMode": "waiting",
+        "questionIndex": 1,
+        "objective": "answer-question-2",
+        "objectiveProgress": 1,
+        "complete": false,
+        "failed": false,
+        "canContinue": false,
+        "selectedChoice": 0,
+        "pendingChoice": -1,
+        "actionDiscovered": false,
+        "tutorialAct": "action",
+        "playerPosition": {
+          "x": 0,
+          "y": -2.549999952316284,
+          "z": -6.000000019073486
+        },
+        "choiceTargets": [
+          {
+            "x": -2.4,
+            "y": 0.4400000000000001,
+            "z": -6.34
+          },
+          {
+            "x": 0,
+            "y": 0.4400000000000001,
+            "z": -6.34
+          },
+          {
+            "x": 2.4,
+            "y": 0.4400000000000001,
+            "z": -6.34
+          }
+        ],
+        "seed": "472",
+        "audio": {
+          "unlocked": false,
+          "muted": false,
+          "cueCount": 0
+        },
+        "physics": {
+          "ready": true,
+          "bodies": 5,
+          "colliders": 5,
+          "sensors": 4,
+          "activeSensors": 3,
+          "ccdBodies": 0,
+          "fixedTimestep": 0.016666666666666666,
+          "steps": 0
+        },
+        "viewport": {
+          "width": 1280,
+          "height": 720,
+          "dpr": 1
+        },
+        "activeLoops": 1,
+        "pausedForScreenshot": true,
+        "debugUiHidden": true,
+        "dialogue": {
+          "levelId": "ghost-floor-02",
+          "eraShaderId": "ibm-pc-cga",
+          "event": "",
+          "nextLevel": "",
+          "values": {}
+        }
+      }
+    }
+  },
+  "consoleErrors": [],
+  "pageErrors": []
+}

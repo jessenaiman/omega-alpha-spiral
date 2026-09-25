@@ -4,13 +4,13 @@ Updated: 2026-09-24
 
 ## Current task — Stage 1 four-floor redesign
 
-- Branch: `codex/feature-stage-one-redesign` in the isolated `stage-one-redesign` worktree. Source checkpoints through `b529609`; current evidence run `stage1-visual-20260924-e`.
+- Branch: `codex/feature-stage-one-redesign` in the isolated `stage-one-redesign` worktree. Source checkpoints through `344e097`; current question evidence run `stage1-visual-20260924-f`.
 - ✅ Gameplay consumes the four authored Ghost OML files for question, choice consequences, transitions, and era IDs. The shared era shader registry supplies the four 3D glyph treatments. Earlier glyph samples remain composited at later questions.
 - ✅ The selected Dreamweaver's `.omd` color drives the intro path and the player's accumulating imprint, the progress cue, and the Chapter Two hero handoff.
-- ✅ All four current question captures opened and rendered nonblank without reported browser errors. Real input reached the second question after 66 unpaused travel samples; largest sampled position step was 0.603 units. The Question 2 prelude keeps the player on-screen and shows the next terminal destination.
+- ✅ All four current question captures opened and rendered nonblank without reported browser errors. Prior source `b529609` real input reached the second question after 66 unpaused travel samples; largest sampled position step was 0.603 units. Its Question 2 prelude kept the player on-screen and showed the next terminal destination.
 - ✅ Waiting terminal edges are hidden, the Question 4 player stays below choice copy, and distinct reached era structures accumulate across Questions 2–4.
-- ❌ Path and era lines still cross choice glyphs, especially on Questions 3–4. The three path texts fit inside the viewport.
-- Next: clear the remaining line crossings against the approved direction, then recapture. Keep authored dialogue and Dialogue Studio separate. No later-stage content is in scope here.
+- ✅ In all four fresh named-state images, path and era lines stay below the authored choice glyphs. The three path texts fit inside the viewport.
+- 🔍 Current-commit unpaused arrival and owner visual approval are not yet established. Keep authored dialogue and Dialogue Studio separate. No later-stage content is in scope here.
 
 ## Current task — OML dialogue ownership and reusable era shaders
 
