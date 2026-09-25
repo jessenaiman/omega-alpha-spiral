@@ -2077,7 +2077,7 @@ export class SpatialBootScene {
               : isPrelude
                 ? -0.2
                 : isWaiting
-                  ? -1.03
+                  ? -0.15
                   : isChoiceTurns
                     ? -0.05 + this._questionRecede * 0.22
                     : -0.8 + Math.min(Math.max((seconds - 13) / 16, 0), 1) * 1.45,
@@ -2134,7 +2134,11 @@ export class SpatialBootScene {
     if (isWaiting || isPrelude) {
       this._omegaDisplay.root.position.x = 0;
       this._omegaDisplay.root.position.y = question.position.y - 0.08;
-      this._omegaDisplay.root.scale.set(this._width * 0.68, 1.12, 1);
+      this._omegaDisplay.root.scale.set(
+        this._width * 0.68,
+        isWaiting ? 0.78 : 1.12,
+        1
+      );
       this._omegaDisplay.root.rotation.set(0, 0, 0);
     }
     for (const letters of Object.values(this._studioLetters))
