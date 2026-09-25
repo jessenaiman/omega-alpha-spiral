@@ -35,6 +35,13 @@ export function studioDialogueSave(): Plugin {
         if (speakerId(voice.name) !== speakerId(design.id ?? ""))
           throw new Error(`${file} does not define ${voice.name}.`);
       }
+      for (const npc of script.npcs) {
+        assertEraShaderBuilt(resolveEraShader(npc.era_shader));
+        const voice = safeName(npc.voice);
+        if (!voice?.toLowerCase().endsWith(".omd"))
+          throw new Error(`${npc.display_name} needs a declared .omd voice.`);
+        await readFile(join(dir, voice), "utf8");
+      }
       const next = script.scene.next;
       if (next) await readFile(join(dir, `${next}.oml`), "utf8");
       return;

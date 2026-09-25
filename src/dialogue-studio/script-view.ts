@@ -40,7 +40,7 @@ const DIRECTIVE =
   /^\s*(\[(?:wait|timer_delay|delay|continue|input|cue|show|set|increment|emit|transition)\b[^\]]*\])\s*$/i;
 
 function highlightedLine(line: string, tags: Oml["tags"]): string {
-  const section = /^\s*\[(tag|voice|scene|question|choice|script|completion)(?:\s+([^\]]+))?\]\s*$/i.exec(
+  const section = /^\s*\[(tag|voice|npc|scene|question|choice|script|completion)(?:\s+([^\]]+))?\]\s*$/i.exec(
     line
   );
   if (section) {

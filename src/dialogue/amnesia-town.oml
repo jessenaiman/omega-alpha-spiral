@@ -5,6 +5,15 @@
 [voice System]
 file = System.omd
 
+[voice Innkeeper]
+file = Innkeeper.omd
+
+[npc innkeeper]
+display_name = Innkeeper
+voice = Innkeeper.omd
+era_shader = apple-macintosh-quickdraw
+location = inn
+
 [scene]
 id = amnesia-town
 title = Amnesia: Classic Town

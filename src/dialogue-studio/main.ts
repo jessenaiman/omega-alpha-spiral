@@ -97,6 +97,8 @@ const cleanSamples = Object.fromEntries(
 const commonSample = "The signal is still here.\nFollow the words.";
 let scriptMode = false;
 let scriptText = "";
+let previewSpeakerLabel: string | null = null;
+let npcEraBySpeaker = new Map<string, string>();
 let restoringPresentation = false;
 let tab: "stage" | "script" = "stage";
 let scriptDoc: DialogueDocument | null = null;
@@ -289,7 +291,9 @@ function compose() {
     "--voice",
     settings[selected].color
   );
-  el("voice-label").textContent = PROFILES[selected].label.toUpperCase();
+  el("voice-label").textContent = (
+    previewSpeakerLabel ?? PROFILES[selected].label
+  ).toUpperCase();
   el("description").textContent = scriptMode
     ? "Recorded opening · authored text from your Godot dialogue"
     : layoutDescriptions[layouts.indexOf(layout)];
@@ -310,6 +314,7 @@ function compose() {
 }
 function choose(id: SpeakerId) {
   scriptMode = false;
+  previewSpeakerLabel = null;
   dialogue.deactivate();
   selected = id;
   el<HTMLSelectElement>("persona-era").value = settings[id].eraShaderId;
@@ -647,10 +652,18 @@ const dialogue = createDialogueEditor({
     makeSliders();
     restoringPresentation = false;
   },
-  supports: (speaker) => SPEAKERS.includes(speaker as SpeakerId),
+  supports: (speaker) => speaker.trim().length > 0,
   line(speaker, text) {
     scriptMode = true;
-    selected = speaker as SpeakerId;
+    const known = SPEAKERS.includes(speaker as SpeakerId);
+    selected = known ? (speaker as SpeakerId) : "omega";
+    previewSpeakerLabel = known ? null : speaker;
+    const npcEra = npcEraBySpeaker.get(speaker.toLowerCase());
+    if (npcEra) {
+      era = resolveEraShader(npcEra).id;
+      letters.omega.setEra(era);
+      ghosts.omega.setEra(era);
+    }
     scriptText = text;
     common = false;
     el<HTMLInputElement>("common").checked = false;
@@ -747,6 +760,9 @@ function showFile(name: string, text: string) {
   scriptEditor?.setText(text);
   if (name.toLowerCase().endsWith(".oml")) {
     const parsed = parseOml(text);
+    npcEraBySpeaker = new Map(
+      parsed.npcs.map((npc) => [npc.id.toLowerCase(), npc.era_shader])
+    );
     dialogue.loadText(text);
     selectedFileEra = resolveEraShader(
       parsed.scene.era_shader ?? SCENES[sceneId].era
