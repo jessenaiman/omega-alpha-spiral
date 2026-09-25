@@ -33,7 +33,12 @@ type JourneyState = {
     exitUnlocked?: boolean;
     nearOffer?: boolean;
     recruitChoice?: string | null;
-    enemies?: Array<{ health: number; telegraph: unknown }>;
+    enemies?: Array<{
+      id: string;
+      health: number;
+      position: ChapterPoint;
+      telegraph: { target: ChapterPoint } | null;
+    }>;
     gatheredDreamweavers?: string[];
     selectedRoute?: string | null;
   };
@@ -505,7 +510,8 @@ async function steerJourneyTo(
   try {
     for (let tick = 0; tick < 700; tick += 1) {
       const state = (await readChapter(page)).journey;
-      if (state.kind !== expected.kind || state.floor !== expected.floor) return;
+      if (state.kind !== expected.kind || state.floor !== expected.floor)
+        return;
       const dx = target.x - state.player.x;
       const dz = target.z - state.player.z;
       if (Math.hypot(dx, dz) <= tolerance) return;
@@ -523,7 +529,10 @@ async function steerJourneyTo(
         heldZ = wantZ;
         if (heldZ) await page.keyboard.down(heldZ);
       }
-      const moved = Math.hypot(state.player.x - last.x, state.player.z - last.z);
+      const moved = Math.hypot(
+        state.player.x - last.x,
+        state.player.z - last.z
+      );
       metrics.distance += moved;
       stuck = moved < 0.015 ? stuck + 1 : 0;
       if (stuck >= 18) {
@@ -550,18 +559,103 @@ async function steerJourneyTo(
 async function resolveMiddleEncounter(
   page: Page,
   floor: number,
-  routeSequence: string[]
+  routeSequence: string[],
+  metrics: { distance: number; softlocks: number }
 ): Promise<"won" | "fallen"> {
-  for (let tick = 0; tick < 900; tick += 1) {
-    const state = (await readChapter(page)).journey;
-    if (state.kind !== "middle" || state.floor !== floor)
-      throw new Error(`Floor ${floor} changed during its encounter`);
-    const outcome = state.status?.encounterOutcome;
-    if (outcome) {
-      routeSequence.push(`floor-${floor}:encounter-${outcome}`);
-      return outcome;
+  let heldX: "KeyA" | "KeyD" | null = null;
+  let heldZ: "KeyW" | "KeyS" | null = null;
+  let last = (await readChapter(page)).journey.player;
+  let stuck = 0;
+  let nextAttackAt = 0;
+  let dodgedTell = "";
+  const setAxes = async (
+    x: "KeyA" | "KeyD" | null,
+    z: "KeyW" | "KeyS" | null
+  ): Promise<void> => {
+    if (x !== heldX) {
+      if (heldX) await page.keyboard.up(heldX);
+      heldX = x;
+      if (heldX) await page.keyboard.down(heldX);
     }
-    await page.waitForTimeout(45);
+    if (z !== heldZ) {
+      if (heldZ) await page.keyboard.up(heldZ);
+      heldZ = z;
+      if (heldZ) await page.keyboard.down(heldZ);
+    }
+  };
+  try {
+    for (let tick = 0; tick < 1_200; tick += 1) {
+      const state = (await readChapter(page)).journey;
+      if (state.kind !== "middle" || state.floor !== floor)
+        throw new Error(`Floor ${floor} changed during its encounter`);
+      const outcome = state.status?.encounterOutcome;
+      if (outcome) {
+        routeSequence.push(`floor-${floor}:encounter-${outcome}`);
+        return outcome;
+      }
+
+      const enemies = state.status?.enemies ?? [];
+      const live = enemies
+        .filter((enemy) => enemy.health > 0)
+        .sort(
+          (left, right) =>
+            Math.hypot(
+              left.position.x - state.player.x,
+              left.position.z - state.player.z
+            ) -
+            Math.hypot(
+              right.position.x - state.player.x,
+              right.position.z - state.player.z
+            )
+        );
+      const threat = live.find((enemy) => enemy.telegraph);
+      if (threat?.telegraph) {
+        const dx = state.player.x - threat.telegraph.target.x;
+        const dz = state.player.z - threat.telegraph.target.z;
+        const awayX = Math.abs(dx) > 0.2 ? (dx > 0 ? "KeyD" : "KeyA") : null;
+        const awayZ = Math.abs(dz) > 0.2 ? (dz > 0 ? "KeyS" : "KeyW") : null;
+        await setAxes(awayX, awayZ);
+        const tell = `${threat.id}:${threat.telegraph.target.x}:${threat.telegraph.target.z}`;
+        if (tell !== dodgedTell) {
+          await page.keyboard.press("Shift");
+          dodgedTell = tell;
+        }
+      } else if (live[0]) {
+        dodgedTell = "";
+        const dx = live[0].position.x - state.player.x;
+        const dz = live[0].position.z - state.player.z;
+        if (Math.hypot(dx, dz) > 1.45) {
+          await setAxes(
+            Math.abs(dx) > 0.2 ? (dx > 0 ? "KeyD" : "KeyA") : null,
+            Math.abs(dz) > 0.2 ? (dz > 0 ? "KeyS" : "KeyW") : null
+          );
+        } else {
+          await setAxes(null, null);
+          if (Date.now() >= nextAttackAt) {
+            await page.keyboard.press("Space");
+            nextAttackAt = Date.now() + 500;
+          }
+        }
+      }
+      const moved = Math.hypot(
+        state.player.x - last.x,
+        state.player.z - last.z
+      );
+      metrics.distance += moved;
+      if ((heldX || heldZ) && moved < 0.015) stuck += 1;
+      else stuck = 0;
+      if (stuck >= 18) {
+        metrics.softlocks += 1;
+        throw new Error(
+          `Floor ${floor} combat input stalled at ${JSON.stringify(state.player)}; status=${JSON.stringify(state.status)}`
+        );
+      }
+      last = state.player;
+      await page.waitForTimeout(45);
+    }
+  } finally {
+    if (heldX) await page.keyboard.up(heldX);
+    if (heldZ) await page.keyboard.up(heldZ);
   }
   const state = (await readChapter(page)).journey;
   throw new Error(
@@ -587,7 +681,14 @@ async function playMiddleFloor(
   const branch = start.routes?.find(
     (route) => route.destinationLandmarkId === offer?.id
   )?.points;
-  if (!exit || !offer || !main || !branch || main.length < 2 || branch.length < 2)
+  if (
+    !exit ||
+    !offer ||
+    !main ||
+    !branch ||
+    main.length < 2 ||
+    branch.length < 2
+  )
     throw new Error(`Floor ${floor} is missing its authored route diagnostics`);
   const branchIndex = main.findIndex(
     (point) => Math.hypot(point.x - branch[0]!.x, point.z - branch[0]!.z) < 0.5
@@ -600,22 +701,27 @@ async function playMiddleFloor(
     const current = (await readChapter(page)).journey;
     if (current.kind !== "middle" || current.floor !== floor) return;
     if (current.phase === "active")
-      await resolveMiddleEncounter(page, floor, routeSequence);
+      await resolveMiddleEncounter(page, floor, routeSequence, metrics);
   }
   let state = (await readChapter(page)).journey;
   if (state.kind !== "middle" || state.floor !== floor) return;
   if (state.phase === "active")
-    await resolveMiddleEncounter(page, floor, routeSequence);
+    await resolveMiddleEncounter(page, floor, routeSequence, metrics);
   if (!state.status?.encounterOutcome)
     state = (await readChapter(page)).journey;
   if (!state.status?.encounterOutcome)
-    throw new Error(`Floor ${floor} route reached its offer without resolving combat`);
+    throw new Error(
+      `Floor ${floor} route reached its offer without resolving combat`
+    );
 
   for (const point of branch.slice(1))
     await steerJourneyTo(page, point, { kind: "middle", floor }, metrics);
   state = (await readChapter(page)).journey;
   if (state.kind !== "middle" || state.floor !== floor) return;
-  expect(state.status?.nearOffer, `Floor ${floor} offer must be reachable`).toBe(true);
+  expect(
+    state.status?.nearOffer,
+    `Floor ${floor} offer must be reachable`
+  ).toBe(true);
   await page.keyboard.press("1");
   await expect
     .poll(async () => (await readChapter(page)).journey.status?.recruitChoice)
@@ -627,10 +733,13 @@ async function playMiddleFloor(
   for (const point of main.slice(branchIndex + 1))
     await steerJourneyTo(page, point, { kind: "middle", floor }, metrics);
   await expect
-    .poll(async () => {
-      const current = (await readChapter(page)).journey;
-      return current.kind !== "middle" || current.floor !== floor;
-    }, { timeout: 15_000 })
+    .poll(
+      async () => {
+        const current = (await readChapter(page)).journey;
+        return current.kind !== "middle" || current.floor !== floor;
+      },
+      { timeout: 15_000 }
+    )
     .toBe(true);
   routeSequence.push(`floor-${floor}:exit-crossed`);
 }
@@ -644,14 +753,22 @@ async function playTownAndFinale(
   expect(state.kind).toBe("late");
   expect(state.floor).toBe(7);
   routeSequence.push("floor-7:town-entry");
-  const dreamweavers = state.landmarks?.filter(
-    (landmark) => landmark.kind === "dreamweaver"
-  ) ?? [];
+  const dreamweavers =
+    state.landmarks?.filter((landmark) => landmark.kind === "dreamweaver") ??
+    [];
   for (const dreamweaver of dreamweavers) {
-    await steerJourneyTo(page, dreamweaver.position, { kind: "late", floor: 7 }, metrics);
+    await steerJourneyTo(
+      page,
+      dreamweaver.position,
+      { kind: "late", floor: 7 },
+      metrics
+    );
     await page.keyboard.press("e");
     await expect
-      .poll(async () => (await readChapter(page)).journey.status?.gatheredDreamweavers?.length)
+      .poll(
+        async () =>
+          (await readChapter(page)).journey.status?.gatheredDreamweavers?.length
+      )
       .toBeGreaterThan(dreamweavers.indexOf(dreamweaver));
     routeSequence.push(`town:gathered-${dreamweaver.id}`);
   }
@@ -668,21 +785,39 @@ async function playTownAndFinale(
   routeSequence.push("town:route-alleys-selected");
   for (const point of townRoute.waypoints)
     await steerJourneyTo(page, point, { kind: "late", floor: 7 }, metrics);
-  await steerJourneyTo(page, townRoute.waypoints.at(-1)!, { kind: "late", floor: 7 }, metrics);
+  await steerJourneyTo(
+    page,
+    townRoute.waypoints.at(-1)!,
+    { kind: "late", floor: 7 },
+    metrics
+  );
   await expect
-    .poll(async () => {
-      const current = (await readChapter(page)).journey;
-      return current.kind === "late" && current.floor === 8;
-    }, { timeout: 15_000 })
+    .poll(
+      async () => {
+        const current = (await readChapter(page)).journey;
+        return current.kind === "late" && current.floor === 8;
+      },
+      { timeout: 15_000 }
+    )
     .toBe(true);
   routeSequence.push("floor-7:exit-crossed");
 
   state = (await readChapter(page)).journey;
-  const core = state.landmarks?.find((landmark) => landmark.id === "healing-core");
+  const core = state.landmarks?.find(
+    (landmark) => landmark.id === "healing-core"
+  );
   if (!core) throw new Error("Floor 8 diagnostics omitted the healing core");
-  await steerJourneyTo(page, core.position, { kind: "late", floor: 8 }, metrics, 2.3);
+  await steerJourneyTo(
+    page,
+    core.position,
+    { kind: "late", floor: 8 },
+    metrics,
+    2.3
+  );
   await expect
-    .poll(async () => (await readChapter(page)).journey.phase, { timeout: 10_000 })
+    .poll(async () => (await readChapter(page)).journey.phase, {
+      timeout: 10_000,
+    })
     .toBe("complete");
   routeSequence.push("floor-8:healing-core-complete");
 }
@@ -884,12 +1019,30 @@ test("bot playtest: real input reaches Floor 4 from Begin", async ({
     .poll(async () => (await readChapter(page)).phase)
     .toBe("complete");
   await expect
-    .poll(async () => {
-      const journey = (await readChapter(page)).journey;
-      return journey.kind === "middle" && journey.floor === 4;
-    }, { timeout: 15_000 })
+    .poll(
+      async () => {
+        const journey = (await readChapter(page)).journey;
+        return journey.kind === "middle" && journey.floor === 4;
+      },
+      { timeout: 15_000 }
+    )
     .toBe(true);
   routeSequence.push("floor-4:entered-after-floor-3-handoff");
+  await playMiddleFloor(page, 4, routeMetrics, routeSequence);
+  await expect
+    .poll(
+      async () => {
+        const journey = (await readChapter(page)).journey;
+        return (
+          journey.kind === "middle" &&
+          journey.floor === 5 &&
+          journey.phase === null
+        );
+      },
+      { timeout: 15_000 }
+    )
+    .toBe(true);
+  routeSequence.push("floor-5:stable-entry");
   const completedChapter = await readChapter(page);
   const after = await sample(page);
   await page.keyboard.press("KeyR");
