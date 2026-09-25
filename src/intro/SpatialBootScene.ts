@@ -1477,8 +1477,7 @@ export class SpatialBootScene {
         activeCall || isWaiting || activeTravel || isThreshold;
       path.visible = visible;
       echo.visible = visible;
-      this._sigils[owner].root.visible =
-        (isWaiting || activeTravel) && !isThreshold;
+      this._sigils[owner].root.visible = activeTravel && !isThreshold;
       this._pathLights[owner].visible = visible;
       if (!visible) {
         this._pathLights[owner].intensity = 0;
@@ -1704,7 +1703,7 @@ export class SpatialBootScene {
       isReduced
     );
     this._walkPlane.visible =
-      isWaiting || isTravel || isName || frame.phase === "doorway";
+      isTravel || isName || frame.phase === "doorway";
     if (this._door) {
       this._door.visible = isThreshold && !isName;
       const rawAssembly = isName
@@ -1865,7 +1864,7 @@ export class SpatialBootScene {
       if (voiceVisible && this._voiceAppearedAt[index] < 0)
         this._voiceAppearedAt[index] = elapsedMs;
       voice.visible = voiceVisible;
-      trail.visible = trailVisible;
+      trail.visible = trailVisible && !isWaiting;
       const entrance: number = isReduced
         ? 1
         : Math.min(
@@ -2019,7 +2018,7 @@ export class SpatialBootScene {
             : responseAnchor
               ? responseAnchor.y - 0.96
               : isWaiting
-                ? -0.38
+                ? -0.8
                 : isChoiceTurns
                   ? -0.05 + this._questionRecede * 0.22
                   : -0.8 + Math.min(Math.max((seconds - 13) / 16, 0), 1) * 1.45,
@@ -2097,7 +2096,7 @@ export class SpatialBootScene {
       question.visible = false;
     }
     if (frame.choiceLines && (isChoiceTurns || isWaiting)) {
-      const columnWidth = this._width * 0.27;
+      const columnWidth = this._width * 0.2;
       for (let owner = 0; owner < 3; owner++) {
         const speaker = SPEAKERS[owner + 1];
         const letters = this._studioLetters[speaker];
@@ -2107,10 +2106,10 @@ export class SpatialBootScene {
         const text = frame.choiceLines[owner] ?? "";
         letters.root.visible = text.length > 0;
         letters.setEra(eraShaderId);
-        letters.setText(wrapAtWords(text, 16));
+        letters.setText(wrapAtWords(text, 12));
         letters.opacity = frame.choiceSpeaker === owner || isWaiting ? 1 : 0.68;
         letters.root.position.set(
-          (owner - 1) * this._width * 0.36 -
+          (owner - 1) * this._width * 0.23 -
             columnWidth * 0.5 +
             12 * resolveEraShader(eraShaderId).tracking * glyphScale,
           isWaiting ? -1.62 : -0.9,
@@ -2398,7 +2397,10 @@ export class SpatialBootScene {
         (isReduced ? 1 : 1 + Math.sin(seconds * 4.2) * 0.045) *
         waitingPulse *
         (isCrossing ? 1 - crossingProgress * 0.72 : 1);
-      this._player.scale.setScalar(pulse);
+      this._player.scale.setScalar(
+        pulse *
+          (1 - this._questionRecede * (this._playerStage > 0 ? 0.42 : 0))
+      );
     }
     const stagedChoice: Group | null =
       isWaiting && this._awaitingAction >= 0
