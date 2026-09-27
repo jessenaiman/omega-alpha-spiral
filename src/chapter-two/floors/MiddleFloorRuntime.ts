@@ -1,4 +1,6 @@
 import * as THREE from "three";
+import type { ChoiceDef, Oml, OmlStateValue } from "../../core/oml";
+import { CHAPTER_ZERO_LEVELS_BY_ID } from "../../dialogue/chapter-zero-vite";
 import { createMiddleFloor4 } from "./middle-floor-4";
 import { createMiddleFloor5 } from "./middle-floor-5";
 import { createMiddleFloor6 } from "./middle-floor-6";
@@ -26,8 +28,13 @@ import type {
   MiddleFloorNumber,
 } from "./middle-types";
 
-export type RecruitGuide = "Light" | "Shadow" | "Ambition";
+export type DreamweaverGuide = "Light" | "Shadow" | "Ambition";
 export type MiddleFloorTransition = 5 | 6 | 7;
+
+export interface AuthoredDreamweaverChoice {
+  readonly guide: DreamweaverGuide;
+  readonly text: string;
+}
 
 export interface MiddleFloorMovement {
   readonly x: number;
@@ -36,7 +43,12 @@ export interface MiddleFloorMovement {
 
 export interface MiddleFloorRuntimeStatus {
   readonly floor: MiddleFloorNumber;
+  readonly overallFloor: 8 | 9 | 10;
+  readonly sceneId: string;
+  readonly eraShaderId: string;
   readonly title: string;
+  readonly question: string;
+  readonly choices: readonly AuthoredDreamweaverChoice[];
   readonly playerPosition: FloorPoint;
   readonly playerHealth: number | null;
   readonly playerMaxHealth: number | null;
@@ -49,8 +61,11 @@ export interface MiddleFloorRuntimeStatus {
   readonly activeEffectIds: readonly string[];
   readonly offerLandmarkId: string | null;
   readonly nearOffer: boolean;
-  readonly recruitCandidates: readonly RecruitGuide[];
-  readonly recruitChoice: RecruitGuide | null;
+  readonly selectedAnswer: DreamweaverGuide | null;
+  readonly hitEnabled: boolean;
+  readonly weaponEnabled: boolean;
+  readonly gameState: Readonly<Record<string, OmlStateValue>>;
+  readonly emittedEvents: readonly string[];
   readonly transitionTo: MiddleFloorTransition | null;
 }
 
@@ -73,11 +88,41 @@ const EXIT_CROSS_RADIUS = 0.85;
 const MAX_UPDATE_MS = 5000;
 const MAX_STEP_MS = 50;
 const FALLBACK_TELEGRAPH_COLOR = 0xffb648;
-const RECRUIT_CANDIDATES: readonly RecruitGuide[] = [
+const DREAMWEAVERS: readonly DreamweaverGuide[] = [
   "Light",
   "Shadow",
   "Ambition",
 ];
+
+function guideFromOwner(owner: string): DreamweaverGuide {
+  if (owner === "light") return "Light";
+  if (owner === "shadow") return "Shadow";
+  if (owner === "ambition") return "Ambition";
+  throw new Error(`Unknown Dreamweaver owner: ${owner}`);
+}
+
+function authoredLevel(layout: MiddleFloorLayout): Oml {
+  const level = CHAPTER_ZERO_LEVELS_BY_ID.get(layout.sceneId);
+  if (!level) throw new Error(`Missing authored OML scene: ${layout.sceneId}`);
+  return level;
+}
+
+function authoredChoice(level: Oml, guide: DreamweaverGuide): ChoiceDef {
+  const owner = guide.toLowerCase();
+  const choice = level.choices.find((candidate) => candidate.owner === owner);
+  if (!choice)
+    throw new Error(`${level.scene.id} has no answer authored by ${guide}.`);
+  return choice;
+}
+
+function authoredStateValue(
+  level: Oml,
+  path: string
+): OmlStateValue | undefined {
+  return level.events.find(
+    (event) => event.type === "set-state" && event.path === path
+  )?.value;
+}
 
 /**
  * Owns middle-floor traversal and encounter state. Attach `group` once to the
@@ -102,9 +147,11 @@ export class MiddleFloorRuntime {
   private readonly _fallbackTelegraphs = new Map<string, FallbackTelegraph>();
   private readonly _recordedEncounters = new Set<string>();
   private readonly _encounterEchoes: CombatEchoRecord[] = [];
-  private readonly _recruitChoices: Partial<
-    Record<MiddleFloorNumber, RecruitGuide>
+  private readonly _dreamweaverAnswers: Partial<
+    Record<MiddleFloorNumber, DreamweaverGuide>
   > = {};
+  private readonly _state: Record<string, OmlStateValue> = {};
+  private readonly _emittedEvents: string[] = [];
   private _audioContext: AudioContext | null = null;
 
   public constructor(seed: number = 0) {
@@ -132,10 +179,10 @@ export class MiddleFloorRuntime {
     return this._encounterEchoes.slice();
   }
 
-  public get recruitChoices(): Readonly<
-    Partial<Record<MiddleFloorNumber, RecruitGuide>>
+  public get dreamweaverAnswers(): Readonly<
+    Partial<Record<MiddleFloorNumber, DreamweaverGuide>>
   > {
-    return { ...this._recruitChoices };
+    return { ...this._dreamweaverAnswers };
   }
 
   public get status(): MiddleFloorRuntimeStatus | null {
@@ -147,8 +194,17 @@ export class MiddleFloorRuntime {
     const nearOffer = Boolean(
       offer && distanceBetween(position, offer.position) <= offer.reach
     );
-    const recruitChoice = this._recruitChoices[this._layout.floor] ?? null;
-    const exitUnlocked = Boolean(this._combat?.resolution && recruitChoice);
+    const level = authoredLevel(this._layout);
+    const selectedAnswer =
+      this._dreamweaverAnswers[this._layout.floor] ?? null;
+    const hitEnabled = authoredStateValue(level, "gameplay.hit.enabled") !== false;
+    const weaponEnabled = selectedAnswer
+      ? authoredChoice(level, selectedAnswer).effects.some(
+          (effect) =>
+            effect.path === "gameplay.weapon.enabled" && effect.value === true
+        )
+      : false;
+    const exitUnlocked = Boolean(this._combat?.resolution && selectedAnswer);
     const currentTelegraph =
       this._combat?.phase === "active"
         ? (this._combat.enemies.find((enemy) => enemy.telegraph)?.telegraph ??
@@ -159,21 +215,31 @@ export class MiddleFloorRuntime {
       : this._combat.phase === "active"
         ? currentTelegraph
           ? `Attack tell: ${currentTelegraph.label} Use Run to leave its marked area.`
-          : "Hit the nearest enemy. Run when an attack tell appears."
+          : hitEnabled
+            ? weaponEnabled
+              ? "Use the weapon Shadow opened for you. Run when an attack tell appears."
+              : "Hit without a weapon. Run when an attack tell appears."
+            : "You cannot Hit on this floor. Survive as long as you can."
         : this._combat.resolution?.outcome === "fallen"
-          ? "You fell; the floor kept your choice. Cross the marked exit after choosing a companion recommendation."
-          : "The encounter ended. Cross the marked exit after choosing a companion recommendation.";
+          ? "You fell, but the floor kept your answer. Cross the marked exit."
+          : "The encounter ended. Cross the marked exit.";
     const objective =
-      this._combat?.resolution && !recruitChoice
-        ? this._combat.resolution.outcome === "fallen"
-          ? "You fell, but the way remains. Return to the offer and choose a Dreamweaver's companion recommendation."
-          : "Choose a Dreamweaver's companion recommendation at the offer before crossing the exit."
-        : nearOffer && !recruitChoice
-          ? "Choose a Dreamweaver's companion recommendation here, or continue to the encounter."
-          : encounterObjective;
+      !selectedAnswer
+        ? nearOffer
+          ? level.question.text ?? "Choose a Dreamweaver's answer."
+          : "Reach the three Dreamweaver answers before the test."
+        : encounterObjective;
     return {
       floor: this._layout.floor,
-      title: this._layout.title,
+      overallFloor: this._layout.overallFloor,
+      sceneId: level.scene.id ?? this._layout.sceneId,
+      eraShaderId: level.scene.era_shader ?? this._layout.eraShaderId,
+      title: level.scene.title ?? level.scene.id ?? "Never Go Alone",
+      question: level.question.text ?? "",
+      choices: level.choices.map((choice) => ({
+        guide: guideFromOwner(choice.owner),
+        text: choice.text,
+      })),
       playerPosition: position,
       playerHealth: this._combat?.player.health ?? null,
       playerMaxHealth: this._combat?.player.maxHealth ?? null,
@@ -186,8 +252,11 @@ export class MiddleFloorRuntime {
       activeEffectIds: [...this._activeEffects.keys()],
       offerLandmarkId: offer?.id ?? null,
       nearOffer,
-      recruitCandidates: offer ? RECRUIT_CANDIDATES : [],
-      recruitChoice,
+      selectedAnswer,
+      hitEnabled,
+      weaponEnabled,
+      gameState: { ...this._state },
+      emittedEvents: [...this._emittedEvents],
       transitionTo: this._transitionSignal,
     };
   }
@@ -265,6 +334,7 @@ export class MiddleFloorRuntime {
   public hit(): boolean {
     if (this._disposed || !this._combat || this._combat.phase !== "active")
       return false;
+    if (!this.status?.hitEnabled) return false;
     const previous = this._combat;
     const next = hitCombatEnemy(previous);
     const landed = next.events.some((event) => event.type === "enemy-damaged");
@@ -314,16 +384,34 @@ export class MiddleFloorRuntime {
     return true;
   }
 
-  /** Choose a future party alignment while in reach of this floor's offer landmark. */
-  public chooseRecruit(guide: RecruitGuide): boolean {
+  /** Choose the authored Dreamweaver answer while in reach of the mirror offer. */
+  public chooseAnswer(guide: DreamweaverGuide): boolean {
     const offer = this._layout?.landmarks.find(
       (landmark) => landmark.role === "offer"
     );
-    if (!offer || !RECRUIT_CANDIDATES.includes(guide)) return false;
+    if (!offer || !DREAMWEAVERS.includes(guide)) return false;
     if (distanceBetween(this.playerPosition, offer.position) > offer.reach)
       return false;
-    this._recruitChoices[this._layout!.floor] = guide;
+    const choice = authoredChoice(authoredLevel(this._layout!), guide);
+    this._dreamweaverAnswers[this._layout!.floor] = guide;
+    for (const effect of choice.effects) this._applyEffect(effect);
+    if (choice.emit) this._emittedEvents.push(choice.emit);
     return true;
+  }
+
+  private _applyEffect(effect: {
+    operation: "set" | "increment";
+    path: string;
+    value: OmlStateValue;
+  }): void {
+    if (effect.operation === "set") {
+      this._state[effect.path] = effect.value;
+      return;
+    }
+    const current = this._state[effect.path];
+    const increment = typeof effect.value === "number" ? effect.value : 0;
+    this._state[effect.path] =
+      (typeof current === "number" ? current : 0) + increment;
   }
 
   /** Must be called from a user gesture before the first audio cue is scheduled. */
@@ -471,10 +559,18 @@ export class MiddleFloorRuntime {
       !insideAuthoredArena(this._playerPosition, layout)
     )
       return;
-    this._combat = createCombatEncounter(
-      layout.encounter,
-      this._playerPosition
-    );
+    const level = authoredLevel(layout);
+    const answer = this._dreamweaverAnswers[layout.floor] ?? null;
+    const weaponEnabled = answer
+      ? authoredChoice(level, answer).effects.some(
+          (effect) =>
+            effect.path === "gameplay.weapon.enabled" && effect.value === true
+        )
+      : false;
+    const plan = authoredStateValue(level, "combat.outcome");
+    this._combat = createCombatEncounter(layout.encounter, this._playerPosition, {
+      hitDamage: weaponEnabled ? 2 : plan === "nearly-impossible" ? 0.25 : 1,
+    });
     this._playerPosition = point(this._combat.player.position);
     this._syncTelegraphSockets();
   }
@@ -525,11 +621,13 @@ export class MiddleFloorRuntime {
           landmarkId: landmark.id,
         });
       }
-      const hasRecruitChoice = Boolean(this._recruitChoices[layout.floor]);
+      const hasDreamweaverAnswer = Boolean(
+        this._dreamweaverAnswers[layout.floor]
+      );
       if (
         landmark.role === "exit" &&
         this._combat?.resolution &&
-        hasRecruitChoice &&
+        hasDreamweaverAnswer &&
         inside
       ) {
         if (!wasInside)

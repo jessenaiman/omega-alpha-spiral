@@ -1,0 +1,68 @@
+# Never Go Alone Floor 03 - Ambition's final test; Shadow opens weapon selection
+# Creative source:
+# https://github.com/jessenaiman/omega-alpha-spiral/blob/main/project-management/official%20game%20docs%20(read-only)/chapter-zero-stages/stage_3/never_go_alone.json
+# Mischief and Wrath draft names are translated to the approved Shadow and Ambition names.
+
+[voice Light]
+file = Light.omd
+
+[voice Shadow]
+file = Shadow.omd
+
+[voice Ambition]
+file = Ambition.omd
+
+[scene]
+id = never-go-alone-floor-03
+title = Ambition's Final Test
+era_shader = xerox-star-bitmap-gui
+layout = ambition-core-test
+next = amnesia-town
+
+[question]
+text = The core waits. Which Dreamweaver's answer do you carry into Ambition's test?
+
+[choice light]
+owner = light
+text = Hold the line with the reflections already beside you.
+response = Two stand strong, but the echo grows louder.
+set = never_go_alone.floor3.answer = light
+increment = dreamweavers.light.affinity = 1
+emit = never-go-alone.floor3.answer.selected
+transition = amnesia-town
+
+[choice shadow]
+owner = shadow
+text = Choose a weapon before the final fight.
+response = Pick a weapon. A different trick for the final fight.
+set = never_go_alone.floor3.answer = shadow
+set = gameplay.weapon.selection = pending
+set = gameplay.weapon.enabled = true
+increment = dreamweavers.shadow.affinity = 1
+emit = never-go-alone.floor3.weapon-choice.requested
+transition = amnesia-town
+
+[choice ambition]
+owner = ambition
+text = Enter the core test with raw power.
+response = Choose the final elements. The code trembles on the edge of collapse.
+set = never_go_alone.floor3.answer = ambition
+increment = dreamweavers.ambition.affinity = 1
+emit = never-go-alone.floor3.answer.selected
+transition = amnesia-town
+
+[script]
+Ambition: Choose the final elements. The code trembles on the edge of collapse. Make it fall.
+Shadow: Pick the last piece. I can give you a weapon if you choose my way.
+Light: Two stand strong, but the echo grows louder.
+[set combat.outcome = final-test]
+[show question]
+[show choice light]
+[show choice shadow]
+[show choice ambition]
+
+[completion]
+System: INTERFERENCE DETECTED... DREAMWEAVER ACTIVITY... INITIATING EMERGENCY RESET...
+[set never_go_alone.complete = true]
+[emit never-go-alone.complete]
+[transition amnesia-town]

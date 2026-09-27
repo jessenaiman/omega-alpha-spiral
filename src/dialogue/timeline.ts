@@ -138,7 +138,7 @@ export function dialogueDocumentFromOml(
   );
   return validateDialogueDocument({
     schemaVersion: 1,
-    title: level.scene.id ?? "Omega dialogue",
+    title: level.scene.title ?? level.scene.id ?? "Omega dialogue",
     source,
     events,
     completion,

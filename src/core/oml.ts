@@ -17,6 +17,14 @@ export interface VoiceDef {
   file?: string;
 }
 
+export interface NpcDef {
+  id: string;
+  display_name: string;
+  voice: string;
+  era_shader: string;
+  location: string;
+}
+
 export type OmlStateValue = string | number | boolean;
 
 export interface OmlStateEffect {
@@ -64,8 +72,10 @@ export interface Oml {
   kind: "level";
   tags: TagDef[];
   voices: VoiceDef[];
+  npcs: NpcDef[];
   scene: {
     id?: string;
+    title?: string;
     era_shader?: string;
     layout?: string;
     next?: string;
@@ -195,6 +205,7 @@ export function parseOml(text: string): Oml {
     kind: "level",
     tags: [],
     voices: [],
+    npcs: [],
     scene: {},
     question: {},
     choices: [],
@@ -204,13 +215,14 @@ export function parseOml(text: string): Oml {
   let where:
     | "tag"
     | "voice"
+    | "npc"
     | "scene"
     | "question"
     | "choice"
     | "script"
     | "completion"
     | null = null;
-  let current: TagDef | VoiceDef | ChoiceDef | null = null;
+  let current: TagDef | VoiceDef | NpcDef | ChoiceDef | null = null;
 
   for (const raw of text.split("\n")) {
     const line = raw.trimEnd();
@@ -231,6 +243,18 @@ export function parseOml(text: string): Oml {
           current = { name };
           oml.voices.push(current);
           where = "voice";
+          continue;
+        }
+        if (kind === "npc" && name) {
+          current = {
+            id: name,
+            display_name: name,
+            voice: "",
+            era_shader: "",
+            location: "",
+          };
+          oml.npcs.push(current);
+          where = "npc";
           continue;
         }
         if (kind === "choice" && name) {
@@ -266,7 +290,7 @@ export function parseOml(text: string): Oml {
 
     if (where === "scene") {
       const [key, value] = parseValues(line.trim());
-      if (["id", "era_shader", "layout", "next"].includes(key))
+      if (["id", "title", "era_shader", "layout", "next"].includes(key))
         oml.scene[key as keyof Oml["scene"]] = value;
       continue;
     }
@@ -302,6 +326,15 @@ export function parseOml(text: string): Oml {
         const voice = current as VoiceDef;
         if (key === "interval") voice.interval = num(value);
         else if (key === "color" || key === "file") voice[key] = value;
+      } else if (where === "npc") {
+        const npc = current as NpcDef;
+        if (
+          key === "display_name" ||
+          key === "voice" ||
+          key === "era_shader" ||
+          key === "location"
+        )
+          npc[key] = value;
       }
       continue;
     }
@@ -463,8 +496,17 @@ export function writeOml(oml: Oml): string {
     if (voice.interval !== undefined) out.push(`interval = ${voice.interval}`);
     out.push("");
   }
+  for (const npc of oml.npcs) {
+    out.push(`[npc ${npc.id}]`);
+    out.push(`display_name = ${npc.display_name}`);
+    out.push(`voice = ${npc.voice}`);
+    out.push(`era_shader = ${npc.era_shader}`);
+    out.push(`location = ${npc.location}`);
+    out.push("");
+  }
   out.push("[scene]");
   if (oml.scene.id) out.push(`id = ${oml.scene.id}`);
+  if (oml.scene.title) out.push(`title = ${oml.scene.title}`);
   if (oml.scene.era_shader) out.push(`era_shader = ${oml.scene.era_shader}`);
   if (oml.scene.layout) out.push(`layout = ${oml.scene.layout}`);
   if (oml.scene.next) out.push(`next = ${oml.scene.next}`);

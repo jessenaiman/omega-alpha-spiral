@@ -15,6 +15,7 @@ file = Ambition.omd
 
 [scene]
 id = ghost-floor-03
+title = Question 3
 era_shader = home-micro-rom
 layout = passage
 next = ghost-floor-04

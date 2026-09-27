@@ -917,6 +917,18 @@ body[data-tab="script"].script-mode::after {
 .script-mirror [class^="tok-"]::after {
   content: none;
 }
+.script-mirror .tok-section {
+  color: var(--section-accent, #d8b86d);
+}
+.script-mirror .tok-key {
+  color: #82b8cf;
+}
+.script-mirror .tok-value {
+  color: #d5dde2;
+}
+.script-mirror .tok-directive {
+  color: #9bd0a5;
+}
 /* Inline application tags set their own value inline. */
 .script-mirror .tok-color {
   color: inherit;

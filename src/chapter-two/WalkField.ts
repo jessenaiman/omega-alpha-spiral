@@ -6,6 +6,7 @@ import {
   type RoomObject,
 } from "./rooms";
 import type { EarlyFloorLayout } from "./floors/early-layout";
+import type { OmlStateEffect, OmlStateValue } from "../core/oml";
 
 const FIELD_BOUNDARY: number = 22;
 const WALK_SPEED: number = 6;
@@ -54,6 +55,8 @@ export class WalkField {
     "exploring" | "prompt" | "fighting" | "result" | "rewriting" | "complete" =
     "exploring";
   public choices: EchoChoice[] = [];
+  public state: Record<string, OmlStateValue> = {};
+  public emittedEvents: string[] = [];
   public selected: RoomObject | null = null;
   public guide: Guide | null = null;
   private _fightRemaining: number = 0;
@@ -114,6 +117,8 @@ export class WalkField {
     this.roomIndex = 0;
     this.phase = "exploring";
     this.choices = [];
+    this.state = {};
+    this.emittedEvents = [];
     this.selected = null;
     this.guide = null;
     this._fightRemaining = 0;
@@ -219,7 +224,20 @@ export class WalkField {
       answer,
       points: this.selected.alignment === owner ? 2 : 1,
     });
+    for (const effect of this.selected.effects) this._applyEffect(effect);
+    if (this.selected.emit) this.emittedEvents.push(this.selected.emit);
     this.phase = "result";
+  }
+
+  private _applyEffect(effect: OmlStateEffect): void {
+    if (effect.operation === "set") {
+      this.state[effect.path] = effect.value;
+      return;
+    }
+    const current = this.state[effect.path];
+    const increment = typeof effect.value === "number" ? effect.value : 0;
+    this.state[effect.path] =
+      (typeof current === "number" ? current : 0) + increment;
   }
 
   public continue(): void {

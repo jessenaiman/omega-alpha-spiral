@@ -2,6 +2,8 @@ import { createFloor2ShadowLayout } from "./floors/early-shadow";
 import { createFloor3AmbitionLayout } from "./floors/early-ambition";
 import type { EarlyFloorLayout, FloorPoint } from "./floors/early-layout";
 import { createRng } from "../core/random";
+import { CHAPTER_ZERO_LEVELS_BY_ID } from "../dialogue/chapter-zero-vite";
+import type { OmlStateEffect } from "../core/oml";
 
 export type ObjectKind = "door" | "monster" | "chest";
 export type Guide = "Light" | "Shadow" | "Ambition";
@@ -11,7 +13,11 @@ export interface RoomObject {
   z: number;
   alignment: Guide;
   text: string;
+  effects: readonly OmlStateEffect[];
+  emit: string;
+  transition: string;
 }
+type RoomObjectPlacement = Pick<RoomObject, "kind" | "x" | "z">;
 export interface RoomBlock {
   id?: string;
   x: number;
@@ -21,6 +27,8 @@ export interface RoomBlock {
   rotationRadians?: number;
 }
 export interface EchoRoom {
+  levelId: string;
+  eraShaderId?: string;
   owner: Guide;
   objects: RoomObject[];
   blocks?: RoomBlock[];
@@ -28,10 +36,44 @@ export interface EchoRoom {
   layout?: EarlyFloorLayout;
   routes?: Readonly<Record<ObjectKind, readonly FloorPoint[]>>;
 }
+type AuthoredRoomGeometry = Omit<EchoRoom, "eraShaderId" | "objects"> & {
+  objects: RoomObjectPlacement[];
+};
+
+function guideFromOwner(owner: string): Guide {
+  if (owner === "light") return "Light";
+  if (owner === "shadow") return "Shadow";
+  if (owner === "ambition") return "Ambition";
+  throw new Error(`Unknown Dreamweaver owner: ${owner}`);
+}
+
+function applyAuthoredDialogue(room: AuthoredRoomGeometry): EchoRoom {
+  const level = CHAPTER_ZERO_LEVELS_BY_ID.get(room.levelId);
+  if (!level) throw new Error(`Missing authored OML scene: ${room.levelId}`);
+  const choices = new Map(level.choices.map((choice) => [choice.id, choice]));
+  return {
+    ...room,
+    eraShaderId: level.scene.era_shader,
+    objects: room.objects.map((object) => {
+      const choice = choices.get(object.kind);
+      if (!choice)
+        throw new Error(`${room.levelId} has no ${object.kind} choice.`);
+      return {
+        ...object,
+        alignment: guideFromOwner(choice.owner),
+        text: choice.text,
+        effects: choice.effects.map((effect) => ({ ...effect })),
+        emit: choice.emit ?? "",
+        transition: choice.transition ?? "",
+      };
+    }),
+  };
+}
 
 // Authored copy of stage_2/nethack-scene.md:119-237, interpreted as data, NOT
 // executed pseudocode. Colors, code architecture and movement are our graybox.
-const LIGHT_ROOM: EchoRoom = {
+const LIGHT_ROOM: AuthoredRoomGeometry = {
+  levelId: "nethack-floor-01",
   owner: "Light",
   heroStart: { x: 0, z: 12 },
   blocks: [
@@ -43,76 +85,60 @@ const LIGHT_ROOM: EchoRoom = {
       kind: "door",
       x: -8,
       z: 0,
-      alignment: "Light",
-      text: "What is the first story you ever loved?",
     },
     {
       kind: "monster",
       x: 0,
       z: 0,
-      alignment: "Ambition",
-      text: "A spectral wolf appears! It lunges...",
     },
     {
       kind: "chest",
       x: 8,
       z: 0,
-      alignment: "Shadow",
-      text: "You open the chest. Inside: a broken compass.",
     },
   ],
 };
 
-const SHADOW_ROOM: EchoRoom = {
+const SHADOW_ROOM: AuthoredRoomGeometry = {
+  levelId: "nethack-floor-02",
   owner: "Shadow",
   objects: [
     {
       kind: "door",
       x: -8,
       z: 0,
-      alignment: "Shadow",
-      text: "Is chaos kinder than order?",
     },
     {
       kind: "monster",
       x: 0,
       z: 0,
-      alignment: "Light",
-      text: "A guardian of light blocks your path!",
     },
     {
       kind: "chest",
       x: 8,
       z: 0,
-      alignment: "Ambition",
-      text: "The chest giggles. It’s empty... or is it?",
     },
   ],
 };
 
-const AMBITION_ROOM: EchoRoom = {
+const AMBITION_ROOM: AuthoredRoomGeometry = {
+  levelId: "nethack-floor-03",
   owner: "Ambition",
   objects: [
     {
       kind: "door",
       x: -8,
       z: 0,
-      alignment: "Ambition",
-      text: "Would you burn the world to save one soul?",
     },
     {
       kind: "monster",
       x: 0,
       z: 0,
-      alignment: "Shadow",
-      text: "A trickster imp cackles and attacks!",
     },
     {
       kind: "chest",
       x: 8,
       z: 0,
-      alignment: "Light",
-      text: "Inside: a shard glowing with ancient hope.",
     },
   ],
 };
@@ -144,11 +170,14 @@ function placeRoom(room: EchoRoom, layout: EarlyFloorLayout): EchoRoom {
 
 /** Seeded room set with stable identities and randomized physical exit slots. */
 export function createEchoRooms(variationSeed: number = 0): EchoRoom[] {
+  const authoredLightRoom = applyAuthoredDialogue(LIGHT_ROOM);
+  const authoredShadowRoom = applyAuthoredDialogue(SHADOW_ROOM);
+  const authoredAmbitionRoom = applyAuthoredDialogue(AMBITION_ROOM);
   const lightSlots = createRng(variationSeed)
     .fork("floor-1-light:exit-slots")
-    .shuffle(LIGHT_ROOM.objects.map(({ x, z }) => ({ x, z })));
+    .shuffle(authoredLightRoom.objects.map(({ x, z }) => ({ x, z })));
   const lightKinds: ObjectKind[] = ["door", "monster", "chest"];
-  const lightObjects = LIGHT_ROOM.objects.map((object) => {
+  const lightObjects = authoredLightRoom.objects.map((object) => {
     const slotIndex = lightKinds.indexOf(object.kind);
     const slot = lightSlots[slotIndex];
     return { ...object, x: slot.x, z: slot.z };
@@ -166,13 +195,13 @@ export function createEchoRooms(variationSeed: number = 0): EchoRoom[] {
   ) as Record<ObjectKind, FloorPoint[]>;
   return [
     {
-      ...LIGHT_ROOM,
+      ...authoredLightRoom,
       objects: lightObjects,
       routes: lightRoutes,
-      blocks: LIGHT_ROOM.blocks?.map((block) => ({ ...block })),
+      blocks: authoredLightRoom.blocks?.map((block) => ({ ...block })),
     },
-    placeRoom(SHADOW_ROOM, createFloor2ShadowLayout(variationSeed)),
-    placeRoom(AMBITION_ROOM, createFloor3AmbitionLayout(variationSeed)),
+    placeRoom(authoredShadowRoom, createFloor2ShadowLayout(variationSeed)),
+    placeRoom(authoredAmbitionRoom, createFloor3AmbitionLayout(variationSeed)),
   ];
 }
 

@@ -25,7 +25,7 @@
       "properties": {
         "schema": { "const": "dialogue.oms" },
         "kind": { "const": "persona" },
-        "id": { "enum": ["omega", "light", "shadow", "ambition"] },
+        "id": { "type": "string", "pattern": "^[a-z][a-z0-9_-]*$" },
         "display_name": { "type": "string", "minLength": 1 },
         "nicknames": { "type": "string" },
         "color": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
@@ -117,6 +117,18 @@
             { "type": "boolean" }
           ]
         }
+      },
+      "additionalProperties": false
+    },
+    "npc": {
+      "type": "object",
+      "required": ["id", "display_name", "voice", "era_shader", "location"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z][a-z0-9_-]*$" },
+        "display_name": { "type": "string", "minLength": 1 },
+        "voice": { "type": "string", "pattern": "^[A-Za-z0-9_-]+\\.omd$" },
+        "era_shader": { "type": "string", "minLength": 1 },
+        "location": { "type": "string", "minLength": 1 }
       },
       "additionalProperties": false
     },
@@ -253,16 +265,21 @@
     },
     "level": {
       "type": "object",
-      "required": ["kind", "tags", "voices", "scene", "question", "choices", "events", "completion"],
+      "required": ["kind", "tags", "voices", "npcs", "scene", "question", "choices", "events", "completion"],
       "properties": {
         "kind": { "const": "level" },
         "tags": { "type": "array", "items": { "type": "object" } },
         "voices": { "type": "array", "items": { "type": "object" } },
+        "npcs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/npc" }
+        },
         "scene": {
           "type": "object",
-          "required": ["id", "era_shader", "layout", "next"],
+          "required": ["id", "title", "era_shader", "layout"],
           "properties": {
             "id": { "type": "string", "minLength": 1 },
+            "title": { "type": "string", "minLength": 1 },
             "era_shader": { "type": "string", "minLength": 1 },
             "layout": { "type": "string", "minLength": 1 },
             "next": { "type": "string", "minLength": 1 }
@@ -271,7 +288,6 @@
         },
         "question": {
           "type": "object",
-          "required": ["text"],
           "properties": {
             "text": { "type": "string", "minLength": 1 }
           },
@@ -280,7 +296,7 @@
         "choices": {
           "type": "array",
           "items": { "$ref": "#/$defs/choice" },
-          "minItems": 3,
+          "minItems": 0,
           "maxItems": 3
         },
         "events": {

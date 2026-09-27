@@ -1,0 +1,60 @@
+# NetHack Floor 02 - Shadow's dungeon
+# Creative source:
+# https://github.com/jessenaiman/omega-alpha-spiral/blob/main/project-management/official%20game%20docs%20(read-only)/chapter-zero-stages/stage_2/nethack-scene.md
+
+[voice Light]
+file = Light.omd
+
+[voice Shadow]
+file = Shadow.omd
+
+[voice Ambition]
+file = Ambition.omd
+
+[scene]
+id = nethack-floor-02
+title = Shadow's Dungeon
+era_shader = ibm-pc-cga
+layout = rogue-room-shadow
+next = nethack-floor-03
+
+[question]
+text = Three exits wait in Shadow's dungeon. Which one do you choose?
+
+[choice door]
+owner = shadow
+text = Is chaos kinder than order?
+response = > You answer the door and cross its threshold.
+set = nethack.floor2.exit = door
+increment = dreamweavers.shadow.affinity = 2
+emit = nethack.floor2.exit.selected
+transition = nethack-floor-03
+
+[choice monster]
+owner = light
+text = A guardian of light blocks your path!
+response = > You meet the guardian in a basic auto-fight.
+set = nethack.floor2.exit = monster
+increment = dreamweavers.light.affinity = 1
+emit = nethack.floor2.exit.selected
+transition = nethack-floor-03
+
+[choice chest]
+owner = ambition
+text = The chest giggles. It's empty... or is it?
+response = > The empty chest leaves its question with you.
+set = nethack.floor2.exit = chest
+increment = dreamweavers.ambition.affinity = 1
+emit = nethack.floor2.exit.selected
+transition = nethack-floor-03
+
+[script]
+Shadow: The loop always breaks here... but not today?
+[show question]
+[show choice door]
+[show choice monster]
+[show choice chest]
+
+[completion]
+[continue Cross the chosen exit]
+[transition nethack-floor-03]
